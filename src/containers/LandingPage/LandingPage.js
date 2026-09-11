@@ -22,12 +22,16 @@ import HeroCarousel from '../../components/HeroCarousel/HeroCarousel';
 import TrustBar from '../../components/TrustBar/TrustBar';
 import CategoryRail from '../../components/CategoryRail/CategoryRail';
 import PromoCards from '../../components/PromoCards/PromoCards';
+import FeaturedListings from '../../components/FeaturedListings/FeaturedListings';
+import FeaturedStores from '../../components/FeaturedStores/FeaturedStores';
 import VerifiedBand from '../../components/VerifiedBand/VerifiedBand';
 import AppBand from '../../components/AppBand/AppBand';
 import heroSlides from '../../config/heroSlides';
 import trustItems from '../../config/trustItems';
 import categories from '../../config/categories';
 import promoCards from '../../config/promoCards';
+import { featuredProducts, featuredServices } from '../../config/featuredListings';
+import featuredStores from '../../config/featuredStores';
 
 const PageBuilder = loadable(() =>
   import(/* webpackChunkName: "PageBuilder" */ '../PageBuilder/PageBuilder')
@@ -69,6 +73,19 @@ export const LandingPageComponent = props => {
         <>
           <CategoryRail categories={categories} />
           <PromoCards cards={promoCards} />
+          <FeaturedListings
+            title="Productos destacados"
+            seeAllLabel="Ver todos los productos"
+            seeAllHref="/s?pub_listingType=product"
+            items={featuredProducts}
+          />
+          <FeaturedListings
+            title="Servicios populares"
+            seeAllLabel="Ver todos los servicios"
+            seeAllHref="/s?pub_listingType=service"
+            items={featuredServices}
+          />
+          <FeaturedStores stores={featuredStores} />
           <VerifiedBand />
           <AppBand />
         </>
