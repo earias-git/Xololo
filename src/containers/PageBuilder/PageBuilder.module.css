@@ -1,6 +1,13 @@
 .layout {
   min-height: 100vh;
   grid-template-rows: auto 1fr auto;
+  /* XOLOLO: CSS Grid tracks default to `1fr`, but browsers grow the track to
+     fit the largest min-content among their descendants. Some hosted section
+     components render text/CTAs that expand past the viewport (e.g. the hero
+     search CTA min-width) and end up pushing the whole main+topbar to that
+     bigger width. Locking the single column to `minmax(0, 1fr)` clips those
+     descendants to the viewport instead of stretching the layout. */
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .topbar {
@@ -11,6 +18,10 @@
 
 .main {
   display: grid;
+  /* Same reason as .layout above: keep the single grid column from growing
+     when a hosted section renders content that would otherwise expand the
+     track beyond the viewport. */
+  grid-template-columns: minmax(0, 1fr);
   scroll-margin-top: var(--topbarHeight);
   @media (--viewportMedium) {
     scroll-margin-top: var(--topbarHeightDesktop);

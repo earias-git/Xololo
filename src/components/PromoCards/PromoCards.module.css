@@ -21,7 +21,9 @@
   gap: 16px;
   grid-template-columns: 1fr;
 
-  @media (min-width: 720px) {
+  /* From tablet width onwards, arrange the three cards in a row like the
+     mockup — first card slightly wider so its bigger headline breathes. */
+  @media (min-width: 640px) {
     grid-template-columns: 1.3fr 1fr 1fr;
   }
 }
