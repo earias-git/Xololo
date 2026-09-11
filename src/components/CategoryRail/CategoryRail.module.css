@@ -60,11 +60,10 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
 
-  /* On desktop, when all tiles fit, distribute them across the full width
-     so they don't cluster on the left as they did while we had fewer
-     categories than columns. On mobile we keep the horizontal scroll. */
+  /* On desktop we let the tiles grow to fill the row; on mobile we keep
+     the horizontal scroll so long lists don't wrap awkwardly. */
   @media (--viewportMedium) {
-    justify-content: space-between;
+    gap: 10px;
   }
 }
 
@@ -82,10 +81,12 @@
   scroll-snap-align: start;
 
   /* On desktop we let each tile grow slightly to eat the leftover space
-     evenly instead of leaving a big gap on the right. */
+     evenly instead of leaving a big gap on the right. Max-width matches the
+     mockup's ~104px tile so 10 categorías caben cómodamente en 1240px de
+     contenedor. */
   @media (--viewportMedium) {
     flex: 1 1 0;
-    max-width: 128px;
+    max-width: 108px;
   }
 }
 

@@ -1,9 +1,13 @@
 import React from 'react';
 
-// XOLOLO: las 7 categorías del landing (paridad con la sección "Categorias"
-// del asset hospedado). Los `href` apuntan al SearchPage filtrando por la
-// categoría correspondiente; ajustar la key (`pub_categoryLevel1`) si el
-// listing schema del Console usa otra.
+// XOLOLO: las 10 categorías del mockup del landing. Los `href` apuntan al
+// SearchPage filtrando por la categoría correspondiente; ajustar la key
+// (`pub_categoryLevel1`) si el listing schema del Console usa otra.
+//
+// IMPORTANTE: estas categorías son únicamente lo que se muestra en el riel
+// visual del landing. Para que los sellers puedan realmente publicar bajo
+// cada una, hay que agregarlas también en Sharetribe Console → Listings →
+// Categories (o el schema equivalente que use la marketplace).
 
 const Icon = ({ children, viewBox = '0 0 24 24' }) => (
   <svg
@@ -32,6 +36,17 @@ const categories = [
     ),
   },
   {
+    id: 'hogar',
+    label: 'Hogar',
+    href: '/s?pub_categoryLevel1=hogar',
+    icon: (
+      <Icon>
+        <path d="M3 11l9-7 9 7" />
+        <path d="M5 10v9h14v-9" />
+      </Icon>
+    ),
+  },
+  {
     id: 'moda',
     label: 'Moda',
     href: '/s?pub_categoryLevel1=moda',
@@ -53,6 +68,52 @@ const categories = [
     ),
   },
   {
+    id: 'alimentos',
+    label: 'Alimentos',
+    href: '/s?pub_categoryLevel1=alimentos',
+    icon: (
+      <Icon>
+        <path d="M4 10h16" />
+        <path d="M6 10V6h12v4" />
+        <path d="M5 10l1 10h12l1-10" />
+      </Icon>
+    ),
+  },
+  {
+    id: 'tecnologia',
+    label: 'Tecnología',
+    href: '/s?pub_categoryLevel1=tecnologia',
+    icon: (
+      <Icon>
+        <rect x="4" y="4" width="16" height="12" rx="1.5" />
+        <path d="M9 20h6M12 16v4" />
+      </Icon>
+    ),
+  },
+  {
+    id: 'mascotas',
+    label: 'Mascotas',
+    href: '/s?pub_categoryLevel1=mascotas',
+    icon: (
+      <Icon>
+        <circle cx="7" cy="7" r="2" />
+        <circle cx="17" cy="7" r="2" />
+        <path d="M4 15c0-3 3-4 8-4s8 1 8 4-3 5-8 5-8-2-8-5Z" />
+      </Icon>
+    ),
+  },
+  {
+    id: 'papeleria',
+    label: 'Papelería',
+    href: '/s?pub_categoryLevel1=papeleria',
+    icon: (
+      <Icon>
+        <path d="M6 3h9l3 3v15H6z" />
+        <path d="M15 3v3h3M9 12h6M9 16h6" />
+      </Icon>
+    ),
+  },
+  {
     id: 'turismo',
     label: 'Turismo',
     href: '/s?pub_categoryLevel1=turismo',
@@ -65,36 +126,13 @@ const categories = [
     ),
   },
   {
-    id: 'wellness',
-    label: 'Wellness',
-    href: '/s?pub_categoryLevel1=wellness',
-    icon: (
-      <Icon>
-        <circle cx="12" cy="5" r="1.6" />
-        <path d="M8 20l2.5-7L8 10l2-4 2 3h2l2-3 2 4-2.5 3L18 20" />
-      </Icon>
-    ),
-  },
-  {
-    id: 'consultoria',
-    label: 'Consultoría',
-    href: '/s?pub_categoryLevel1=consultoria',
+    id: 'servicios-pro',
+    label: 'Servicios pro',
+    href: '/s?pub_categoryLevel1=servicios-pro',
     icon: (
       <Icon>
         <path d="M9 3h6l1 4H8l1-4Z" />
         <path d="M5 8h14l-1 13H6L5 8Z" />
-      </Icon>
-    ),
-  },
-  {
-    id: 'agro-alimentos',
-    label: 'Agro y Alimentos',
-    href: '/s?pub_categoryLevel1=agro-alimentos',
-    icon: (
-      <Icon>
-        <path d="M4 10h16" />
-        <path d="M6 10V6h12v4" />
-        <path d="M5 10l1 10h12l1-10" />
       </Icon>
     ),
   },
