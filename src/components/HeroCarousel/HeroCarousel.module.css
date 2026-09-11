@@ -1,0 +1,246 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background-color: #1c2436;
+}
+
+.viewport {
+  position: relative;
+  width: 100%;
+  /* On mobile the hero is tall enough for a big headline; on desktop we cap
+     it so the fold doesn't look empty of content below. */
+  height: 520px;
+
+  @media (--viewportMedium) {
+    height: 560px;
+  }
+
+  @media (--viewportLarge) {
+    height: 600px;
+  }
+}
+
+/* Each slide sits on top of the same viewport and fades in/out. */
+.slide {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 700ms ease-in-out;
+  will-change: opacity;
+}
+
+.slideActive {
+  opacity: 1;
+  visibility: visible;
+  z-index: 1;
+}
+
+/* Dark overlay so the copy is readable on any background image. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(15, 22, 38, 0.55) 0%, rgba(15, 22, 38, 0.25) 100%);
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #ffffff;
+
+  @media (--viewportMedium) {
+    padding: 56px 40px;
+  }
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.title {
+  margin: 0 0 16px;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+  max-width: 20ch;
+  text-wrap: balance;
+  color: #ffffff;
+
+  @media (--viewportMedium) {
+    font-size: 44px;
+    max-width: 22ch;
+  }
+
+  @media (--viewportLarge) {
+    font-size: 52px;
+  }
+}
+
+.description {
+  margin: 0 0 28px;
+  font-size: 15px;
+  line-height: 1.55;
+  max-width: 44ch;
+  color: rgba(255, 255, 255, 0.9);
+
+  @media (--viewportMedium) {
+    font-size: 17px;
+    margin-bottom: 32px;
+  }
+}
+
+.ctas {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  min-height: 44px;
+  transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out,
+    background-color 0.15s ease-in-out;
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.ctaPrimary {
+  background-color: #ffffff;
+  color: #1c2436;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.ctaPrimary:hover {
+  color: #1c2436;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+.ctaGhost {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+}
+
+.ctaGhost:hover {
+  color: #ffffff;
+  border-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Prev / next arrows */
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1c2436;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.15s ease-in-out;
+
+  @media (--viewportMedium) {
+    display: flex;
+  }
+}
+
+.arrow:hover {
+  background: #ffffff;
+}
+
+.arrow svg {
+  width: 20px;
+  height: 20px;
+}
+
+.arrowPrev {
+  left: 16px;
+}
+
+.arrowNext {
+  right: 16px;
+}
+
+/* Bullet dots */
+.dots {
+  position: absolute;
+  bottom: 20px;
+  left: 24px;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+
+  @media (--viewportMedium) {
+    left: 40px;
+    bottom: 28px;
+  }
+}
+
+.dot {
+  width: 24px;
+  height: 4px;
+  border-radius: 4px;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, width 0.2s ease-in-out;
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.dotActive {
+  background: #ffffff;
+  width: 32px;
+}
+
+/* Reduce motion friendliness */
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    transition: none;
+  }
+  .cta,
+  .dot,
+  .arrow {
+    transition: none;
+  }
+}

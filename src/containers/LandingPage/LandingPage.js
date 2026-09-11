@@ -14,20 +14,38 @@ import { fetchFeaturedListings } from '../../ducks/featuredListings.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { getFeaturedListingsProps } from '../../util/data';
 
+// XOLOLO: hero carrusel custom, se renderiza antes del PageBuilder y sustituye
+// visualmente la sección "hero" que trae el asset hospedado.
+import HeroCarousel from '../../components/HeroCarousel/HeroCarousel';
+import heroSlides from '../../config/heroSlides';
+
 const PageBuilder = loadable(() =>
   import(/* webpackChunkName: "PageBuilder" */ '../PageBuilder/PageBuilder')
 );
 
+// XOLOLO: elimina la primera sección `hero` del asset del landing para que el
+// PageBuilder no la duplique con el HeroCarousel custom. Deja intactas las
+// demás secciones (Why this marketplace, How it works, Categorias, ...).
+const stripHostedHero = pageData => {
+  if (!pageData?.sections?.length) return pageData;
+  const sections = pageData.sections.filter(s => s.sectionType !== 'hero');
+  if (sections.length === pageData.sections.length) return pageData;
+  return { ...pageData, sections };
+};
+
 export const LandingPageComponent = props => {
   const { pageAssetsData, inProgress, error } = props;
+  const pageData = pageAssetsData?.[camelize(ASSET_NAME)]?.data;
+  const dataWithoutHero = stripHostedHero(pageData);
 
   return (
     <PageBuilder
-      pageAssetsData={pageAssetsData?.[camelize(ASSET_NAME)]?.data}
+      pageAssetsData={dataWithoutHero}
       inProgress={inProgress}
       error={error}
       fallbackPage={<FallbackPage error={error} />}
       featuredListings={getFeaturedListingsProps(camelize(ASSET_NAME), props)}
+      beforeSections={<HeroCarousel slides={heroSlides} />}
     />
   );
 };

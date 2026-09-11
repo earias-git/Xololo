@@ -109,6 +109,9 @@ const PageBuilder = props => {
     options,
     currentPage,
     featuredListings,
+    // XOLOLO: content rendered inside <main> BEFORE the hosted sections.
+    // Used by LandingPage to place the custom HeroCarousel under the topbar.
+    beforeSections = null,
     ...pageProps
   } = props;
 
@@ -138,6 +141,7 @@ const PageBuilder = props => {
                 <TopbarContainer currentPage={currentPage} />
               </Topbar>
               <Main as="main" id="main-content" className={css.main}>
+                {beforeSections}
                 {sections.length === 0 && inProgress ? (
                   <LoadingSpinner />
                 ) : (
