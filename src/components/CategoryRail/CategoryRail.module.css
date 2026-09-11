@@ -59,6 +59,13 @@
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+
+  /* On desktop, when all tiles fit, distribute them across the full width
+     so they don't cluster on the left as they did while we had fewer
+     categories than columns. On mobile we keep the horizontal scroll. */
+  @media (--viewportMedium) {
+    justify-content: space-between;
+  }
 }
 
 .rail::-webkit-scrollbar {
@@ -73,6 +80,13 @@
 .item {
   flex: 0 0 auto;
   scroll-snap-align: start;
+
+  /* On desktop we let each tile grow slightly to eat the leftover space
+     evenly instead of leaving a big gap on the right. */
+  @media (--viewportMedium) {
+    flex: 1 1 0;
+    max-width: 128px;
+  }
 }
 
 .tile {
@@ -92,7 +106,7 @@
     transform 0.15s ease-in-out;
 
   @media (--viewportMedium) {
-    width: 108px;
+    width: auto;
     padding: 16px 8px;
   }
 }
