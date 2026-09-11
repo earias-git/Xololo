@@ -45,6 +45,9 @@
 .icon > svg {
   width: 100%;
   height: 100%;
+  /* Sharetribe base CSS defaults `svg { fill: currentcolor }`; override so
+     these outline icons keep their contour-only look. */
+  fill: none;
 }
 
 .textCol {

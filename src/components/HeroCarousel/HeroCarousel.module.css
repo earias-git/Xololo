@@ -198,6 +198,9 @@
 .arrow svg {
   width: 20px;
   height: 20px;
+  /* Sharetribe base CSS defaults `svg { fill: currentcolor }`; override so
+     the outline chevron only draws its stroke, without a filled triangle. */
+  fill: none;
 }
 
 .arrowPrev {

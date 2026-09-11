@@ -139,6 +139,10 @@
 .iconRing > svg {
   width: 20px;
   height: 20px;
+  /* Sharetribe base CSS defaults `svg { fill: currentcolor }`, which would
+     fill our outline icons with green. Force `fill: none` so only the stroke
+     paths draw. */
+  fill: none;
 
   @media (--viewportMedium) {
     width: 22px;
