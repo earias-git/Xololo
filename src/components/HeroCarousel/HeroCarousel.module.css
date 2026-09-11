@@ -10,16 +10,17 @@
 .viewport {
   position: relative;
   width: 100%;
-  /* On mobile the hero is tall enough for a big headline; on desktop we cap
-     it so the fold doesn't look empty of content below. */
-  height: 520px;
+  /* Kept intentionally short so the sections below the hero (categorías,
+     promos, verified…) stay above the fold. Business ask: the hero is a
+     banner, not a full-screen takeover. */
+  height: 380px;
 
   @media (--viewportMedium) {
-    height: 560px;
+    height: 400px;
   }
 
   @media (--viewportLarge) {
-    height: 600px;
+    height: 420px;
   }
 }
 
@@ -57,14 +58,14 @@
   height: 100%;
   max-width: 1240px;
   margin: 0 auto;
-  padding: 40px 24px;
+  padding: 28px 24px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   color: #ffffff;
 
   @media (--viewportMedium) {
-    padding: 56px 40px;
+    padding: 32px 40px;
   }
 }
 
@@ -78,8 +79,8 @@
 }
 
 .title {
-  margin: 0 0 16px;
-  font-size: 34px;
+  margin: 0 0 12px;
+  font-size: 28px;
   font-weight: 700;
   line-height: 1.1;
   max-width: 20ch;
@@ -87,25 +88,25 @@
   color: #ffffff;
 
   @media (--viewportMedium) {
-    font-size: 44px;
+    font-size: 36px;
     max-width: 22ch;
   }
 
   @media (--viewportLarge) {
-    font-size: 52px;
+    font-size: 42px;
   }
 }
 
 .description {
-  margin: 0 0 28px;
-  font-size: 15px;
-  line-height: 1.55;
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.5;
   max-width: 44ch;
   color: rgba(255, 255, 255, 0.9);
 
   @media (--viewportMedium) {
-    font-size: 17px;
-    margin-bottom: 32px;
+    font-size: 15px;
+    margin-bottom: 22px;
   }
 }
 
@@ -113,6 +114,15 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+/* Small footnote sitting under the CTAs (e.g. "precio con pago anual"). */
+.note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.75);
+  font-style: italic;
 }
 
 .cta {

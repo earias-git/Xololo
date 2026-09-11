@@ -21,25 +21,29 @@ const heroSlides = [
     imageAlt: 'Fondo azul Xololo — compra con confianza',
   },
   {
-    id: 'envio-gratis',
-    eyebrow: 'Oferta de lanzamiento',
-    title: 'Envío gratis en tu primera compra',
+    id: 'cero-comisiones',
+    eyebrow: 'Para tu negocio',
+    title: 'Tu tienda en línea y marketplace desde CERO comisiones por venta',
     description:
-      'Válido en pedidos mayores a $500 MXN con cualquier seller Xololo Verified™. Por tiempo limitado.',
-    ctas: [{ label: 'Ver ofertas', href: '/s' }],
+      'Solo pagas tu plan mensual. Tu tienda propia en tuempresa.xololo.mx más el marketplace de Xololo, sin retención por transacción.',
+    ctas: [
+      { label: 'Ver planes', href: '/p/planes' },
+      { label: 'Crear mi tienda', href: '/signup', variant: 'ghost' },
+    ],
     background: slide2,
-    imageAlt: 'Fondo verde Xololo — envío gratis',
+    imageAlt: 'Fondo verde Xololo — cero comisiones por venta',
   },
   {
     id: 'abrir-tienda',
     eyebrow: 'Para negocios',
-    title: 'Abre tu tienda en línea desde $299/mes',
+    title: 'Abre tu tienda en línea desde $169/mes',
     description:
       'Tu propia tienda en tuempresa.xololo.mx: fácil de armar, fácil de administrar. Sin necesidad de saber de tecnología.',
     ctas: [
       { label: 'Crear mi tienda', href: '/signup' },
       { label: 'Ver planes', href: '/p/planes', variant: 'ghost' },
     ],
+    note: 'Precio con pago anual',
     background: slide3,
     imageAlt: 'Fondo ámbar Xololo — abre tu tienda',
   },

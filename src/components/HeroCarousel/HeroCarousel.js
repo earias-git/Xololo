@@ -121,6 +121,7 @@ const HeroCarousel = props => {
                 {slide.ctas && slide.ctas.length ? (
                   <div className={css.ctas}>{slide.ctas.map(renderCta)}</div>
                 ) : null}
+                {slide.note ? <p className={css.note}>{slide.note}</p> : null}
               </div>
             </div>
           );
