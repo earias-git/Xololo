@@ -112,6 +112,9 @@ const PageBuilder = props => {
     // XOLOLO: content rendered inside <main> BEFORE the hosted sections.
     // Used by LandingPage to place the custom HeroCarousel under the topbar.
     beforeSections = null,
+    // XOLOLO: content rendered inside <main> AFTER the hosted sections.
+    // Used by LandingPage to place the custom CategoryRail at the bottom.
+    afterSections = null,
     ...pageProps
   } = props;
 
@@ -147,6 +150,7 @@ const PageBuilder = props => {
                 ) : (
                   <SectionBuilder sections={sections} options={{ ...options, featuredListings }} />
                 )}
+                {afterSections}
               </Main>
               <Footer>
                 <FooterContainer />

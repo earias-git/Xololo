@@ -14,24 +14,30 @@ import { fetchFeaturedListings } from '../../ducks/featuredListings.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { getFeaturedListingsProps } from '../../util/data';
 
-// XOLOLO: hero carrusel + banda de confianza custom. Se renderizan antes del
-// PageBuilder y sustituyen visualmente la sección "hero" que trae el asset
-// hospedado.
+// XOLOLO: piezas custom del landing (hero carrusel, banda de confianza y riel
+// de categorías con íconos). Se colocan alrededor de las secciones hospedadas
+// para acercar el look al mockup sin depender del PageBuilder para todo.
 import HeroCarousel from '../../components/HeroCarousel/HeroCarousel';
 import TrustBar from '../../components/TrustBar/TrustBar';
+import CategoryRail from '../../components/CategoryRail/CategoryRail';
 import heroSlides from '../../config/heroSlides';
 import trustItems from '../../config/trustItems';
+import categories from '../../config/categories';
 
 const PageBuilder = loadable(() =>
   import(/* webpackChunkName: "PageBuilder" */ '../PageBuilder/PageBuilder')
 );
 
-// XOLOLO: elimina la primera sección `hero` del asset del landing para que el
-// PageBuilder no la duplique con el HeroCarousel custom. Deja intactas las
-// demás secciones (Why this marketplace, How it works, Categorias, ...).
-const stripHostedHero = pageData => {
+// XOLOLO: filtra las secciones hospedadas que ya reemplazamos con componentes
+// custom para que no se dupliquen:
+// - 'hero' -> reemplazado por HeroCarousel arriba
+// - 'carousel' -> asumimos que la única sección tipo carousel del landing es
+//   "Categorias" y la reemplazamos con CategoryRail abajo. Si se llegara a
+//   sumar otro carousel al asset, hay que refinar este filtro por sectionId.
+const stripCustomizedSections = pageData => {
   if (!pageData?.sections?.length) return pageData;
-  const sections = pageData.sections.filter(s => s.sectionType !== 'hero');
+  const removed = new Set(['hero', 'carousel']);
+  const sections = pageData.sections.filter(s => !removed.has(s.sectionType));
   if (sections.length === pageData.sections.length) return pageData;
   return { ...pageData, sections };
 };
@@ -39,11 +45,11 @@ const stripHostedHero = pageData => {
 export const LandingPageComponent = props => {
   const { pageAssetsData, inProgress, error } = props;
   const pageData = pageAssetsData?.[camelize(ASSET_NAME)]?.data;
-  const dataWithoutHero = stripHostedHero(pageData);
+  const dataForBuilder = stripCustomizedSections(pageData);
 
   return (
     <PageBuilder
-      pageAssetsData={dataWithoutHero}
+      pageAssetsData={dataForBuilder}
       inProgress={inProgress}
       error={error}
       fallbackPage={<FallbackPage error={error} />}
@@ -54,6 +60,7 @@ export const LandingPageComponent = props => {
           <TrustBar items={trustItems} />
         </>
       }
+      afterSections={<CategoryRail categories={categories} />}
     />
   );
 };
