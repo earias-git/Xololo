@@ -37,15 +37,17 @@ const PageBuilder = loadable(() =>
   import(/* webpackChunkName: "PageBuilder" */ '../PageBuilder/PageBuilder')
 );
 
-// XOLOLO: filtra las secciones hospedadas que ya reemplazamos con componentes
-// custom para que no se dupliquen:
-// - 'hero' -> reemplazado por HeroCarousel arriba
-// - 'carousel' -> asumimos que la única sección tipo carousel del landing es
-//   "Categorias" y la reemplazamos con CategoryRail abajo. Si se llegara a
-//   sumar otro carousel al asset, hay que refinar este filtro por sectionId.
+// XOLOLO: filtra las secciones hospedadas del landing porque el layout
+// completo se arma ahora con componentes custom que replican el mockup:
+// - 'hero' -> HeroCarousel + TrustBar arriba
+// - 'columns' -> reemplazadas por PromoCards + FeaturedListings + FeaturedStores
+// - 'carousel' (Categorias) -> CategoryRail
+// Al filtrar por tipo dejamos el asset hospedado disponible por si se quiere
+// reactivar alguna sección de Console sin cambiar código; para eso basta con
+// remover ese `sectionType` del set.
 const stripCustomizedSections = pageData => {
   if (!pageData?.sections?.length) return pageData;
-  const removed = new Set(['hero', 'carousel']);
+  const removed = new Set(['hero', 'columns', 'carousel']);
   const sections = pageData.sections.filter(s => !removed.has(s.sectionType));
   if (sections.length === pageData.sections.length) return pageData;
   return { ...pageData, sections };
