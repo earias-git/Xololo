@@ -156,4 +156,6 @@ export { default as HeroCarousel } from './HeroCarousel/HeroCarousel';
 export { default as TrustBar } from './TrustBar/TrustBar';
 export { default as CategoryRail } from './CategoryRail/CategoryRail';
 export { default as PromoCards } from './PromoCards/PromoCards';
+export { default as VerifiedBand } from './VerifiedBand/VerifiedBand';
+export { default as AppBand } from './AppBand/AppBand';
 export { default as ModalMissingInformation } from './ModalMissingInformation/ModalMissingInformation';

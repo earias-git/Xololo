@@ -22,6 +22,8 @@ import HeroCarousel from '../../components/HeroCarousel/HeroCarousel';
 import TrustBar from '../../components/TrustBar/TrustBar';
 import CategoryRail from '../../components/CategoryRail/CategoryRail';
 import PromoCards from '../../components/PromoCards/PromoCards';
+import VerifiedBand from '../../components/VerifiedBand/VerifiedBand';
+import AppBand from '../../components/AppBand/AppBand';
 import heroSlides from '../../config/heroSlides';
 import trustItems from '../../config/trustItems';
 import categories from '../../config/categories';
@@ -67,6 +69,8 @@ export const LandingPageComponent = props => {
         <>
           <CategoryRail categories={categories} />
           <PromoCards cards={promoCards} />
+          <VerifiedBand />
+          <AppBand />
         </>
       }
     />

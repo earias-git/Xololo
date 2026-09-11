@@ -1,0 +1,157 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  width: 100%;
+  padding: 8px 0 40px;
+  background-color: #ffffff;
+}
+
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+
+  @media (--viewportMedium) {
+    padding: 0 40px;
+  }
+}
+
+.band {
+  background-color: #232d40;
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 28px 24px;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+  align-items: center;
+
+  @media (min-width: 720px) {
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    padding: 32px 40px;
+  }
+}
+
+.copy {
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6bcb8c;
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #ffffff;
+  text-wrap: balance;
+  max-width: 32ch;
+
+  @media (--viewportMedium) {
+    font-size: 20px;
+  }
+}
+
+.description {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 42ch;
+}
+
+.badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.storeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  text-decoration: none;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.storeBadge:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.storeIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #ffffff;
+}
+
+.storeCopy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.storeSmall {
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.03em;
+}
+
+.storeBig {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Right-hand decorative phone silhouette. Kept minimalist (a rounded
+   rectangle with a subtle top notch) so we don't ship a bulky image. */
+.visual {
+  display: flex;
+  justify-content: center;
+
+  @media (min-width: 720px) {
+    justify-content: flex-end;
+  }
+}
+
+.phone {
+  width: 120px;
+  height: 150px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(155deg, #3d4d6d, #232d40 70%);
+  position: relative;
+}
+
+.phone::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storeBadge {
+    transition: none;
+  }
+}
