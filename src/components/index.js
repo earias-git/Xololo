@@ -155,4 +155,5 @@ export { default as WhatsAppButton } from './WhatsAppButton/WhatsAppButton';
 export { default as HeroCarousel } from './HeroCarousel/HeroCarousel';
 export { default as TrustBar } from './TrustBar/TrustBar';
 export { default as CategoryRail } from './CategoryRail/CategoryRail';
+export { default as PromoCards } from './PromoCards/PromoCards';
 export { default as ModalMissingInformation } from './ModalMissingInformation/ModalMissingInformation';

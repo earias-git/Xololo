@@ -14,15 +14,18 @@ import { fetchFeaturedListings } from '../../ducks/featuredListings.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { getFeaturedListingsProps } from '../../util/data';
 
-// XOLOLO: piezas custom del landing (hero carrusel, banda de confianza y riel
-// de categorías con íconos). Se colocan alrededor de las secciones hospedadas
-// para acercar el look al mockup sin depender del PageBuilder para todo.
+// XOLOLO: piezas custom del landing (hero carrusel, banda de confianza, riel
+// de categorías, tarjetas promocionales). Se colocan alrededor de las
+// secciones hospedadas para acercar el look al mockup sin depender del
+// PageBuilder para todo.
 import HeroCarousel from '../../components/HeroCarousel/HeroCarousel';
 import TrustBar from '../../components/TrustBar/TrustBar';
 import CategoryRail from '../../components/CategoryRail/CategoryRail';
+import PromoCards from '../../components/PromoCards/PromoCards';
 import heroSlides from '../../config/heroSlides';
 import trustItems from '../../config/trustItems';
 import categories from '../../config/categories';
+import promoCards from '../../config/promoCards';
 
 const PageBuilder = loadable(() =>
   import(/* webpackChunkName: "PageBuilder" */ '../PageBuilder/PageBuilder')
@@ -60,7 +63,12 @@ export const LandingPageComponent = props => {
           <TrustBar items={trustItems} />
         </>
       }
-      afterSections={<CategoryRail categories={categories} />}
+      afterSections={
+        <>
+          <CategoryRail categories={categories} />
+          <PromoCards cards={promoCards} />
+        </>
+      }
     />
   );
 };

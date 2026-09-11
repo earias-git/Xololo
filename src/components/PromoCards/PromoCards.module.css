@@ -1,0 +1,148 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  width: 100%;
+  padding: 24px 0 32px;
+  background-color: #ffffff;
+}
+
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+
+  @media (--viewportMedium) {
+    padding: 0 40px;
+  }
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 720px) {
+    grid-template-columns: 1.3fr 1fr 1fr;
+  }
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  padding: 24px 26px;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -12px rgba(35, 45, 64, 0.22);
+}
+
+.kicker {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-wrap: balance;
+
+  @media (--viewportMedium) {
+    font-size: 19px;
+  }
+}
+
+.description {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  max-width: 30ch;
+}
+
+.go {
+  font-size: 12.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Decorative rounded shape in the bottom-right corner of each card. Purely
+   ornamental; hidden from AT via aria-hidden on the parent element. */
+.deco {
+  position: absolute;
+  right: -18px;
+  bottom: -18px;
+  width: 96px;
+  height: 96px;
+  border-radius: 28px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* --- Variants --- */
+
+.amber {
+  background-color: #fbead2;
+  color: #6b4a1f;
+}
+.amber .kicker,
+.amber .go,
+.amber .title {
+  color: #c8720f;
+}
+.amber .title {
+  color: #6b4a1f;
+}
+.amber .deco {
+  background: linear-gradient(135deg, #f0b268, #c8720f);
+}
+
+.green {
+  background-color: #e4f5ea;
+  color: #2e5a3f;
+}
+.green .kicker,
+.green .go {
+  color: #1f8f52;
+}
+.green .title {
+  color: #17513a;
+}
+.green .deco {
+  background: linear-gradient(135deg, #6bcb8c, #1f8f52);
+}
+
+.navy {
+  background-color: #eef0f5;
+  color: #4b5670;
+}
+.navy .kicker,
+.navy .go {
+  color: #34425f;
+}
+.navy .title {
+  color: #232d40;
+}
+.navy .deco {
+  background: linear-gradient(135deg, #8f9cc2, #34425f);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}
