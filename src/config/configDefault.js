@@ -67,12 +67,20 @@ const defaultConfig = {
   // You should create one to track social sharing in Facebook
   facebookAppId: process.env.REACT_APP_FACEBOOK_APP_ID,
 
+  // WhatsApp contact button (floating action button, shown on every page).
+  // phoneNumber must be in international format without "+" or spaces, e.g. "525512345678".
+  // If phoneNumber is not set, the button is not rendered.
+  whatsapp: {
+    phoneNumber: process.env.REACT_APP_WHATSAPP_NUMBER,
+    defaultMessage: process.env.REACT_APP_WHATSAPP_DEFAULT_MESSAGE || 'Hola, tengo una pregunta sobre Xololo 👋',
+  },
+
   // If you want to change the language, remember to also change the
   // locale data and the messages in the app.js file.
   // Note: The localization comes from localization asset nowadays by default.
   //       To use this built-in configuration, you need to remove the overwrite from configHelper.js (mergeLocalizations func)
   localization: {
-    locale: 'en-US',
+    locale: 'es',
     // First day of week
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale/getWeekInfo#return_value
     // 1: Monday

@@ -1,0 +1,60 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: var(--zIndexPopup);
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  height: 52px;
+  padding: 0 16px 0 14px;
+  border-radius: 26px;
+
+  background-color: #25d366;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+
+  text-decoration: none;
+  transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+  @media (--viewportMedium) {
+    right: 28px;
+    bottom: 28px;
+  }
+}
+
+.root:hover {
+  transform: scale(1.04);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  color: #ffffff;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  fill: #ffffff;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+
+  /* Icon-only on small screens to save space; label appears from tablet width up. */
+  display: none;
+
+  @media (--viewportMedium) {
+    display: inline-block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+}

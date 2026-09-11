@@ -10,6 +10,13 @@ import css from './SectionCarousel.module.css';
 const KEY_CODE_ARROW_LEFT = 37;
 const KEY_CODE_ARROW_RIGHT = 39;
 
+// XOLOLO: carousels with more blocks than visible columns rotate on their own,
+// like the promotional banner carousels on marketplaces such as Mercado Libre.
+const AUTOPLAY_INTERVAL_MS = 5000;
+// How close to the end (in px) counts as "at the end", so autoplay loops back to the start
+// instead of getting stuck once native scroll clamping stops further movement.
+const END_OF_SCROLL_THRESHOLD_PX = 8;
+
 // The number of columns (numColumns) affects styling and responsive images
 const COLUMN_CONFIG = [
   { css: css.oneColumn, responsiveImageSizes: '(max-width: 767px) 100vw, 1200px' },
@@ -104,6 +111,62 @@ const SectionCarousel = props => {
     return () => window.removeEventListener('resize', setCarouselWidth);
   }, []);
 
+  const isAtEnd = slider => {
+    return slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - END_OF_SCROLL_THRESHOLD_PX;
+  };
+
+  const advanceSlide = () => {
+    const slider = window.document.getElementById(sliderId);
+    if (!slider) {
+      return;
+    }
+    const slideWidth = numColumns * slider?.firstChild?.clientWidth;
+    slider.scrollLeft = isAtEnd(slider) ? 0 : slider.scrollLeft + slideWidth;
+  };
+
+  // XOLOLO: autoplay for carousels that have more blocks than fit in view at once.
+  // Paused while the pointer or keyboard focus is inside the carousel, and skipped
+  // entirely when the visitor prefers reduced motion.
+  useEffect(() => {
+    const canAutoplay = hasBlocks && numberOfBlocks > numColumns;
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+
+    if (!canAutoplay || prefersReducedMotion) {
+      return undefined;
+    }
+
+    const container = window.document.getElementById(sliderContainerId);
+    let intervalId = null;
+
+    const start = () => {
+      stop();
+      intervalId = window.setInterval(advanceSlide, AUTOPLAY_INTERVAL_MS);
+    };
+    const stop = () => {
+      if (intervalId) {
+        window.clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
+    start();
+    container?.addEventListener('mouseenter', stop);
+    container?.addEventListener('mouseleave', start);
+    container?.addEventListener('focusin', stop);
+    container?.addEventListener('focusout', start);
+
+    return () => {
+      stop();
+      container?.removeEventListener('mouseenter', stop);
+      container?.removeEventListener('mouseleave', start);
+      container?.removeEventListener('focusin', stop);
+      container?.removeEventListener('focusout', start);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasBlocks, numberOfBlocks, numColumns]);
+
   // If external mapping has been included for fields
   // E.g. { h1: { component: MyAwesomeHeader } }
   const fieldComponents = options?.fieldComponents;
@@ -120,9 +183,7 @@ const SectionCarousel = props => {
   };
 
   const onSlideRight = e => {
-    var slider = window.document.getElementById(sliderId);
-    const slideWidth = numColumns * slider?.firstChild?.clientWidth;
-    slider.scrollLeft = slider.scrollLeft + slideWidth;
+    advanceSlide();
     // Fix for Safari
     e.target.focus();
   };

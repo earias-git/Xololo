@@ -1449,5 +1449,7 @@
   "UserNav.accountSettings": "Account settings",
   "UserNav.profileSettings": "Profile settings",
   "UserNav.screenreader.userNav": "User profile navigation",
-  "UserNav.yourListings": "Your listings"
+  "UserNav.yourListings": "Your listings",
+
+  "WhatsAppButton.label": "WhatsApp"
 }

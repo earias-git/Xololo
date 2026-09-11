@@ -25,7 +25,7 @@ import {
 import { includeCSSProperties } from './util/style';
 import { IncludeScripts } from './util/includeScripts';
 
-import { MaintenanceMode } from './components';
+import { MaintenanceMode, WhatsAppButton } from './components';
 
 // routing
 import routeConfiguration from './routing/routeConfiguration';
@@ -33,6 +33,9 @@ import Routes from './routing/Routes';
 
 // Sharetribe Web Template uses English translations as default translations.
 import defaultMessages from './translations/en.json';
+// XOLOLO: fallback/default translations in Spanish.
+// Any key missing here falls back to en.json, and hosted translation.json (Console) always wins.
+import messagesInLocale from './translations/es.json';
 
 // If you want to change the language of default (fallback) translations,
 // change the imports to match the wanted locale:
@@ -70,8 +73,7 @@ import defaultMessages from './translations/en.json';
 //   3. en.json
 //
 // I.e. remove "const messagesInLocale" and add import for the correct locale:
-// import messagesInLocale from './translations/fr.json';
-const messagesInLocale = {};
+// (See top of file: messagesInLocale is imported from './translations/es.json')
 
 // If translation key is missing from `messagesInLocale` (e.g. fr.json),
 // corresponding key will be added to messages from `defaultMessages` (en.json)
@@ -283,6 +285,7 @@ export const ClientApp = props => {
             <BrowserRouter>
               <Routes logLoadDataCalls={logLoadDataCalls} />
             </BrowserRouter>
+            <WhatsAppButton />
           </HelmetProvider>
         </Provider>
       </IntlProvider>
