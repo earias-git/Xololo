@@ -307,3 +307,56 @@
     }
   }
 }
+
+/* XOLOLO: prominent "Vender en Xololo" CTA in the top-right of the topbar.
+   Rendered as a real button pill, in the marketplace accent green so it
+   pops next to the muted grey login/signup links. */
+.sellOnXololoLink {
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: 8px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 8px;
+
+  font-weight: var(--fontWeightBold);
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+
+  background-color: #1f8f52;
+  color: #ffffff;
+  border-bottom: 0;
+
+  transition: background-color 0.15s ease-in-out, transform 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+}
+
+.sellOnXololoLink:hover {
+  background-color: #187a44;
+  color: #ffffff;
+  text-decoration: none;
+  border-bottom: 0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 122, 68, 0.25);
+  border-radius: 8px;
+}
+
+/* Icon next to the "Iniciar sesión" label. */
+.loginIcon {
+  width: 18px;
+  height: 18px;
+  vertical-align: -4px;
+  margin-right: 6px;
+  color: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sellOnXololoLink {
+    transition: none;
+  }
+}

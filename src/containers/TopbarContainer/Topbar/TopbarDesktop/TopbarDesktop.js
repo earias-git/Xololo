@@ -33,8 +33,33 @@ const LoginLink = () => {
   return (
     <NamedLink id="login-link" name="LoginPage" className={css.topbarLink}>
       <span className={css.topbarLinkLabel}>
+        <svg
+          className={css.loginIcon}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21c1.4-4 5-6 8-6s6.6 2 8 6" />
+        </svg>
         <FormattedMessage id="TopbarDesktop.login" />
       </span>
+    </NamedLink>
+  );
+};
+
+// XOLOLO: CTA verde prominente para captar sellers desde el topbar.
+// Envía al signup (registro), pero SÓLO se muestra cuando el visitante no
+// está autenticado (los sellers ya autenticados tienen "Publicar anuncio"
+// como acción principal en su menú).
+const SellOnXololoLink = () => {
+  return (
+    <NamedLink id="sell-on-xololo-link" name="SignupPage" className={css.sellOnXololoLink}>
+      <FormattedMessage id="TopbarDesktop.sellOnXololo" defaultMessage="Vender en Xololo" />
     </NamedLink>
   );
 };
@@ -182,6 +207,7 @@ const TopbarDesktop = props => {
 
   const signupLinkMaybe = isAuthenticatedOrJustHydrated ? null : <SignupLink />;
   const loginLinkMaybe = isAuthenticatedOrJustHydrated ? null : <LoginLink />;
+  const sellOnXololoLinkMaybe = isAuthenticatedOrJustHydrated ? null : <SellOnXololoLink />;
 
   const searchFormMaybe = showSearchForm ? (
     <TopbarSearchForm
@@ -225,6 +251,7 @@ const TopbarDesktop = props => {
       {profileMenuMaybe}
       {signupLinkMaybe}
       {loginLinkMaybe}
+      {sellOnXololoLinkMaybe}
     </nav>
   );
 };
