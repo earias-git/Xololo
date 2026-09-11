@@ -14,10 +14,13 @@ import { fetchFeaturedListings } from '../../ducks/featuredListings.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { getFeaturedListingsProps } from '../../util/data';
 
-// XOLOLO: hero carrusel custom, se renderiza antes del PageBuilder y sustituye
-// visualmente la sección "hero" que trae el asset hospedado.
+// XOLOLO: hero carrusel + banda de confianza custom. Se renderizan antes del
+// PageBuilder y sustituyen visualmente la sección "hero" que trae el asset
+// hospedado.
 import HeroCarousel from '../../components/HeroCarousel/HeroCarousel';
+import TrustBar from '../../components/TrustBar/TrustBar';
 import heroSlides from '../../config/heroSlides';
+import trustItems from '../../config/trustItems';
 
 const PageBuilder = loadable(() =>
   import(/* webpackChunkName: "PageBuilder" */ '../PageBuilder/PageBuilder')
@@ -45,7 +48,12 @@ export const LandingPageComponent = props => {
       error={error}
       fallbackPage={<FallbackPage error={error} />}
       featuredListings={getFeaturedListingsProps(camelize(ASSET_NAME), props)}
-      beforeSections={<HeroCarousel slides={heroSlides} />}
+      beforeSections={
+        <>
+          <HeroCarousel slides={heroSlides} />
+          <TrustBar items={trustItems} />
+        </>
+      }
     />
   );
 };

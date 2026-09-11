@@ -1,0 +1,68 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  width: 100%;
+  border-bottom: 1px solid #e7eaf0;
+  background-color: #ffffff;
+}
+
+.list {
+  list-style: none;
+  margin: 0 auto;
+  padding: 20px 24px;
+  max-width: 1240px;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 560px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 32px;
+  }
+
+  @media (--viewportMedium) {
+    grid-template-columns: repeat(4, 1fr);
+    padding: 22px 40px;
+  }
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  color: #1f8f52;
+  margin-top: 2px;
+  display: inline-flex;
+}
+
+.icon > svg {
+  width: 100%;
+  height: 100%;
+}
+
+.textCol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #232d40;
+  line-height: 1.25;
+}
+
+.description {
+  font-size: 12.5px;
+  color: #6b7080;
+  margin-top: 2px;
+  line-height: 1.35;
+}

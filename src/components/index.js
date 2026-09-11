@@ -153,4 +153,5 @@ export { default as LayoutComposer, LayoutSingleColumn, LayoutSideNavigation } f
 export { default as MaintenanceMode } from './MaintenanceMode/MaintenanceMode';
 export { default as WhatsAppButton } from './WhatsAppButton/WhatsAppButton';
 export { default as HeroCarousel } from './HeroCarousel/HeroCarousel';
+export { default as TrustBar } from './TrustBar/TrustBar';
 export { default as ModalMissingInformation } from './ModalMissingInformation/ModalMissingInformation';
