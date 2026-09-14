@@ -15,7 +15,7 @@ const heroSlides = [
       'Tu dinero se libera solo cuando recibes lo acordado. Miles de negocios mexicanos ya venden con Xololo Verified™.',
     ctas: [
       { label: 'Explorar productos', href: '/s?pub_listingType=product' },
-      { label: 'Explorar servicios', href: '/s?pub_listingType=service', variant: 'ghost' },
+      { label: 'Explorar servicios', href: '/s?pub_listingType=service,service-day', variant: 'ghost' },
     ],
     background: slide1,
     imageAlt: 'Fondo azul Xololo — compra con confianza',

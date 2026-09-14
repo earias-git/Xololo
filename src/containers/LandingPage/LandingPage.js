@@ -84,7 +84,7 @@ export const LandingPageComponent = props => {
           <FeaturedListings
             title="Servicios populares"
             seeAllLabel="Ver todos los servicios"
-            seeAllHref="/s?pub_listingType=service"
+            seeAllHref="/s?pub_listingType=service,service-day"
             items={featuredServices}
           />
           <FeaturedStores stores={featuredStores} />
