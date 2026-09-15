@@ -46,6 +46,7 @@ const dataLoader = require('./dataLoader');
 const { generateCSPNonce, csp } = require('./csp');
 const sdkUtils = require('./api-util/sdk');
 const { getSDKProxy } = require('./api-util/sdkCacheProxy');
+const { extractStorefrontSlug } = require('./subdomain');
 
 const buildPath = path.resolve(__dirname, '..', 'build');
 const dev = process.env.REACT_APP_ENV === 'development';
@@ -273,8 +274,13 @@ app.get('/{*splat}', async (req, res) => {
 
   res.locals.beforeLoadDataTimestamp = Date.now();
 
+  // XOLOLO: detectar subdominio de storefront (ej. "kike" para kike.xololo.mx).
+  // Se pasa a loadData para precargar el slug en el redux store y que la
+  // LandingPage renderice el storefront del seller cuando corresponda.
+  const storefrontSlug = extractStorefrontSlug(req.headers.host);
+
   dataLoader
-    .loadData(req.url, sdk, appInfo)
+    .loadData(req.url, sdk, appInfo, { storefrontSlug })
     .then(data => {
       res.locals.timestampAfterLoadData = Date.now();
       const cspNonce = cspEnabled ? res.locals.cspNonce : null;

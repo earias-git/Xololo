@@ -11,7 +11,17 @@ const extractHostedConfig = configAssets => {
   }, {});
 };
 
-exports.loadData = function(requestUrl, sdk, appInfo) {
+// XOLOLO: si el server detectó un subdominio de storefront antes de
+// llamar loadData, precargamos el slug en el redux store para que la
+// LandingPage decida entre marketplace vs storefront. Importamos el
+// action lazy porque server/dataLoader.js es CommonJS y el slice es ESM
+// compilado por Babel — hay que ir por el default export del bundle.
+const setStorefrontSubdomain = slug => ({
+  type: 'storefrontSubdomain/setStorefrontSubdomain',
+  payload: slug,
+});
+
+exports.loadData = function(requestUrl, sdk, appInfo, { storefrontSlug = null } = {}) {
   const {
     matchPathname,
     configureStore,
@@ -26,6 +36,11 @@ exports.loadData = function(requestUrl, sdk, appInfo) {
   let hostedConfig = {};
 
   const store = configureStore({ initialState: {}, sdk });
+
+  // Precargar el slug antes de cualquier loadData de rutas.
+  if (storefrontSlug) {
+    store.dispatch(setStorefrontSubdomain(storefrontSlug));
+  }
 
   if (PREVENT_DATA_LOADING_IN_SSR) {
     // This might help certain temporary scenarios, where DDOS attack adds load to server.

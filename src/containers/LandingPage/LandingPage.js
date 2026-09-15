@@ -17,7 +17,10 @@ import {
   selectFeaturedServices,
 } from '../../ducks/landingListings.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
+import { selectStorefrontSlug } from '../../ducks/storefrontSubdomain.duck';
 import { getFeaturedListingsProps } from '../../util/data';
+
+import StorefrontPage from '../StorefrontPage/StorefrontPage';
 
 // XOLOLO: piezas custom del landing (hero carrusel, banda de confianza, riel
 // de categorías, tarjetas promocionales). Se colocan alrededor de las
@@ -69,7 +72,16 @@ export const LandingPageComponent = props => {
     onFetchLandingListings,
     featuredProducts,
     featuredServices,
+    storefrontSlug,
   } = props;
+
+  // XOLOLO: si el server detectó un subdominio de storefront, saltamos el
+  // marketplace general y renderizamos la tienda del seller.
+  // Efectos y transformaciones del marketplace ni se disparan.
+  if (storefrontSlug) {
+    return <StorefrontPage />;
+  }
+
   const pageData = pageAssetsData?.[camelize(ASSET_NAME)]?.data;
   const dataForBuilder = stripCustomizedSections(pageData);
 
@@ -146,6 +158,7 @@ const mapStateToProps = state => {
     error,
     featuredProducts: selectFeaturedProducts(state),
     featuredServices: selectFeaturedServices(state),
+    storefrontSlug: selectStorefrontSlug(state),
   };
 };
 

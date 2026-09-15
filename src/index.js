@@ -130,6 +130,20 @@ if (typeof window !== 'undefined') {
 
   const preloadedState = window.__PRELOADED_STATE__ || '{}';
   const initialState = JSON.parse(preloadedState, sdkTypes.reviver);
+
+  // XOLOLO: fallback cliente-side para detectar el subdominio de storefront
+  // cuando el server no lo hizo (dev mode con webpack dev server) o cuando
+  // el SSR no dispatchó por algún motivo. Idempotente: si el server ya
+  // pobló storefrontSubdomain.slug, respetamos ese valor.
+  if (!initialState?.storefrontSubdomain?.slug) {
+    // eslint-disable-next-line global-require
+    const { extractStorefrontSlug } = require('./util/storefrontSubdomain');
+    const clientSlug = extractStorefrontSlug(window.location.host);
+    if (clientSlug) {
+      initialState.storefrontSubdomain = { slug: clientSlug };
+    }
+  }
+
   const sdk = createInstance({
     transitVerbose: appSettings.sdk.transitVerbose,
     clientId: appSettings.sdk.clientId,
