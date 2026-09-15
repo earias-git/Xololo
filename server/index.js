@@ -203,6 +203,13 @@ app.get('/site.webmanifest', webmanifestResourceRoute);
 // even if you have enabled basic authentication e.g. in staging environment.
 app.use('/.well-known', wellKnownRouter);
 
+// XOLOLO: health check endpoint for Render (staging). It sits BEFORE the
+// basic auth middleware so upstream health probes get a 200 even when the
+// site is locked behind BASIC_AUTH_USERNAME/PASSWORD. Render's default
+// health check hits '/', which basic auth rejects with 401 and marks the
+// deploy as failed after 15 min.
+app.get('/_health', (req, res) => res.status(200).send('ok'));
+
 // Use basic authentication when not in dev mode. This is
 // intentionally after the static middleware and /.well-known
 // endpoints as those will bypass basic auth.
