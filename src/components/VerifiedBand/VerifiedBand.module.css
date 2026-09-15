@@ -72,8 +72,11 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  /* minmax(0, 1fr) permite que cada celda se encoja por debajo del
+     tamaño intrínseco de su contenido y evita que el 4º badge se salga
+     en pantallas de ~360px. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
 
   @media (min-width: 720px) {
     display: flex;
@@ -86,18 +89,31 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  min-width: 68px;
+  /* Sin min-width en mobile: dejamos que el grid distribuya el espacio.
+     En desktop (viewportMedium) sí ponemos min-width para conservar la
+     forma redonda cuando hay mucho ancho. */
+  min-width: 0;
+
+  @media (min-width: 720px) {
+    min-width: 68px;
+  }
 }
 
 .ring {
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 2px solid #6bcb8c;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #6bcb8c;
+  flex-shrink: 0;
+
+  @media (min-width: 720px) {
+    width: 46px;
+    height: 46px;
+  }
 }
 
 .ring > svg {
