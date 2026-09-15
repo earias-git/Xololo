@@ -54,7 +54,19 @@ const FeaturedListings = props => {
           {items.map(item => (
             <li key={item.id} className={css.item}>
               <a href={item.href || '#'} className={css.card}>
-                <div className={css.thumb} data-tone={item.tone || 'sand'}>
+                <div
+                  className={css.thumb}
+                  data-tone={item.imageUrl ? undefined : item.tone || 'sand'}
+                  style={
+                    item.imageUrl
+                      ? {
+                          backgroundImage: `url(${item.imageUrl})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                        }
+                      : undefined
+                  }
+                >
                   <span className={css.heartBadge} aria-label="Guardar en favoritos">
                     <HeartIcon />
                   </span>

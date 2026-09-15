@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import loadable from '@loadable/component';
 
-import { bool, object } from 'prop-types';
+import { bool, object, array, func } from 'prop-types';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 
@@ -11,6 +11,11 @@ import { propTypes } from '../../util/types';
 import FallbackPage from './FallbackPage';
 import { ASSET_NAME } from './LandingPage.duck';
 import { fetchFeaturedListings } from '../../ducks/featuredListings.duck';
+import {
+  fetchLandingListings,
+  selectFeaturedProducts,
+  selectFeaturedServices,
+} from '../../ducks/landingListings.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { getFeaturedListingsProps } from '../../util/data';
 
@@ -30,7 +35,10 @@ import heroSlides from '../../config/heroSlides';
 import trustItems from '../../config/trustItems';
 import categories from '../../config/categories';
 import promoCards from '../../config/promoCards';
-import { featuredProducts, featuredServices } from '../../config/featuredListings';
+import {
+  featuredProducts as featuredProductsPlaceholder,
+  featuredServices as featuredServicesPlaceholder,
+} from '../../config/featuredListings';
 import featuredStores from '../../config/featuredStores';
 
 const PageBuilder = loadable(() =>
@@ -54,9 +62,28 @@ const stripCustomizedSections = pageData => {
 };
 
 export const LandingPageComponent = props => {
-  const { pageAssetsData, inProgress, error } = props;
+  const {
+    pageAssetsData,
+    inProgress,
+    error,
+    onFetchLandingListings,
+    featuredProducts,
+    featuredServices,
+  } = props;
   const pageData = pageAssetsData?.[camelize(ASSET_NAME)]?.data;
   const dataForBuilder = stripCustomizedSections(pageData);
+
+  // XOLOLO: fetch de listings reales al montar el landing. Si el fetch
+  // regresa vacío o falla, caemos a los placeholders estáticos para no
+  // dejar hueco visual mientras se poblan las secciones destacadas.
+  useEffect(() => {
+    if (onFetchLandingListings) {
+      onFetchLandingListings();
+    }
+  }, [onFetchLandingListings]);
+
+  const productsToShow = featuredProducts?.length ? featuredProducts : featuredProductsPlaceholder;
+  const servicesToShow = featuredServices?.length ? featuredServices : featuredServicesPlaceholder;
 
   return (
     <PageBuilder
@@ -79,13 +106,13 @@ export const LandingPageComponent = props => {
             title="Productos destacados"
             seeAllLabel="Ver todos los productos"
             seeAllHref="/s?pub_listingType=product"
-            items={featuredProducts}
+            items={productsToShow}
           />
           <FeaturedListings
             title="Servicios populares"
             seeAllLabel="Ver todos los servicios"
             seeAllHref="/s?pub_listingType=service,service-day"
-            items={featuredServices}
+            items={servicesToShow}
           />
           <FeaturedStores stores={featuredStores} />
           <VerifiedBand />
@@ -100,6 +127,9 @@ LandingPageComponent.propTypes = {
   pageAssetsData: object,
   inProgress: bool,
   error: propTypes.error,
+  featuredProducts: array,
+  featuredServices: array,
+  onFetchLandingListings: func,
 };
 
 const mapStateToProps = state => {
@@ -108,12 +138,21 @@ const mapStateToProps = state => {
 
   const getListingEntitiesById = listingIds => getListingsById(state, listingIds);
 
-  return { pageAssetsData, featuredListingData, getListingEntitiesById, inProgress, error };
+  return {
+    pageAssetsData,
+    featuredListingData,
+    getListingEntitiesById,
+    inProgress,
+    error,
+    featuredProducts: selectFeaturedProducts(state),
+    featuredServices: selectFeaturedServices(state),
+  };
 };
 
 const mapDispatchToProps = dispatch => ({
   onFetchFeaturedListings: (sectionId, parentPage, listingImageConfig, allSections) =>
     dispatch(fetchFeaturedListings({ sectionId, parentPage, listingImageConfig, allSections })),
+  onFetchLandingListings: () => dispatch(fetchLandingListings()),
 });
 
 // Note: it is important that the withRouter HOC is **outside** the
