@@ -5,7 +5,7 @@ services:
     plan: starter
     region: oregon
     branch: main
-    buildCommand: yarn install --production=false && yarn build
+    buildCommand: yarn install --production=false --ignore-scripts && (npx patch-package || echo "patch-package warning, continuing") && yarn build
     startCommand: yarn start
     healthCheckPath: /
     envVars:
