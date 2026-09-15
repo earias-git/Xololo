@@ -10,13 +10,13 @@ services:
     healthCheckPath: /
     envVars:
       - key: NODE_VERSION
-        value: 22.22.0
+        value: "22.22.0"
       - key: NODE_ENV
         value: production
       - key: REACT_APP_ENV
         value: production
       - key: PORT
-        value: 3000
+        value: "3000"
       - key: REACT_APP_MARKETPLACE_ROOT_URL
         sync: false
       - key: REACT_APP_MARKETPLACE_NAME
@@ -30,9 +30,9 @@ services:
       - key: REACT_APP_MAPBOX_ACCESS_TOKEN
         sync: false
       - key: REACT_APP_SHARETRIBE_USING_SSL
-        value: true
+        value: "true"
       - key: SERVER_SHARETRIBE_TRUST_PROXY
-        value: true
+        value: "true"
       - key: REACT_APP_CSP
         value: report
       - key: BASIC_AUTH_USERNAME
