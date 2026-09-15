@@ -15,8 +15,6 @@ services:
         value: production
       - key: REACT_APP_ENV
         value: production
-      - key: PORT
-        value: "3000"
       - key: REACT_APP_MARKETPLACE_ROOT_URL
         sync: false
       - key: REACT_APP_MARKETPLACE_NAME
