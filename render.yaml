@@ -37,3 +37,20 @@ services:
         sync: false
       - key: BASIC_AUTH_PASSWORD
         sync: false
+      # XOLOLO: Sharetribe Integration API — para queries user-by-slug
+      # y featured-stores en el server.
+      - key: SHARETRIBE_INTEGRATION_CLIENT_ID
+        sync: false
+      - key: SHARETRIBE_INTEGRATION_CLIENT_SECRET
+        sync: false
+      # XOLOLO: Cloudflare R2 — uploads de logo/banner del storefront.
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        value: xololo-media
+      - key: R2_PUBLIC_BASE_URL
+        value: https://media.xololo.mx

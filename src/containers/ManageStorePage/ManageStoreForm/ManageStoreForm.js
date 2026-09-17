@@ -4,6 +4,7 @@ import classNames from 'classnames';
 
 import { Form, PrimaryButton, FieldTextInput, FieldSelect } from '../../../components';
 
+import ImageUploadField from './ImageUploadField';
 import css from './ManageStoreForm.module.css';
 
 // XOLOLO: form controls to edit the seller's storefront branding.
@@ -199,37 +200,6 @@ const SlugPreview = ({ slug }) => {
   );
 };
 
-// Preview visual del logo o banner una vez que el URL es válido. Si la
-// imagen falla al cargar, mostramos un mensaje corto para que el seller
-// sepa que la URL no funciona (evita que se dé por hecho que se guardó
-// bien un logo roto).
-const ImagePreview = ({ url, kind = 'logo' }) => {
-  const [error, setError] = useState(false);
-  React.useEffect(() => {
-    setError(false);
-  }, [url]);
-
-  if (!isValidUrl(url)) return null;
-  if (error) {
-    return (
-      <div className={css.imagePreviewError}>
-        ⚠ No pudimos cargar la imagen desde esa URL. Revisa que sea pública y
-        directa a un archivo de imagen.
-      </div>
-    );
-  }
-  return (
-    <div className={classNames(css.imagePreview, kind === 'banner' ? css.imagePreviewBanner : css.imagePreviewLogo)}>
-      <img
-        src={url}
-        alt={`Preview del ${kind}`}
-        className={kind === 'banner' ? css.previewBannerImg : css.previewLogoImg}
-        onError={() => setError(true)}
-      />
-    </div>
-  );
-};
-
 const ManageStoreForm = props => (
   <FinalForm
     {...props}
@@ -328,35 +298,20 @@ const ManageStoreForm = props => (
               defaultColor="#6bcb8c"
             />
 
-            <FieldTextInput
-              className={css.field}
-              type="text"
-              id="logoUrl"
+            <ImageUploadField
               name="logoUrl"
-              label="Logo (URL a la imagen)"
-              placeholder="https://..."
-              validate={validateUrl}
+              kind="logo"
+              label="Logo de tu tienda"
+              hint="PNG con fondo transparente, alto ~200 px. Se muestra en el header de tu storefront."
             />
-            <p className={css.hint}>
-              PNG con fondo transparente, alto ~200 px. Sube tu logo a
-              Imgur, Cloudinary o tu propio hosting y pega el URL público.
-            </p>
-            <ImagePreview url={values?.logoUrl} kind="logo" />
 
-            <FieldTextInput
-              className={css.field}
-              type="text"
-              id="bannerUrl"
+            <ImageUploadField
               name="bannerUrl"
-              label="Banner publicitario (URL a la imagen)"
-              placeholder="https://..."
-              validate={validateUrl}
+              kind="banner"
+              label="Banner publicitario"
+              hint="Imagen horizontal (1600 x 400 px recomendado). Aparece bajo el header de tu storefront."
+              aspectRatio="4 / 1"
             />
-            <p className={css.hint}>
-              Imagen horizontal (1600 x 400 px recomendado) que aparece bajo
-              el header de tu storefront.
-            </p>
-            <ImagePreview url={values?.bannerUrl} kind="banner" />
           </fieldset>
 
           <fieldset className={css.section}>

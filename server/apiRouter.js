@@ -18,6 +18,7 @@ const transitionPrivileged = require('./api/transition-privileged');
 const deleteAccount = require('./api/delete-account');
 const sellerBySlug = require('./api/seller-by-slug');
 const featuredStores = require('./api/featured-stores');
+const uploadStoreImage = require('./api/upload-store-image');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -64,6 +65,11 @@ router.get('/seller-by-slug', sellerBySlug);
 
 // XOLOLO: tiendas destacadas para la sección FeaturedStores del landing.
 router.get('/featured-stores', featuredStores);
+
+// XOLOLO: subir logo/banner de la tienda del seller a Cloudflare R2.
+// multer maneja el multipart/form-data dentro del handler, así que aquí
+// no montamos body-parser transit.
+router.post('/upload-store-image', uploadStoreImage);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed
