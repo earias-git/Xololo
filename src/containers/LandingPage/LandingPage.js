@@ -16,6 +16,7 @@ import {
   selectFeaturedProducts,
   selectFeaturedServices,
 } from '../../ducks/landingListings.duck';
+import { fetchLandingStores, selectLandingStores } from '../../ducks/landingStores.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { selectStorefrontSlug } from '../../ducks/storefrontSubdomain.duck';
 import { getFeaturedListingsProps } from '../../util/data';
@@ -42,7 +43,7 @@ import {
   featuredProducts as featuredProductsPlaceholder,
   featuredServices as featuredServicesPlaceholder,
 } from '../../config/featuredListings';
-import featuredStores from '../../config/featuredStores';
+import featuredStoresPlaceholder from '../../config/featuredStores';
 
 const PageBuilder = loadable(() =>
   import(/* webpackChunkName: "PageBuilder" */ '../PageBuilder/PageBuilder')
@@ -70,8 +71,10 @@ export const LandingPageComponent = props => {
     inProgress,
     error,
     onFetchLandingListings,
+    onFetchLandingStores,
     featuredProducts,
     featuredServices,
+    featuredStores,
     storefrontSlug,
   } = props;
 
@@ -92,10 +95,14 @@ export const LandingPageComponent = props => {
     if (onFetchLandingListings) {
       onFetchLandingListings();
     }
-  }, [onFetchLandingListings]);
+    if (onFetchLandingStores) {
+      onFetchLandingStores();
+    }
+  }, [onFetchLandingListings, onFetchLandingStores]);
 
   const productsToShow = featuredProducts?.length ? featuredProducts : featuredProductsPlaceholder;
   const servicesToShow = featuredServices?.length ? featuredServices : featuredServicesPlaceholder;
+  const storesToShow = featuredStores?.length ? featuredStores : featuredStoresPlaceholder;
 
   return (
     <PageBuilder
@@ -126,7 +133,7 @@ export const LandingPageComponent = props => {
             seeAllHref="/s?pub_listingType=service,service-day"
             items={servicesToShow}
           />
-          <FeaturedStores stores={featuredStores} />
+          <FeaturedStores stores={storesToShow} />
           <VerifiedBand />
           <AppBand />
         </>
@@ -158,6 +165,7 @@ const mapStateToProps = state => {
     error,
     featuredProducts: selectFeaturedProducts(state),
     featuredServices: selectFeaturedServices(state),
+    featuredStores: selectLandingStores(state),
     storefrontSlug: selectStorefrontSlug(state),
   };
 };
@@ -166,6 +174,7 @@ const mapDispatchToProps = dispatch => ({
   onFetchFeaturedListings: (sectionId, parentPage, listingImageConfig, allSections) =>
     dispatch(fetchFeaturedListings({ sectionId, parentPage, listingImageConfig, allSections })),
   onFetchLandingListings: () => dispatch(fetchLandingListings()),
+  onFetchLandingStores: () => dispatch(fetchLandingStores()),
 });
 
 // Note: it is important that the withRouter HOC is **outside** the

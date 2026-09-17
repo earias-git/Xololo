@@ -17,6 +17,7 @@ const initiatePrivileged = require('./api/initiate-privileged');
 const transitionPrivileged = require('./api/transition-privileged');
 const deleteAccount = require('./api/delete-account');
 const sellerBySlug = require('./api/seller-by-slug');
+const featuredStores = require('./api/featured-stores');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -60,6 +61,9 @@ router.post('/delete-account', deleteAccount);
 
 // XOLOLO: resolver slug de tienda a datos del seller. Usa Integration API.
 router.get('/seller-by-slug', sellerBySlug);
+
+// XOLOLO: tiendas destacadas para la sección FeaturedStores del landing.
+router.get('/featured-stores', featuredStores);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

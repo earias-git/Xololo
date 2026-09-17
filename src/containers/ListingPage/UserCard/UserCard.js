@@ -97,7 +97,16 @@ const UserCard = props => {
   const ensuredCurrentUser = ensureCurrentUser(currentUser);
   const isCurrentUser =
     ensuredUser.id && ensuredCurrentUser.id && ensuredUser.id.uuid === ensuredCurrentUser.id.uuid;
-  const { displayName, bio } = ensuredUser.attributes.profile;
+  const { displayName, bio, publicData } = ensuredUser.attributes.profile;
+  // XOLOLO: si el seller tiene slug configurado (S4), mostramos link a su
+  // storefront en subdominio. En dev linkeamos a http://{slug}.localhost:3000
+  // para probar sin necesidad de tocar /etc/hosts.
+  const sellerSlug = publicData?.slug;
+  const storefrontHref = sellerSlug
+    ? typeof window !== 'undefined' && /localhost/.test(window.location.hostname)
+      ? `http://${sellerSlug}.localhost:3000`
+      : `https://${sellerSlug}.xololo.mx`
+    : null;
 
   const handleContactUserClick = () => {
     onContactUser(user);
@@ -141,8 +150,18 @@ const UserCard = props => {
       </NamedLink>
     ) : null;
 
+  const storefrontLink = storefrontHref ? (
+    <>
+      <a className={css.link} href={storefrontHref} target="_blank" rel="noopener noreferrer">
+        Ver tienda ↗
+      </a>
+      <span className={css.linkSeparator}>•</span>
+    </>
+  ) : null;
+
   const links = ensuredUser.id ? (
     <p className={linkClasses}>
+      {storefrontLink}
       <NamedLink className={css.link} name="ProfilePage" params={{ id: ensuredUser.id.uuid }}>
         <FormattedMessage id="UserCard.viewProfileLink" />
       </NamedLink>
