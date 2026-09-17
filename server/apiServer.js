@@ -21,9 +21,24 @@ const app = express();
 
 // NOTE: CORS is only needed in this dev API server because it's
 // running in a different port than the main app.
+// XOLOLO: aceptamos también wildcards *.localhost:3000 y *.xololo.mx para
+// que las storefronts en subdominio puedan pegarle a /api en dev.
+const rootUrl = process.env.REACT_APP_MARKETPLACE_ROOT_URL;
+const isXololoOrigin = origin => {
+  if (!origin) return true; // same-origin/curl
+  if (origin === rootUrl) return true;
+  try {
+    const { hostname, port } = new URL(origin);
+    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+      return port === '3000';
+    }
+    if (hostname === 'xololo.mx' || hostname.endsWith('.xololo.mx')) return true;
+  } catch {}
+  return false;
+};
 app.use(
   cors({
-    origin: process.env.REACT_APP_MARKETPLACE_ROOT_URL,
+    origin: (origin, cb) => cb(null, isXololoOrigin(origin)),
     credentials: true,
   })
 );

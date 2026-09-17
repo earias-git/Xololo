@@ -13,6 +13,7 @@ import featuredListings from './featuredListings.duck';
 import landingListings from './landingListings.duck';
 import marketplaceData from './marketplaceData.duck';
 import paymentMethods from './paymentMethods.duck';
+import storefrontSeller from './storefrontSeller.duck';
 import storefrontSubdomain from './storefrontSubdomain.duck';
 import stripe from './stripe.duck';
 import stripeConnectAccount from './stripeConnectAccount.duck';
@@ -28,6 +29,7 @@ export {
   landingListings,
   marketplaceData,
   paymentMethods,
+  storefrontSeller,
   storefrontSubdomain,
   stripe,
   stripeConnectAccount,
