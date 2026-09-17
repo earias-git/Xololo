@@ -139,6 +139,15 @@ const LayoutWrapperAccountSettingsSideNav = props => {
     ...payoutDetailsMaybe,
     ...paymentMethodsMaybe,
     {
+      // XOLOLO: tab del dashboard del seller
+      text: <span>Mi tienda</span>,
+      selected: currentPage === 'ManageStorePage',
+      id: 'ManageStorePageTab',
+      linkProps: {
+        name: 'ManageStorePage',
+      },
+    },
+    {
       text: <FormattedMessage id="LayoutWrapperAccountSettingsSideNav.manageAccountTabTitle" />,
       selected: currentPage === 'ManageAccountPage',
       id: 'ManageAccountPageTab',

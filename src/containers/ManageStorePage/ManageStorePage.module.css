@@ -1,0 +1,38 @@
+.desktopTopbar {}
+.mobileTopbar {}
+
+.content {
+  padding: 24px 16px 64px;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.subheading {
+  margin: 8px 0 16px;
+  font-size: 14.5px;
+  color: #4a5169;
+  line-height: 1.5;
+}
+
+.livePreview {
+  margin: 0 0 24px;
+  padding: 12px 16px;
+  background-color: #f7f4ee;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: #232d40;
+}
+
+.livePreview a {
+  color: #1f8f52;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.livePreview a:hover {
+  text-decoration: underline;
+}
+
+.form {
+  margin-top: 8px;
+}
