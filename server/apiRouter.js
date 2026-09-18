@@ -19,6 +19,7 @@ const deleteAccount = require('./api/delete-account');
 const sellerBySlug = require('./api/seller-by-slug');
 const featuredStores = require('./api/featured-stores');
 const uploadStoreImage = require('./api/upload-store-image');
+const shippingQuote = require('./api/shipping-quote');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -70,6 +71,13 @@ router.get('/featured-stores', featuredStores);
 // multer maneja el multipart/form-data dentro del handler, así que aquí
 // no montamos body-parser transit.
 router.post('/upload-store-image', uploadStoreImage);
+
+// XOLOLO: cotización de envío por paquetería via Skydropx.
+// Recibe listingId + destination (CP + área) y devuelve rates disponibles.
+// Requiere que el listing tenga shippingPricingMode:'carrier' + peso/dim,
+// y que el seller haya configurado originPostalCode en /account/store.
+// body-parser JSON explícito porque el cliente manda application/json.
+router.post('/shipping-quote', bodyParser.json(), shippingQuote);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed
