@@ -22,6 +22,7 @@ import {
   FieldCurrencyInput,
   FieldTextInput,
   FieldCheckbox,
+  FieldRadioButton,
 } from '../../../../components';
 
 // Import modules from this directory
@@ -201,6 +202,23 @@ export const EditListingDeliveryForm = props => (
               })}
               disabled={!pickupEnabled}
             />
+
+            {/* XOLOLO: recolección local puede ser gratis (default 0) o con
+                cobro. Al pagar, el buyer recibe un código de 6 dígitos que
+                muestra al recoger; el seller lo valida en su dashboard. */}
+            <FieldCurrencyInput
+              id={formId ? `${formId}.pickupPrice` : 'pickupPrice'}
+              name="pickupPrice"
+              className={css.input}
+              label="Costo de recolección"
+              placeholder="$0 = gratis"
+              currencyConfig={currencyConfig}
+              disabled={!pickupEnabled}
+            />
+            <p className={css.xxHint}>
+              Deja en $0 si la recolección es gratis. Al pagar, el buyer recibe
+              un código de 6 dígitos que te muestra al recoger.
+            </p>
           </div>
 
           <FieldCheckbox
@@ -212,77 +230,179 @@ export const EditListingDeliveryForm = props => (
           />
 
           <div className={shippingClasses}>
-            <FieldCurrencyInput
-              id={
-                formId
-                  ? `${formId}.shippingPriceInSubunitsOneItem`
-                  : 'shippingPriceInSubunitsOneItem'
-              }
-              name="shippingPriceInSubunitsOneItem"
-              className={css.input}
-              label={intl.formatMessage({
-                id: 'EditListingDeliveryForm.shippingOneItemLabel',
-              })}
-              placeholder={intl.formatMessage({
-                id: 'EditListingDeliveryForm.shippingOneItemPlaceholder',
-              })}
-              currencyConfig={currencyConfig}
-              disabled={!shippingEnabled}
-              validate={
-                shippingEnabled
-                  ? required(
-                      intl.formatMessage({
-                        id: 'EditListingDeliveryForm.shippingOneItemRequired',
-                      })
-                    )
-                  : null
-              }
-              hideErrorMessage={!shippingEnabled}
-              // Whatever parameters are being used to calculate
-              // the validation function need to be combined in such
-              // a way that, when they change, this key prop
-              // changes, thus reregistering this field (and its
-              // validation function) with Final Form.
-              // See example: https://codesandbox.io/s/changing-field-level-validators-zc8ei
-              key={shippingEnabled ? 'oneItemValidation' : 'noOneItemValidation'}
-            />
-
-            {allowOrdersOfMultipleItems ? (
-              <FieldCurrencyInput
-                id={
-                  formId
-                    ? `${formId}.shippingPriceInSubunitsAdditionalItems`
-                    : 'shippingPriceInSubunitsAdditionalItems'
-                }
-                name="shippingPriceInSubunitsAdditionalItems"
-                className={css.input}
-                label={intl.formatMessage({
-                  id: 'EditListingDeliveryForm.shippingAdditionalItemsLabel',
-                })}
-                placeholder={intl.formatMessage({
-                  id: 'EditListingDeliveryForm.shippingAdditionalItemsPlaceholder',
-                })}
-                currencyConfig={currencyConfig}
-                disabled={!shippingEnabled}
-                validate={
-                  shippingEnabled
-                    ? required(
-                        intl.formatMessage({
-                          id: 'EditListingDeliveryForm.shippingAdditionalItemsRequired',
-                        })
-                      )
-                    : null
-                }
-                hideErrorMessage={!shippingEnabled}
-                // Whatever parameters are being used to calculate
-                // the validation function need to be combined in such
-                // a way that, when they change, this key prop
-                // changes, thus reregistering this field (and its
-                // validation function) with Final Form.
-                // See example: https://codesandbox.io/s/changing-field-level-validators-zc8ei
-                key={shippingEnabled ? 'additionalItemsValidation' : 'noAdditionalItemsValidation'}
+            {/* XOLOLO: modo de precio del envío.
+                - flat: seller pone un costo fijo (comportamiento default de Sharetribe).
+                - carrier: costo se calcula al momento del checkout usando Skydropx
+                  con el peso/dimensiones del producto y el CP del buyer. */}
+            <fieldset className={css.xxShippingModeGroup} disabled={!shippingEnabled}>
+              <legend className={css.xxShippingModeLegend}>Cómo defines el costo</legend>
+              <FieldRadioButton
+                id={`${formId}.shippingPricingMode.flat`}
+                name="shippingPricingMode"
+                label="Precio fijo (yo lo pongo)"
+                value="flat"
               />
+              <FieldRadioButton
+                id={`${formId}.shippingPricingMode.carrier`}
+                name="shippingPricingMode"
+                label="Cotizar con paquetería (Skydropx)"
+                value="carrier"
+              />
+            </fieldset>
+
+            {values.shippingPricingMode === 'flat' || !values.shippingPricingMode ? (
+              <>
+                <FieldCurrencyInput
+                  id={
+                    formId
+                      ? `${formId}.shippingPriceInSubunitsOneItem`
+                      : 'shippingPriceInSubunitsOneItem'
+                  }
+                  name="shippingPriceInSubunitsOneItem"
+                  className={css.input}
+                  label={intl.formatMessage({
+                    id: 'EditListingDeliveryForm.shippingOneItemLabel',
+                  })}
+                  placeholder={intl.formatMessage({
+                    id: 'EditListingDeliveryForm.shippingOneItemPlaceholder',
+                  })}
+                  currencyConfig={currencyConfig}
+                  disabled={!shippingEnabled}
+                  validate={
+                    shippingEnabled && values.shippingPricingMode !== 'carrier'
+                      ? required(
+                          intl.formatMessage({
+                            id: 'EditListingDeliveryForm.shippingOneItemRequired',
+                          })
+                        )
+                      : null
+                  }
+                  hideErrorMessage={!shippingEnabled}
+                  key={shippingEnabled ? 'oneItemValidation' : 'noOneItemValidation'}
+                />
+
+                {allowOrdersOfMultipleItems ? (
+                  <FieldCurrencyInput
+                    id={
+                      formId
+                        ? `${formId}.shippingPriceInSubunitsAdditionalItems`
+                        : 'shippingPriceInSubunitsAdditionalItems'
+                    }
+                    name="shippingPriceInSubunitsAdditionalItems"
+                    className={css.input}
+                    label={intl.formatMessage({
+                      id: 'EditListingDeliveryForm.shippingAdditionalItemsLabel',
+                    })}
+                    placeholder={intl.formatMessage({
+                      id: 'EditListingDeliveryForm.shippingAdditionalItemsPlaceholder',
+                    })}
+                    currencyConfig={currencyConfig}
+                    disabled={!shippingEnabled}
+                    validate={
+                      shippingEnabled && values.shippingPricingMode !== 'carrier'
+                        ? required(
+                            intl.formatMessage({
+                              id: 'EditListingDeliveryForm.shippingAdditionalItemsRequired',
+                            })
+                          )
+                        : null
+                    }
+                    hideErrorMessage={!shippingEnabled}
+                    key={
+                      shippingEnabled ? 'additionalItemsValidation' : 'noAdditionalItemsValidation'
+                    }
+                  />
+                ) : null}
+              </>
             ) : null}
+
+            {values.shippingPricingMode === 'carrier' ? (
+              <>
+                {/* Peso + dimensiones son requeridos para cotizar en Skydropx.
+                    Todos en unidades métricas (gramos y cm) — la API los pide así. */}
+                <div className={css.xxDimensionsGrid}>
+                  <FieldTextInput
+                    id={`${formId}.weightGrams`}
+                    name="weightGrams"
+                    className={css.input}
+                    type="number"
+                    min="1"
+                    label="Peso (gramos)"
+                    placeholder="500"
+                    validate={
+                      shippingEnabled && values.shippingPricingMode === 'carrier'
+                        ? required('El peso es requerido para cotizar el envío.')
+                        : null
+                    }
+                    hideErrorMessage={!shippingEnabled}
+                  />
+                  <FieldTextInput
+                    id={`${formId}.dimensionLengthCm`}
+                    name="dimensionLengthCm"
+                    className={css.input}
+                    type="number"
+                    min="1"
+                    label="Largo (cm)"
+                    placeholder="20"
+                    validate={
+                      shippingEnabled && values.shippingPricingMode === 'carrier'
+                        ? required('Requerido.')
+                        : null
+                    }
+                    hideErrorMessage={!shippingEnabled}
+                  />
+                  <FieldTextInput
+                    id={`${formId}.dimensionWidthCm`}
+                    name="dimensionWidthCm"
+                    className={css.input}
+                    type="number"
+                    min="1"
+                    label="Ancho (cm)"
+                    placeholder="15"
+                    validate={
+                      shippingEnabled && values.shippingPricingMode === 'carrier'
+                        ? required('Requerido.')
+                        : null
+                    }
+                    hideErrorMessage={!shippingEnabled}
+                  />
+                  <FieldTextInput
+                    id={`${formId}.dimensionHeightCm`}
+                    name="dimensionHeightCm"
+                    className={css.input}
+                    type="number"
+                    min="1"
+                    label="Alto (cm)"
+                    placeholder="10"
+                    validate={
+                      shippingEnabled && values.shippingPricingMode === 'carrier'
+                        ? required('Requerido.')
+                        : null
+                    }
+                    hideErrorMessage={!shippingEnabled}
+                  />
+                </div>
+                <p className={css.xxHint}>
+                  Peso y dimensiones del paquete cerrado. Se usan al momento del
+                  checkout para cotizar en Skydropx contra el CP del buyer.
+                </p>
+              </>
+            ) : null}
+
+            {/* XOLOLO: promo "envío gratis" — el seller absorbe el costo. Si
+                está activo, el buyer ve "Envío gratis 🎁" y en el checkout
+                Xololo no le cobra por el envío. Aplica tanto a precio fijo
+                como a cotización dinámica. */}
+            <FieldCheckbox
+              id={`${formId}.sellerCoversShipping`}
+              name="sellerCoversShipping"
+              label="🎁 Ofrezco envío gratis (yo absorbo el costo)"
+              value="yes"
+            />
+            <p className={css.xxHint}>
+              Si lo activas, el buyer verá &quot;Envío gratis&quot; y no se le
+              cobrará el envío en el checkout. El costo lo asumes tú.
+            </p>
           </div>
 
           <Button

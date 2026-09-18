@@ -78,6 +78,41 @@
   }
 }
 
+/* XOLOLO: extensiones para el panel de envíos (Skydropx + recolección
+   con costo). Prefijo xx para diferenciar de los estilos base de
+   Sharetribe y facilitar futuras actualizaciones del template. */
+.xxShippingModeGroup {
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  padding: 12px 16px 8px;
+  margin: 0 0 20px;
+}
+
+.xxShippingModeLegend {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--colorGrey700);
+  padding: 0 6px;
+}
+
+.xxDimensionsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 16px;
+  margin-bottom: 8px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.xxHint {
+  margin: -8px 0 20px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--colorGrey500);
+}
+
 .submitButton {
   margin-top: auto;
   margin-bottom: 24px;

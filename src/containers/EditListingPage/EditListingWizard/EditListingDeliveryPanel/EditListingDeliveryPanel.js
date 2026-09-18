@@ -41,6 +41,14 @@ const getInitialValues = props => {
     pickupEnabled,
     shippingPriceInSubunitsOneItem,
     shippingPriceInSubunitsAdditionalItems,
+    // XOLOLO: campos extendidos para Skydropx + recolección con costo.
+    shippingPricingMode,
+    weightGrams,
+    dimensionLengthCm,
+    dimensionWidthCm,
+    dimensionHeightCm,
+    sellerCoversShipping,
+    pickupPriceInSubunits,
   } = publicData;
   const deliveryOptions = [];
 
@@ -60,6 +68,8 @@ const getInitialValues = props => {
     shippingPriceInSubunitsAdditionalItems != null
       ? new Money(shippingPriceInSubunitsAdditionalItems, currency)
       : null;
+  const pickupPriceAsMoney =
+    pickupPriceInSubunits != null ? new Money(pickupPriceInSubunits, currency) : null;
 
   // Initial values for the form
   return {
@@ -73,6 +83,14 @@ const getInitialValues = props => {
     deliveryOptions,
     shippingPriceInSubunitsOneItem: shippingOneItemAsMoney,
     shippingPriceInSubunitsAdditionalItems: shippingAdditionalItemsAsMoney,
+    // XOLOLO: defaults sanos para primera carga — flat con seller no absorbe.
+    shippingPricingMode: shippingPricingMode || 'flat',
+    weightGrams: weightGrams != null ? String(weightGrams) : '',
+    dimensionLengthCm: dimensionLengthCm != null ? String(dimensionLengthCm) : '',
+    dimensionWidthCm: dimensionWidthCm != null ? String(dimensionWidthCm) : '',
+    dimensionHeightCm: dimensionHeightCm != null ? String(dimensionHeightCm) : '',
+    sellerCoversShipping: sellerCoversShipping ? ['yes'] : [],
+    pickupPrice: pickupPriceAsMoney,
   };
 };
 
@@ -160,6 +178,14 @@ const EditListingDeliveryPanel = props => {
               shippingPriceInSubunitsOneItem,
               shippingPriceInSubunitsAdditionalItems,
               deliveryOptions,
+              // XOLOLO: nuevos campos.
+              shippingPricingMode,
+              weightGrams,
+              dimensionLengthCm,
+              dimensionWidthCm,
+              dimensionHeightCm,
+              sellerCoversShipping,
+              pickupPrice,
             } = values;
 
             const shippingEnabled = deliveryOptions.includes('shipping');
@@ -167,19 +193,47 @@ const EditListingDeliveryPanel = props => {
             const address = location?.selectedPlace?.address || null;
             const origin = location?.selectedPlace?.origin || null;
 
+            // XOLOLO: pickup ahora tiene costo opcional (0 = gratis).
             const pickupDataMaybe =
-              pickupEnabled && address ? { location: { address, building } } : {};
-
-            const shippingDataMaybe =
-              shippingEnabled && shippingPriceInSubunitsOneItem != null
+              pickupEnabled && address
                 ? {
-                    // Note: we only save the "amount" because currency should not differ from listing's price.
-                    // Money is always dealt in subunits (e.g. cents) to avoid float calculations.
-                    shippingPriceInSubunitsOneItem: shippingPriceInSubunitsOneItem.amount,
-                    shippingPriceInSubunitsAdditionalItems:
-                      shippingPriceInSubunitsAdditionalItems?.amount,
+                    location: { address, building },
+                    pickupPriceInSubunits: pickupPrice?.amount != null ? pickupPrice.amount : 0,
                   }
                 : {};
+
+            // XOLOLO: shipping puede ser 'flat' (precio fijo Sharetribe) o
+            // 'carrier' (cotización Skydropx). En 'carrier' guardamos peso y
+            // dimensiones y NO guardamos precio (se calcula al checkout).
+            const isCarrier = shippingPricingMode === 'carrier';
+            const shippingDataMaybe = shippingEnabled
+              ? {
+                  shippingPricingMode: isCarrier ? 'carrier' : 'flat',
+                  sellerCoversShipping:
+                    Array.isArray(sellerCoversShipping) && sellerCoversShipping.includes('yes'),
+                  ...(isCarrier
+                    ? {
+                        weightGrams: weightGrams ? Number(weightGrams) : null,
+                        dimensionLengthCm: dimensionLengthCm ? Number(dimensionLengthCm) : null,
+                        dimensionWidthCm: dimensionWidthCm ? Number(dimensionWidthCm) : null,
+                        dimensionHeightCm: dimensionHeightCm ? Number(dimensionHeightCm) : null,
+                        // Carrier no usa precios fijos; los borramos para no confundir el checkout.
+                        shippingPriceInSubunitsOneItem: null,
+                        shippingPriceInSubunitsAdditionalItems: null,
+                      }
+                    : {
+                        shippingPriceInSubunitsOneItem:
+                          shippingPriceInSubunitsOneItem?.amount ?? null,
+                        shippingPriceInSubunitsAdditionalItems:
+                          shippingPriceInSubunitsAdditionalItems?.amount ?? null,
+                        // Flat no usa peso/dimensiones; los limpiamos.
+                        weightGrams: null,
+                        dimensionLengthCm: null,
+                        dimensionWidthCm: null,
+                        dimensionHeightCm: null,
+                      }),
+                }
+              : {};
 
             // New values for listing attributes
             const updateValues = {
@@ -202,6 +256,13 @@ const EditListingDeliveryPanel = props => {
                 shippingPriceInSubunitsOneItem,
                 shippingPriceInSubunitsAdditionalItems,
                 deliveryOptions,
+                shippingPricingMode,
+                weightGrams,
+                dimensionLengthCm,
+                dimensionWidthCm,
+                dimensionHeightCm,
+                sellerCoversShipping,
+                pickupPrice,
               },
             });
             onSubmit(updateValues);

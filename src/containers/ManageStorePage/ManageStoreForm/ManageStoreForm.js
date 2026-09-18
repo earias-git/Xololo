@@ -415,6 +415,21 @@ const ManageStoreForm = props => (
               Aparece en el footer de tu storefront junto con un botón para ver
               la ubicación en Google Maps.
             </p>
+
+            <FieldTextInput
+              className={css.field}
+              type="text"
+              id="originPostalCode"
+              name="originPostalCode"
+              label="Código postal de origen (para envíos)"
+              placeholder="03100"
+              maxLength={5}
+            />
+            <p className={css.hint}>
+              5 dígitos. Es el CP desde donde salen los envíos por paquetería —
+              usa el de tu bodega o tu domicilio si envías desde casa. Se usa
+              solo para cotizar el envío en Skydropx; no se muestra público.
+            </p>
           </fieldset>
 
           <fieldset className={css.section}>

@@ -53,6 +53,9 @@ const cleanValues = raw => {
     facebook: trim(raw.facebook) || null,
     legalName: trim(raw.legalName) || null,
     address: trim(raw.address) || null,
+    originPostalCode: raw.originPostalCode
+      ? String(raw.originPostalCode).replace(/[^\d]/g, '').slice(0, 5) || null
+      : null,
     primaryCategory: CATEGORY_OPTIONS.has(raw.primaryCategory) ? raw.primaryCategory : null,
     showCalendar: raw.showCalendar === 'yes' ? 'yes' : 'no',
   };
@@ -90,6 +93,7 @@ export const ManageStorePageComponent = props => {
     facebook: publicData.facebook || '',
     legalName: publicData.legalName || '',
     address: publicData.address || '',
+    originPostalCode: publicData.originPostalCode || '',
     primaryCategory: publicData.primaryCategory || '',
     showCalendar: publicData.showCalendar === 'yes' ? 'yes' : 'no',
   };
