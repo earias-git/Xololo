@@ -1,0 +1,208 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  width: 100%;
+  margin-bottom: 24px;
+  padding: 20px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+}
+
+.hint {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  color: var(--colorGrey500);
+  line-height: 1.45;
+}
+
+/* ---------- Form de destino ---------- */
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--colorGrey700);
+}
+
+.input {
+  padding: 10px 12px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--colorGrey900);
+  background-color: #ffffff;
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--marketplaceColor);
+}
+
+/* ---------- Botón cotizar ---------- */
+.quoteBtn {
+  margin-top: 14px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background-color: var(--marketplaceColor);
+  color: #ffffff;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.quoteBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.quoteBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: #991b1b;
+}
+
+/* ---------- Grid de rates ---------- */
+.ratesGrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.rateCard {
+  position: relative;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: 10px;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rateCard:hover {
+  border-color: var(--marketplaceColor);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -6px rgba(0, 0, 0, 0.15);
+}
+
+.rateCardSelected {
+  border-color: var(--marketplaceColor);
+  background-color: color-mix(in srgb, var(--marketplaceColor) 6%, #ffffff);
+  border-width: 2px;
+}
+
+.rateCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.rateCarrier {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--colorGrey900);
+  text-transform: capitalize;
+}
+
+.ratePrice {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--marketplaceColor);
+  white-space: nowrap;
+}
+
+.ratePrice small {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--colorGrey500);
+}
+
+.rateCardBody {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--colorGrey500);
+}
+
+.rateService {
+  font-weight: 600;
+  color: var(--colorGrey700);
+}
+
+.rateCheck {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--marketplaceColor);
+}
+
+/* ---------- Banner "envío gratis" ---------- */
+.freeBanner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+}
+
+.freeBadge {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.freeTitle {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #166534;
+}
+
+.freeSubtitle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #15803d;
+}

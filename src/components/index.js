@@ -160,4 +160,5 @@ export { default as VerifiedBand } from './VerifiedBand/VerifiedBand';
 export { default as AppBand } from './AppBand/AppBand';
 export { default as FeaturedListings } from './FeaturedListings/FeaturedListings';
 export { default as FeaturedStores } from './FeaturedStores/FeaturedStores';
+export { default as ShippingRateSelector } from './ShippingRateSelector/ShippingRateSelector';
 export { default as ModalMissingInformation } from './ModalMissingInformation/ModalMissingInformation';
