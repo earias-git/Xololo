@@ -54,11 +54,14 @@ services:
         value: xololo-media
       - key: R2_PUBLIC_BASE_URL
         value: https://media.xololo.mx
-      # XOLOLO: Skydropx — cotización y generación de guías de envío.
-      # Configurar en el dashboard de Render (sync: false).
-      - key: SKYDROPX_API_KEY
+      # XOLOLO: Skydropx PRO — cotización y generación de guías de envío.
+      # Sandbox host: sb-pro.skydropx.com  |  Prod host: api-pro.skydropx.com
+      # Configurar CLIENT_ID / CLIENT_SECRET en el dashboard de Render.
+      - key: SKYDROPX_CLIENT_ID
         sync: false
-      - key: SKYDROPX_API_SECRET
+      - key: SKYDROPX_CLIENT_SECRET
         sync: false
       - key: SKYDROPX_ENV
         value: sandbox
+      - key: SKYDROPX_HOST
+        value: sb-pro.skydropx.com
