@@ -24,6 +24,7 @@ import {
   SavedCardDetails,
   StripePaymentAddress,
   CustomExtendedDataField,
+  ShippingRateSelector,
 } from '../../../components';
 
 import ShippingDetails from '../ShippingDetails/ShippingDetails';
@@ -497,6 +498,12 @@ class StripePaymentForm extends Component {
       isFuzzyLocation,
       transactionFieldConfigs = [],
       showTransactionFields,
+      // XOLOLO: props para el widget de cotización de envío. Vienen desde
+      // CheckoutPageWithPayment a partir de listing.publicData.
+      listingId,
+      listingShippingPricingMode,
+      listingSellerCoversShipping,
+      onShippingRateSelected,
       values,
     } = formRenderProps;
 
@@ -591,8 +598,30 @@ class StripePaymentForm extends Component {
     const showAdditionalInfoHeading =
       showInitialMessageInput || (hasTransactionFieldConfigs && showTransactionFields);
 
+    // XOLOLO: si el listing está en modo 'carrier', mostramos el widget
+    // ShippingRateSelector ARRIBA de la ShippingDetails para que el buyer
+    // elija paquetería antes de llenar su dirección. Al seleccionar un
+    // rate, lo persistimos en el form state via formApi.change y también
+    // notificamos al parent (CheckoutPageWithPayment) por si quiere
+    // re-speculate para actualizar el OrderBreakdown en vivo.
+    const showRateSelector = listingShippingPricingMode === 'carrier';
+    const handleRateSelected = rate => {
+      formApi.change('selectedShippingRate', rate || undefined);
+      if (typeof onShippingRateSelected === 'function') {
+        onShippingRateSelected(rate);
+      }
+    };
+
     return hasStripeKey ? (
       <Form className={classes} onSubmit={handleSubmit} enforcePagePreloadFor="OrderDetailsPage">
+        {showRateSelector ? (
+          <ShippingRateSelector
+            listingId={listingId}
+            shippingPricingMode={listingShippingPricingMode}
+            sellerCoversShipping={listingSellerCoversShipping}
+            onRateSelected={handleRateSelected}
+          />
+        ) : null}
         <LocationOrShippingDetails
           askShippingDetails={askShippingDetails}
           showPickUpLocation={showPickUpLocation}

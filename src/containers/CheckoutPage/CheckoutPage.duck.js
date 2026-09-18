@@ -19,12 +19,28 @@ const initiateOrderPayloadCreator = (
   // If we already have a transaction ID, we should transition, not initiate.
   const isTransition = !!transactionId;
 
-  const { deliveryMethod, quantity, bookingDates, ...otherOrderParams } = orderParams;
+  const {
+    deliveryMethod,
+    quantity,
+    bookingDates,
+    // XOLOLO: sacamos del payload el rate seleccionado + id de cotización
+    // para meterlos en `orderData` (parámetro que llega al server de forma
+    // dedicada, no a bodyParams.params). Server los lee en
+    // initiate-privileged para construir el line item de shipping-fee y
+    // persistir el snapshot xololoShipping en protectedData.
+    selectedShippingRate,
+    shippingQuotationId,
+    ...otherOrderParams
+  } = orderParams;
   const quantityMaybe = quantity ? { stockReservationQuantity: quantity } : {};
   const bookingParamsMaybe = bookingDates || {};
 
   // Parameters only for client app's server
-  const orderData = deliveryMethod ? { deliveryMethod } : {};
+  const orderData = {
+    ...(deliveryMethod ? { deliveryMethod } : {}),
+    ...(selectedShippingRate ? { selectedShippingRate } : {}),
+    ...(shippingQuotationId ? { shippingQuotationId } : {}),
+  };
 
   // Parameters for Marketplace API
   const transitionParams = {
@@ -264,6 +280,12 @@ const speculateTransactionPayloadCreator = (
     priceVariantName,
     quantity,
     bookingDates,
+    // XOLOLO: mismo tratamiento que en initiate — el rate viaja en
+    // orderData para que el server de speculative también calcule el
+    // shipping fee (para que el OrderBreakdown muestre el total correcto
+    // cuando el buyer cambia de paquetería).
+    selectedShippingRate,
+    shippingQuotationId,
     ...otherOrderParams
   } = orderParams;
   const quantityMaybe = quantity ? { stockReservationQuantity: quantity } : {};
@@ -273,6 +295,8 @@ const speculateTransactionPayloadCreator = (
   const orderData = {
     ...(deliveryMethod ? { deliveryMethod } : {}),
     ...(priceVariantName ? { priceVariantName } : {}),
+    ...(selectedShippingRate ? { selectedShippingRate } : {}),
+    ...(shippingQuotationId ? { shippingQuotationId } : {}),
   };
 
   // Parameters for Marketplace API

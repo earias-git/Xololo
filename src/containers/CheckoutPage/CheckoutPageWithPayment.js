@@ -110,7 +110,12 @@ const getOrderParams = (
   optionalPaymentParams,
   config,
   transactionFieldProtectedData,
-  customerDefaultMessage
+  customerDefaultMessage,
+  // XOLOLO: rate seleccionado en el form del checkout (widget
+  // ShippingRateSelector). Se propaga hasta orderData server-side para
+  // calcular el shipping fee dinámicamente (Skydropx).
+  selectedShippingRate,
+  shippingQuotationId
 ) => {
   const quantity = pageData.orderData?.quantity;
   const quantityMaybe = quantity ? { quantity } : {};
@@ -118,6 +123,11 @@ const getOrderParams = (
   const seatsMaybe = seats ? { seats } : {};
   const deliveryMethod = pageData.orderData?.deliveryMethod;
   const deliveryMethodMaybe = deliveryMethod ? { deliveryMethod } : {};
+  // XOLOLO: el rate + id de cotización viajan a orderParams como top-level
+  // para que CheckoutPage.duck.js los pueda mover a `orderData` (parámetro
+  // que llega al server como snapshot de la intención del cliente).
+  const selectedShippingRateMaybe = selectedShippingRate ? { selectedShippingRate } : {};
+  const shippingQuotationIdMaybe = shippingQuotationId ? { shippingQuotationId } : {};
   const { listingType, unitType, priceVariants } = pageData?.listing?.attributes?.publicData || {};
 
   // price variant data for fixed duration bookings
@@ -155,6 +165,8 @@ const getOrderParams = (
     ...seatsMaybe,
     ...bookingDatesMaybe(pageData.orderData?.bookingDates),
     ...priceVariantNameMaybe,
+    ...selectedShippingRateMaybe,
+    ...shippingQuotationIdMaybe,
     ...protectedDataMaybe,
     ...optionalPaymentParams,
   };
@@ -319,13 +331,20 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
 
   // These are the order parameters for the first payment-related transition
   // which is either initiate-transition or initiate-transition-after-enquiry
+  // XOLOLO: extraer el rate seleccionado del form (widget ShippingRateSelector).
+  // Si el listing no es carrier, este campo será undefined y no se propaga.
+  const selectedShippingRate = formValues?.selectedShippingRate;
+  const shippingQuotationId = formValues?.shippingQuotationId;
+
   const orderParams = getOrderParams(
     pageData,
     shippingDetails,
     optionalPaymentParams,
     config,
     transactionFieldsProtectedData,
-    message
+    message,
+    selectedShippingRate,
+    shippingQuotationId
   );
 
   // There are multiple XHR calls that needs to be made against Stripe API and Sharetribe Marketplace API on checkout with payments
@@ -648,6 +667,13 @@ export const CheckoutPageWithPayment = props => {
                 stripePublishableKey={config.stripe.publishableKey}
                 marketplaceName={config.marketplaceName}
                 isBooking={isBookingProcessAlias(transactionProcessAlias)}
+                listingId={pageData?.listing?.id?.uuid}
+                listingShippingPricingMode={
+                  pageData?.listing?.attributes?.publicData?.shippingPricingMode
+                }
+                listingSellerCoversShipping={
+                  !!pageData?.listing?.attributes?.publicData?.sellerCoversShipping
+                }
                 isFuzzyLocation={config.maps.fuzzy.enabled}
                 transactionFieldConfigs={transactionFieldConfigs}
                 showTransactionFields={showTransactionFields}
