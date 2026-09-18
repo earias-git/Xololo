@@ -39,6 +39,75 @@ const buildInstagramUrl = handle => {
   return `https://instagram.com/${clean}`;
 };
 
+const buildFacebookUrl = handle => {
+  if (!handle) return null;
+  const raw = String(handle).trim();
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const clean = raw.replace(/^@/, '').replace(/^facebook\.com\//i, '');
+  return `https://facebook.com/${clean}`;
+};
+
+const buildMapsUrl = address => {
+  if (!address) return null;
+  const clean = String(address).trim();
+  if (!clean) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clean)}`;
+};
+
+// XOLOLO: iconos SVG estilizados para reemplazar los emojis 📷/💬 que se
+// veían demasiado toscos en el contacto. Todos usan currentColor para
+// heredar el color del botón.
+const IconInstagram = props => (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+    <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.8" />
+    <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+    <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" />
+  </svg>
+);
+
+const IconFacebook = props => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+    <path d="M13.5 21v-7.5h2.5l.4-3H13.5V8.7c0-.87.24-1.46 1.48-1.46h1.58V4.6c-.27-.04-1.2-.11-2.28-.11-2.25 0-3.78 1.37-3.78 3.9v2.1H8v3h2.5V21h3z" />
+  </svg>
+);
+
+const IconWhatsapp = props => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+    <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.09-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2Zm4.36 12.04c-.24-.12-1.41-.7-1.63-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.18-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.01-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.46-.39-.4-.54-.41h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.7 2.6 4.12 3.64.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.41-.58 1.61-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28Z" />
+  </svg>
+);
+
+const IconShield = props => (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+    <path
+      d="M12 2.5 4.5 5v6.2c0 4.5 3.2 8.5 7.5 10.3 4.3-1.8 7.5-5.8 7.5-10.3V5L12 2.5Z"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
+    <path
+      d="m8.5 12 2.4 2.4L15.5 10"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const IconMapPin = props => (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+    <path
+      d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11Z"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+    <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.7" />
+  </svg>
+);
+
 const StorefrontPageComponent = props => {
   const {
     slug,
@@ -91,7 +160,11 @@ const StorefrontPageComponent = props => {
   const banner = pd.bannerUrl;
   const whatsappUrl = buildWhatsAppUrl(pd.whatsapp, seller.displayName);
   const instagramUrl = buildInstagramUrl(pd.instagram);
+  const facebookUrl = buildFacebookUrl(pd.facebook);
+  const mapsUrl = buildMapsUrl(pd.address);
   const showCalendar = pd.showCalendar === 'yes';
+  const legalName = pd.legalName;
+  const address = pd.address;
 
   const rootStyle = {
     '--storefront-primary': primary,
@@ -156,14 +229,20 @@ const StorefrontPageComponent = props => {
         </div>
       </section>
 
-      {pd.longDescription ? (
-        <section id="sobre-nosotros" className={css.about}>
-          <div className={css.aboutInner}>
-            <h2 className={css.sectionTitle}>Sobre nosotros</h2>
-            <p className={css.aboutText}>{pd.longDescription}</p>
+      {/* XOLOLO: sello de confianza — la compra siempre está respaldada por
+          Xololo. Se muestra debajo del hero para que sea lo primero que ve
+          el buyer antes del catálogo. */}
+      <section className={css.trustBadge} aria-label="Compra protegida">
+        <div className={css.trustBadgeInner}>
+          <IconShield className={css.trustBadgeIcon} />
+          <div className={css.trustBadgeText}>
+            <strong className={css.trustBadgeTitle}>Compra protegida por Xololo</strong>
+            <span className={css.trustBadgeSubtitle}>
+              Tu pago está seguro. Si no recibes el producto, te devolvemos tu dinero.
+            </span>
           </div>
-        </section>
-      ) : null}
+        </div>
+      </section>
 
       <section id="catalogo" className={css.catalog}>
         {listings?.length ? (
@@ -181,6 +260,15 @@ const StorefrontPageComponent = props => {
           </div>
         )}
       </section>
+
+      {pd.longDescription ? (
+        <section id="sobre-nosotros" className={css.about}>
+          <div className={css.aboutInner}>
+            <h2 className={css.sectionTitle}>Sobre nosotros</h2>
+            <p className={css.aboutText}>{pd.longDescription}</p>
+          </div>
+        </section>
+      ) : null}
 
       {showCalendar ? (
         <section id="disponibilidad" className={css.calendar}>
@@ -211,9 +299,7 @@ const StorefrontPageComponent = props => {
                 rel="noopener noreferrer"
                 className={css.contactBtnWhatsapp}
               >
-                <span className={css.contactBtnIcon} aria-hidden="true">
-                  💬
-                </span>
+                <IconWhatsapp className={css.contactBtnIcon} />
                 WhatsApp
               </a>
             ) : null}
@@ -224,15 +310,54 @@ const StorefrontPageComponent = props => {
                 rel="noopener noreferrer"
                 className={css.contactBtnInstagram}
               >
-                <span className={css.contactBtnIcon} aria-hidden="true">
-                  📷
-                </span>
+                <IconInstagram className={css.contactBtnIcon} />
                 Instagram
+              </a>
+            ) : null}
+            {facebookUrl ? (
+              <a
+                href={facebookUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={css.contactBtnFacebook}
+              >
+                <IconFacebook className={css.contactBtnIcon} />
+                Facebook
               </a>
             ) : null}
           </div>
         </div>
       </section>
+
+      {/* XOLOLO: footer legal del seller — nombre legal + dirección + link a
+          Google Maps si aplica. Separado del footer corporativo de Xololo
+          para que quede claro qué información pertenece a cada uno. */}
+      {(legalName || address) ? (
+        <section className={css.legalFooter}>
+          <div className={css.legalFooterInner}>
+            {legalName ? (
+              <p className={css.legalName}>{legalName}</p>
+            ) : null}
+            {address ? (
+              <p className={css.legalAddress}>
+                <IconMapPin className={css.legalAddressIcon} />
+                <span>{address}</span>
+              </p>
+            ) : null}
+            {mapsUrl ? (
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={css.legalMapsBtn}
+              >
+                <IconMapPin className={css.legalMapsIcon} />
+                Ver ubicación en Google Maps
+              </a>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       <footer className={css.footer}>
         <div className={css.footerInner}>
@@ -251,7 +376,7 @@ const StorefrontPageComponent = props => {
           className={css.floatingWhatsapp}
           aria-label="Contactar por WhatsApp"
         >
-          <span aria-hidden="true">💬</span>
+          <IconWhatsapp className={css.floatingWhatsappIcon} />
           <span className={css.floatingWhatsappLabel}>WhatsApp</span>
         </a>
       ) : null}

@@ -48,6 +48,9 @@ const cleanValues = raw => {
     bannerUrl: trim(raw.bannerUrl) || null,
     whatsapp: raw.whatsapp ? String(raw.whatsapp).replace(/[^\d]/g, '') : null,
     instagram: trim(raw.instagram)?.replace(/^@/, '') || null,
+    facebook: trim(raw.facebook) || null,
+    legalName: trim(raw.legalName) || null,
+    address: trim(raw.address) || null,
     primaryCategory: CATEGORY_OPTIONS.has(raw.primaryCategory) ? raw.primaryCategory : null,
     showCalendar: raw.showCalendar === 'yes' ? 'yes' : 'no',
   };
@@ -80,6 +83,9 @@ export const ManageStorePageComponent = props => {
     bannerUrl: publicData.bannerUrl || '',
     whatsapp: publicData.whatsapp || '',
     instagram: publicData.instagram || '',
+    facebook: publicData.facebook || '',
+    legalName: publicData.legalName || '',
+    address: publicData.address || '',
     primaryCategory: publicData.primaryCategory || '',
     showCalendar: publicData.showCalendar === 'yes' ? 'yes' : 'no',
   };

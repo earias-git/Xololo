@@ -1,17 +1,24 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { useConfiguration } from '../../context/configurationContext';
 import { FormattedMessage } from '../../util/reactIntl';
+import { selectStorefrontSlug } from '../../ducks/storefrontSubdomain.duck';
 
 import css from './WhatsAppButton.module.css';
 
 // Floating WhatsApp contact button, shown on every page.
 // Renders nothing if no phone number has been configured (see config.whatsapp in configDefault.js).
+//
+// XOLOLO: en storefronts de sellers (subdominios) NO renderizamos el
+// WhatsApp corporativo — cada tienda tiene su propio botón que apunta
+// al seller. Dejar los dos confunde al buyer.
 const WhatsAppButton = () => {
   const config = useConfiguration();
   const { phoneNumber, defaultMessage } = config?.whatsapp || {};
+  const storefrontSlug = useSelector(selectStorefrontSlug);
 
-  if (!phoneNumber) {
+  if (!phoneNumber || storefrontSlug) {
     return null;
   }
 

@@ -91,10 +91,10 @@
 .hero {
   background-color: var(--storefront-primary);
   color: #ffffff;
-  padding: 48px 24px;
+  padding: 28px 24px 32px;
 
   @media (--viewportMedium) {
-    padding: 72px 40px;
+    padding: 40px 40px 44px;
   }
 }
 
@@ -175,6 +175,59 @@
 
 .heroCtaGhost:hover {
   background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- Trust badge ---------- */
+.trustBadge {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e6e1d6;
+  padding: 14px 24px;
+
+  @media (--viewportMedium) {
+    padding: 16px 40px;
+  }
+}
+
+.trustBadgeInner {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.trustBadgeIcon {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  color: #16a34a;
+}
+
+.trustBadgeText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.35;
+}
+
+.trustBadgeTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #16a34a;
+  letter-spacing: 0.005em;
+
+  @media (--viewportMedium) {
+    font-size: 15px;
+  }
+}
+
+.trustBadgeSubtitle {
+  font-size: 13px;
+  color: #4a5169;
+
+  @media (--viewportMedium) {
+    font-size: 13.5px;
+  }
 }
 
 /* ---------- Common section ---------- */
@@ -297,7 +350,8 @@
 }
 
 .contactBtnWhatsapp,
-.contactBtnInstagram {
+.contactBtnInstagram,
+.contactBtnFacebook {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -319,14 +373,93 @@
   color: #ffffff;
 }
 
+.contactBtnFacebook {
+  background-color: #1877f2;
+  color: #ffffff;
+}
+
 .contactBtnWhatsapp:hover,
-.contactBtnInstagram:hover {
+.contactBtnInstagram:hover,
+.contactBtnFacebook:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.35);
 }
 
 .contactBtnIcon {
-  font-size: 16px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+/* ---------- Legal footer (seller) ---------- */
+.legalFooter {
+  background-color: #ffffff;
+  border-top: 1px solid #e6e1d6;
+  padding: 28px 24px;
+
+  @media (--viewportMedium) {
+    padding: 32px 40px;
+  }
+}
+
+.legalFooterInner {
+  max-width: 780px;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.legalName {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #232d40;
+}
+
+.legalAddress {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #4a5169;
+  line-height: 1.5;
+}
+
+.legalAddressIcon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: var(--storefront-primary);
+}
+
+.legalMapsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background-color: var(--storefront-primary);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.legalMapsBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.35);
+}
+
+.legalMapsIcon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
 }
 
 /* ---------- Footer ---------- */
@@ -388,6 +521,12 @@
   @media (--viewportMedium) {
     display: inline;
   }
+}
+
+.floatingWhatsappIcon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
 }
 
 /* ---------- Loading ---------- */

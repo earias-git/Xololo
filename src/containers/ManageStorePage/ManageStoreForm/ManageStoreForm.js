@@ -342,6 +342,50 @@ const ManageStoreForm = props => (
               label="Instagram — sin @"
               placeholder="mi_tienda"
             />
+
+            <FieldTextInput
+              className={css.field}
+              type="text"
+              id="facebook"
+              name="facebook"
+              label="Facebook — usuario o URL completa"
+              placeholder="mitienda.oficial"
+            />
+            <p className={css.hint}>
+              Puedes poner solo el usuario (<code>mitienda.oficial</code>) o la
+              URL completa (<code>https://facebook.com/mitienda.oficial</code>).
+            </p>
+          </fieldset>
+
+          <fieldset className={css.section}>
+            <legend className={css.sectionTitle}>
+              <span aria-hidden="true" className={css.sectionIcon}>📍</span>
+              Datos legales y ubicación
+            </legend>
+
+            <FieldTextInput
+              className={css.field}
+              type="text"
+              id="legalName"
+              name="legalName"
+              label="Razón social o nombre legal"
+              placeholder="Ej. Mi Tienda S.A. de C.V. — o tu nombre completo si eres persona física"
+              maxLength={140}
+            />
+
+            <FieldTextInput
+              className={css.field}
+              type="textarea"
+              id="address"
+              name="address"
+              label="Dirección"
+              placeholder="Calle, número, colonia, ciudad, estado, C.P."
+              rows={3}
+            />
+            <p className={css.hint}>
+              Aparece en el footer de tu storefront junto con un botón para ver
+              la ubicación en Google Maps.
+            </p>
           </fieldset>
 
           <fieldset className={css.section}>
