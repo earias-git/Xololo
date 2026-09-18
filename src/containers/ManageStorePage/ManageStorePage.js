@@ -3,6 +3,7 @@ import { compose } from 'redux';
 import { connect } from 'react-redux';
 
 import { useConfiguration } from '../../context/configurationContext';
+import { useIntl } from '../../util/reactIntl';
 import { propTypes } from '../../util/types';
 import { ensureCurrentUser } from '../../util/data';
 import {
@@ -55,6 +56,7 @@ const cleanValues = raw => {
 
 export const ManageStorePageComponent = props => {
   const config = useConfiguration();
+  const intl = useIntl();
   const {
     currentUser,
     scrollingDisabled,
@@ -119,6 +121,7 @@ export const ManageStorePageComponent = props => {
         useAccountSettingsNav
         accountSettingsNavProps={accountSettingsNavProps}
         footer={<FooterContainer />}
+        intl={intl}
       >
         <div className={css.content}>
           <H3 as="h1">Mi tienda</H3>
