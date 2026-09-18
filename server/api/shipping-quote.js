@@ -137,10 +137,9 @@ module.exports = async (req, res) => {
     return res.json({ quotationId, rates });
   } catch (e) {
     if (e instanceof SkydropxAuthError) {
-      // XOLOLO: temporalmente devolvemos el mensaje raw del helper para
-      // diagnosticar. Cuando el flujo esté estable en prod, cambiar por
-      // un mensaje genérico (no filtrar detalles internos al cliente).
-      return res.status(500).json({ error: 'internal', details: `Skydropx auth: ${e.message}` });
+      // eslint-disable-next-line no-console
+      console.error('shipping-quote SkydropxAuthError:', e.message);
+      return res.status(500).json({ error: 'internal' });
     }
     if (e instanceof SkydropxQuoteError) {
       return res.status(422).json({ error: 'quote_failed', details: e.details || e.message });
