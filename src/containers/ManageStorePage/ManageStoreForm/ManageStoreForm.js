@@ -18,28 +18,41 @@ const RESERVED_SLUGS = new Set([
 
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 
-// Paleta curada de colores primarios. 16 tonos organizados en 4 familias
+// Paleta curada de colores primarios. 32 tonos organizados en 4 familias
+// (verdes, naranja/cálidos, azules, morado/rosa) con 8 tonos cada una,
 // para que el seller pueda ver de un vistazo qué opción le queda a su
 // marca sin tener que pensar en códigos HEX.
 const PRIMARY_PALETTE = [
-  // Verdes / naturaleza
-  '#1f8f52', '#0f7a3f', '#2ea44f', '#3fb56b',
-  // Naranja / cálidos
-  '#c8720f', '#e05a1a', '#f0932b', '#eb984e',
-  // Azul / confianza
-  '#1e3a8a', '#2563eb', '#0891b2', '#0ea5e9',
-  // Morado / rosa
-  '#7c3aed', '#a855f7', '#db2777', '#e11d48',
+  // Verdes / naturaleza (8)
+  '#166534', '#15803d', '#1f8f52', '#0f7a3f',
+  '#2ea44f', '#3fb56b', '#65a30d', '#4d7c0f',
+  // Naranja / cálidos (8)
+  '#7c2d12', '#c2410c', '#c8720f', '#e05a1a',
+  '#f0932b', '#eb984e', '#eab308', '#ca8a04',
+  // Azul / confianza (8)
+  '#1e3a8a', '#1e40af', '#2563eb', '#0891b2',
+  '#0ea5e9', '#0284c7', '#0369a1', '#164e63',
+  // Morado / rosa (8)
+  '#4c1d95', '#6d28d9', '#7c3aed', '#a855f7',
+  '#c026d3', '#db2777', '#e11d48', '#be185d',
 ];
 
 // Paleta secundaria — tonos más suaves y complementarios para acentos,
-// bandas y fondos. Mismo orden que la primaria para que sea intuitivo
-// combinar.
+// bandas y fondos. Mismo orden y familias que la primaria (32 tonos)
+// para que sea intuitivo combinar.
 const SECONDARY_PALETTE = [
-  '#6bcb8c', '#a8e6b8', '#7dd3a2', '#c4f0d4',
-  '#e4a856', '#f5b96f', '#fbcf94', '#ffe0b0',
+  // Verdes suaves
+  '#86efac', '#6bcb8c', '#a8e6b8', '#7dd3a2',
+  '#c4f0d4', '#bbf7d0', '#d9f99d', '#a3e635',
+  // Naranja suaves
+  '#fdba74', '#e4a856', '#f5b96f', '#fbcf94',
+  '#ffe0b0', '#fed7aa', '#fde68a', '#facc15',
+  // Azules suaves
   '#93c5fd', '#bfdbfe', '#a5f3fc', '#bae6fd',
-  '#c4b5fd', '#e9d5ff', '#fbcfe8', '#fecdd3',
+  '#7dd3fc', '#cffafe', '#e0f2fe', '#dbeafe',
+  // Morados/rosas suaves
+  '#c4b5fd', '#e9d5ff', '#ddd6fe', '#fbcfe8',
+  '#f5d0fe', '#fecdd3', '#fbb6ce', '#fda4af',
 ];
 
 const validateSlug = value => {
@@ -308,8 +321,24 @@ const ManageStoreForm = props => (
             <ImageUploadField
               name="bannerUrl"
               kind="banner"
-              label="Banner publicitario"
+              label="Banner publicitario 1"
               hint="Imagen horizontal (1600 x 400 px recomendado). Aparece bajo el header de tu storefront."
+              aspectRatio="4 / 1"
+            />
+
+            <ImageUploadField
+              name="bannerUrl2"
+              kind="banner"
+              label="Banner publicitario 2 (opcional)"
+              hint="Si subes 2 o 3 banners, se muestran en un carrusel que rota automáticamente cada 6 segundos."
+              aspectRatio="4 / 1"
+            />
+
+            <ImageUploadField
+              name="bannerUrl3"
+              kind="banner"
+              label="Banner publicitario 3 (opcional)"
+              hint="Tercer slide del carrusel — mismo formato horizontal 4 : 1."
               aspectRatio="4 / 1"
             />
           </fieldset>

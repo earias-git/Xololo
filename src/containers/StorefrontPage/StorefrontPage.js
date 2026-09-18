@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { string, bool, func, array, object } from 'prop-types';
 
@@ -23,6 +24,122 @@ import css from './StorefrontPage.module.css';
 
 const DEFAULT_PRIMARY = '#1f8f52';
 const DEFAULT_SECONDARY = '#6bcb8c';
+const BANNER_AUTOPLAY_MS = 6000;
+
+// XOLOLO: carrusel de banners del storefront.
+// Muestra 1-3 imágenes horizontales. Si hay 2 o más, rota cada 6s con
+// pausa al hover/focus (respeta prefers-reduced-motion). Con 1 sola
+// imagen se degrada a un banner estático — mismos estilos que antes.
+const BannerCarousel = ({ banners }) => {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const containerRef = useRef(null);
+  const numSlides = banners?.length || 0;
+
+  const goTo = useCallback(
+    idx => {
+      if (!numSlides) return;
+      const next = ((idx % numSlides) + numSlides) % numSlides;
+      setActiveIdx(next);
+    },
+    [numSlides]
+  );
+
+  useEffect(() => {
+    if (numSlides <= 1) return undefined;
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    if (prefersReducedMotion) return undefined;
+
+    const container = containerRef.current;
+    let intervalId = null;
+    let paused = false;
+
+    const tick = () => {
+      if (!paused) setActiveIdx(prev => (prev + 1) % numSlides);
+    };
+    intervalId = window.setInterval(tick, BANNER_AUTOPLAY_MS);
+    const pause = () => { paused = true; };
+    const resume = () => { paused = false; };
+
+    container?.addEventListener('mouseenter', pause);
+    container?.addEventListener('mouseleave', resume);
+    container?.addEventListener('focusin', pause);
+    container?.addEventListener('focusout', resume);
+
+    return () => {
+      if (intervalId != null) window.clearInterval(intervalId);
+      container?.removeEventListener('mouseenter', pause);
+      container?.removeEventListener('mouseleave', resume);
+      container?.removeEventListener('focusin', pause);
+      container?.removeEventListener('focusout', resume);
+    };
+  }, [numSlides]);
+
+  if (!numSlides) return null;
+
+  return (
+    <section
+      ref={containerRef}
+      className={css.bannerCarousel}
+      aria-roledescription="carousel"
+      aria-label="Banners de la tienda"
+    >
+      {banners.map((url, idx) => (
+        <div
+          key={url + idx}
+          className={classNames(css.bannerSlide, {
+            [css.bannerSlideActive]: idx === activeIdx,
+          })}
+          role="group"
+          aria-roledescription="slide"
+          aria-label={`${idx + 1} de ${numSlides}`}
+          aria-hidden={idx !== activeIdx}
+          style={{ backgroundImage: `url(${url})` }}
+        />
+      ))}
+      {numSlides > 1 ? (
+        <>
+          <button
+            type="button"
+            className={classNames(css.bannerArrow, css.bannerArrowPrev)}
+            onClick={() => goTo(activeIdx - 1)}
+            aria-label="Banner anterior"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className={classNames(css.bannerArrow, css.bannerArrowNext)}
+            onClick={() => goTo(activeIdx + 1)}
+            aria-label="Banner siguiente"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div className={css.bannerDots} role="tablist" aria-label="Elegir banner">
+            {banners.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                role="tab"
+                aria-selected={idx === activeIdx}
+                aria-label={`Ir al banner ${idx + 1}`}
+                className={classNames(css.bannerDot, {
+                  [css.bannerDotActive]: idx === activeIdx,
+                })}
+                onClick={() => goTo(idx)}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+    </section>
+  );
+};
 
 const buildWhatsAppUrl = (number, sellerName) => {
   if (!number) return null;
@@ -140,7 +257,7 @@ const StorefrontPageComponent = props => {
   const primary = pd.brandPrimaryColor || DEFAULT_PRIMARY;
   const secondary = pd.brandSecondaryColor || DEFAULT_SECONDARY;
   const logo = pd.logoUrl;
-  const banner = pd.bannerUrl;
+  const banners = [pd.bannerUrl, pd.bannerUrl2, pd.bannerUrl3].filter(Boolean);
   const whatsappUrl = buildWhatsAppUrl(pd.whatsapp, seller.displayName);
   const instagramUrl = buildInstagramUrl(pd.instagram);
   const facebookUrl = buildFacebookUrl(pd.facebook);
@@ -184,13 +301,7 @@ const StorefrontPageComponent = props => {
         </div>
       </header>
 
-      {banner ? (
-        <section
-          className={css.banner}
-          style={{ backgroundImage: `url(${banner})` }}
-          aria-label="Banner de la tienda"
-        />
-      ) : null}
+      <BannerCarousel banners={banners} />
 
       <section className={css.hero}>
         <div className={css.heroInner}>

@@ -75,16 +75,109 @@
   color: var(--storefront-primary);
 }
 
-/* ---------- Banner ---------- */
-.banner {
+/* ---------- Banner (carrusel) ---------- */
+.bannerCarousel {
+  position: relative;
   height: 200px;
   background-color: #2a3550;
-  background-size: cover;
-  background-position: center;
+  overflow: hidden;
 
   @media (--viewportMedium) {
     height: 360px;
   }
+}
+
+.bannerSlide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 0.7s ease-in-out;
+  pointer-events: none;
+}
+
+.bannerSlideActive {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bannerArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #232d40;
+  border: none;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 3;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+
+  @media (--viewportMedium) {
+    display: inline-flex;
+  }
+}
+
+.bannerArrow:hover {
+  background-color: #ffffff;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.bannerArrow svg {
+  width: 20px;
+  height: 20px;
+}
+
+.bannerArrowPrev {
+  left: 20px;
+}
+
+.bannerArrowNext {
+  right: 20px;
+}
+
+.bannerDots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  gap: 8px;
+  padding: 6px 12px;
+  background-color: rgba(0, 0, 0, 0.35);
+  border-radius: 999px;
+  z-index: 3;
+
+  @media (--viewportMedium) {
+    bottom: 20px;
+  }
+}
+
+.bannerDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.55);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.bannerDot:hover {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+.bannerDotActive {
+  background-color: #ffffff;
+  transform: scale(1.2);
 }
 
 /* ---------- Hero ---------- */
