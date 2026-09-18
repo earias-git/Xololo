@@ -211,6 +211,17 @@ app.use('/.well-known', wellKnownRouter);
 // deploy as failed after 15 min.
 app.get('/_health', (req, res) => res.status(200).send('ok'));
 
+// XOLOLO: apiRouter va ANTES del basic auth para que los endpoints
+// programáticos (/api/shipping-quote, /api/seller-by-slug, upload de
+// imágenes, webhooks futuros de Skydropx/Stripe, etc) sean alcanzables
+// desde el mundo exterior sin necesidad de basic auth. El basic auth
+// de staging está pensado para ocultar el HTML/UI del index público
+// mientras no queremos que aparezca; los endpoints /api ya tienen su
+// propia seguridad interna (Sharetribe SDK/session, tokens dedicados,
+// validación de origin, etc). Sin este orden, cualquier integración
+// externa quedaría bloqueada por 401.
+app.use('/api', apiRouter);
+
 // Use basic authentication when not in dev mode. This is
 // intentionally after the static middleware and /.well-known
 // endpoints as those will bypass basic auth.
@@ -231,9 +242,6 @@ if (!dev) {
 // We use passport to enable authenticating with
 // a 3rd party identity provider (e.g. Facebook or Google)
 app.use(passport.initialize());
-
-// Server-side routes that do not render the application
-app.use('/api', apiRouter);
 
 const noCacheHeaders = {
   'Cache-control': 'no-cache, no-store, must-revalidate',
