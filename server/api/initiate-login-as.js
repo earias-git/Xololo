@@ -8,8 +8,13 @@ const CONSOLE_URL = process.env.SERVER_SHARETRIBE_CONSOLE_URL || 'https://consol
 const USING_SSL = process.env.REACT_APP_SHARETRIBE_USING_SSL === 'true';
 
 // redirect_uri param used when initiating a login as authentication flow and
-// when requesting a token using an authorization code
-const loginAsRedirectUri = `${ROOT_URL.replace(/\/$/, '')}/api/login-as`;
+// when requesting a token using an authorization code.
+// XOLOLO: fallback a null cuando ROOT_URL no está set — evita que el módulo
+// crashee al cargar y tumbe todo el servidor. El handler abajo ya devuelve
+// 409 si la variable falta, así que la ruta específica del login-as sigue
+// respondiendo (mal, pero devolviendo un error 409 controlado en vez de
+// tumbar el proceso entero).
+const loginAsRedirectUri = ROOT_URL ? `${ROOT_URL.replace(/\/$/, '')}/api/login-as` : null;
 
 // Cookies used for authorization code authentication.
 const stateKey = `st-${CLIENT_ID}-oauth2State`;
