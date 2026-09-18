@@ -9,45 +9,104 @@ const { types } = require('sharetribe-flex-sdk');
 const { Money } = types;
 
 /**
- * Get quantity and add extra line-items that are related to delivery method
+ * Get quantity and add extra line-items that are related to delivery method.
  *
- * @param {Object} orderData should contain stockReservationQuantity and deliveryMethod
- * @param {*} publicData should contain shipping prices
- * @param {*} currency should point to the currency of listing's price.
+ * XOLOLO: extendido para soportar los modos custom de envío del marketplace:
+ *  - shipping + shippingPricingMode='carrier' → usa selectedShippingRate.total
+ *    (viene de orderData; el buyer eligió una paquetería via Skydropx en el
+ *    checkout). Si sellerCoversShipping=true, la línea se agrega en $0 con
+ *    label especial "Envío gratis (cortesía del vendedor)".
+ *  - shipping + shippingPricingMode='flat' (o sin mode) → comportamiento
+ *    default de Sharetribe (precio fijo del listing).
+ *  - pickup + pickupPriceInSubunits > 0 → línea de "Recolección local" con
+ *    ese costo. Si es 0 o falta, se mantiene el default (gratis, sin línea).
+ *
+ * @param {Object} orderData
+ * @param {number} orderData.stockReservationQuantity
+ * @param {string} orderData.deliveryMethod - 'shipping' | 'pickup'
+ * @param {Object} [orderData.selectedShippingRate] - {id, carrier, service,
+ *   total (number en unidades mayores, ej. 245.50), currency, days,
+ *   isFreeShipping}
+ * @param {Object} publicData - publicData del listing
+ * @param {string} currency - código de moneda (ej. 'MXN')
  */
 const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
-  // Check delivery method and shipping prices
   const quantity = orderData ? orderData.stockReservationQuantity : null;
   const deliveryMethod = orderData && orderData.deliveryMethod;
   const isShipping = deliveryMethod === 'shipping';
   const isPickup = deliveryMethod === 'pickup';
-  const { shippingPriceInSubunitsOneItem, shippingPriceInSubunitsAdditionalItems } =
-    publicData || {};
 
-  // Calculate shipping fee if applicable
-  const shippingFee = isShipping
-    ? calculateShippingFee(
+  const {
+    shippingPriceInSubunitsOneItem,
+    shippingPriceInSubunitsAdditionalItems,
+    // XOLOLO extended fields
+    shippingPricingMode,
+    sellerCoversShipping,
+    pickupPriceInSubunits,
+  } = publicData || {};
+
+  const extraLineItems = [];
+
+  if (isShipping) {
+    if (shippingPricingMode === 'carrier') {
+      // Modo cotización dinámica.
+      //  - sellerCoversShipping=true → línea $0 SIEMPRE, ignorando lo que
+      //    mande el cliente (el vendedor absorbe el costo).
+      //  - caso normal → toma rate.total del orderData.selectedShippingRate
+      //    (viene en unidades mayores, ej. 245.50; convertimos a centavos).
+      //  - carrier sin sellerCubre y sin rate → no agregamos línea; Sharetribe
+      //    fallará al procesar. Fase C.2 debe bloquear el submit hasta que
+      //    el buyer elija una paquetería.
+      const freeShipping = !!sellerCoversShipping;
+      const rate = orderData?.selectedShippingRate;
+      const rateTotal = freeShipping ? 0 : Number(rate?.total);
+
+      const shouldAddLine = freeShipping || (rate && Number.isFinite(rateTotal) && rateTotal >= 0);
+
+      if (shouldAddLine) {
+        // Reusamos el code 'line-item/shipping-fee' incluso para $0 — así
+        // el OrderBreakdown existente lo renderiza sin cambios de UI.
+        const subunits = Math.round(rateTotal * 100);
+        extraLineItems.push({
+          code: 'line-item/shipping-fee',
+          unitPrice: new Money(subunits, currency),
+          quantity: 1,
+          includeFor: ['customer', 'provider'],
+        });
+      }
+    } else {
+      // Modo flat (default Sharetribe): precio fijo del listing.
+      const shippingFee = calculateShippingFee(
         shippingPriceInSubunitsOneItem,
         shippingPriceInSubunitsAdditionalItems,
         currency,
         quantity
-      )
-    : null;
-
-  // Add line-item for given delivery method.
-  // Note: by default, pickup considered as free and, therefore, we don't add pickup fee line-item
-  const deliveryLineItem = !!shippingFee
-    ? [
-        {
+      );
+      if (shippingFee) {
+        extraLineItems.push({
           code: 'line-item/shipping-fee',
           unitPrice: shippingFee,
           quantity: 1,
           includeFor: ['customer', 'provider'],
-        },
-      ]
-    : [];
+        });
+      }
+    }
+  }
 
-  return { quantity, extraLineItems: deliveryLineItem };
+  if (isPickup) {
+    // Recolección local con costo opcional. 0 o null = gratis, no agregamos línea.
+    const pickupAmount = Number.isInteger(pickupPriceInSubunits) ? pickupPriceInSubunits : 0;
+    if (pickupAmount > 0) {
+      extraLineItems.push({
+        code: 'line-item/pickup-fee',
+        unitPrice: new Money(pickupAmount, currency),
+        quantity: 1,
+        includeFor: ['customer', 'provider'],
+      });
+    }
+  }
+
+  return { quantity, extraLineItems };
 };
 
 const getOfferQuantityAndLineItems = orderData => {
