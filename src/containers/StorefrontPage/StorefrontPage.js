@@ -12,6 +12,7 @@ import {
 import { selectStorefrontSlug } from '../../ducks/storefrontSubdomain.duck';
 
 import FeaturedListings from '../../components/FeaturedListings/FeaturedListings';
+import VerifiedBand from '../../components/VerifiedBand/VerifiedBand';
 
 import css from './StorefrontPage.module.css';
 
@@ -75,24 +76,6 @@ const IconFacebook = props => (
 const IconWhatsapp = props => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
     <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.09-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2Zm4.36 12.04c-.24-.12-1.41-.7-1.63-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.18-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.01-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.46-.39-.4-.54-.41h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.7 2.6 4.12 3.64.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.41-.58 1.61-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28Z" />
-  </svg>
-);
-
-const IconShield = props => (
-  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
-    <path
-      d="M12 2.5 4.5 5v6.2c0 4.5 3.2 8.5 7.5 10.3 4.3-1.8 7.5-5.8 7.5-10.3V5L12 2.5Z"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinejoin="round"
-    />
-    <path
-      d="m8.5 12 2.4 2.4L15.5 10"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
   </svg>
 );
 
@@ -229,20 +212,11 @@ const StorefrontPageComponent = props => {
         </div>
       </section>
 
-      {/* XOLOLO: sello de confianza — la compra siempre está respaldada por
-          Xololo. Se muestra debajo del hero para que sea lo primero que ve
-          el buyer antes del catálogo. */}
-      <section className={css.trustBadge} aria-label="Compra protegida">
-        <div className={css.trustBadgeInner}>
-          <IconShield className={css.trustBadgeIcon} />
-          <div className={css.trustBadgeText}>
-            <strong className={css.trustBadgeTitle}>Compra protegida por Xololo</strong>
-            <span className={css.trustBadgeSubtitle}>
-              Tu pago está seguro. Si no recibes el producto, te devolvemos tu dinero.
-            </span>
-          </div>
-        </div>
-      </section>
+      {/* XOLOLO: sello de confianza — reutilizamos VerifiedBand del home
+          para que la seña visual sea idéntica en toda la plataforma
+          (mismo layout, mismos íconos, mismo copy "Xololo Verified™"). */}
+      <VerifiedBand />
+
 
       <section id="catalogo" className={css.catalog}>
         {listings?.length ? (
