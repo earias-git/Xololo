@@ -440,39 +440,32 @@
   gap: 12px;
 }
 
+/* XOLOLO: botones de contacto unificados con el color primario del
+   seller. Antes cada red usaba sus colores oficiales (verde WA,
+   gradiente IG, azul FB) — mucho ruido visual. Ahora un solo estilo
+   sólido en color de marca; los íconos outline distinguen la red sin
+   competir por atención. */
 .contactBtnWhatsapp,
 .contactBtnInstagram,
 .contactBtnFacebook {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 22px;
+  padding: 10px 20px;
   border-radius: 999px;
+  background-color: var(--storefront-primary);
+  color: #ffffff;
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.contactBtnWhatsapp {
-  background-color: #25d366;
-  color: #ffffff;
-}
-
-.contactBtnInstagram {
-  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
-  color: #ffffff;
-}
-
-.contactBtnFacebook {
-  background-color: #1877f2;
-  color: #ffffff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
 .contactBtnWhatsapp:hover,
 .contactBtnInstagram:hover,
 .contactBtnFacebook:hover {
   transform: translateY(-1px);
+  filter: brightness(1.08);
   box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.35);
 }
 

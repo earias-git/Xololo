@@ -173,26 +173,44 @@ const buildMapsUrl = address => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clean)}`;
 };
 
-// XOLOLO: iconos SVG estilizados para reemplazar los emojis 📷/💬 que se
-// veían demasiado toscos en el contacto. Todos usan currentColor para
-// heredar el color del botón.
+// XOLOLO: íconos outline uniformes para el bloque de contacto (misma
+// stroke-width y proporciones para que se lean como un set). Todos usan
+// currentColor y heredan el color primario del seller.
 const IconInstagram = props => (
   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
-    <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.8" />
-    <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+    <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.7" />
+    <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" />
     <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" />
   </svg>
 );
 
 const IconFacebook = props => (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
-    <path d="M13.5 21v-7.5h2.5l.4-3H13.5V8.7c0-.87.24-1.46 1.48-1.46h1.58V4.6c-.27-.04-1.2-.11-2.28-.11-2.25 0-3.78 1.37-3.78 3.9v2.1H8v3h2.5V21h3z" />
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+    <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.7" />
+    <path
+      d="M14.5 8.5h-1.2c-.6 0-1 .3-1 1V11h2.2l-.3 2h-1.9v5"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
 const IconWhatsapp = props => (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
-    <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.09-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2Zm4.36 12.04c-.24-.12-1.41-.7-1.63-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.18-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.01-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.46-.39-.4-.54-.41h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.7 2.6 4.12 3.64.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.41-.58 1.61-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28Z" />
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+    <path
+      d="M20.5 12a8.5 8.5 0 1 1-3.6-6.94L20.5 4l-1 3.5A8.5 8.5 0 0 1 20.5 12Z"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-1.9-.9-.9.9c-1-.3-1.9-1.2-2.2-2.2l.9-.9-.9-1.9L9 9.5Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
