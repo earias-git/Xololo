@@ -38,6 +38,27 @@ const TOKEN_REFRESH_MARGIN_MS = 5 * 60 * 1000;
 const MAX_POLL_MS = 25000;
 const POLL_INTERVAL_MS = 1000;
 
+// XOLOLO: política de pricing (ver docs/LOGISTICS_V1.md §5).
+// - SOS Protección Skydropx: $25 MXN fijo por envío, obligatorio siempre.
+// - Utilidad Xololo: 14% sobre el bruto Skydropx (guía + SOS).
+// Fórmula: precio_público = (rate_skydropx + 25) × 1.14
+// Constantes exportadas para poder usarlas también al crear la guía y
+// facturar/desglosar en el ledger interno.
+const SOS_INSURANCE_MXN = 25;
+const XOLOLO_MARGIN_PCT = 0.14;
+
+const applyPricingPolicy = skydropxTotalMXN => {
+  const bruto = Number(skydropxTotalMXN) + SOS_INSURANCE_MXN;
+  const totalPublico = bruto * (1 + XOLOLO_MARGIN_PCT);
+  return {
+    skydropxTotal: Number(skydropxTotalMXN),
+    sosInsurance: SOS_INSURANCE_MXN,
+    skydropxBruto: Number(bruto.toFixed(2)),
+    xololoMargin: Number((bruto * XOLOLO_MARGIN_PCT).toFixed(2)),
+    totalPublico: Number(totalPublico.toFixed(2)),
+  };
+};
+
 class SkydropxAuthError extends Error {
   constructor(msg) {
     super(msg);
@@ -158,18 +179,25 @@ const getQuotationRates = async ({ from, to, parcel }) => {
 
   const successRates = (last.rates || [])
     .filter(r => r.success)
-    .map(r => ({
-      id: r.id,
-      carrier: r.provider_display_name,
-      carrierCode: r.provider_name,
-      service: r.provider_service_name,
-      serviceCode: r.provider_service_code,
-      total: Number(r.total),
-      currency: r.currency_code || 'MXN',
-      days: r.days,
-      pickup: r.pickup,
-      officeDelivery: r.office_delivery,
-    }))
+    .map(r => {
+      // XOLOLO: aplicamos la política de pricing (SOS obligatorio + margen).
+      // El cliente y checkout ven `total` = precio público final.
+      // `pricing` desglosa por si se necesita auditar o mostrar en el UI.
+      const pricing = applyPricingPolicy(Number(r.total));
+      return {
+        id: r.id,
+        carrier: r.provider_display_name,
+        carrierCode: r.provider_name,
+        service: r.provider_service_name,
+        serviceCode: r.provider_service_code,
+        total: pricing.totalPublico,
+        currency: r.currency_code || 'MXN',
+        days: r.days,
+        pickup: r.pickup,
+        officeDelivery: r.office_delivery,
+        pricing,
+      };
+    })
     .sort((a, b) => a.total - b.total);
 
   return { quotationId, rates: successRates };
