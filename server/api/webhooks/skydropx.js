@@ -26,8 +26,20 @@
 
 const crypto = require('crypto');
 const sharetribeSdkIntegration = require('sharetribe-flex-integration-sdk');
+const { sendEventNotifications } = require('../../api-util/notifications');
 
 const AUTH_TOKEN = process.env.SKYDROPX_WEBHOOK_TOKEN;
+
+// XOLOLO: mapa Skydropx status → evento de notificación Xololo.
+// Cada webhook con un cambio de status dispara la notificación
+// correspondiente. Los intermedios (ready_to_pickup, last_mile) se
+// silencian para no saturar al buyer.
+const STATUS_TO_EVENT = {
+  picked_up: 'order.picked_up',
+  in_transit: 'order.in_transit',
+  out_for_delivery: 'order.out_for_delivery',
+  delivered: 'order.delivered',
+};
 
 let integrationSdk = null;
 const getIntegrationSdk = () => {
@@ -202,11 +214,56 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'update_failed' });
   }
 
+  // XOLOLO: dispara notificaciones si el status corresponde a un evento
+  // de nuestra matriz (D.9). Fire-and-forget: no bloqueamos el 200.
+  const notificationEvent = !isDuplicate && STATUS_TO_EVENT[newEvent.status];
+  if (notificationEvent) {
+    try {
+      // Traer buyer + seller + listing para el context. Fallamos silente
+      // si algo no está — las notificaciones no rompen el webhook.
+      const [buyerResp, sellerResp, listingResp] = await Promise.all([
+        sdk.users.show({ id: tx.relationships?.customer?.data?.id?.uuid }),
+        sdk.users.show({ id: tx.relationships?.provider?.data?.id?.uuid }),
+        sdk.listings.show({ id: tx.relationships?.listing?.data?.id?.uuid }),
+      ]);
+      const context = {
+        buyer: {
+          name: buyerResp.data.data.attributes?.profile?.displayName,
+          email: buyerResp.data.data.attributes?.email,
+          whatsapp: buyerResp.data.data.attributes?.profile?.publicData?.whatsapp,
+        },
+        seller: {
+          name: sellerResp.data.data.attributes?.profile?.displayName,
+          email: sellerResp.data.data.attributes?.email,
+          whatsapp: sellerResp.data.data.attributes?.profile?.publicData?.whatsapp,
+        },
+        listing: {
+          title: listingResp.data.data.attributes?.title,
+        },
+        order: {
+          url: `https://xololo.mx/sale/${tx.id.uuid}/details`,
+        },
+        carrier: {
+          name: updatedGuide.carrierName?.toUpperCase(),
+        },
+        tracking: {
+          url: updatedGuide.trackingUrl,
+        },
+      };
+      // No await al await del dispatcher — fire and forget.
+      sendEventNotifications(notificationEvent, context).catch(() => {});
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[webhook skydropx] notifications context failed:', e.message);
+    }
+  }
+
   return res.status(200).json({
     ok: true,
     processed: true,
     duplicate: isDuplicate,
     txId: tx.id.uuid,
     status: newEvent.status,
+    notificationEvent,
   });
 };
