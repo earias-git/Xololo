@@ -36,8 +36,37 @@ const CATEGORY_OPTIONS = new Set([
   'tecnologia', 'mascotas', 'papeleria', 'turismo', 'servicios-pro',
 ]);
 
+// XOLOLO: helpers de dirección estructurada. Cada dirección se guarda
+// como objeto con 5 campos + los checkboxes viven al lado (bool) para
+// que el form recuerde la elección "same as legal" del seller. Ver
+// docs/LOGISTICS_V1.md §1.
+const cleanAddress = raw => {
+  const trim = v => (typeof v === 'string' ? v.trim() : '');
+  const street = trim(raw?.street);
+  const colonia = trim(raw?.colonia);
+  const postalCode = String(raw?.postalCode || '').replace(/[^\d]/g, '').slice(0, 5);
+  const city = trim(raw?.city);
+  const state = trim(raw?.state);
+  // Si TODOS los campos están vacíos, devolvemos null (no persistimos).
+  if (!street && !colonia && !postalCode && !city && !state) return null;
+  return { street, colonia, postalCode, city, state };
+};
+
 const cleanValues = raw => {
   const trim = v => (typeof v === 'string' ? v.trim() : v);
+
+  const legalAddress = cleanAddress(raw.legalAddress);
+  const commercialSameAsLegal = !!raw.commercialSameAsLegal;
+  const pickupSameAsLegal = !!raw.pickupSameAsLegal;
+  const commercialAddress = commercialSameAsLegal
+    ? legalAddress
+    : cleanAddress(raw.commercialAddress);
+  const pickupAddress = pickupSameAsLegal
+    ? legalAddress
+    : cleanAddress(raw.pickupAddress);
+  // El CP de origen (para cotizar Skydropx) se hereda del pickupAddress.
+  const originPostalCode = pickupAddress?.postalCode || legalAddress?.postalCode || null;
+
   const out = {
     slug: trim(raw.slug) || null,
     shortDescription: trim(raw.shortDescription) || null,
@@ -52,10 +81,17 @@ const cleanValues = raw => {
     instagram: trim(raw.instagram)?.replace(/^@/, '') || null,
     facebook: trim(raw.facebook) || null,
     legalName: trim(raw.legalName) || null,
-    address: trim(raw.address) || null,
-    originPostalCode: raw.originPostalCode
-      ? String(raw.originPostalCode).replace(/[^\d]/g, '').slice(0, 5) || null
-      : null,
+    // XOLOLO: 3 direcciones estructuradas (v1 política de logística).
+    legalAddress,
+    commercialAddress,
+    pickupAddress,
+    commercialSameAsLegal,
+    pickupSameAsLegal,
+    pickupReferences: trim(raw.pickupReferences) || null,
+    // El campo original 'address' (string libre) queda deprecado.
+    // Nulificamos para migrar cuentas viejas al nuevo schema.
+    address: null,
+    originPostalCode,
     primaryCategory: CATEGORY_OPTIONS.has(raw.primaryCategory) ? raw.primaryCategory : null,
     showCalendar: raw.showCalendar === 'yes' ? 'yes' : 'no',
   };
@@ -78,6 +114,16 @@ export const ManageStorePageComponent = props => {
   const user = ensureCurrentUser(currentUser);
   const publicData = user.attributes?.profile?.publicData || {};
 
+  // XOLOLO: hidratamos las 3 direcciones. Si la cuenta viene del schema
+  // viejo (solo `address` como string) mostramos el string en el campo
+  // "street" del legal para que el seller lo revise y complete los otros
+  // campos al re-guardar. Es una migración lazy (per-user, no batch).
+  const emptyAddr = { street: '', colonia: '', postalCode: '', city: '', state: '' };
+  const legacyAddressAsStreet =
+    publicData.address && typeof publicData.address === 'string' && !publicData.legalAddress
+      ? { ...emptyAddr, street: publicData.address }
+      : null;
+
   const initialValues = {
     slug: publicData.slug || '',
     shortDescription: publicData.shortDescription || '',
@@ -92,7 +138,22 @@ export const ManageStorePageComponent = props => {
     instagram: publicData.instagram || '',
     facebook: publicData.facebook || '',
     legalName: publicData.legalName || '',
-    address: publicData.address || '',
+    // 3 direcciones estructuradas + checkboxes de auto-rellenar.
+    legalAddress: publicData.legalAddress || legacyAddressAsStreet || { ...emptyAddr },
+    commercialAddress: publicData.commercialAddress || { ...emptyAddr },
+    pickupAddress: publicData.pickupAddress || { ...emptyAddr },
+    // Los flags "same as legal": true por default en cuentas nuevas
+    // (menor fricción). Cuentas existentes conservan lo guardado.
+    commercialSameAsLegal:
+      typeof publicData.commercialSameAsLegal === 'boolean'
+        ? publicData.commercialSameAsLegal
+        : !publicData.commercialAddress,
+    pickupSameAsLegal:
+      typeof publicData.pickupSameAsLegal === 'boolean'
+        ? publicData.pickupSameAsLegal
+        : !publicData.pickupAddress,
+    pickupReferences: publicData.pickupReferences || '',
+    // originPostalCode ya no se captura directo — se hereda del pickupAddress.
     originPostalCode: publicData.originPostalCode || '',
     primaryCategory: publicData.primaryCategory || '',
     showCalendar: publicData.showCalendar === 'yes' ? 'yes' : 'no',

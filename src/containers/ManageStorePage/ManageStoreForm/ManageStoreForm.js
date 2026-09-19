@@ -213,6 +213,60 @@ const SlugPreview = ({ slug }) => {
   );
 };
 
+// XOLOLO: bloque estructurado de dirección (5 campos + título + hint).
+// Se usa 3 veces en el form: legal, comercial, recolección. Los campos
+// son sub-props del name padre (ej. name="legalAddress" → legalAddress.street,
+// legalAddress.colonia, etc.). Final Form maneja objetos anidados nativos.
+const AddressBlock = ({ name, title, hint }) => (
+  <div className={css.addressBlock}>
+    <h4 className={css.addressBlockTitle}>{title}</h4>
+    {hint ? <p className={css.hint}>{hint}</p> : null}
+    <div className={css.addressGrid}>
+      <FieldTextInput
+        className={classNames(css.field, css.addressFieldWide)}
+        type="text"
+        id={`${name}.street`}
+        name={`${name}.street`}
+        label="Calle y número"
+        placeholder="Ej. Av. Insurgentes Sur 1234"
+      />
+      <FieldTextInput
+        className={css.field}
+        type="text"
+        id={`${name}.colonia`}
+        name={`${name}.colonia`}
+        label="Colonia"
+        placeholder="Ej. Del Valle"
+      />
+      <FieldTextInput
+        className={css.field}
+        type="text"
+        id={`${name}.postalCode`}
+        name={`${name}.postalCode`}
+        label="Código postal"
+        placeholder="03100"
+        maxLength={5}
+      />
+      <FieldTextInput
+        className={css.field}
+        type="text"
+        id={`${name}.city`}
+        name={`${name}.city`}
+        label="Ciudad o municipio"
+        placeholder="Ej. Xalapa"
+      />
+      <FieldTextInput
+        className={css.field}
+        type="text"
+        id={`${name}.state`}
+        name={`${name}.state`}
+        label="Estado"
+        placeholder="Ej. Veracruz"
+      />
+    </div>
+  </div>
+);
+
 const ManageStoreForm = props => (
   <FinalForm
     {...props}
@@ -389,7 +443,7 @@ const ManageStoreForm = props => (
           <fieldset className={css.section}>
             <legend className={css.sectionTitle}>
               <span aria-hidden="true" className={css.sectionIcon}>📍</span>
-              Datos legales y ubicación
+              Datos legales y ubicaciones
             </legend>
 
             <FieldTextInput
@@ -402,34 +456,69 @@ const ManageStoreForm = props => (
               maxLength={140}
             />
 
-            <FieldTextInput
-              className={css.field}
-              type="textarea"
-              id="address"
-              name="address"
-              label="Dirección"
-              placeholder="Calle, número, colonia, ciudad, estado, C.P."
-              rows={3}
+            {/* XOLOLO: 3 direcciones — legal (SAT), comercial (storefront)
+                y recolección (Skydropx). Los checkboxes "misma que legal"
+                auto-rellenan al marcarse. Ver docs/LOGISTICS_V1.md §1. */}
+            <AddressBlock
+              name="legalAddress"
+              title="Domicilio legal (SAT)"
+              hint="Debe coincidir con tu Constancia de Situación Fiscal del SAT. Se usa para facturación electrónica."
             />
-            <p className={css.hint}>
-              Aparece en el footer de tu storefront junto con un botón para ver
-              la ubicación en Google Maps.
-            </p>
+
+            <div className={css.addressSameRow}>
+              <Field name="commercialSameAsLegal" type="checkbox">
+                {({ input }) => (
+                  <label className={css.addressSameLabel}>
+                    <input {...input} type="checkbox" />
+                    <span>Mi domicilio comercial es el mismo que el legal</span>
+                  </label>
+                )}
+              </Field>
+            </div>
+            <Field name="commercialSameAsLegal" subscription={{ value: true }}>
+              {({ input: { value: same } }) =>
+                same ? null : (
+                  <AddressBlock
+                    name="commercialAddress"
+                    title="Domicilio comercial"
+                    hint="Dónde opera tu tienda físicamente. Aparece en el footer de tu storefront con botón a Google Maps."
+                  />
+                )
+              }
+            </Field>
+
+            <div className={css.addressSameRow}>
+              <Field name="pickupSameAsLegal" type="checkbox">
+                {({ input }) => (
+                  <label className={css.addressSameLabel}>
+                    <input {...input} type="checkbox" />
+                    <span>El chofer del courier recolecta en mi domicilio legal</span>
+                  </label>
+                )}
+              </Field>
+            </div>
+            <Field name="pickupSameAsLegal" subscription={{ value: true }}>
+              {({ input: { value: same } }) =>
+                same ? null : (
+                  <AddressBlock
+                    name="pickupAddress"
+                    title="Domicilio de recolección"
+                    hint="Desde aquí recoge el courier los paquetes. Puede ser tu bodega o cualquier punto distinto al legal."
+                  />
+                )
+              }
+            </Field>
 
             <FieldTextInput
               className={css.field}
-              type="text"
-              id="originPostalCode"
-              name="originPostalCode"
-              label="Código postal de origen (para envíos)"
-              placeholder="03100"
-              maxLength={5}
+              type="textarea"
+              id="pickupReferences"
+              name="pickupReferences"
+              label="Referencias para el chofer (opcional pero útil)"
+              placeholder="Ej. Portón azul junto a la panadería. Tocar timbre 2. Preguntar por María."
+              rows={2}
+              maxLength={280}
             />
-            <p className={css.hint}>
-              5 dígitos. Es el CP desde donde salen los envíos por paquetería —
-              usa el de tu bodega o tu domicilio si envías desde casa. Se usa
-              solo para cotizar el envío en Skydropx; no se muestra público.
-            </p>
           </fieldset>
 
           <fieldset className={css.section}>

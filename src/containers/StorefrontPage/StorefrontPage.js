@@ -279,10 +279,22 @@ const StorefrontPageComponent = props => {
   const whatsappUrl = buildWhatsAppUrl(pd.whatsapp, seller.displayName);
   const instagramUrl = buildInstagramUrl(pd.instagram);
   const facebookUrl = buildFacebookUrl(pd.facebook);
-  const mapsUrl = buildMapsUrl(pd.address);
   const showCalendar = pd.showCalendar === 'yes';
   const legalName = pd.legalName;
-  const address = pd.address;
+  // XOLOLO: preferimos commercialAddress (v1 estructurado) para el
+  // footer del storefront porque es el "dónde estamos". Fallback a
+  // legalAddress si commercial no está capturado, y a `address`
+  // (string legacy) para cuentas que aún no han migrado.
+  const buildAddressString = a => {
+    if (!a || typeof a !== 'object') return null;
+    const parts = [a.street, a.colonia, a.city, a.state, a.postalCode].filter(Boolean);
+    return parts.length ? parts.join(', ') : null;
+  };
+  const address =
+    buildAddressString(pd.commercialAddress) ||
+    buildAddressString(pd.legalAddress) ||
+    (typeof pd.address === 'string' ? pd.address : null);
+  const mapsUrl = buildMapsUrl(address);
 
   const rootStyle = {
     '--storefront-primary': primary,

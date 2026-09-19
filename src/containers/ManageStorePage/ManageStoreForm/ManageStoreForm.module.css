@@ -254,6 +254,47 @@
   line-height: 1.4;
 }
 
+/* ---------- Bloques de dirección estructurada (D.3) ---------- */
+.addressBlock {
+  margin: 0 0 20px;
+  padding: 16px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 10px;
+  background-color: #fafafa;
+}
+
+.addressBlockTitle {
+  margin: 0 0 4px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+}
+
+.addressGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+  margin-top: 8px;
+}
+
+.addressFieldWide {
+  grid-column: 1 / -1;
+}
+
+.addressSameRow {
+  margin: 4px 0 12px;
+}
+
+.addressSameLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--colorGrey700);
+  cursor: pointer;
+  user-select: none;
+}
+
 /* ---------- Submit / feedback ---------- */
 .submit {
   align-self: flex-start;
