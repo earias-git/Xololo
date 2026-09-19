@@ -21,6 +21,7 @@ const featuredStores = require('./api/featured-stores');
 const uploadStoreImage = require('./api/upload-store-image');
 const shippingQuote = require('./api/shipping-quote');
 const verifyPickupCode = require('./api/verify-pickup-code');
+const generateShippingGuide = require('./api/generate-shipping-guide');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -85,6 +86,14 @@ router.post('/shipping-quote', bodyParser.json(), shippingQuote);
 // intentos fallidos bloquean el código y disparan alerta a Xololo.
 // Ver docs/LOGISTICS_V1.md §8.
 router.post('/verify-pickup-code', bodyParser.json(), verifyPickupCode);
+
+// XOLOLO: generar la guía Skydropx para una transacción "paid". Solo
+// el provider (seller) puede llamarlo, y sólo si:
+//   - modo carrier + rate seleccionado por el buyer
+//   - las 5 fotos SOS están cargadas
+//   - todavía no se ha generado (evita duplicados)
+// Ver docs/LOGISTICS_V1.md §5 + Fase D.5.
+router.post('/generate-shipping-guide', bodyParser.json(), generateShippingGuide);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed
