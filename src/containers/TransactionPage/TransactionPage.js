@@ -49,6 +49,7 @@ import {
   OrderBreakdown,
   OrderPanel,
   LayoutSingleColumn,
+  OrderFulfillmentPanel,
 } from '../../components';
 
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
@@ -982,7 +983,15 @@ export const TransactionPageComponent = props => {
       scrollingDisabled={scrollingDisabled}
     >
       <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
-        <div className={css.root}>{panel}</div>
+        <div className={css.root}>
+          {/* XOLOLO: panel de fulfillment del seller (Fase D.5c).
+              Solo renderea si el user logueado es el PROVIDER y el
+              listing tiene shipping carrier con rate elegido. */}
+          {isProviderRole && isDataAvailable ? (
+            <OrderFulfillmentPanel transaction={transaction} />
+          ) : null}
+          {panel}
+        </div>
         <ReviewModal
           id="ReviewOrderModal"
           isOpen={isReviewModalOpen}
