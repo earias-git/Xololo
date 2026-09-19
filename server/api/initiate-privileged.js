@@ -1,5 +1,14 @@
+const crypto = require('crypto');
 const sharetribeSdk = require('sharetribe-flex-sdk');
 const { transactionLineItems } = require('../api-util/lineItems');
+
+// XOLOLO: código de recolección de 6 dígitos (§8 del LOGISTICS_V1.md).
+// Se genera al momento del initiate REAL de una transacción con
+// deliveryMethod='pickup'. NUNCA lo generamos en speculative (evita
+// gasto y filtrar códigos a un buyer que aún no completa el checkout).
+// crypto.randomInt es criptográficamente seguro; el rango 100000-999999
+// da exactamente 6 dígitos.
+const generatePickupCode = () => String(crypto.randomInt(100000, 1000000));
 const { isIntentionToMakeOffer } = require('../api-util/negotiation');
 const {
   getSdk,
@@ -62,14 +71,34 @@ const getMetadata = (orderData, transition) => {
 //            currency, days} | null,   ← solo si carrier con selección
 //     quotationId: string | null,
 //   }
-const buildXololoShipping = (listing, orderData) => {
+const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
   const publicData = listing?.attributes?.publicData || {};
   const deliveryMethod = orderData?.deliveryMethod;
   const shippingPricingMode = publicData.shippingPricingMode;
   const sellerCoversShipping = !!publicData.sellerCoversShipping;
 
   if (deliveryMethod === 'pickup') {
-    return { mode: 'pickup', sellerCoversShipping: false, rate: null, quotationId: null };
+    // XOLOLO: en el initiate REAL generamos el código de 6 dígitos para
+    // que el buyer lo vea al confirmar la orden. En speculative dejamos
+    // pickupCode como null (no queremos generar códigos por cada
+    // recálculo de breakdown; solo persiste el que va a la transacción
+    // final). Ver docs/LOGISTICS_V1.md §8.
+    const pickupCode = isSpeculative
+      ? null
+      : {
+          code: generatePickupCode(),
+          revealedAt: null, // se marca cuando seller hace "Iniciar entrega"
+          verifiedAt: null, // se marca al validar código correcto
+          attempts: 0,
+          blockedAt: null, // después de 3 intentos fallidos
+        };
+    return {
+      mode: 'pickup',
+      sellerCoversShipping: false,
+      rate: null,
+      quotationId: null,
+      pickupCode,
+    };
   }
   if (deliveryMethod !== 'shipping') {
     return { mode: 'none', sellerCoversShipping: false, rate: null, quotationId: null };
@@ -131,7 +160,7 @@ module.exports = (req, res) => {
       // listing + rate elegida por el buyer. Se persiste en protectedData
       // para que Fase D (fulfillment) tenga la info completa sin re-leer
       // el listing (que puede cambiar entre initiate y capture).
-      xololoShipping = buildXololoShipping(listing, orderData);
+      xololoShipping = buildXololoShipping(listing, orderData, { isSpeculative });
 
       return getTrustedSdk(req);
     })

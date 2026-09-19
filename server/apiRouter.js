@@ -20,6 +20,7 @@ const sellerBySlug = require('./api/seller-by-slug');
 const featuredStores = require('./api/featured-stores');
 const uploadStoreImage = require('./api/upload-store-image');
 const shippingQuote = require('./api/shipping-quote');
+const verifyPickupCode = require('./api/verify-pickup-code');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -78,6 +79,12 @@ router.post('/upload-store-image', uploadStoreImage);
 // y que el seller haya configurado originPostalCode en /account/store.
 // body-parser JSON explícito porque el cliente manda application/json.
 router.post('/shipping-quote', bodyParser.json(), shippingQuote);
+
+// XOLOLO: verificar código de 6 dígitos que el buyer muestra al seller
+// al recoger. Solo el provider de la transacción puede llamarlo. 3
+// intentos fallidos bloquean el código y disparan alerta a Xololo.
+// Ver docs/LOGISTICS_V1.md §8.
+router.post('/verify-pickup-code', bodyParser.json(), verifyPickupCode);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed
