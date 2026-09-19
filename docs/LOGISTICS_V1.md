@@ -234,18 +234,83 @@ Skydropx. No es opcional.
 
 ### Requisito para que el seguro aplique
 
-El seller **debe subir 3 fotos** en el flujo de fulfillment antes
-de que se genere la guía:
+El seller **debe subir 5 fotografías** en el flujo de fulfillment
+antes de que se genere la guía. Los primeros 3 son evidencia
+general de contenido y embalaje; los últimos 2 son los específicos
+que Skydropx exige para reclamos por sobrepesos y daños durante
+transporte:
 
-1. Foto del producto sin embalar
-2. Foto del producto embalado
-3. Foto de la guía adherida al paquete
+1. **Producto sin embalar** — mostrando el artículo tal cual es.
+2. **Producto embalado** — con el material de protección final
+   (cajas, bubble wrap, cinta, etc.).
+3. **Guía adherida al paquete** — donde se lee claramente el
+   tracking number.
+4. **Paquete con regla/flexómetro** mostrando **ancho, alto y
+   largo** de manera clara en el embalaje final. Es la evidencia
+   base para reclamos donde el courier alegue medidas mayores a
+   las declaradas o daños derivados de mala clasificación.
+5. **Paquete en báscula** con el peso legible en pantalla, en su
+   embalaje final. Evidencia clave para reclamos por sobrepeso o
+   pérdida.
 
-Sin estas 3 fotos, la aseguradora puede rechazar reclamos. La UI
-del seller **bloquea** el botón "Generar guía" hasta que las 3
-estén cargadas. Se guardan en R2 bajo
-`orders/{transactionId}/insurance/` y quedan disponibles para
-Stripe Disputes evidence y reclamos SOS.
+Sin las 5 fotos, la aseguradora Skydropx **puede rechazar
+reclamos** — especialmente los de sobrepeso, que son los más
+comunes. La UI del seller **bloquea** el botón "Generar guía"
+hasta que las 5 estén cargadas.
+
+Todas se guardan en R2 bajo
+`orders/{transactionId}/insurance/{01_producto,02_embalado,03_guia,04_medidas,05_peso}.jpg`
+y quedan disponibles para Stripe Disputes evidence y reclamos SOS.
+
+**Guía visual para el seller** (v1 debe incluir):
+
+- Ejemplos "buena vs mala" foto para cada uno de los 5 slots.
+- Instrucciones específicas: "la regla o flexómetro debe verse en
+  la misma toma que el paquete", "el peso en pantalla debe estar
+  legible", etc.
+- Micro-cursillo (~3 min) antes de publicar el primer producto
+  con estas técnicas.
+
+### Proceso de indemnización (Skydropx)
+
+*Referencia visual:*
+- Proceso: [docs/assets/logistics/skydropx-proceso-indemnizacion.jpg](./assets/logistics/skydropx-proceso-indemnizacion.jpg)
+- Fotos: [docs/assets/logistics/skydropx-fotos-evidencia.jpg](./assets/logistics/skydropx-fotos-evidencia.jpg)
+
+Cuando ocurre una incidencia (pérdida, daño, robo, sobrepeso), el
+proceso de reclamo tiene ventana estricta de **48 horas hábiles**
+desde el momento en que se detecta el problema:
+
+**Flujo:**
+
+1. **Inicio de operaciones** — la guía viaja normal.
+2. **Generación de guía** con las 5 fotos cargadas (requisito
+   arriba).
+3. **Incidencia detectada** → Xololo (en nombre del seller) tiene
+   48h para levantar el reporte en Skydropx con:
+   - Tracking number
+   - Carrier
+   - Valor declarado
+   - Contenido del paquete
+   - Las 5 fotos del paso anterior
+4. Skydropx revisa evidencia (~24-72h).
+5. Al autorizarse: cliente envía **factura o nota de venta del
+   producto** + imagen extra si se requiere.
+6. Skydropx paga en máx **5 días hábiles** posteriores a la
+   autorización.
+7. Notificación por correo al liberarse el pago.
+
+**Responsabilidades operativas en Xololo:**
+
+- El sistema debe capturar automáticamente al generar la guía:
+  `contenido` (del listing) y `valor_declarado` (del precio de
+  venta). No confiar en que el seller lo escriba manualmente.
+- Al detectarse una incidencia (via webhook Skydropx o reporte
+  del buyer), el sistema abre un caso interno con todos los
+  metadatos + fotos y le muestra a Xololo un botón "Levantar
+  reclamo en Skydropx" pre-poblado. Cronómetro de 48h visible.
+- Al autorizarse, el sistema pide al seller subir la factura/nota
+  de venta digital para adjuntar al pago.
 
 ### Comunicación (marketing + checkout + onboarding)
 
