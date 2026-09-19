@@ -50,6 +50,7 @@ import {
   OrderPanel,
   LayoutSingleColumn,
   OrderFulfillmentPanel,
+  OrderTimeline,
 } from '../../components';
 
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
@@ -984,6 +985,10 @@ export const TransactionPageComponent = props => {
     >
       <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
         <div className={css.root}>
+          {/* XOLOLO: timeline de la orden (Fase D.7). Visible para ambas
+              partes — cada uno ve el estado en tiempo real alimentado
+              por los eventos del webhook Skydropx (D.6). */}
+          {isDataAvailable ? <OrderTimeline transaction={transaction} /> : null}
           {/* XOLOLO: panel de fulfillment del seller (Fase D.5c).
               Solo renderea si el user logueado es el PROVIDER y el
               listing tiene shipping carrier con rate elegido. */}
