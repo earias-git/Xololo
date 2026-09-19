@@ -24,6 +24,7 @@ const verifyPickupCode = require('./api/verify-pickup-code');
 const generateShippingGuide = require('./api/generate-shipping-guide');
 const uploadSosPhoto = require('./api/upload-sos-photo');
 const skydropxWebhook = require('./api/webhooks/skydropx');
+const orderSurvey = require('./api/order-survey');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -112,6 +113,12 @@ router.post(
   bodyParser.raw({ type: 'application/json', limit: '1mb' }),
   skydropxWebhook
 );
+
+// XOLOLO: encuesta post-entrega del buyer (D.8). Sólo el customer
+// puede llamar; registra su respuesta ("Todo bien" con rating y
+// comentario opcional, o "Algo mal" abre disputa) y persiste
+// xololoAcceptanceProof en la tx.
+router.post('/order-survey', bodyParser.json(), orderSurvey);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

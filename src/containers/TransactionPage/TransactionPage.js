@@ -51,6 +51,7 @@ import {
   LayoutSingleColumn,
   OrderFulfillmentPanel,
   OrderTimeline,
+  PostDeliverySurvey,
 } from '../../components';
 
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
@@ -995,6 +996,25 @@ export const TransactionPageComponent = props => {
           {isProviderRole && isDataAvailable ? (
             <OrderFulfillmentPanel transaction={transaction} />
           ) : null}
+          {/* XOLOLO: encuesta post-entrega del buyer (D.8). Solo para
+              CUSTOMER, cuando la orden ya se entregó (webhook o transición
+              lo dice) y aún no hay review ni disputa registrada. Si el
+              buyer no responde en 48h, el cron aplica afirmativa ficta. */}
+          {isCustomerRole && isDataAvailable && (() => {
+            const meta = transaction?.attributes?.metadata || {};
+            const trackingEvents = meta.xololoShippingTrackingEvents || [];
+            const wasDeliveredByWebhook = trackingEvents.some(e => e.status === 'delivered');
+            const wasDeliveredByTx = (transaction?.attributes?.transitions || [])
+              .some(t => t.transition === 'transition/mark-delivered');
+            const isDelivered = wasDeliveredByWebhook || wasDeliveredByTx;
+            const alreadyAnswered =
+              !!meta.xololoBuyerReview ||
+              !!meta.xololoDispute ||
+              meta.xololoAcceptanceProof?.type === 'tacit';
+            return isDelivered && !alreadyAnswered ? (
+              <PostDeliverySurvey transactionId={transaction.id.uuid} />
+            ) : null;
+          })()}
           {panel}
         </div>
         <ReviewModal

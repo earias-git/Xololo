@@ -370,6 +370,20 @@ const server = app.listen(PORT, () => {
   if (dev) {
     console.log(`Open http://localhost:${PORT}/ and start hacking!\n`); // eslint-disable-line no-console
   }
+
+  // XOLOLO: arranca el cron de afirmativa ficta (Fase D.8). Solo en
+  // producción para no molestar durante desarrollo local. Ver
+  // server/jobs/tacit-acceptance.js y docs/LOGISTICS_V1.md §4.
+  if (!dev) {
+    try {
+      // eslint-disable-next-line global-require
+      const tacitAcceptance = require('./jobs/tacit-acceptance');
+      tacitAcceptance.start();
+      console.log('[xololo] tacit-acceptance job scheduled'); // eslint-disable-line no-console
+    } catch (e) {
+      console.error('[xololo] tacit-acceptance job failed to start:', e.message); // eslint-disable-line no-console
+    }
+  }
 });
 
 // Graceful shutdown:

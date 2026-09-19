@@ -164,4 +164,5 @@ export { default as ShippingRateSelector } from './ShippingRateSelector/Shipping
 export { default as SosPhotosUploader } from './SosPhotosUploader/SosPhotosUploader';
 export { default as OrderFulfillmentPanel } from './OrderFulfillmentPanel/OrderFulfillmentPanel';
 export { default as OrderTimeline } from './OrderTimeline/OrderTimeline';
+export { default as PostDeliverySurvey } from './PostDeliverySurvey/PostDeliverySurvey';
 export { default as ModalMissingInformation } from './ModalMissingInformation/ModalMissingInformation';
