@@ -203,10 +203,91 @@ const getQuotationRates = async ({ from, to, parcel }) => {
   return { quotationId, rates: successRates };
 };
 
+// XOLOLO: crear un envío (generar guía Skydropx). Se llama desde
+// D.5 (UI seller: click en "Generar guía") una vez que:
+//   1. El buyer eligió rate en checkout (rateId + quotationId ya
+//      viven en transaction.protectedData.xololoShipping.rate.id y
+//      .quotationId)
+//   2. El seller cargó las 5 fotos SOS (bloqueado por el botón)
+//   3. El seller confirmó los detalles del paquete
+//
+// Entrada:
+//   {
+//     quotationId, rateId,
+//     addressFrom: {name, street1, street_number, postal_code,
+//                   area_level1, area_level2, area_level3, country_code,
+//                   phone, email, reference}
+//     addressTo:   {name, street1, ..., phone, email}
+//     parcel:      {length, width, height, weight, content}  // cm/kg
+//     declaredValue: number (MXN, para el seguro)
+//     insurance: bool (true en Xololo — SOS obligatorio)
+//     packageType: string (paquete estándar de Skydropx)
+//     consignmentNoteContent: string (contenido del listing)
+//   }
+//
+// Salida esperada Skydropx:
+//   { shipment: { id, tracking_number, label_url, ... }}
+//
+// TODO(D.2 continuación): validar el schema exacto con una prueba
+// real contra sandbox — la Skydropx docs de "Crea un envío" no
+// terminaron de cargar en el browser scrape; los nombres exactos
+// (rate_id vs rate, insurance flag, package_type key) pueden
+// requerir ajuste. Al primer 422 se corrige contra el error
+// devuelto por Skydropx, igual que hicimos con quotations.
+const createShipment = async ({
+  quotationId,
+  rateId,
+  addressFrom,
+  addressTo,
+  parcel,
+  declaredValue,
+  insurance = true,
+  packageType = 'package',
+  consignmentNoteContent,
+}) => {
+  if (!quotationId || !rateId) {
+    throw new SkydropxQuoteError('quotationId y rateId son requeridos.');
+  }
+  const token = await getAccessToken();
+
+  const body = {
+    shipment: {
+      quotation_id: quotationId,
+      rate_id: rateId,
+      address_from: { country_code: 'MX', ...addressFrom },
+      address_to: { country_code: 'MX', ...addressTo },
+      parcel: { ...parcel, package_type: packageType },
+      declared_value: Number(declaredValue),
+      insurance,
+      consignment_note_content: consignmentNoteContent,
+    },
+  };
+
+  const res = await fetch(`https://${HOST}/api/v1/rate/shipments/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new SkydropxQuoteError(
+      `Skydropx rechazó creación de envío (${res.status})`,
+      data?.errors || data
+    );
+  }
+  return data;
+};
+
 module.exports = {
   getAccessToken,
   getQuotationRates,
+  createShipment,
   SkydropxAuthError,
   SkydropxQuoteError,
   SkydropxTimeoutError,
+  SOS_INSURANCE_MXN,
+  XOLOLO_MARGIN_PCT,
 };
