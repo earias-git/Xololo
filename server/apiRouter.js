@@ -23,6 +23,7 @@ const shippingQuote = require('./api/shipping-quote');
 const verifyPickupCode = require('./api/verify-pickup-code');
 const generateShippingGuide = require('./api/generate-shipping-guide');
 const uploadSosPhoto = require('./api/upload-sos-photo');
+const skydropxWebhook = require('./api/webhooks/skydropx');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -100,6 +101,17 @@ router.post('/generate-shipping-guide', bodyParser.json(), generateShippingGuide
 // El seller sube por slot antes de poder generar la guía. Persiste la
 // URL en tx.metadata.xololoShippingSosPhotos vía trustedSdk.
 router.post('/upload-sos-photo', uploadSosPhoto);
+
+// XOLOLO: webhook receiver de Skydropx. Recibe eventos de tracking
+// (packages: in_transit, delivered, in_return, etc), valida token o
+// HMAC-SHA512, busca la transacción por shipmentId, y actualiza
+// metadata.xololoShippingTrackingEvents + xololoShippingGuide.currentStatus.
+// Body-parser RAW porque necesitamos los bytes exactos para el HMAC.
+router.post(
+  '/webhooks/skydropx',
+  bodyParser.raw({ type: 'application/json', limit: '1mb' }),
+  skydropxWebhook
+);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed
