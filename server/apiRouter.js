@@ -22,6 +22,7 @@ const uploadStoreImage = require('./api/upload-store-image');
 const shippingQuote = require('./api/shipping-quote');
 const verifyPickupCode = require('./api/verify-pickup-code');
 const generateShippingGuide = require('./api/generate-shipping-guide');
+const uploadSosPhoto = require('./api/upload-sos-photo');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -94,6 +95,11 @@ router.post('/verify-pickup-code', bodyParser.json(), verifyPickupCode);
 //   - todavía no se ha generado (evita duplicados)
 // Ver docs/LOGISTICS_V1.md §5 + Fase D.5.
 router.post('/generate-shipping-guide', bodyParser.json(), generateShippingGuide);
+
+// XOLOLO: subir una de las 5 fotos SOS de una orden (multipart/form-data).
+// El seller sube por slot antes de poder generar la guía. Persiste la
+// URL en tx.metadata.xololoShippingSosPhotos vía trustedSdk.
+router.post('/upload-sos-photo', uploadSosPhoto);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

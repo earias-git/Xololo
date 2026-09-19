@@ -94,7 +94,11 @@ module.exports = async (req, res) => {
     }
 
     // XOLOLO §5: verificar las 5 fotos SOS antes de generar guía.
-    const sosPhotos = xShipping.sosPhotos || {};
+    // Las fotos las persiste upload-sos-photo.js en
+    // tx.metadata.xololoShippingSosPhotos (metadata en vez de
+    // protectedData para que sólo trustedSdk pueda escribirlas y
+    // el buyer no las pueda modificar).
+    const sosPhotos = tx.attributes.metadata?.xololoShippingSosPhotos || {};
     const requiredSlots = [
       'producto', 'embalado', 'guia', 'medidas', 'peso',
     ];
