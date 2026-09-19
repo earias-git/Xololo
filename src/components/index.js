@@ -161,4 +161,5 @@ export { default as AppBand } from './AppBand/AppBand';
 export { default as FeaturedListings } from './FeaturedListings/FeaturedListings';
 export { default as FeaturedStores } from './FeaturedStores/FeaturedStores';
 export { default as ShippingRateSelector } from './ShippingRateSelector/ShippingRateSelector';
+export { default as SosPhotosUploader } from './SosPhotosUploader/SosPhotosUploader';
 export { default as ModalMissingInformation } from './ModalMissingInformation/ModalMissingInformation';

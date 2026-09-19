@@ -1,0 +1,238 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  width: 100%;
+  padding: 20px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+/* ---------- Header con summary y progreso ---------- */
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  @media (--viewportMedium) {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.summaryTitle {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+}
+
+.summarySubtitle {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--colorGrey500);
+  max-width: 62ch;
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 180px;
+
+  @media (--viewportMedium) {
+    align-items: flex-end;
+  }
+}
+
+.progressCount {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--colorGrey700);
+}
+
+.progressBar {
+  width: 100%;
+  min-width: 160px;
+  height: 8px;
+  border-radius: 999px;
+  background-color: var(--colorGrey50, #f2f2f2);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #34d399 0%, #10b981 100%);
+  transition: width 0.35s ease;
+}
+
+.progressDone {
+  font-size: 12px;
+  font-weight: 700;
+  color: #10b981;
+}
+
+/* ---------- Grid de slots ---------- */
+.slotsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (--viewportLarge) {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* ---------- Slot individual ---------- */
+.slot {
+  padding: 14px;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: 10px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.slot:hover {
+  border-color: var(--colorGrey300);
+}
+
+.slotDone {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.slotCritical {
+  border-left: 4px solid #ea580c;
+}
+
+.slotHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.slotTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+  line-height: 1.25;
+}
+
+.slotBadgeDone {
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  white-space: nowrap;
+}
+
+.slotHint {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--colorGrey500);
+}
+
+.uploadBtn,
+.replaceBtn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1.5px dashed var(--colorGrey300);
+  background-color: #fafafa;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--colorGrey700);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.uploadBtn:hover,
+.replaceBtn:hover {
+  background-color: #f3f4f6;
+  border-color: var(--marketplaceColor, #6bcb8c);
+  color: var(--marketplaceColor, #6bcb8c);
+}
+
+.uploadBtn:disabled,
+.replaceBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.replaceBtn {
+  border-style: solid;
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.previewImg {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: #f3f4f6;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.tipsToggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--marketplaceColor, #1f8f52);
+  cursor: pointer;
+  text-align: left;
+}
+
+.tips {
+  padding: 8px 10px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border-left: 3px solid var(--colorGrey100);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.tipGood {
+  margin: 0 0 4px;
+  color: #059669;
+}
+
+.tipBad {
+  margin: 0;
+  color: #b91c1c;
+}
+
+.error {
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: #991b1b;
+}
