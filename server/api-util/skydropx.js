@@ -203,67 +203,106 @@ const getQuotationRates = async ({ from, to, parcel }) => {
   return { quotationId, rates: successRates };
 };
 
+// XOLOLO: defaults SAT Carta Porte + tipo de empaque cuando el listing
+// no los define. Skydropx exige ambos por paquete y sólo acepta códigos
+// de su catálogo (48,962 códigos SAT en 2449 páginas — no es libre).
+// Para v1 usamos códigos genéricos aceptados:
+//   4G       = Caja de cartón (el más común)
+//   60122500 = Manualidades de papel y papel artesanal (fallback para
+//              productos generales; funciona para mayoría de artesanías,
+//              regalos, souvenirs, hogar).
+// TODO v2: mapeo curado categoría-listing → código SAT, en
+// docs/consignment-note-catalog.md. El seller no debería tener que
+// elegirlo manual.
+const DEFAULT_PACKAGE_TYPE = '4G';
+const DEFAULT_CONSIGNMENT_NOTE = '60122500';
+
 // XOLOLO: crear un envío (generar guía Skydropx). Se llama desde
-// D.5 (UI seller: click en "Generar guía") una vez que:
-//   1. El buyer eligió rate en checkout (rateId + quotationId ya
-//      viven en transaction.protectedData.xololoShipping.rate.id y
-//      .quotationId)
+// D.5 (UI seller "Generar guía") cuando:
+//   1. El buyer ya eligió rate en checkout (viven en
+//      transaction.protectedData.xololoShipping.rate.id y quotationId)
 //   2. El seller cargó las 5 fotos SOS (bloqueado por el botón)
-//   3. El seller confirmó los detalles del paquete
+//   3. El seller confirmó detalles del paquete
 //
-// Entrada:
+// Endpoint: POST /api/v1/shipments
+// Body wrapper "shipment" en el root; rate_id es todo lo que se necesita
+// del rate (quotation_id se deriva del rate). Campos requeridos:
+// address_from + address_to con street1, name, company, phone, email, reference;
+// packages[] con package_type, consignment_note y package_protected.
+// Descubierto navegando la docs "Crea un envío" en sb-pro.skydropx.com.
+//
+// Entrada helper:
 //   {
-//     quotationId, rateId,
-//     addressFrom: {name, street1, street_number, postal_code,
-//                   area_level1, area_level2, area_level3, country_code,
-//                   phone, email, reference}
-//     addressTo:   {name, street1, ..., phone, email}
-//     parcel:      {length, width, height, weight, content}  // cm/kg
-//     declaredValue: number (MXN, para el seguro)
-//     insurance: bool (true en Xololo — SOS obligatorio)
-//     packageType: string (paquete estándar de Skydropx)
-//     consignmentNoteContent: string (contenido del listing)
+//     rateId, quotationId (opcional; sirve como referencia interna),
+//     addressFrom: {street1, name, company, phone, email, reference,
+//                   postal_code, area_level1, area_level2, area_level3,
+//                   further_information?, tax_id_number?}
+//     addressTo:   { ... mismos que from }
+//     parcels: [{length, width, height, weight}]  // cm y kg — array porque Skydropx soporta multi
+//     declaredValue: number MXN (para SOS)
+//     insurance: bool (true default — SOS obligatorio por política)
+//     packageType: código SAT (default '4G' = caja de cartón)
+//     consignmentNote: código Carta Porte (default '50000000')
+//     consignmentNoteContent: descripción del contenido
+//     autoAdvance: bool (default true en sandbox — simula tracking auto
+//                        para probar el webhook D.6 sin esperar al carrier)
+//     printingFormat: 'standard' | 'thermal' (default 'standard')
 //   }
-//
-// Salida esperada Skydropx:
-//   { shipment: { id, tracking_number, label_url, ... }}
-//
-// TODO(D.2 continuación): validar el schema exacto con una prueba
-// real contra sandbox — la Skydropx docs de "Crea un envío" no
-// terminaron de cargar en el browser scrape; los nombres exactos
-// (rate_id vs rate, insurance flag, package_type key) pueden
-// requerir ajuste. Al primer 422 se corrige contra el error
-// devuelto por Skydropx, igual que hicimos con quotations.
 const createShipment = async ({
-  quotationId,
   rateId,
+  quotationId, // solo para logging/traceabilidad, no se envía a Skydropx
   addressFrom,
   addressTo,
-  parcel,
+  parcels,
   declaredValue,
   insurance = true,
-  packageType = 'package',
+  packageType = DEFAULT_PACKAGE_TYPE,
+  consignmentNote = DEFAULT_CONSIGNMENT_NOTE,
   consignmentNoteContent,
+  autoAdvance,
+  printingFormat = 'standard',
 }) => {
-  if (!quotationId || !rateId) {
-    throw new SkydropxQuoteError('quotationId y rateId son requeridos.');
+  if (!rateId) {
+    throw new SkydropxQuoteError('rateId es requerido.');
+  }
+  if (!Array.isArray(parcels) || parcels.length === 0) {
+    throw new SkydropxQuoteError('parcels debe ser un array con al menos un paquete.');
   }
   const token = await getAccessToken();
 
+  // auto_advance simula la progresión tracking en sandbox; en prod se
+  // ignora. Default: true si SKYDROPX_ENV=sandbox, false si producción.
+  const isSandbox = (process.env.SKYDROPX_ENV || 'sandbox') === 'sandbox';
+  const shouldAutoAdvance = typeof autoAdvance === 'boolean' ? autoAdvance : isSandbox;
+
+  const packagesPayload = parcels.map((p, idx) => ({
+    package_number: String(idx + 1),
+    length: Number(p.length),
+    width: Number(p.width),
+    height: Number(p.height),
+    weight: Number(p.weight),
+    package_type: packageType,
+    consignment_note: consignmentNote,
+    // El seguro va POR PAQUETE en Skydropx, no global.
+    package_protected: insurance,
+    declared_value: Number(declaredValue),
+    content: consignmentNoteContent,
+  }));
+
   const body = {
     shipment: {
-      quotation_id: quotationId,
       rate_id: rateId,
+      unique_shipment: true, // evita duplicados en reintentos (cache 96h)
+      auto_advance: shouldAutoAdvance,
+      printing_format: printingFormat,
+      include_order_detail: true, // genera packing slip también (útil para el seller)
       address_from: { country_code: 'MX', ...addressFrom },
       address_to: { country_code: 'MX', ...addressTo },
-      parcel: { ...parcel, package_type: packageType },
-      declared_value: Number(declaredValue),
-      insurance,
-      consignment_note_content: consignmentNoteContent,
+      packages: packagesPayload,
     },
   };
 
-  const res = await fetch(`https://${HOST}/api/v1/rate/shipments/`, {
+  const res = await fetch(`https://${HOST}/api/v1/shipments`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -281,10 +320,48 @@ const createShipment = async ({
   return data;
 };
 
+// XOLOLO: consultar un envío por id. La label_url se genera async
+// después de crear el shipment, así que este helper hace polling hasta
+// que aparezca (o hasta timeout). Se usa desde D.5 después de crear
+// la guía para darle al seller el link del PDF que va a imprimir.
+const getShipment = async (shipmentId, { poll = false, maxPollMs = 15000 } = {}) => {
+  if (!shipmentId) throw new SkydropxQuoteError('shipmentId requerido.');
+  const token = await getAccessToken();
+
+  const fetchOnce = async () => {
+    const r = await fetch(`https://${HOST}/api/v1/shipments/${shipmentId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const d = await r.json().catch(() => null);
+    if (!r.ok) throw new SkydropxQuoteError(`GET shipment falló (${r.status})`, d);
+    return d;
+  };
+
+  if (!poll) return fetchOnce();
+
+  const start = Date.now();
+  while (Date.now() - start < maxPollMs) {
+    const data = await fetchOnce();
+    // Buscar label_url en la data + included (Skydropx retorna
+    // JSON:API-style con paquetes en `included`).
+    const shipmentAttrs = data?.data?.attributes || {};
+    const pkgs = (data?.included || []).filter(i => i.type === 'package');
+    const labelReady =
+      shipmentAttrs.label_url ||
+      pkgs.some(p => p.attributes?.label_url);
+    if (labelReady) return data;
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  throw new SkydropxTimeoutError(
+    `label_url no disponible después de ${maxPollMs}ms para shipment ${shipmentId}`
+  );
+};
+
 module.exports = {
   getAccessToken,
   getQuotationRates,
   createShipment,
+  getShipment,
   SkydropxAuthError,
   SkydropxQuoteError,
   SkydropxTimeoutError,
