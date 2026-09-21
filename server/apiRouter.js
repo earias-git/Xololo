@@ -25,6 +25,7 @@ const generateShippingGuide = require('./api/generate-shipping-guide');
 const uploadSosPhoto = require('./api/upload-sos-photo');
 const skydropxWebhook = require('./api/webhooks/skydropx');
 const orderSurvey = require('./api/order-survey');
+const notificationSmokeTest = require('./api/notification-smoke-test');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -119,6 +120,10 @@ router.post(
 // comentario opcional, o "Algo mal" abre disputa) y persiste
 // xololoAcceptanceProof en la tx.
 router.post('/order-survey', bodyParser.json(), orderSurvey);
+
+// XOLOLO: endpoint TEMPORAL para smoke-testear el email dispatcher.
+// Requiere NOTIFICATION_SMOKE_TOKEN. Borrar cuando validemos el flow.
+router.post('/notification-smoke-test', bodyParser.json(), notificationSmokeTest);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed
