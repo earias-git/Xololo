@@ -1,0 +1,119 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  padding: 18px;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: 12px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--colorGrey900);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--colorGrey500);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.qtyGroup {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.qtyBtn {
+  width: 34px;
+  padding: 8px 0;
+  border: none;
+  background-color: #f9fafb;
+  color: var(--colorGrey700);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.qtyBtn:hover {
+  background-color: #e5e7eb;
+}
+
+.qtyInput {
+  width: 44px;
+  text-align: center;
+  border: none;
+  border-left: 1.5px solid var(--colorGrey100);
+  border-right: 1.5px solid var(--colorGrey100);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+  background-color: #ffffff;
+  padding: 0;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.qtyInput::-webkit-outer-spin-button,
+.qtyInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.addBtn {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: none;
+  background-color: var(--marketplaceColor, #1f8f52);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, filter 0.15s, background-color 0.25s;
+}
+
+.addBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.addBtnAdded {
+  background-color: #10b981;
+}
+
+.hint {
+  margin: 0;
+  padding: 8px 12px;
+  background-color: color-mix(in srgb, var(--marketplaceColor, #1f8f52) 6%, #ffffff);
+  border-left: 3px solid var(--marketplaceColor, #1f8f52);
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--colorGrey700);
+  line-height: 1.45;
+}
