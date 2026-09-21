@@ -16,7 +16,10 @@
 
 const XOLOLO_PRIMARY = '#232d40';
 const XOLOLO_BRAND_HREF = 'https://xololo.mx';
-const XOLOLO_LOGO_URL = 'https://media.xololo.mx/xololo-logo-email.png';
+// XOLOLO: logo servido desde public/static/xololo-logo-email.png (516x96,
+// PNG con fondo transparente). Sharetribe expone /static como directorio
+// estático desde el server (ver server/index.js express.static).
+const XOLOLO_LOGO_URL = 'https://xololo.mx/static/xololo-logo-email.png';
 
 // Escapa HTML para inyectar strings de forma segura.
 const esc = str =>
@@ -40,25 +43,21 @@ const textToHtml = txt =>
 const sellerHeader = ({ seller }) => {
   const brandColor = seller?.primaryColor || XOLOLO_PRIMARY;
   const sellerUrl = seller?.slug ? `https://${seller.slug}.xololo.mx` : XOLOLO_BRAND_HREF;
+  const sellerLogoImg = seller?.logoUrl
+    ? `<img src="${esc(seller.logoUrl)}" alt="${esc(seller?.name || 'Tienda')}" width="200" style="max-height: 60px; max-width: 200px; height: auto; display: block; border: 0;" />`
+    : `<span style="color: ${esc(brandColor)}; font-size: 22px; font-weight: 800; letter-spacing: -0.01em;">${esc(seller?.name || 'Tienda')}</span>`;
+
   return `
     <div style="background: #ffffff; border-bottom: 4px solid ${esc(brandColor)}; padding: 24px 32px; text-align: left;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="vertical-align: middle;">
-            ${
-              seller?.logoUrl
-                ? `<a href="${esc(sellerUrl)}" style="text-decoration: none;"><img src="${esc(
-                    seller.logoUrl
-                  )}" alt="${esc(seller?.name || 'Tienda')}" style="max-height: 60px; max-width: 200px; display: block;" /></a>`
-                : `<a href="${esc(sellerUrl)}" style="text-decoration: none; color: ${esc(
-                    brandColor
-                  )}; font-size: 22px; font-weight: 800; letter-spacing: -0.01em;">${esc(seller?.name || 'Tienda')}</a>`
-            }
+            <a href="${esc(sellerUrl)}" style="text-decoration: none;">${sellerLogoImg}</a>
           </td>
           <td style="vertical-align: middle; text-align: right;">
-            <a href="${XOLOLO_BRAND_HREF}" style="text-decoration: none; display: inline-block; padding: 4px 10px; background-color: #f3f4f6; color: #232d40; font-size: 11px; border-radius: 999px;">
-              <span style="color: #6b7280;">Powered by</span>
-              <strong style="color: #232d40; margin-left: 4px;">Xololo</strong>
+            <a href="${XOLOLO_BRAND_HREF}" style="text-decoration: none; display: inline-block; padding: 6px 12px; background-color: #f3f4f6; border-radius: 999px; line-height: 1;">
+              <span style="color: #6b7280; font-size: 10px; margin-right: 6px; vertical-align: middle;">Powered by</span>
+              <img src="${XOLOLO_LOGO_URL}" alt="Xololo" height="16" style="height: 16px; width: auto; vertical-align: middle; border: 0;" />
             </a>
           </td>
         </tr>
@@ -67,11 +66,12 @@ const sellerHeader = ({ seller }) => {
   `;
 };
 
-// Header sólo Xololo (para emails al seller)
+// Header sólo Xololo (para emails al seller). Fondo blanco con border
+// bottom navy — evita el problema de logos color sobre fondo dark.
 const xololoHeader = () => `
-  <div style="background: ${XOLOLO_PRIMARY}; padding: 24px 32px; text-align: left;">
-    <a href="${XOLOLO_BRAND_HREF}" style="text-decoration: none; color: #ffffff; font-size: 24px; font-weight: 800; letter-spacing: -0.01em;">
-      Xololo<sup style="font-size: 10px; vertical-align: super;">®</sup>
+  <div style="background: #ffffff; border-bottom: 4px solid ${XOLOLO_PRIMARY}; padding: 22px 32px; text-align: left;">
+    <a href="${XOLOLO_BRAND_HREF}" style="text-decoration: none; display: inline-block;">
+      <img src="${XOLOLO_LOGO_URL}" alt="Xololo" height="42" style="height: 42px; width: auto; display: block; border: 0;" />
     </a>
   </div>
 `;
@@ -86,11 +86,13 @@ const xololoFooter = () => `
       Todos los envíos incluyen SOS Protección Skydropx: si no recibes<br />
       el producto o llega dañado, te devolvemos tu dinero.
     </p>
-    <p style="margin: 0; font-size: 11px; color: rgba(223, 228, 238, 0.6);">
-      <a href="${XOLOLO_BRAND_HREF}" style="color: #ffffff; text-decoration: none; font-weight: 700;">
-        Xololo<sup style="font-size: 8px;">®</sup>
+    <p style="margin: 0 0 8px;">
+      <a href="${XOLOLO_BRAND_HREF}" style="text-decoration: none; display: inline-block;">
+        <img src="${XOLOLO_LOGO_URL}" alt="Xololo" height="24" style="height: 24px; width: auto; display: inline-block; border: 0; opacity: 0.9;" />
       </a>
-      &middot; Marca registrada &middot; Único sitio oficial:
+    </p>
+    <p style="margin: 0; font-size: 11px; color: rgba(223, 228, 238, 0.6);">
+      Marca registrada &middot; Único sitio oficial:
       <a href="${XOLOLO_BRAND_HREF}" style="color: rgba(223, 228, 238, 0.85); text-decoration: none;">xololo.mx</a>
     </p>
   </div>
