@@ -226,6 +226,7 @@ module.exports = async (req, res) => {
         sdk.users.show({ id: tx.relationships?.provider?.data?.id?.uuid }),
         sdk.listings.show({ id: tx.relationships?.listing?.data?.id?.uuid }),
       ]);
+      const sellerPd = sellerResp.data.data.attributes?.profile?.publicData || {};
       const context = {
         buyer: {
           name: buyerResp.data.data.attributes?.profile?.displayName,
@@ -235,7 +236,14 @@ module.exports = async (req, res) => {
         seller: {
           name: sellerResp.data.data.attributes?.profile?.displayName,
           email: sellerResp.data.data.attributes?.email,
-          whatsapp: sellerResp.data.data.attributes?.profile?.publicData?.whatsapp,
+          whatsapp: sellerPd.whatsapp,
+          // XOLOLO email branding: pasamos logo + colores del seller para
+          // que los emails al BUYER usen dual-brand (seller header +
+          // Xololo footer). Ver server/api-util/notifications/emailTemplates.js.
+          logoUrl: sellerPd.logoUrl,
+          primaryColor: sellerPd.brandPrimaryColor,
+          secondaryColor: sellerPd.brandSecondaryColor,
+          slug: sellerPd.slug,
         },
         listing: {
           title: listingResp.data.data.attributes?.title,

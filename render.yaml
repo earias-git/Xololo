@@ -70,3 +70,14 @@ services:
       # en el dashboard de Skydropx > Conexiones > Webhooks.
       - key: SKYDROPX_WEBHOOK_TOKEN
         sync: false
+      # XOLOLO: Resend para emails dual-brand (D.9 + email branding).
+      # Requiere validar dominio xololo.mx en Resend dashboard antes de
+      # que los emails salgan sin caer en spam.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM_NAME
+        value: Xololo
+      - key: EMAIL_FROM_ADDRESS
+        value: noreply@xololo.mx
+      - key: EMAIL_REPLY_TO
+        value: soporte@xololo.mx
