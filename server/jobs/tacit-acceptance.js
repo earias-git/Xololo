@@ -95,12 +95,31 @@ const runTick = async () => {
           id: tx.id.uuid,
           metadata: { xololoAcceptanceProof: acceptanceProof },
         });
+        // XOLOLO: además del metadata, disparamos la transición
+        // AUTO_MARK_RECEIVED del proceso Sharetribe. Sin esto la tx
+        // se queda estancada en DELIVERED (ya no hay botón manual).
+        // Usamos AUTO_ para diferenciar del MARK_RECEIVED explícito
+        // del buyer y dejar rastro en el ActivityFeed de que fue
+        // afirmativa ficta.
+        try {
+          await sdk.transactions.transition({
+            id: tx.id.uuid,
+            transition: 'transition/auto-mark-received',
+            params: {},
+          });
+        } catch (transitionErr) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[tacit-acceptance] transition auto-mark-received falló para tx ${tx.id.uuid}:`,
+            transitionErr?.data?.errors || transitionErr?.message
+          );
+        }
         processed += 1;
         // eslint-disable-next-line no-console
         console.log(
           `[tacit-acceptance] ✓ tx ${tx.id.uuid} entregada ${new Date(
             deliveredAt
-          ).toISOString()} → afirmativa ficta aplicada`
+          ).toISOString()} → afirmativa ficta aplicada + tx transicionada`
         );
       } catch (e) {
         // eslint-disable-next-line no-console

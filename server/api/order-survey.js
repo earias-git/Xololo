@@ -124,6 +124,27 @@ module.exports = async (req, res) => {
           xololoAcceptanceProof: acceptanceProof,
         },
       });
+
+      // XOLOLO: además de guardar la evidencia, disparamos la transición
+      // MARK_RECEIVED del proceso Sharetribe para avanzar la orden. Sin
+      // esto la tx queda estancada en DELIVERED — no hay botón "Recibí"
+      // manual del buyer (ver stateDataPurchase.js). Fallamos silente si
+      // la transición no aplica (state ya cambiado, etc.) porque la
+      // review ya se guardó y es lo importante.
+      try {
+        await trustedSdk.transactions.transition({
+          id: transactionId,
+          transition: 'transition/mark-received',
+          params: {},
+        });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[order-survey] transition mark-received falló para ${transactionId}:`,
+          e?.data?.errors || e?.message
+        );
+      }
+
       return res.json({ ok: true, outcome: 'good', acceptanceProof });
     }
 

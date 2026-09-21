@@ -42,13 +42,19 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
       return { processName, processState, showDetailCardHeadings: true };
     })
     .cond([states.PURCHASED, CUSTOMER], () => {
+      // XOLOLO: NO mostramos el botón "Recibí mi pedido" al buyer.
+      // La entrega se confirma por 2 vías automáticas:
+      //   1. Webhook Skydropx con status='delivered' (paquetería)
+      //   2. Código de 6 dígitos que el buyer muestra al chofer/seller
+      //      en modo pickup (endpoint /api/verify-pickup-code)
+      // Cuando cualquiera dispara, el cron tacit-acceptance transiciona
+      // AUTO_MARK_RECEIVED tras 48h si el buyer no respondió encuesta.
       return {
         processName,
         processState,
         showDetailCardHeadings: true,
-        showActionButtons: true,
         showExtraInfo: true,
-        primaryButtonProps: actionButtonProps(transitions.MARK_RECEIVED_FROM_PURCHASED, CUSTOMER),
+        // showActionButtons + primaryButtonProps omitidos a propósito
       };
     })
     .cond([states.PURCHASED, PROVIDER], () => {
@@ -67,13 +73,19 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
       };
     })
     .cond([states.DELIVERED, CUSTOMER], () => {
+      // XOLOLO: en estado DELIVERED, la acción del buyer es responder
+      // la encuesta post-entrega (componente PostDeliverySurvey ya en
+      // TransactionPage). Ese endpoint dispara MARK_RECEIVED cuando
+      // outcome='good', o abre disputa cuando outcome='bad'. No hay
+      // botón "Recibí" — la encuesta lo reemplaza.
+      // Si el buyer no responde en 48h, cron tacit-acceptance dispara
+      // AUTO_MARK_RECEIVED.
       return {
         processName,
         processState,
         showDetailCardHeadings: true,
         showDispute: true,
-        showActionButtons: true,
-        primaryButtonProps: actionButtonProps(transitions.MARK_RECEIVED, CUSTOMER),
+        // showActionButtons + primaryButtonProps omitidos a propósito
       };
     })
     .cond([states.COMPLETED, _], () => {
