@@ -36,6 +36,7 @@ import * as log from './util/log';
 
 // Import relevant global duck files
 import { authInfo } from './ducks/auth.duck';
+import { hydrateFromStorage as hydrateCartFromStorage } from './ducks/cart.duck';
 import { fetchAppAssets } from './ducks/hostedAssets.duck';
 import { fetchCurrentUser } from './ducks/user.duck';
 
@@ -52,6 +53,11 @@ const render = (store, shouldHydrate) => {
   const cdnAssetsVersion = state.hostedAssets.version;
   const authInfoLoaded = state.auth.authInfoLoaded;
   const info = authInfoLoaded ? Promise.resolve({}) : store.dispatch(authInfo());
+
+  // XOLOLO: hidrata el carrito multi-item desde localStorage (Cart.1).
+  // Se hace ANTES del hydrate de React para que la UI vea los items al
+  // renderizar (evita flash de "carrito vacío" seguido de items).
+  store.dispatch(hydrateCartFromStorage());
 
   info
     .then(() => {
