@@ -1,0 +1,159 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  min-height: 100vh;
+  background-color: #f7f4ee;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Header con logo del seller ---------- */
+.header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e6e1d6;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  @media (--viewportMedium) {
+    padding: 16px 40px;
+  }
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo {
+  height: 44px;
+  max-height: 44px;
+  width: auto;
+  display: block;
+
+  @media (--viewportMedium) {
+    height: 72px;
+    max-height: 72px;
+  }
+}
+
+.brandFallback {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--xololo-brand-primary, var(--marketplaceColor));
+  letter-spacing: 0.01em;
+
+  @media (--viewportMedium) {
+    font-size: 22px;
+  }
+}
+
+.poweredBy {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  text-decoration: none;
+  color: var(--colorGrey500);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: #f3f4f6;
+  transition: background-color 0.15s ease;
+
+  @media (--viewportMedium) {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+}
+
+.poweredBy:hover {
+  background-color: #e5e7eb;
+}
+
+.poweredByLabel {
+  color: var(--colorGrey500);
+}
+
+.poweredByBrand {
+  color: #232d40;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Content ---------- */
+.content {
+  flex: 1;
+  width: 100%;
+}
+
+/* ---------- Footer compact con benefits ---------- */
+.footer {
+  background-color: #232d40;
+  color: #dfe4ee;
+  padding: 22px 20px;
+  margin-top: auto;
+
+  @media (--viewportMedium) {
+    padding: 28px 40px;
+  }
+}
+
+.footerInner {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: 1fr 2fr;
+    gap: 32px;
+    align-items: center;
+  }
+}
+
+.footerCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.footerBrand {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.footerBrand sup {
+  font-size: 10px;
+  vertical-align: super;
+  margin-left: 1px;
+}
+
+.footerTag {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(223, 228, 238, 0.75);
+  line-height: 1.4;
+}
+
+.footerBenefit {
+  margin: 0;
+  font-size: 14px;
+  color: #ffffff;
+  line-height: 1.4;
+}
+
+.footerBenefitSub {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: rgba(223, 228, 238, 0.75);
+  line-height: 1.45;
+}

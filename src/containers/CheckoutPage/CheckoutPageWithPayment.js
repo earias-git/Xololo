@@ -21,7 +21,15 @@ import {
 } from '../../transactions/transaction';
 
 // Import shared components
-import { H3, H4, NamedLink, OrderBreakdown, Page, TopbarSimplified } from '../../components';
+import {
+  H3,
+  H4,
+  NamedLink,
+  OrderBreakdown,
+  Page,
+  TopbarSimplified,
+  SellerBrandFrame,
+} from '../../components';
 
 import {
   bookingDatesMaybe,
@@ -600,9 +608,18 @@ export const CheckoutPageWithPayment = props => {
     );
   }
 
+  // XOLOLO: aplicar branding del seller en el checkout. Si el listing
+  // tiene author (seller) con brandPrimaryColor definido, todo el
+  // checkout adopta sus colores + logo grande arriba + footer con
+  // mensajes de compra protegida. TopbarSimplified corporativo de
+  // Xololo solo aparece cuando el seller no tiene branding.
+  const sellerHasBranding =
+    !!listing?.author?.attributes?.profile?.publicData?.brandPrimaryColor;
+
   return (
     <Page title={title} scrollingDisabled={scrollingDisabled}>
-      <TopbarSimplified />
+      <SellerBrandFrame seller={listing?.author}>
+      {sellerHasBranding ? null : <TopbarSimplified />}
       <div className={css.contentContainer}>
         <MobileListingImage
           listingTitle={listingTitle}
@@ -697,6 +714,7 @@ export const CheckoutPageWithPayment = props => {
           intl={intl}
         />
       </div>
+      </SellerBrandFrame>
     </Page>
   );
 };

@@ -52,6 +52,7 @@ import {
   OrderFulfillmentPanel,
   OrderTimeline,
   PostDeliverySurvey,
+  SellerBrandFrame,
 } from '../../components';
 
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
@@ -984,7 +985,27 @@ export const TransactionPageComponent = props => {
       )}
       scrollingDisabled={scrollingDisabled}
     >
-      <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
+      {/* XOLOLO: cuando el user está viendo una TransactionPage, todo el
+          contexto es "esta compra en la tienda de <seller>". Por eso el
+          branding manda del seller — su logo grande, sus colores. El
+          SellerBrandFrame envuelve con su propio header (logo seller +
+          "Powered by Xololo") y footer (mensajes de compra protegida).
+          Cuando el seller no tiene branding configurado, SellerBrandFrame
+          se hace transparente y renderea sólo children — ahí sí LayoutSingleColumn
+          aporta el topbar/footer corporate de Xololo. */}
+      <SellerBrandFrame seller={provider}>
+      <LayoutSingleColumn
+        topbar={
+          provider?.attributes?.profile?.publicData?.brandPrimaryColor
+            ? null
+            : <TopbarContainer />
+        }
+        footer={
+          provider?.attributes?.profile?.publicData?.brandPrimaryColor
+            ? null
+            : <FooterContainer />
+        }
+      >
         <div className={css.root}>
           {/* XOLOLO: timeline de la orden (Fase D.7). Visible para ambas
               partes — cada uno ve el estado en tiempo real alimentado
@@ -1095,6 +1116,7 @@ export const TransactionPageComponent = props => {
           />
         ) : null}
       </LayoutSingleColumn>
+      </SellerBrandFrame>
     </Page>
   );
 };
