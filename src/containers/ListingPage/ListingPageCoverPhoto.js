@@ -23,6 +23,7 @@ import {
   OrderPanel,
   LayoutSingleColumn,
   SectionText,
+  AddToCartCta,
 } from '../../components';
 
 // Related components and modules
@@ -361,6 +362,17 @@ export const ListingPageComponent = props => {
               marketplaceName={config.marketplaceName}
               showListingImage={showListingImage}
             />
+            {/* XOLOLO: Cart.2b — botón "Agregar al carrito" abajo del
+                OrderPanel para consolidar productos del mismo seller. */}
+            {!isOwnListing ? (
+              <AddToCartCta
+                listing={currentListing}
+                author={ensuredAuthor}
+                imageUrl={
+                  currentListing?.images?.[0]?.attributes?.variants?.['listing-card']?.url
+                }
+              />
+            ) : null}
           </div>
         </div>
       </LayoutSingleColumn>

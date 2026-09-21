@@ -23,6 +23,7 @@ import {
   OrderPanel,
   LayoutSingleColumn,
   SectionText,
+  AddToCartCta,
 } from '../../components';
 
 // Related components and modules
@@ -337,6 +338,22 @@ export const ListingPageComponent = props => {
               marketplaceName={config.marketplaceName}
               showListingImage={showListingImage}
             />
+            {/* XOLOLO: Cart.2b — botón "Agregar al carrito" bajo el
+                OrderPanel. Complementa el "Buy now" con la opción de
+                consolidar múltiples productos del mismo seller en un
+                solo envío (Cart.4 hará el checkout multi-item). Sin
+                Cart.4 aún, se acumula en localStorage pero al comprar
+                se cierra con transacción individual — se soluciona en
+                Cart.5. */}
+            {!isOwnListing ? (
+              <AddToCartCta
+                listing={currentListing}
+                author={ensuredAuthor}
+                imageUrl={
+                  currentListing?.images?.[0]?.attributes?.variants?.['listing-card']?.url
+                }
+              />
+            ) : null}
           </div>
         </div>
       </LayoutSingleColumn>
