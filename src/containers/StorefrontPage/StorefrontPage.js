@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
-import { connect } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { string, bool, func, array, object } from 'prop-types';
 
 import {
@@ -11,6 +11,7 @@ import {
   selectStorefrontListings,
 } from '../../ducks/storefrontSeller.duck';
 import { selectStorefrontSlug } from '../../ducks/storefrontSubdomain.duck';
+import { selectCartItemCount } from '../../ducks/cart.duck';
 
 import FeaturedListings from '../../components/FeaturedListings/FeaturedListings';
 import VerifiedBand from '../../components/VerifiedBand/VerifiedBand';
@@ -30,6 +31,19 @@ const BANNER_AUTOPLAY_MS = 6000;
 // Muestra 1-3 imágenes horizontales. Si hay 2 o más, rota cada 6s con
 // pausa al hover/focus (respeta prefers-reduced-motion). Con 1 sola
 // imagen se degrada a un banner estático — mismos estilos que antes.
+// XOLOLO Cart.3: link al carrito del seller en el header del storefront.
+// Solo renderea si el sellerId es válido y hay items en el carrito.
+const StorefrontCartLink = ({ sellerId }) => {
+  const uuid = typeof sellerId === 'string' ? sellerId : sellerId?.uuid;
+  const count = useSelector(uuid ? selectCartItemCount(uuid) : () => 0);
+  if (!uuid || count <= 0) return null;
+  return (
+    <a href={`/cart/${uuid}`} className={css.cartLink} aria-label={`Carrito (${count} items)`}>
+      🛒 <span className={css.cartLinkBadge}>{count}</span>
+    </a>
+  );
+};
+
 const BannerCarousel = ({ banners }) => {
   const [activeIdx, setActiveIdx] = useState(0);
   const containerRef = useRef(null);
@@ -327,6 +341,9 @@ const StorefrontPageComponent = props => {
             <a href="#contacto" className={css.navLink}>
               Contacto
             </a>
+            {/* XOLOLO Cart.3: ícono flotante del carrito del seller.
+                Solo visible cuando hay items. */}
+            <StorefrontCartLink sellerId={seller.id} />
           </nav>
         </div>
       </header>

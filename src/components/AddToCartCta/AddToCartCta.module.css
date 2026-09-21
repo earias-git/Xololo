@@ -117,3 +117,18 @@
   color: var(--colorGrey700);
   line-height: 1.45;
 }
+
+.viewCartLink {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 6px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--marketplaceColor, #1f8f52);
+  text-decoration: none;
+  align-self: flex-start;
+}
+
+.viewCartLink:hover {
+  text-decoration: underline;
+}

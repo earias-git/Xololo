@@ -121,6 +121,12 @@ const AddToCartCta = ({ listing, author, imageUrl, className, rootClassName }) =
           carrito.
         </p>
       ) : null}
+
+      {currentCount > 0 ? (
+        <a href={`/cart/${sellerId}`} className={css.viewCartLink}>
+          🛒 Ver mi carrito ({currentCount}) →
+        </a>
+      ) : null}
     </div>
   );
 };
