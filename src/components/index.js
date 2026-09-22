@@ -168,5 +168,6 @@ export { default as PostDeliverySurvey } from './PostDeliverySurvey/PostDelivery
 export { default as SellerBrandFrame } from './SellerBrandFrame/SellerBrandFrame';
 export { default as SellerDashboardHero } from './SellerDashboardHero/SellerDashboardHero';
 export { default as ShareListingButton } from './ShareListingButton/ShareListingButton';
+export { default as StoreStatsWidget } from './StoreStatsWidget/StoreStatsWidget';
 export { default as AddToCartCta } from './AddToCartCta/AddToCartCta';
 export { default as ModalMissingInformation } from './ModalMissingInformation/ModalMissingInformation';

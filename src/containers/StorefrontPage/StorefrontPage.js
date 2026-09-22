@@ -15,6 +15,7 @@ import { selectCartItemCount } from '../../ducks/cart.duck';
 
 import FeaturedListings from '../../components/FeaturedListings/FeaturedListings';
 import VerifiedBand from '../../components/VerifiedBand/VerifiedBand';
+import StoreStatsWidget from '../../components/StoreStatsWidget/StoreStatsWidget';
 
 import css from './StorefrontPage.module.css';
 
@@ -375,6 +376,13 @@ const StorefrontPageComponent = props => {
           (mismo layout, mismos íconos, mismo copy "Xololo Verified™"). */}
       <VerifiedBand />
 
+      {/* XOLOLO F3 · Fase 4: prueba social pública. Se auto-oculta si
+          el seller aún no cumple el threshold (≥5 ventas). */}
+      {seller?.id ? (
+        <div className={css.statsWrap}>
+          <StoreStatsWidget sellerId={seller.id} />
+        </div>
+      ) : null}
 
       <section id="catalogo" className={css.catalog}>
         {listings?.length ? (

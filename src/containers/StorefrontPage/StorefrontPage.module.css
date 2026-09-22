@@ -395,6 +395,17 @@
   }
 }
 
+/* ---------- Store stats (F3 Fase 4) ---------- */
+.statsWrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 20px 16px 0;
+
+  @media (--viewportMedium) {
+    padding: 24px 32px 0;
+  }
+}
+
 /* ---------- Catalog wrapper ---------- */
 .catalog {
   background-color: #f7f4ee;
