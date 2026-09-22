@@ -100,6 +100,20 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
       </MenuLabel>
       <MenuContent className={css.profileMenuContent}>
         {showManageListingsLink ? (
+          <MenuItem key="DashboardPage">
+            <NamedLink
+              className={classNames(css.menuLink, currentPageClass('DashboardPage'))}
+              name="DashboardPage"
+            >
+              <span className={css.menuItemBorder} />
+              <FormattedMessage
+                id="TopbarDesktop.dashboardLink"
+                defaultMessage="Dashboard"
+              />
+            </NamedLink>
+          </MenuItem>
+        ) : null}
+        {showManageListingsLink ? (
           <MenuItem key="ManageListingsPage">
             <NamedLink
               className={classNames(css.menuLink, currentPageClass('ManageListingsPage'))}

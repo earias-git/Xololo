@@ -17,6 +17,7 @@ const CartPage = loadable(() => import(/* webpackChunkName: "CartPage" */ '../co
 const CheckoutPage = loadable(() => import(/* webpackChunkName: "CheckoutPage" */ '../containers/CheckoutPage/CheckoutPage'));
 const CMSPage = loadable(() => import(/* webpackChunkName: "CMSPage" */ '../containers/CMSPage/CMSPage'));
 const ContactDetailsPage = loadable(() => import(/* webpackChunkName: "ContactDetailsPage" */ '../containers/ContactDetailsPage/ContactDetailsPage'));
+const DashboardPage = loadable(() => import(/* webpackChunkName: "DashboardPage" */ '../containers/DashboardPage/DashboardPage'));
 const EditListingPage = loadable(() => import(/* webpackChunkName: "EditListingPage" */ '../containers/EditListingPage/EditListingPage'));
 const EmailVerificationPage = loadable(() => import(/* webpackChunkName: "EmailVerificationPage" */ '../containers/EmailVerificationPage/EmailVerificationPage'));
 const InboxPage = loadable(() => import(/* webpackChunkName: "InboxPage" */ '../containers/InboxPage/InboxPage'));
@@ -284,6 +285,14 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       authPage: 'LoginPage',
       component: InboxPage,
       loadData: pageDataLoadingAPI.InboxPage.loadData,
+    },
+    {
+      // XOLOLO F3: dashboard de analytics para sellers.
+      path: '/dashboard',
+      name: 'DashboardPage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: DashboardPage,
     },
     {
       // XOLOLO Cart.4: página del carrito del seller identificado por

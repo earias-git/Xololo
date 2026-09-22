@@ -26,6 +26,7 @@ const uploadSosPhoto = require('./api/upload-sos-photo');
 const skydropxWebhook = require('./api/webhooks/skydropx');
 const orderSurvey = require('./api/order-survey');
 const postalCode = require('./api/postal-code');
+const sellerAnalytics = require('./api/seller-analytics');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -124,6 +125,10 @@ router.post('/order-survey', bodyParser.json(), orderSurvey);
 // XOLOLO: proxy a SEPOMEX para autocompletar estado/ciudad/colonias
 // desde el CP en el checkout. Público; caché in-memory 24h.
 router.get('/postal-code', postalCode);
+
+// XOLOLO F3: analytics de ventas para el dashboard del seller.
+// Auth: user logueado. Devuelve las tx del provider en rango [from, to].
+router.get('/seller-analytics', sellerAnalytics);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

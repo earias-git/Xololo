@@ -1184,6 +1184,7 @@
   "TopbarDesktop.screenreader.topbarNavigation": "Top bar navigation",
   "TopbarDesktop.sellOnXololo": "Sell on Xololo",
   "TopbarDesktop.signup": "Sign up",
+  "TopbarDesktop.dashboardLink": "Dashboard",
   "TopbarDesktop.yourListingsLink": "Your listings",
   "TopbarMobileMenu.accountSettingsLink": "Account settings",
   "TopbarMobileMenu.greeting": "Hello {displayName}",

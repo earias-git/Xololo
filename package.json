@@ -52,6 +52,7 @@
     "react-redux": "9.2.0",
     "react-refresh": "^0.18.0",
     "react-router-dom": "^5.3.4",
+    "recharts": "^3.10.1",
     "rehype-react": "^6.2.1",
     "rehype-sanitize": "^4.0.0",
     "remark-parse": "^9.0.0",
