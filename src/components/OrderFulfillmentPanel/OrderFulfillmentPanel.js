@@ -61,6 +61,9 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const map = {
+          invalid_request: 'Falta información en la solicitud.',
+          unauthorized: 'Sesión expirada. Recarga la página.',
+          transaction_not_found: 'No encontramos esta transacción.',
           not_shippable: 'Esta orden no es cotizable por paquetería.',
           no_rate_selected: 'El buyer aún no eligió paquetería.',
           already_generated: 'La guía ya fue generada.',
@@ -68,17 +71,33 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
           seller_address_incomplete:
             'Tu domicilio de recolección está incompleto. Actualízalo en /account/store.',
           buyer_address_incomplete: 'La dirección del comprador está incompleta.',
+          cart_parcel_incomplete:
+            'Alguno de los productos del pedido no tiene peso o dimensiones definidos.',
           skydropx_rejected: 'Skydropx rechazó la guía. Detalle abajo.',
           label_timeout:
             'La guía se creó pero el PDF tarda. Recarga esta página en un minuto.',
+          internal: 'Error interno del servidor. Detalle abajo.',
         };
-        setGenerationError(map[data.error] || 'No pudimos generar la guía.');
-        // XOLOLO: guardamos el detail crudo del server (Skydropx errors,
-        // missing fields, etc.) para exponerlo en el UI. Ayuda a debuggear
-        // sin depender de los logs de Render.
-        if (data.details || data.missing) {
-          setGenerationErrorDetails(data.details || data.missing || null);
-        }
+        setGenerationError(
+          map[data.error] || `No pudimos generar la guía (${data.error || 'error desconocido'}).`
+        );
+        // XOLOLO: guardamos SIEMPRE lo que devolvió el server (error +
+        // details + missing) para que el <details> técnico aparezca aun
+        // si el `data.error` no está en el map (nuevos errores del server
+        // que no hemos mapeado, etc.). Ayuda a debuggear sin depender
+        // de logs de Render.
+        const debugDetails = {
+          ...(data.error ? { error: data.error } : {}),
+          ...(data.details ? { details: data.details } : {}),
+          ...(data.missing ? { missing: data.missing } : {}),
+          ...(data.offendingListingId
+            ? { offendingListingId: data.offendingListingId }
+            : {}),
+          httpStatus: res.status,
+        };
+        setGenerationErrorDetails(debugDetails);
+        // eslint-disable-next-line no-console
+        console.error('[generate-shipping-guide] server rejected:', debugDetails);
         // El caso already_generated devuelve la guía en el response.
         if (data.error === 'already_generated' && data.guide) setGuide(data.guide);
         return;
