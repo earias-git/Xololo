@@ -60,6 +60,15 @@ const AddToCartCta = ({ listing, author, imageUrl, className, rootClassName }) =
         },
       })
     );
+    // XOLOLO F3 Sprint 2B: trackea el add-to-cart con la source
+    // detectada de la sesión. Dedupe por (event, listingId) — un buyer
+    // que agregue el mismo producto 2 veces cuenta como un evento.
+    // eslint-disable-next-line global-require
+    const { trackEvent, detectSource } = require('../../util/tracking');
+    trackEvent('listing.added_to_cart', {
+      listingId: listing.id.uuid,
+      source: detectSource(),
+    });
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 2500);
   };

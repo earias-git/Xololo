@@ -87,6 +87,20 @@ const EnhancedCheckoutPage = props => {
     setPageData(data || {});
     setIsDataLoaded(true);
 
+    // XOLOLO F3 Sprint 2B: checkout.started con la source de la sesión.
+    // Se dispara al aterrizar en CheckoutPage (ANTES de que el buyer
+    // meta datos de pago) — mide inicio de embudo, no compra
+    // completada (esa es la tx pagada).
+    const listingIdForTracking = data?.listing?.id?.uuid;
+    if (listingIdForTracking) {
+      // eslint-disable-next-line global-require
+      const { trackEvent, detectSource } = require('../../util/tracking');
+      trackEvent('checkout.started', {
+        listingId: listingIdForTracking,
+        source: detectSource(),
+      });
+    }
+
     // Do not fetch extra data if user is not active (E.g. they are in pending-approval state.)
     if (isUserAuthorized(currentUser)) {
       // This is for processes using payments with Stripe integration

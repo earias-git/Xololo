@@ -24,6 +24,7 @@ import {
   LayoutSingleColumn,
   SectionText,
   AddToCartCta,
+  ShareListingButton,
 } from '../../components';
 
 // Related components and modules
@@ -287,6 +288,16 @@ export const ListingPageComponent = props => {
                 </H3>
               )}
             </div>
+            {/* XOLOLO F3 Sprint 2B: botón compartir con tracking preciso
+                por canal + UTMs en el link compartido. */}
+            {currentListing?.id?.uuid ? (
+              <div style={{ margin: '0 0 16px' }}>
+                <ShareListingButton
+                  listingId={currentListing.id.uuid}
+                  listingTitle={title}
+                />
+              </div>
+            ) : null}
             {showDescription && <SectionText text={description} showAsIngress />}
 
             <CustomListingFields

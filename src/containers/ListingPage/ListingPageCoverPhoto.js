@@ -24,6 +24,7 @@ import {
   LayoutSingleColumn,
   SectionText,
   AddToCartCta,
+  ShareListingButton,
 } from '../../components';
 
 // Related components and modules
@@ -385,6 +386,15 @@ export const ListingPageComponent = props => {
                   currentListing?.images?.[0]?.attributes?.variants?.['listing-card']?.url
                 }
               />
+            ) : null}
+            {/* XOLOLO F3 Sprint 2B: compartir con tracking preciso. */}
+            {currentListing?.id?.uuid ? (
+              <div style={{ margin: '12px 0 0' }}>
+                <ShareListingButton
+                  listingId={currentListing.id.uuid}
+                  listingTitle={title}
+                />
+              </div>
             ) : null}
           </div>
         </div>

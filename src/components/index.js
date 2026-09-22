@@ -167,5 +167,6 @@ export { default as OrderTimeline } from './OrderTimeline/OrderTimeline';
 export { default as PostDeliverySurvey } from './PostDeliverySurvey/PostDeliverySurvey';
 export { default as SellerBrandFrame } from './SellerBrandFrame/SellerBrandFrame';
 export { default as SellerDashboardHero } from './SellerDashboardHero/SellerDashboardHero';
+export { default as ShareListingButton } from './ShareListingButton/ShareListingButton';
 export { default as AddToCartCta } from './AddToCartCta/AddToCartCta';
 export { default as ModalMissingInformation } from './ModalMissingInformation/ModalMissingInformation';
