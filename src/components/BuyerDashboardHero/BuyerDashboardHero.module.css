@@ -1,0 +1,332 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  margin: 0 0 24px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.summary {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+  color: var(--colorGrey700);
+  padding: 12px 16px;
+  background-color: var(--colorGrey50, #f7f4ee);
+  border-radius: 10px;
+}
+
+.summary strong {
+  color: #232d40;
+  font-weight: 800;
+}
+
+.block {
+  padding: 0;
+}
+
+.blockTitle {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--colorGrey900);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.blockCount {
+  display: inline-block;
+  padding: 1px 8px;
+  background-color: #232d40;
+  color: #ffffff;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+/* ---------- Thumb reusable ---------- */
+.thumb {
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--colorGrey50, #f7f4ee);
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbEmpty {
+  font-size: 20px;
+  color: var(--colorGrey300, #d1d5db);
+}
+
+/* ---------- In-transit ---------- */
+.transitList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.transitCard {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+  background-color: #ffffff;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 12px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: 48px 1fr auto;
+  }
+}
+
+.transitMain {
+  min-width: 0;
+}
+
+.transitTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transitSeller {
+  margin: 2px 0 6px;
+  font-size: 12px;
+  color: var(--colorGrey500);
+}
+
+.transitStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background-color: var(--colorGrey50, #f7f4ee);
+  color: var(--colorGrey700);
+}
+
+.transitStatus--progress {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.transitStatus--urgent {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.transitStatus--success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.transitTracking {
+  grid-column: 1 / -1;
+  padding-top: 10px;
+  border-top: 1px solid var(--colorGrey100);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--colorGrey500);
+
+  @media (--viewportMedium) {
+    grid-column: 3;
+    border-top: 0;
+    padding-top: 0;
+    padding-left: 12px;
+    border-left: 1px solid var(--colorGrey100);
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    min-width: 150px;
+  }
+}
+
+.trackingCarrier {
+  margin: 0;
+  font-weight: 700;
+  color: var(--colorGrey700);
+}
+
+.trackingNumber {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--colorGrey700);
+}
+
+.trackingAgo {
+  margin: 0;
+  font-style: italic;
+}
+
+.trackingLink {
+  color: #232d40;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 12.5px;
+}
+
+.trackingLink:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Reviews pending ---------- */
+.reviewList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reviewRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background-color: #fffbeb;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+}
+
+.reviewRowUrgent {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+}
+
+.reviewMain {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.reviewTitle {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reviewMeta {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #92400e;
+}
+
+.reviewRowUrgent .reviewMeta {
+  color: #991b1b;
+}
+
+.reviewCta {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background-color: #232d40;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.reviewCta:hover {
+  filter: brightness(1.1);
+}
+
+/* ---------- Buy again ---------- */
+.buyAgainRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.buyAgainChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 10px;
+  background-color: #ffffff;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--colorGrey900);
+  transition: transform 0.12s, box-shadow 0.12s;
+  min-width: 0;
+}
+
+.buyAgainChip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(35, 45, 64, 0.08);
+}
+
+.buyAgainLogo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.buyAgainLogoFallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #232d40;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.buyAgainInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.buyAgainName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+
+.buyAgainMeta {
+  font-size: 11px;
+  color: var(--colorGrey500);
+}

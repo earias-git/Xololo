@@ -165,6 +165,7 @@ export { default as SosPhotosUploader } from './SosPhotosUploader/SosPhotosUploa
 export { default as OrderFulfillmentPanel } from './OrderFulfillmentPanel/OrderFulfillmentPanel';
 export { default as OrderTimeline } from './OrderTimeline/OrderTimeline';
 export { default as PostDeliverySurvey } from './PostDeliverySurvey/PostDeliverySurvey';
+export { default as BuyerDashboardHero } from './BuyerDashboardHero/BuyerDashboardHero';
 export { default as SellerBrandFrame } from './SellerBrandFrame/SellerBrandFrame';
 export { default as SellerDashboardHero } from './SellerDashboardHero/SellerDashboardHero';
 export { default as ShareListingButton } from './ShareListingButton/ShareListingButton';

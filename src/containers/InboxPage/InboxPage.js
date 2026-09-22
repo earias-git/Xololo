@@ -38,6 +38,7 @@ import { isScrollingDisabled } from '../../ducks/ui.duck';
 import {
   H2,
   Avatar,
+  BuyerDashboardHero,
   NamedLink,
   NotificationBadge,
   Page,
@@ -416,6 +417,10 @@ export const InboxPageComponent = props => {
         {!isOrders && !fetchInProgress && hasTransactions ? (
           <SellerDashboardHero transactions={transactions} />
         ) : null}
+        {/* XOLOLO F3 · Fase 2: dashboard hero para buyer. Fetch propio
+            (endpoint /api/buyer-dashboard); si no hay actividad
+            relevante el componente se auto-oculta. */}
+        {isOrders ? <BuyerDashboardHero /> : null}
         {fetchOrdersOrSalesError ? (
           <p className={css.error}>
             <FormattedMessage id="InboxPage.fetchFailed" />

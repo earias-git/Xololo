@@ -32,6 +32,7 @@ const sellerCatalogInsights = require('./api/seller-catalog-insights');
 const sellerMonthlyReportPreview = require('./api/seller-monthly-report-preview');
 const adminMetrics = require('./api/admin-metrics');
 const publicStoreStats = require('./api/public-store-stats');
+const buyerDashboard = require('./api/buyer-dashboard');
 const trackEvent = require('./api/track-event');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
@@ -159,6 +160,10 @@ router.get('/admin/sellers-ranking', adminMetrics.sellersRanking);
 // XOLOLO F3 Fase 4: métricas públicas de la tienda de un seller.
 // Público. Sólo expone data no sensible (# ventas, unidades, sello).
 router.get('/public-store-stats', publicStoreStats);
+
+// XOLOLO F3 Fase 2: dashboard del buyer (en-tránsito, reviews
+// pendientes, buy again). Auth required — devuelve sólo SUS pedidos.
+router.get('/buyer-dashboard', buyerDashboard);
 
 // XOLOLO F3 Sprint 2: recibe eventos de tracking del cliente.
 // Público, rate-limited por IP. Encola y responde 200 inmediato.
