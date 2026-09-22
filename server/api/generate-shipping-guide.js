@@ -39,6 +39,7 @@ const {
   SkydropxTimeoutError,
 } = require('../api-util/skydropx');
 const { aggregateParcel } = require('../api-util/cartShipping');
+const { sendEventNotifications } = require('../api-util/notifications');
 
 module.exports = async (req, res) => {
   try {
@@ -355,6 +356,55 @@ module.exports = async (req, res) => {
         xololoShippingGuide: guideData,
       },
     });
+
+    // XOLOLO D.9: notificar al buyer con el tracking. Fire-and-forget
+    // — el response al seller no debe bloquearse por email/push. Los
+    // errores se loguean en el dispatcher, no se propagan.
+    try {
+      const rootUrl = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx').replace(
+        /\/$/,
+        ''
+      );
+      const orderUrl = `${rootUrl}/order/${transactionId}`;
+      const sellerBrandColor =
+        providerPd.brandPrimaryColor || providerPd.storePrimaryColor || null;
+      const sellerLogoUrl = providerPd.logoUrl || providerPd.brandLogoUrl || null;
+      const sellerSlug = providerPd.slug || null;
+
+      const notifContext = {
+        buyer: {
+          name: shippingDetails.name || 'Comprador',
+          email: customer?.attributes?.email,
+        },
+        seller: {
+          name: provider?.attributes?.profile?.displayName || 'Vendedor',
+          email:
+            providerProtectedData.email || provider?.attributes?.email || undefined,
+          logoUrl: sellerLogoUrl,
+          primaryColor: sellerBrandColor,
+          slug: sellerSlug,
+        },
+        listing: { title: listingTitle },
+        order: { url: orderUrl },
+        carrier: {
+          name: guideData.carrierName || 'Paquetería',
+          service: guideData.serviceName || '',
+        },
+        tracking: {
+          number: guideData.trackingNumber || '',
+          url: guideData.trackingUrl || orderUrl, // fallback al order si no hay tracking url del carrier
+        },
+      };
+      // No await — dispatcher hace su propio Promise.allSettled y no
+      // debe bloquear el response al seller.
+      sendEventNotifications('order.label_generated', notifContext).catch(err => {
+        // eslint-disable-next-line no-console
+        console.error('[generate-shipping-guide] notify error:', err?.message);
+      });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[generate-shipping-guide] error armando notify context:', err?.message);
+    }
 
     return res.json(guideData);
   } catch (e) {

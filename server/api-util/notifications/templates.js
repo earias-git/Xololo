@@ -81,17 +81,24 @@ const TEMPLATES = {
   'order.label_generated': {
     email: {
       buyer: {
-        subject: 'Tu pedido está listo para ser recolectado',
+        subject: 'Tu paquete está listo — ya puedes rastrearlo',
         bodyText:
-          'Hola {buyer.name},\n\n{seller.name} generó la guía de envío. ' +
-          'El paquete será recolectado por {carrier.name} próximamente.\n\n{order.url}',
+          'Hola {buyer.name},\n\n' +
+          '{seller.name} generó la guía de envío para tu pedido ' +
+          '"{listing.title}". El paquete será recolectado por ' +
+          '{carrier.name} próximamente.\n\n' +
+          'Paquetería: {carrier.name} — {carrier.service}\n' +
+          'Número de guía: {tracking.number}\n' +
+          'Rastreo: {tracking.url}\n\n' +
+          'También puedes ver el estado en tiempo real desde tu pedido en Xololo:\n' +
+          '{order.url}',
       },
     },
     push: {
       buyer: {
-        title: 'Guía generada',
-        body: '{carrier.name} pasará por tu paquete',
-        url: '{order.url}',
+        title: 'Paquete listo para recolección',
+        body: '{carrier.name} · Guía {tracking.number}',
+        url: '{tracking.url}',
       },
     },
   },
