@@ -17,7 +17,8 @@
 const multer = require('multer');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const sharetribeSdk = require('../api-util/sdk');
-const { getSdk, getTrustedSdk } = require('../api-util/sdk');
+const { getSdk } = require('../api-util/sdk');
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 
 const MAX_SIZE = 8 * 1024 * 1024; // 8 MB — fotos de móvil pueden ser más grandes que logos
 const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp']);
@@ -140,25 +141,39 @@ module.exports = async (req, res) => {
   const url = `${PUBLIC_BASE_URL().replace(/\/$/, '')}/${key}`;
 
   // Persistir la URL en la metadata de la transacción.
-  // updateMetadata de Sharetribe hace merge shallow al top level:
-  // xololoShippingSosPhotos como key completo sí se preserva entre
-  // llamadas, pero su VALOR se sustituye entero. Para mantener los
-  // slots previos leemos con el trustedSdk el objeto actual y luego
-  // re-escribimos el objeto completo con el nuevo slot fusionado.
+  //
+  // IMPORTANTE: `metadata` sólo es visible/escribible al OPERATOR vía
+  // Integration API. El trustedSdk (Marketplace API con token
+  // trust-exchanged) NO puede leerla — devuelve `metadata: undefined`
+  // aunque haya sido escrita previamente. Si usáramos trustedSdk aquí,
+  // cada upload leería `metadata: {}` y sobreescribiría los slots
+  // previos, dejando sólo la última foto en la tx (bug detectado en
+  // 2026-09-21: 5 fotos subidas, sólo la última persistida).
+  //
+  // updateMetadata hace merge SHALLOW al top level de `metadata`, así
+  // que `xololoShippingSosPhotos` como key completo se preserva entre
+  // llamadas, pero su VALOR se sustituye entero. Por eso re-leemos el
+  // objeto actual antes de mergear.
   try {
-    const trustedSdk = await getTrustedSdk(req);
-    // Re-leemos para agarrar el snapshot actual (protectedData +
-    // metadata) via trusted — evita race conditions con 2 slots
-    // subiendo en paralelo (ganará el último que escriba, aceptable
-    // en v1: el seller sube uno a la vez en la UI).
-    const currentTx = await trustedSdk.transactions.show({ id: transactionId });
-    const currentSos =
-      currentTx.data.data.attributes.metadata?.xololoShippingSosPhotos || {};
-    const mergedSos = { ...currentSos, [slot]: url };
-    await trustedSdk.transactions.updateMetadata({
-      id: transactionId,
-      metadata: { xololoShippingSosPhotos: mergedSos },
-    });
+    const isdk = getIntegrationSdk();
+    if (!isdk) {
+      // Sin Integration SDK no podemos persistir metadata de forma
+      // fiable; el R2 upload sí completó, así que devolvemos 200 pero
+      // logueamos para alertar. Ver docs/deploy env vars.
+      // eslint-disable-next-line no-console
+      console.error(
+        '[upload-sos-photo] SHARETRIBE_INTEGRATION_CLIENT_ID/SECRET no configurados; metadata NO se persistió'
+      );
+    } else {
+      const currentTx = await isdk.transactions.show({ id: transactionId });
+      const currentSos =
+        currentTx.data.data.attributes.metadata?.xololoShippingSosPhotos || {};
+      const mergedSos = { ...currentSos, [slot]: url };
+      await isdk.transactions.updateMetadata({
+        id: transactionId,
+        metadata: { xololoShippingSosPhotos: mergedSos },
+      });
+    }
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('[upload-sos-photo] updateMetadata error', err?.message);

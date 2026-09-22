@@ -30,7 +30,8 @@
 //     packagesTracking: [...]  // multi-package si aplica
 //   }
 
-const { getSdk, getTrustedSdk } = require('../api-util/sdk');
+const { getSdk } = require('../api-util/sdk');
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const {
   createShipment,
   getShipment,
@@ -97,9 +98,32 @@ module.exports = async (req, res) => {
     // XOLOLO §5: verificar las 5 fotos SOS antes de generar guía.
     // Las fotos las persiste upload-sos-photo.js en
     // tx.metadata.xololoShippingSosPhotos (metadata en vez de
-    // protectedData para que sólo trustedSdk pueda escribirlas y
-    // el buyer no las pueda modificar).
-    const sosPhotos = tx.attributes.metadata?.xololoShippingSosPhotos || {};
+    // protectedData para que el buyer no las pueda modificar).
+    //
+    // IMPORTANTE: metadata sólo es visible al operator (Integration API).
+    // El sdk normal del provider devolvería `metadata: undefined` — hay
+    // que re-leer la tx via Integration SDK. Si no está configurado,
+    // rechazamos con error específico para que se logueen las env vars.
+    const isdk = getIntegrationSdk();
+    if (!isdk) {
+      // eslint-disable-next-line no-console
+      console.error(
+        '[generate-shipping-guide] Integration SDK no configurado; no se puede validar SOS photos'
+      );
+      return res.status(500).json({
+        error: 'internal',
+        details: 'Integration SDK sin configurar en el servidor.',
+      });
+    }
+    let sosPhotos = {};
+    try {
+      const opTxResp = await isdk.transactions.show({ id: transactionId });
+      sosPhotos = opTxResp.data.data.attributes.metadata?.xololoShippingSosPhotos || {};
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[generate-shipping-guide] integration tx.show falló', e?.message);
+      return res.status(500).json({ error: 'internal' });
+    }
     const requiredSlots = [
       'producto', 'embalado', 'guia', 'medidas', 'peso',
     ];
@@ -284,10 +308,11 @@ module.exports = async (req, res) => {
       })),
     };
 
-    // Persistir en tx.protectedData vía trustedSdk (metadata pública
-    // no la puede tocar el provider directo — trusted SDK sí).
-    const trustedSdk = await getTrustedSdk(req);
-    await trustedSdk.transactions.updateMetadata({
+    // Persistir en tx.metadata vía Integration SDK. updateMetadata NO
+    // existe en el SDK marketplace (sólo en integration) — el
+    // trustedSdk devolvería TypeError. Re-usamos la instancia isdk que
+    // ya obtuvimos arriba para validar las SOS photos.
+    await isdk.transactions.updateMetadata({
       id: transactionId,
       metadata: {
         xololoShippingGuide: guideData,

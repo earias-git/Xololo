@@ -22,7 +22,8 @@
 // - Al éxito: se marca verifiedAt y se dispara transition/mark-delivered
 //   (o el equivalente en el proceso de compra) para liberar el flow.
 
-const { getSdk, getTrustedSdk } = require('../api-util/sdk');
+const { getSdk } = require('../api-util/sdk');
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 
 const MAX_ATTEMPTS = 3;
 
@@ -84,20 +85,21 @@ module.exports = async (req, res) => {
     const nowIso = new Date().toISOString();
     const matches = String(code) === String(pickupCode.code);
 
-    // Usamos el trusted SDK (privilegios de operador) para escribir en la
-    // transacción (metadata no la puede tocar el buyer/provider directo).
-    const trustedSdk = await getTrustedSdk(req);
+    // Escribir metadata requiere Integration SDK — el marketplace SDK
+    // no tiene updateMetadata. Sin Integration credentials no podemos
+    // rastrear intentos ni marcar verified, así que rechazamos temprano.
+    const isdk = getIntegrationSdk();
+    if (!isdk) {
+      // eslint-disable-next-line no-console
+      console.error('[verify-pickup-code] Integration SDK no configurado');
+      return res.status(500).json({ error: 'internal' });
+    }
 
     if (!matches) {
       const nextAttempts = (pickupCode.attempts || 0) + 1;
       const willBlock = nextAttempts >= MAX_ATTEMPTS;
-      const updatedPickupCode = {
-        ...pickupCode,
-        attempts: nextAttempts,
-        blockedAt: willBlock ? nowIso : null,
-      };
-      // Actualizamos protectedData con los intentos.
-      await trustedSdk.transactions.updateMetadata({
+      // Actualizamos metadata con los intentos.
+      await isdk.transactions.updateMetadata({
         id: transactionId,
         metadata: {
           xololoPickupCodeAttempts: {
@@ -117,7 +119,7 @@ module.exports = async (req, res) => {
     // Éxito: marcar verificado y persistir. (La transición a
     // "entregado" del proceso Sharetribe se hace en Fase D.5 desde el
     // UI del seller, no aquí — este endpoint solo valida el código.)
-    await trustedSdk.transactions.updateMetadata({
+    await isdk.transactions.updateMetadata({
       id: transactionId,
       metadata: {
         xololoPickupCodeVerified: {

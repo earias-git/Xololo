@@ -26,7 +26,8 @@
 //   type='disputed'. Los fondos quedan congelados (Xololo revisa <72h).
 //   En v2 disparará una transition/dispute custom.
 
-const { getSdk, getTrustedSdk } = require('../api-util/sdk');
+const { getSdk } = require('../api-util/sdk');
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 
 module.exports = async (req, res) => {
   try {
@@ -79,7 +80,25 @@ module.exports = async (req, res) => {
       return res.status(403).json({ error: 'not_customer' });
     }
 
-    const meta = tx.attributes.metadata || {};
+    // metadata sólo es visible al operator (Integration API). El sdk
+    // normal del buyer devolvería metadata:undefined y "already_reviewed"
+    // nunca se dispararía → doble review posible. Leemos vía Integration
+    // SDK para validar y también para escribir después.
+    const isdk = getIntegrationSdk();
+    if (!isdk) {
+      // eslint-disable-next-line no-console
+      console.error('[order-survey] Integration SDK no configurado');
+      return res.status(500).json({ error: 'internal' });
+    }
+    let meta = {};
+    try {
+      const opTxResp = await isdk.transactions.show({ id: transactionId });
+      meta = opTxResp.data.data.attributes.metadata || {};
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[order-survey] integration tx.show falló', e?.message);
+      return res.status(500).json({ error: 'internal' });
+    }
     if (meta.xololoBuyerReview || meta.xololoDispute) {
       return res.status(409).json({
         error: 'already_reviewed',
@@ -102,7 +121,6 @@ module.exports = async (req, res) => {
     }
 
     const nowIso = new Date().toISOString();
-    const trustedSdk = await getTrustedSdk(req);
 
     if (outcome === 'good') {
       const review = {
@@ -117,7 +135,7 @@ module.exports = async (req, res) => {
         acceptedBy: currentUserId,
         method: 'post_delivery_survey',
       };
-      await trustedSdk.transactions.updateMetadata({
+      await isdk.transactions.updateMetadata({
         id: transactionId,
         metadata: {
           xololoBuyerReview: review,
@@ -132,7 +150,7 @@ module.exports = async (req, res) => {
       // la transición no aplica (state ya cambiado, etc.) porque la
       // review ya se guardó y es lo importante.
       try {
-        await trustedSdk.transactions.transition({
+        await isdk.transactions.transition({
           id: transactionId,
           transition: 'transition/mark-received',
           params: {},
@@ -161,7 +179,7 @@ module.exports = async (req, res) => {
       disputedAt: nowIso,
       method: 'post_delivery_survey',
     };
-    await trustedSdk.transactions.updateMetadata({
+    await isdk.transactions.updateMetadata({
       id: transactionId,
       metadata: {
         xololoDispute: dispute,
