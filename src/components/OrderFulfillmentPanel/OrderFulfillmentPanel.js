@@ -35,6 +35,7 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
   const [guide, setGuide] = useState(existingGuide || null);
   const [generatingGuide, setGeneratingGuide] = useState(false);
   const [generationError, setGenerationError] = useState(null);
+  const [generationErrorDetails, setGenerationErrorDetails] = useState(null);
   const [started, setStarted] = useState(!!initialSosPhotos.producto || !!existingGuide);
 
   // Solo carrier + rate elegido → aplicamos este flujo.
@@ -48,6 +49,7 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
 
   const handleGenerate = async () => {
     setGenerationError(null);
+    setGenerationErrorDetails(null);
     setGeneratingGuide(true);
     try {
       const res = await fetch(`${apiBaseUrl()}/api/generate-shipping-guide`, {
@@ -66,11 +68,17 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
           seller_address_incomplete:
             'Tu domicilio de recolección está incompleto. Actualízalo en /account/store.',
           buyer_address_incomplete: 'La dirección del comprador está incompleta.',
-          skydropx_rejected: 'Skydropx rechazó la guía. Contáctanos si el problema persiste.',
+          skydropx_rejected: 'Skydropx rechazó la guía. Detalle abajo.',
           label_timeout:
             'La guía se creó pero el PDF tarda. Recarga esta página en un minuto.',
         };
         setGenerationError(map[data.error] || 'No pudimos generar la guía.');
+        // XOLOLO: guardamos el detail crudo del server (Skydropx errors,
+        // missing fields, etc.) para exponerlo en el UI. Ayuda a debuggear
+        // sin depender de los logs de Render.
+        if (data.details || data.missing) {
+          setGenerationErrorDetails(data.details || data.missing || null);
+        }
         // El caso already_generated devuelve la guía en el response.
         if (data.error === 'already_generated' && data.guide) setGuide(data.guide);
         return;
@@ -212,7 +220,19 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
                 {generatingGuide ? 'Generando…' : 'Generar guía'}
               </button>
               {generationError ? (
-                <p className={css.stepError}>{generationError}</p>
+                <>
+                  <p className={css.stepError}>{generationError}</p>
+                  {generationErrorDetails ? (
+                    <details className={css.stepErrorDetails}>
+                      <summary>Ver detalle técnico</summary>
+                      <pre>
+                        {typeof generationErrorDetails === 'string'
+                          ? generationErrorDetails
+                          : JSON.stringify(generationErrorDetails, null, 2)}
+                      </pre>
+                    </details>
+                  ) : null}
+                </>
               ) : null}
             </>
           ) : (
