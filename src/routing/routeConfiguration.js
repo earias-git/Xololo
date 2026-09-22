@@ -18,6 +18,7 @@ const CheckoutPage = loadable(() => import(/* webpackChunkName: "CheckoutPage" *
 const CMSPage = loadable(() => import(/* webpackChunkName: "CMSPage" */ '../containers/CMSPage/CMSPage'));
 const ContactDetailsPage = loadable(() => import(/* webpackChunkName: "ContactDetailsPage" */ '../containers/ContactDetailsPage/ContactDetailsPage'));
 const DashboardPage = loadable(() => import(/* webpackChunkName: "DashboardPage" */ '../containers/DashboardPage/DashboardPage'));
+const AdminPage = loadable(() => import(/* webpackChunkName: "AdminPage" */ '../containers/AdminPage/AdminPage'));
 const EditListingPage = loadable(() => import(/* webpackChunkName: "EditListingPage" */ '../containers/EditListingPage/EditListingPage'));
 const EmailVerificationPage = loadable(() => import(/* webpackChunkName: "EmailVerificationPage" */ '../containers/EmailVerificationPage/EmailVerificationPage'));
 const InboxPage = loadable(() => import(/* webpackChunkName: "InboxPage" */ '../containers/InboxPage/InboxPage'));
@@ -293,6 +294,17 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       auth: true,
       authPage: 'LoginPage',
       component: DashboardPage,
+    },
+    {
+      // XOLOLO F3 · Fase 3: panel interno /admin para Ops de Xololo.
+      // Gate real vive server-side (XOLOLO_ADMIN_EMAILS). El cliente
+      // sólo requiere auth para que exista sesión — si el user no es
+      // admin, los fetches responden 403 y la UI lo comunica.
+      path: '/admin',
+      name: 'AdminPage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: AdminPage,
     },
     {
       // XOLOLO Cart.4: página del carrito del seller identificado por

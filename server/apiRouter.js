@@ -30,6 +30,7 @@ const sellerAnalytics = require('./api/seller-analytics');
 const sellerAnalyticsExport = require('./api/seller-analytics-export');
 const sellerCatalogInsights = require('./api/seller-catalog-insights');
 const sellerMonthlyReportPreview = require('./api/seller-monthly-report-preview');
+const adminMetrics = require('./api/admin-metrics');
 const trackEvent = require('./api/track-event');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
@@ -145,6 +146,14 @@ router.get('/seller-analytics/export', sellerAnalyticsExport);
 // XOLOLO F3 Sprint 6B: dispara el email de reporte mensual al user
 // logueado (default: mes anterior). Sirve como preview del cron.
 router.post('/seller-monthly-report-preview', bodyParser.json(), sellerMonthlyReportPreview);
+
+// XOLOLO F3 Fase 3: endpoints admin gated por XOLOLO_ADMIN_EMAILS.
+// GET /api/admin/health           → métricas globales del marketplace
+// GET /api/admin/disputes         → tx con xololoDispute abierto
+// GET /api/admin/sellers-ranking  → top sellers por revenue
+router.get('/admin/health', adminMetrics.health);
+router.get('/admin/disputes', adminMetrics.disputes);
+router.get('/admin/sellers-ranking', adminMetrics.sellersRanking);
 
 // XOLOLO F3 Sprint 2: recibe eventos de tracking del cliente.
 // Público, rate-limited por IP. Encola y responde 200 inmediato.
