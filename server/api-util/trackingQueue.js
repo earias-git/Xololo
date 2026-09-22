@@ -200,10 +200,17 @@ const flushOnce = async () => {
 
 // --------- flush: sellers/stores (xololoStoreAnalytics) ---------
 //
-// Mismo patrón que flushOnce pero persiste en user.metadata via
-// sdk.users.updateProfile (Integration API expone metadata en el
-// profile update, igual que listings.update). Alimenta la sección
-// "Tráfico" de /admin con vistas de storefront por seller.
+// Mismo patrón que flushOnce pero persiste en el user via
+// sdk.users.updateProfile. OJO: a diferencia de Listing/Transaction
+// (donde metadata es un atributo top-level), en User TODAS las
+// extended-data namespaces (publicData/protectedData/privateData/
+// metadata) viven ANIDADAS bajo `profile` — o sea
+// user.attributes.profile.metadata, NO user.attributes.metadata. El
+// PARÁMETRO que se le pasa a updateProfile sigue siendo plano
+// ({ id, metadata: {...} }, igual que { publicData } en
+// ManageStorePage.duck.js) — Sharetribe lo guarda anidado del lado
+// del server. Alimenta la sección "Tráfico" de /admin con vistas de
+// storefront por seller.
 
 const flushStoreViewsOnce = async () => {
   if (storeViewQueue.length === 0) return { flushed: 0 };
@@ -225,7 +232,8 @@ const flushStoreViewsOnce = async () => {
   for (const [sellerId, delta] of grouped) {
     try {
       const showResp = await sdk.users.show({ id: sellerId });
-      const existing = showResp.data.data.attributes?.metadata?.xololoStoreAnalytics || null;
+      const existing =
+        showResp.data.data.attributes?.profile?.metadata?.xololoStoreAnalytics || null;
       const next = applyDeltas(existing, delta);
       await sdk.users.updateProfile({
         id: sellerId,

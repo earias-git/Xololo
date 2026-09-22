@@ -31,6 +31,7 @@ const sellerAnalyticsExport = require('./api/seller-analytics-export');
 const sellerCatalogInsights = require('./api/seller-catalog-insights');
 const sellerMonthlyReportPreview = require('./api/seller-monthly-report-preview');
 const adminMetrics = require('./api/admin-metrics');
+const adminOverview = require('./api/admin-overview');
 const publicStoreStats = require('./api/public-store-stats');
 const buyerDashboard = require('./api/buyer-dashboard');
 const trackEvent = require('./api/track-event');
@@ -156,6 +157,12 @@ router.post('/seller-monthly-report-preview', bodyParser.json(), sellerMonthlyRe
 router.get('/admin/health', adminMetrics.health);
 router.get('/admin/disputes', adminMetrics.disputes);
 router.get('/admin/sellers-ranking', adminMetrics.sellersRanking);
+
+// XOLOLO F3 · ampliación admin: catálogo (productos/servicios +
+// crecimiento), usuarios (buyers activos/inactivos + candidatos a
+// seller) y tráfico (vistas de listings + storefronts) en un solo
+// round-trip. Cache 10min server-side.
+router.get('/admin/overview', adminOverview);
 
 // XOLOLO F3 Fase 4: métricas públicas de la tienda de un seller.
 // Público. Sólo expone data no sensible (# ventas, unidades, sello).

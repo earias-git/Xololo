@@ -321,3 +321,139 @@
   font-size: 11.5px;
   font-style: italic;
 }
+
+/* ---------- ampliación admin: catálogo/usuarios/tráfico ---------- */
+
+.kpiHint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--colorGrey500);
+  line-height: 1.3;
+}
+
+.cachedBadge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: var(--colorGrey50, #f7f4ee);
+  color: var(--colorGrey500);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.chartSection {
+  margin: 0 0 24px;
+  padding: 16px;
+  background-color: #ffffff;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 12px;
+}
+
+.sectionTitle {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--colorGrey900);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionSubtitle {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--colorGrey500);
+  line-height: 1.5;
+}
+
+.blockCountBadge {
+  display: inline-block;
+  padding: 1px 8px;
+  background-color: #232d40;
+  color: #ffffff;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.trafficGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.trafficGrid .chartSection {
+  margin-bottom: 0;
+}
+
+.emptyInline {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--colorGrey500);
+  font-style: italic;
+}
+
+/* ---------- source breakdown bars (Tráfico) ---------- */
+.sourceList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sourceRow {
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.sourceLabel {
+  font-size: 12.5px;
+  color: var(--colorGrey700);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceBarTrack {
+  position: relative;
+  height: 10px;
+  background-color: var(--colorGrey50, #f7f4ee);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.sourceBarFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background-color: #232d40;
+  border-radius: 999px;
+}
+
+.sourceValue {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--colorGrey900);
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: right;
+  min-width: 90px;
+}
+
+.sourcePct {
+  font-weight: 500;
+  color: var(--colorGrey500);
+}
