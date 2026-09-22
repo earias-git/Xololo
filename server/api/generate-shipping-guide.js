@@ -264,15 +264,28 @@ module.exports = async (req, res) => {
       .join(', ')
       .slice(0, 100);
 
+    // XOLOLO: Skydropx impone límites cortos en varios campos del label:
+    //   reference: 30 chars max (validado con rechazo real)
+    //   further_information: acepta texto largo — sirve como escape
+    //     valve para las indicaciones completas del buyer.
+    // Truncamos defensivamente para no bloquear la generación de la
+    // guía. Guardamos el texto original en la tx sin tocar, así el
+    // seller lo sigue viendo completo en su UI.
+    const truncate = (s, n) => String(s || '').slice(0, n);
+
     // Crear el envío en Skydropx.
     const created = await createShipment({
       rateId: xShipping.rate.id,
       quotationId: xShipping.quotationId,
       addressFrom: {
-        name: provider?.attributes?.profile?.displayName || 'Vendedor',
-        company: providerPd.legalName || provider?.attributes?.profile?.displayName || 'Vendedor',
-        street1: `${pickupAddr.street}, ${pickupAddr.colonia}`.trim(),
-        reference: pickupRefs || 'N/D',
+        name: truncate(provider?.attributes?.profile?.displayName || 'Vendedor', 30),
+        company: truncate(
+          providerPd.legalName || provider?.attributes?.profile?.displayName || 'Vendedor',
+          30
+        ),
+        street1: truncate(`${pickupAddr.street}, ${pickupAddr.colonia}`.trim(), 60),
+        reference: truncate(pickupRefs || 'N/D', 30),
+        further_information: pickupRefs || undefined,
         postal_code: pickupAddr.postalCode,
         area_level1: pickupAddr.state,
         area_level2: pickupAddr.city,
@@ -284,10 +297,11 @@ module.exports = async (req, res) => {
           'vendedor@xololo.mx',
       },
       addressTo: {
-        name: shippingDetails.name || 'Comprador',
-        company: shippingDetails.name || 'Comprador',
-        street1: [buyerAddress.line1, buyerAddress.line2].filter(Boolean).join(', '),
-        reference: buyerReferences || 'N/D',
+        name: truncate(shippingDetails.name || 'Comprador', 30),
+        company: truncate(shippingDetails.name || 'Comprador', 30),
+        street1: truncate([buyerAddress.line1, buyerAddress.line2].filter(Boolean).join(', '), 60),
+        reference: truncate(buyerReferences || 'N/D', 30),
+        further_information: buyerReferences || undefined,
         postal_code: buyerAddress.postalCode,
         area_level1: buyerAddress.state || 'México',
         area_level2: buyerAddress.city,
