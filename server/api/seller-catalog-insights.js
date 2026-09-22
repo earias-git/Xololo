@@ -33,6 +33,7 @@
 //   - Cache in-memory 5min por (userId, from, to).
 
 const { getSdk } = require('../api-util/sdk');
+const { readLineItemQty } = require('../api-util/lineItemMoney');
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const CACHE_MAX = 200;
@@ -90,7 +91,7 @@ const aggregateByListing = txs => {
       if (li.code !== 'line-item/item') continue;
       const includes = li.includeFor || [];
       if (!includes.includes('customer') || !includes.includes('provider')) continue;
-      const qty = Number(li.quantity) || 0;
+      const qty = readLineItemQty(li);
       const lineTotal = li.lineTotal?.amount || 0;
       let entry = byListing.get(primaryListingId);
       if (!entry) {

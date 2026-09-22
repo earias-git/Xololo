@@ -14,6 +14,8 @@
 //   });
 //   await sendEventNotifications('seller.monthly_report', ctx);
 
+const { readLineItemQty } = require('./lineItemMoney');
+
 const MONTH_LABELS_ES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
@@ -109,7 +111,7 @@ const topProducts = (txs, included) => {
         agg.set(listingId, e);
       }
       e.revenue += li.lineTotal?.amount || 0;
-      e.units += Number(li.quantity) || 0;
+      e.units += readLineItemQty(li);
     }
   }
   return Array.from(agg.entries())

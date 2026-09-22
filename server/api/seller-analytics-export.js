@@ -19,6 +19,7 @@
 //   tracking, source
 
 const { getSdk } = require('../api-util/sdk');
+const { readLineItemQty } = require('../api-util/lineItemMoney');
 
 const MAX_PAGES = 5;
 const PER_PAGE = 100;
@@ -197,7 +198,7 @@ module.exports = async (req, res) => {
         const incFor = li.includeFor || [];
         if (!incFor.includes('customer') || !incFor.includes('provider')) continue;
         subtotal += li.lineTotal?.amount || 0;
-        cantidad += Number(li.quantity) || 0;
+        cantidad += readLineItemQty(li);
       }
 
       const shipping = lineItems

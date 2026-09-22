@@ -41,6 +41,7 @@ const {
 const { aggregateParcel } = require('../api-util/cartShipping');
 const { sendEventNotifications } = require('../api-util/notifications');
 const { buildTxContext } = require('../api-util/notifications/context');
+const { readLineItemQty } = require('../api-util/lineItemMoney');
 
 module.exports = async (req, res) => {
   try {
@@ -220,7 +221,7 @@ module.exports = async (req, res) => {
         (li.includeFor || []).includes('customer') &&
         (li.includeFor || []).includes('provider')
     );
-    const primaryQty = Math.max(1, Number(primaryLine?.quantity) || 1);
+    const primaryQty = Math.max(1, readLineItemQty(primaryLine));
 
     const parcelItems = [
       {

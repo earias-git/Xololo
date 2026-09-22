@@ -35,6 +35,7 @@
 // cambian tan rápido.
 
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { readLineItemQty } = require('../api-util/lineItemMoney');
 
 const MIN_ORDERS_FOR_ELIGIBLE = 5;
 const MEMBER_MONTHS_VERIFIED = 2; // > 2 meses en la plataforma
@@ -88,7 +89,7 @@ const fetchSellerStats = async (isdk, sellerId) => {
         if (li.code !== 'line-item/item') continue;
         const inc = li.includeFor || [];
         if (!inc.includes('customer') || !inc.includes('provider')) continue;
-        productsSold += Number(li.quantity) || 0;
+        productsSold += readLineItemQty(li);
       }
     }
     const totalPages = resp.data.meta?.totalPages || 1;
