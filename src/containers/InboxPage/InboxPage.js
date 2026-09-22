@@ -47,6 +47,7 @@ import {
   TimeRange,
   UserDisplayName,
   LayoutSideNavigation,
+  SellerDashboardHero,
 } from '../../components';
 
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
@@ -410,6 +411,11 @@ export const InboxPageComponent = props => {
           routeConfiguration={routeConfiguration}
           history={history}
         />
+        {/* XOLOLO F3 · Fase 1: dashboard hero para seller. Sólo en tab sales
+            y cuando ya cargaron las tx (evita flash con la ausencia de datos). */}
+        {!isOrders && !fetchInProgress && hasTransactions ? (
+          <SellerDashboardHero transactions={transactions} />
+        ) : null}
         {fetchOrdersOrSalesError ? (
           <p className={css.error}>
             <FormattedMessage id="InboxPage.fetchFailed" />
