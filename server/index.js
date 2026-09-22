@@ -396,6 +396,21 @@ const server = app.listen(PORT, () => {
   } catch (e) {
     console.error('[xololo] tracking aggregator failed to start:', e.message); // eslint-disable-line no-console
   }
+
+  // XOLOLO F3 Sprint 6B: cron mensual de reportes de sellers. Solo
+  // arranca si MONTHLY_REPORT_ENABLED=true (evita bombardeos en
+  // staging/dev). El propio módulo hace early-return si el env está
+  // apagado — el log lo indica.
+  if (!dev) {
+    try {
+      // eslint-disable-next-line global-require
+      const monthlyReport = require('./jobs/monthly-report');
+      monthlyReport.start();
+      console.log('[xololo] monthly-report job initialized'); // eslint-disable-line no-console
+    } catch (e) {
+      console.error('[xololo] monthly-report job failed to start:', e.message); // eslint-disable-line no-console
+    }
+  }
 });
 
 // Graceful shutdown:

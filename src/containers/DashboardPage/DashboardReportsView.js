@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react'; // React namespace used inside sub-components
 
 import { apiBaseUrl } from '../../util/api';
 
@@ -147,18 +147,81 @@ const DashboardReportsView = () => {
         </div>
       </section>
 
-      <section className={css.chartSection}>
-        <h3 className={css.sectionTitle}>Reporte mensual por email</h3>
-        <div className={css.footNote}>
-          <p>
-            <strong>Próximamente:</strong> configuración para recibir cada día 1 del mes un
-            resumen del mes anterior — ventas totales, top productos, comparativa vs
-            mes previo. El cron ya está preparado en el server; el toggle y el envío
-            se activan en el próximo deploy.
+      <MonthlyEmailBlock />
+    </>
+  );
+};
+
+// XOLOLO F3 Sprint 6B: bloque de email mensual — sólo botón "preview"
+// por ahora (el opt-out real por-seller vive en la cuenta del user y
+// lo agregaremos en un sprint posterior). El botón dispara
+// /api/seller-monthly-report-preview que envía el email al user
+// logueado con el reporte del mes anterior.
+const MonthlyEmailBlock = () => {
+  const [status, setStatus] = React.useState({ state: 'idle', message: null });
+
+  const sendPreview = async () => {
+    setStatus({ state: 'loading', message: null });
+    try {
+      const res = await fetch(`${apiBaseUrl()}/api/seller-monthly-report-preview`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setStatus({ state: 'error', message: data.error || data.details || 'Falló el envío.' });
+        return;
+      }
+      setStatus({
+        state: 'ok',
+        message: `Enviado — resumen de ${data.monthLabel} con ${data.count} pedidos. Revisa tu bandeja.`,
+      });
+    } catch (e) {
+      setStatus({ state: 'error', message: e?.message || 'Falló el envío.' });
+    }
+  };
+
+  return (
+    <section className={css.chartSection}>
+      <h3 className={css.sectionTitle}>Reporte mensual por email</h3>
+      <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--colorGrey500)' }}>
+        Cada día 1 del mes te llegará un resumen del mes anterior — ventas totales,
+        top productos, comparativa vs mes previo. Puedes enviarte uno de prueba
+        ahora mismo.
+      </p>
+      <div className={css.reportRow}>
+        <div className={css.reportRowInfo}>
+          <p className={css.reportRowTitle}>Enviarme un reporte de prueba</p>
+          <p className={css.reportRowMeta}>
+            Genera el resumen del mes anterior y lo envía a tu correo registrado.
           </p>
         </div>
-      </section>
-    </>
+        <button
+          type="button"
+          className={css.reportBtn}
+          onClick={sendPreview}
+          disabled={status.state === 'loading'}
+        >
+          {status.state === 'loading' ? 'Enviando…' : 'Enviar prueba'}
+        </button>
+      </div>
+      {status.state === 'ok' ? (
+        <p style={{ margin: '10px 0 0', fontSize: 13, color: '#065f46' }}>
+          ✓ {status.message}
+        </p>
+      ) : null}
+      {status.state === 'error' ? (
+        <p style={{ margin: '10px 0 0', fontSize: 13, color: '#991b1b' }}>
+          ✗ {status.message}
+        </p>
+      ) : null}
+      <p className={css.alertsFoot} style={{ marginTop: 10 }}>
+        El envío programado del día 1 está gated por MONTHLY_REPORT_ENABLED en Render —
+        se activará una vez validado el template. Por ahora sólo el botón de prueba manda.
+      </p>
+    </section>
   );
 };
 

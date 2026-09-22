@@ -29,6 +29,7 @@ const postalCode = require('./api/postal-code');
 const sellerAnalytics = require('./api/seller-analytics');
 const sellerAnalyticsExport = require('./api/seller-analytics-export');
 const sellerCatalogInsights = require('./api/seller-catalog-insights');
+const sellerMonthlyReportPreview = require('./api/seller-monthly-report-preview');
 const trackEvent = require('./api/track-event');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
@@ -140,6 +141,10 @@ router.get('/seller-catalog-insights', sellerCatalogInsights);
 // XOLOLO F3 Sprint 6: export CSV de ventas del seller.
 // Auth: user logueado. Devuelve text/csv attachment (UTF-8 BOM).
 router.get('/seller-analytics/export', sellerAnalyticsExport);
+
+// XOLOLO F3 Sprint 6B: dispara el email de reporte mensual al user
+// logueado (default: mes anterior). Sirve como preview del cron.
+router.post('/seller-monthly-report-preview', bodyParser.json(), sellerMonthlyReportPreview);
 
 // XOLOLO F3 Sprint 2: recibe eventos de tracking del cliente.
 // Público, rate-limited por IP. Encola y responde 200 inmediato.

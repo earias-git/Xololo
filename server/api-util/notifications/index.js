@@ -74,6 +74,9 @@ const MATRIX = {
   'seller.first_sale': {
     seller: ['email', 'push', 'whatsapp'],
   },
+  'seller.monthly_report': {
+    seller: ['email'],
+  },
 };
 
 const CHANNELS = { email, push, whatsapp };

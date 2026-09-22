@@ -292,6 +292,25 @@ const TEMPLATES = {
       },
     },
   },
+  'seller.monthly_report': {
+    email: {
+      seller: {
+        subject: 'Tu resumen mensual · {report.monthLabel}',
+        bodyText:
+          'Hola {seller.name},\n\n' +
+          'Este es el resumen de tus ventas en Xololo durante {report.monthLabel}:\n\n' +
+          '• Ventas totales: {report.salesMxn}\n' +
+          '• Pedidos: {report.count}\n' +
+          '• Ticket promedio: {report.ticketMxn}\n' +
+          '• Neto para ti: {report.netMxn}\n' +
+          '\n' +
+          '{report.topProductsText}\n' +
+          '\n' +
+          'Ver el dashboard completo: {report.dashboardUrl}\n\n' +
+          'Gracias por vender con Xololo.',
+      },
+    },
+  },
   'seller.first_sale': {
     email: {
       seller: {
