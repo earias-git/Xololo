@@ -534,7 +534,17 @@ class StripePaymentForm extends Component {
       hasHandledCardPayment
     );
 
-    const submitDisabled = invalid || onetimePaymentNeedsAttention || submitInProgress;
+    // XOLOLO: en modo carrier, gated el submit hasta que el buyer haya
+    // seleccionado un rate (o el seller absorba el envío). Sin esto el
+    // pago se procesaría sin línea de shipping-fee y el pedido saldría
+    // "sin envío" — bug real observado 2026-09-21.
+    const needsShippingRate =
+      listingShippingPricingMode === 'carrier' &&
+      !listingSellerCoversShipping &&
+      !values?.selectedShippingRate;
+
+    const submitDisabled =
+      invalid || onetimePaymentNeedsAttention || submitInProgress || needsShippingRate;
     const hasCardError = this.state.error && !submitInProgress;
     const hasPaymentErrors = confirmCardPaymentError || confirmPaymentError;
     const classes = classNames(rootClassName || css.root, className);
@@ -765,6 +775,11 @@ class StripePaymentForm extends Component {
         <div className={css.submitContainer}>
           {hasPaymentErrors ? (
             <span className={css.errorMessage}>{paymentErrorMessage}</span>
+          ) : null}
+          {needsShippingRate ? (
+            <span className={css.errorMessage}>
+              Elige una paquetería en "Opciones de envío" antes de pagar.
+            </span>
           ) : null}
           <PrimaryButton
             className={css.submitButton}
