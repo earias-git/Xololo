@@ -27,6 +27,7 @@ const skydropxWebhook = require('./api/webhooks/skydropx');
 const orderSurvey = require('./api/order-survey');
 const postalCode = require('./api/postal-code');
 const sellerAnalytics = require('./api/seller-analytics');
+const sellerCatalogInsights = require('./api/seller-catalog-insights');
 const trackEvent = require('./api/track-event');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
@@ -130,6 +131,10 @@ router.get('/postal-code', postalCode);
 // XOLOLO F3: analytics de ventas para el dashboard del seller.
 // Auth: user logueado. Devuelve las tx del provider en rango [from, to].
 router.get('/seller-analytics', sellerAnalytics);
+
+// XOLOLO F3 Sprint 3: insights de catálogo (top-sales + alertas).
+// Auth: user logueado.
+router.get('/seller-catalog-insights', sellerCatalogInsights);
 
 // XOLOLO F3 Sprint 2: recibe eventos de tracking del cliente.
 // Público, rate-limited por IP. Encola y responde 200 inmediato.
