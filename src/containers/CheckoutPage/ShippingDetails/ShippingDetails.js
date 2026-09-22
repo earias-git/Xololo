@@ -102,6 +102,24 @@ const ShippingDetails = props => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lookup.status, lookup.data]);
 
+  // XOLOLO: si el lookup NO devolvió city (Zippopotam no da municipio
+  // para México) y el buyer ya eligió colonia, autoRellenamos city con
+  // la colonia como fallback. El buyer puede corregirlo si es la
+  // colonia ≠ municipio, pero al menos desbloquea la cotización de
+  // Skydropx (que exige area_level2). Si el server sí trae city (SEPOMEX
+  // fallback vivo), el effect de arriba corre primero y city queda con
+  // el municipio real.
+  useEffect(() => {
+    if (lookup.status !== 'ok' || !lookup.data) return;
+    if (lookup.data.city) return; // ya tenemos municipio real
+    if (values?.recipientCity) return; // el buyer o el otro effect ya lo puso
+    const chosenColonia = values?.recipientNeighborhood;
+    if (chosenColonia) {
+      formApi.change('recipientCity', chosenColonia);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lookup.status, lookup.data, values?.recipientNeighborhood]);
+
   const colonyOptions =
     lookup.status === 'ok' && Array.isArray(lookup.data?.colonies) ? lookup.data.colonies : [];
   const showColoniaSelect = isMexico && colonyOptions.length > 0;

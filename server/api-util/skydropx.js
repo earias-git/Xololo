@@ -30,12 +30,14 @@ const QUOTATION_URL = `https://${HOST}/api/v1/quotations`;
 
 // Refresh 5 min antes de la expiración real para evitar carreras.
 const TOKEN_REFRESH_MARGIN_MS = 5 * 60 * 1000;
-// Polling: hasta 25s, chequeando cada 1s. Sandbox suele tardar 5-10s en
-// completar todos los carriers; producción es más rápido (~2-3s). Con 25s
-// cubrimos ambos casos con margen. Si queremos respuesta más rápida al
-// buyer, podemos devolver rates parciales (los que ya completaron) al
-// llegar al timeout — en v2.
-const MAX_POLL_MS = 25000;
+// Polling: hasta 40s, chequeando cada 1s. Sandbox de Skydropx pega
+// tirones — hemos visto cotizaciones que tardan 20-30s en completar
+// todos los carriers (esp. cuando DHL/Estafeta responden lento).
+// Producción es más rápido (~2-3s). Con 40s cubrimos el peor caso del
+// sandbox sin bloquear al buyer indefinidamente. Si queremos respuesta
+// más rápida podemos devolver rates parciales (los que ya completaron)
+// al llegar al timeout — en v2.
+const MAX_POLL_MS = 40000;
 const POLL_INTERVAL_MS = 1000;
 
 // XOLOLO: política de pricing (ver docs/LOGISTICS_V1.md §5).
