@@ -26,7 +26,6 @@ const uploadSosPhoto = require('./api/upload-sos-photo');
 const skydropxWebhook = require('./api/webhooks/skydropx');
 const orderSurvey = require('./api/order-survey');
 const postalCode = require('./api/postal-code');
-const notificationSmokeTest = require('./api/notification-smoke-test');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -125,10 +124,6 @@ router.post('/order-survey', bodyParser.json(), orderSurvey);
 // XOLOLO: proxy a SEPOMEX para autocompletar estado/ciudad/colonias
 // desde el CP en el checkout. Público; caché in-memory 24h.
 router.get('/postal-code', postalCode);
-
-// XOLOLO: endpoint TEMPORAL para smoke-testear el email dispatcher.
-// Requiere NOTIFICATION_SMOKE_TOKEN. Borrar cuando validemos el flow.
-router.post('/notification-smoke-test', bodyParser.json(), notificationSmokeTest);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

@@ -9,20 +9,7 @@
 //   404 → { error: 'not_found' }
 //   500 → { error: 'internal' }
 
-const sharetribeIntegrationSdk = require('sharetribe-flex-integration-sdk');
-
-let integrationSdk = null;
-
-const getIntegrationSdk = () => {
-  if (integrationSdk) return integrationSdk;
-  const clientId = process.env.SHARETRIBE_INTEGRATION_CLIENT_ID;
-  const clientSecret = process.env.SHARETRIBE_INTEGRATION_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
-    return null;
-  }
-  integrationSdk = sharetribeIntegrationSdk.createInstance({ clientId, clientSecret });
-  return integrationSdk;
-};
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 
 // Cache de slug → seller para no golpear Integration API en cada request.
 // TTL 60s en dev, más largo si conviene en prod. Se invalida al reiniciar.

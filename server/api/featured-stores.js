@@ -6,17 +6,7 @@
 //   GET /api/featured-stores?limit=6
 //   200 → { stores: [{ id, name, slug, coverUrl, primaryColor, description }] }
 
-const sharetribeIntegrationSdk = require('sharetribe-flex-integration-sdk');
-
-let integrationSdk = null;
-const getIntegrationSdk = () => {
-  if (integrationSdk) return integrationSdk;
-  const clientId = process.env.SHARETRIBE_INTEGRATION_CLIENT_ID;
-  const clientSecret = process.env.SHARETRIBE_INTEGRATION_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
-  integrationSdk = sharetribeIntegrationSdk.createInstance({ clientId, clientSecret });
-  return integrationSdk;
-};
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 
 // Caché para no golpear Integration API en cada landing. Se invalida en
 // cada reinicio; con TTL de 5 minutos evitamos rate limits.

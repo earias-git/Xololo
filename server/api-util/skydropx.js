@@ -314,15 +314,19 @@ const createShipment = async ({
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    // XOLOLO: loguear el payload que mandamos + la respuesta cruda para
-    // diagnosticar rechazos (rate_id caducado, colonia inválida, etc.)
-    // sin depender de un round-trip con el usuario.
+    // XOLOLO: loguear la respuesta cruda de Skydropx siempre — trae los
+    // detalles del rechazo (rate_id caducado, colonia inválida, weight
+    // fuera de rango, etc.) y NO contiene PII del buyer/seller. El
+    // request body sí trae PII (nombre, teléfono, dirección) así que
+    // sólo lo loguemos cuando SKYDROPX_DEBUG=true está seteado.
     // eslint-disable-next-line no-console
     console.error('[skydropx.createShipment] status=', res.status);
     // eslint-disable-next-line no-console
-    console.error('[skydropx.createShipment] request body:', JSON.stringify(body));
-    // eslint-disable-next-line no-console
     console.error('[skydropx.createShipment] response:', JSON.stringify(data));
+    if (process.env.SKYDROPX_DEBUG === 'true') {
+      // eslint-disable-next-line no-console
+      console.error('[skydropx.createShipment] request body:', JSON.stringify(body));
+    }
     throw new SkydropxQuoteError(
       `Skydropx rechazó creación de envío (${res.status})`,
       data?.errors || data

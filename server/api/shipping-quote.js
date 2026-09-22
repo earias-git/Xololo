@@ -23,7 +23,6 @@
 // Rate limit: Skydropx tiene 2 req/s por credencial — para v1 no lo
 // respetamos aquí porque tráfico será bajo.
 
-const sharetribeIntegrationSdk = require('sharetribe-flex-integration-sdk');
 const {
   getQuotationRates,
   SkydropxAuthError,
@@ -31,16 +30,7 @@ const {
   SkydropxTimeoutError,
 } = require('../api-util/skydropx');
 const { aggregateParcel, parcelDataFromListing } = require('../api-util/cartShipping');
-
-let integrationSdk = null;
-const getIntegrationSdk = () => {
-  if (integrationSdk) return integrationSdk;
-  const clientId = process.env.SHARETRIBE_INTEGRATION_CLIENT_ID;
-  const clientSecret = process.env.SHARETRIBE_INTEGRATION_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
-  integrationSdk = sharetribeIntegrationSdk.createInstance({ clientId, clientSecret });
-  return integrationSdk;
-};
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 
 const validateDestination = dest => {
   if (!dest) return 'destination requerido.';

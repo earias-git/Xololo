@@ -25,9 +25,9 @@
 // - El timeline (D.7) lee estos eventos para dibujar los 8 estados
 
 const crypto = require('crypto');
-const sharetribeSdkIntegration = require('sharetribe-flex-integration-sdk');
 const { sendEventNotifications } = require('../../api-util/notifications');
 const { buildTxContext } = require('../../api-util/notifications/context');
+const { getIntegrationSdk } = require('../../api-util/integrationSdk');
 
 const AUTH_TOKEN = process.env.SKYDROPX_WEBHOOK_TOKEN;
 
@@ -40,16 +40,6 @@ const STATUS_TO_EVENT = {
   in_transit: 'order.in_transit',
   out_for_delivery: 'order.out_for_delivery',
   delivered: 'order.delivered',
-};
-
-let integrationSdk = null;
-const getIntegrationSdk = () => {
-  if (integrationSdk) return integrationSdk;
-  const clientId = process.env.SHARETRIBE_INTEGRATION_CLIENT_ID;
-  const clientSecret = process.env.SHARETRIBE_INTEGRATION_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
-  integrationSdk = sharetribeSdkIntegration.createInstance({ clientId, clientSecret });
-  return integrationSdk;
 };
 
 // Validación del token del webhook. Soporta 2 modos:

@@ -15,22 +15,12 @@
 // Si el server se reinicia, el próximo tick sigue del último punto
 // (no hay estado que perder — es idempotente).
 
-const sharetribeSdkIntegration = require('sharetribe-flex-integration-sdk');
 const { sendEventNotifications } = require('../api-util/notifications');
 const { buildTxContext } = require('../api-util/notifications/context');
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 
 const TACIT_WINDOW_MS = 48 * 60 * 60 * 1000; // 48h
 const RUN_EVERY_MS = 60 * 60 * 1000; // cada hora
-
-let integrationSdk = null;
-const getIntegrationSdk = () => {
-  if (integrationSdk) return integrationSdk;
-  const clientId = process.env.SHARETRIBE_INTEGRATION_CLIENT_ID;
-  const clientSecret = process.env.SHARETRIBE_INTEGRATION_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
-  integrationSdk = sharetribeSdkIntegration.createInstance({ clientId, clientSecret });
-  return integrationSdk;
-};
 
 // Detecta cuándo fue entregada una tx. Preferimos el evento del
 // webhook Skydropx (status 'delivered'); fallback: transición
