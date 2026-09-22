@@ -223,13 +223,24 @@ module.exports = (req, res) => {
       xololoCart =
         additionalCartItems.length > 0
           ? {
-              items: additionalCartItems.map(({ listing: l, quantity: q }) => ({
-                listingId: l.id.uuid,
-                title: l.attributes.title,
-                quantity: q,
-                priceInSubunits: l.attributes.price.amount,
-                currency: l.attributes.price.currency,
-              })),
+              items: additionalCartItems.map(({ listing: l, quantity: q }) => {
+                const pd = l.attributes.publicData || {};
+                return {
+                  listingId: l.id.uuid,
+                  title: l.attributes.title,
+                  quantity: q,
+                  priceInSubunits: l.attributes.price.amount,
+                  currency: l.attributes.price.currency,
+                  // XOLOLO Cart.6: peso/dims del listing snapshoteados aquí
+                  // para que generate-shipping-guide agregue parcels sin
+                  // re-consultar los listings (que pueden haberse despublicado
+                  // o cambiado de dimensiones entre initiate y fulfillment).
+                  weightGrams: pd.weightGrams || null,
+                  dimensionLengthCm: pd.dimensionLengthCm || null,
+                  dimensionWidthCm: pd.dimensionWidthCm || null,
+                  dimensionHeightCm: pd.dimensionHeightCm || null,
+                };
+              }),
             }
           : null;
 

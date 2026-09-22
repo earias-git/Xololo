@@ -504,6 +504,10 @@ class StripePaymentForm extends Component {
       listingShippingPricingMode,
       listingSellerCoversShipping,
       onShippingRateSelected,
+      // XOLOLO Cart.6: cantidad del primary listing + items adicionales del
+      // carrito para cotización agregada (peso/dims sumados en el server).
+      primaryQuantity,
+      additionalCartItems,
       values,
     } = formRenderProps;
 
@@ -620,6 +624,8 @@ class StripePaymentForm extends Component {
             shippingPricingMode={listingShippingPricingMode}
             sellerCoversShipping={listingSellerCoversShipping}
             onRateSelected={handleRateSelected}
+            primaryQuantity={primaryQuantity}
+            additionalCartItems={additionalCartItems}
           />
         ) : null}
         <LocationOrShippingDetails

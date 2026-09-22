@@ -699,6 +699,8 @@ export const CheckoutPageWithPayment = props => {
                 listingSellerCoversShipping={
                   !!pageData?.listing?.attributes?.publicData?.sellerCoversShipping
                 }
+                primaryQuantity={pageData?.orderData?.quantity}
+                additionalCartItems={pageData?.orderData?.additionalCartItems}
                 isFuzzyLocation={config.maps.fuzzy.enabled}
                 transactionFieldConfigs={transactionFieldConfigs}
                 showTransactionFields={showTransactionFields}

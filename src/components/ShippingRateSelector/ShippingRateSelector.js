@@ -57,6 +57,11 @@ const ShippingRateSelector = props => {
     shippingPricingMode,
     sellerCoversShipping,
     onRateSelected,
+    // XOLOLO Cart.6: cantidad del primary + items extra del carrito
+    // (mismo shape que orderData.additionalCartItems: [{listingId, quantity}]).
+    // Se envían al server para agregar peso/dimensiones del carrito.
+    primaryQuantity,
+    additionalCartItems,
   } = props;
 
   const [destination, setDestination] = useState({
@@ -118,10 +123,16 @@ const ShippingRateSelector = props => {
     }
     setState({ status: QuoteRequestState.LOADING, rates: [], error: null });
     try {
+      const hasCart = Array.isArray(additionalCartItems) && additionalCartItems.length > 0;
       const res = await fetch(`${apiBaseUrl()}/api/shipping-quote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId, destination }),
+        body: JSON.stringify({
+          listingId,
+          destination,
+          ...(primaryQuantity ? { quantity: primaryQuantity } : {}),
+          ...(hasCart ? { additionalCartItems } : {}),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {

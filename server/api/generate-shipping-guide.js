@@ -37,6 +37,7 @@ const {
   SkydropxQuoteError,
   SkydropxTimeoutError,
 } = require('../api-util/skydropx');
+const { aggregateParcel } = require('../api-util/cartShipping');
 
 module.exports = async (req, res) => {
   try {
@@ -151,6 +152,71 @@ module.exports = async (req, res) => {
       : 0;
     const listingTitle = listing?.attributes?.title || 'Producto';
 
+    // XOLOLO Cart.6: agregar peso/dimensiones de TODOS los items del
+    // carrito para construir el parcel real. El primary listing sale
+    // del `included`; los items extra salen del snapshot xololoCart en
+    // protectedData (grabado por initiate-privileged en Cart.5).
+    //
+    // Se usa el MISMO modelo que en shipping-quote (aggregateParcel:
+    // max largo, max ancho, sum alto, sum peso) para que el rate ya
+    // pagado por el buyer aplique al parcel real que se genera.
+    const listingPd = listing?.attributes?.publicData || {};
+    const xCart = tx.attributes.protectedData?.xololoCart || null;
+
+    // Primary quantity: buscamos la primera línea 'line-item/item' de
+    // customer+provider (no shipping/commission).
+    const primaryLine = (tx.attributes.lineItems || []).find(
+      li =>
+        li.code === 'line-item/item' &&
+        (li.includeFor || []).includes('customer') &&
+        (li.includeFor || []).includes('provider')
+    );
+    const primaryQty = Math.max(1, Number(primaryLine?.quantity) || 1);
+
+    const parcelItems = [
+      {
+        listingId: listingId,
+        title: listingTitle,
+        weightGrams: listingPd.weightGrams,
+        dimensionLengthCm: listingPd.dimensionLengthCm,
+        dimensionWidthCm: listingPd.dimensionWidthCm,
+        dimensionHeightCm: listingPd.dimensionHeightCm,
+        quantity: primaryQty,
+      },
+      ...(xCart?.items || []).map(i => ({
+        listingId: i.listingId,
+        title: i.title,
+        weightGrams: i.weightGrams,
+        dimensionLengthCm: i.dimensionLengthCm,
+        dimensionWidthCm: i.dimensionWidthCm,
+        dimensionHeightCm: i.dimensionHeightCm,
+        quantity: i.quantity,
+      })),
+    ];
+
+    let aggregatedParcel;
+    try {
+      aggregatedParcel = aggregateParcel(parcelItems);
+    } catch (e) {
+      return res.status(409).json({
+        error: 'cart_parcel_incomplete',
+        details: e.message,
+      });
+    }
+
+    // Suma el valor declarado (declared_value) para SOS: primary + carrito.
+    const cartExtraValueMXN = (xCart?.items || []).reduce(
+      (sum, i) => sum + (Number(i.priceInSubunits) || 0) * (Number(i.quantity) || 1),
+      0
+    ) / 100;
+    const declaredValueTotal = listingPrice * primaryQty + cartExtraValueMXN;
+
+    // Content del carta porte: concatena títulos truncando a 100 chars.
+    const cartTitles = (xCart?.items || []).map(i => i.title).filter(Boolean);
+    const consignmentNoteContent = [listingTitle, ...cartTitles]
+      .join(', ')
+      .slice(0, 100);
+
     // Crear el envío en Skydropx.
     const created = await createShipment({
       rateId: xShipping.rate.id,
@@ -184,16 +250,9 @@ module.exports = async (req, res) => {
         phone: shippingDetails.recipientPhoneNumber || '5555555555',
         email: customer?.attributes?.email || 'comprador@xololo.mx',
       },
-      parcels: [
-        {
-          length: listing?.attributes?.publicData?.dimensionLengthCm || 20,
-          width: listing?.attributes?.publicData?.dimensionWidthCm || 15,
-          height: listing?.attributes?.publicData?.dimensionHeightCm || 10,
-          weight: (listing?.attributes?.publicData?.weightGrams || 500) / 1000,
-        },
-      ],
-      declaredValue: listingPrice,
-      consignmentNoteContent: listingTitle,
+      parcels: [aggregatedParcel],
+      declaredValue: declaredValueTotal,
+      consignmentNoteContent,
     });
 
     const shipmentId = created?.data?.id;
