@@ -15,6 +15,7 @@ import FooterContainer from '../FooterContainer/FooterContainer';
 
 import DashboardSalesView from './DashboardSalesView';
 import DashboardProductsView from './DashboardProductsView';
+import DashboardReportsView from './DashboardReportsView';
 
 import css from './DashboardPage.module.css';
 
@@ -29,6 +30,7 @@ import css from './DashboardPage.module.css';
 const SECTIONS = [
   { key: 'ventas', label: 'Ventas' },
   { key: 'productos', label: 'Productos' },
+  { key: 'reportes', label: 'Reportes' },
 ];
 
 const DEFAULT_SECTION = 'ventas';
@@ -85,7 +87,13 @@ const DashboardPage = () => {
         footer={<FooterContainer />}
       >
         <div className={css.root}>
-          {activeSection === 'productos' ? <DashboardProductsView /> : <DashboardSalesView />}
+          {activeSection === 'productos' ? (
+            <DashboardProductsView />
+          ) : activeSection === 'reportes' ? (
+            <DashboardReportsView />
+          ) : (
+            <DashboardSalesView />
+          )}
         </div>
       </LayoutSideNavigation>
     </Page>
