@@ -517,7 +517,56 @@ Para que las 4 audiencias no se hagan a mano, extraer a
 
 ---
 
-## 11. Cambios a este documento
+## 11. Branding y paleta 🟢
+
+**Color primary Xololo:** `#232d40` (navy) — el mismo que usa el email
+template (`server/api-util/notifications/emailTemplates.js`).
+**Accent verde:** `#5DCAA5` (el detalle del logo — usar con moderación
+para success states y highlights).
+**Fondo neutro:** `#f7f4ee` (marketplace body bg).
+**Superficies:** `#ffffff` (cards).
+
+**Logo oficial:** `src/assets/xololo-logo-desktop.png` y
+`xololo-logo-mobile.png`. La marca es una X estilizada en navy con
+un pequeño detalle verde arriba a la derecha. Ya se usa en topbar y
+emails — el dashboard debe consumir el mismo asset (no dibujar la X
+a mano).
+
+**Paleta secundaria para gráficas / sources** (mapeo consistente):
+- WhatsApp → verde `#1D9E75`
+- Facebook → azul `#378ADD`
+- Instagram → rosa `#D4537E`
+- Direct → gris `#888780`
+- Xololo interno → púrpura `#7F77DD`
+- TikTok → coral oscuro `#D85A30`
+- Otros → gris claro `#B4B2A9`
+
+**Iconos:** Tabler outline (ya cargados). Un solo icono decorativo
+por card en el header, del mismo peso visual. Sin `-filled` variants.
+
+---
+
+## 12. Decisiones cerradas 2026-09-22 🟢
+
+- **1. Alertas de catálogo (§2.3-C):** aprobadas las 4 (stock bajo,
+  vistas-sin-ventas, sin actualizar >90d, sin actividad).
+- **2. Tráfico (§2.4):** donut + tabla source×KPI + timeline apilado
+  es suficiente para v1. Heatmap por hora y mapa de países → v2.
+- **3. Comparativa vs período previo (§2.2):** comparación con el
+  **mismo período de longitud** (últ. 90d vs 90d previos), no mes-vs-
+  mismo-mes-año. Más útil para tracking de tendencia continua.
+- **4. Branding:** paleta Xololo (§11) aplicada en todos los mockups
+  al codificar. Los mockups iniciales usaban paleta CDS genérica —
+  ignorar los colores exactos, quedarse con la estructura.
+- **5. Reportes (§2.5):** entran CSV descargable + email mensual en
+  v1. PDF-ready → v2.
+
+---
+
+## 13. Cambios a este documento
 
 - **2026-09-22:** creación inicial. Bloque A (Seller · Ventas base) ya
   desplegado.
+- **2026-09-22 (tarde):** mockups aprobados para 3 secciones de Fase 1
+  (Productos, Tráfico, Ventas ampliada, Reportes). Decisiones cerradas
+  en §12. Branding oficial en §11.
