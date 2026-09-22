@@ -1,30 +1,27 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 
 import { apiBaseUrl } from '../../util/api';
 
 import css from './ShippingRateSelector.module.css';
 
-// XOLOLO: widget del checkout que cotiza envío contra Skydropx y deja al
-// buyer elegir paquetería. Aparece solo cuando el listing está en modo
-// carrier (shippingPricingMode='carrier'). Self-contained: maneja su
-// propio state (dirección de destino, rates, rate seleccionado) y notifica
-// al parent con onRateSelected(rate) al elegir uno.
+// XOLOLO: widget de cotización de envío para el checkout. Aparece
+// DEBAJO del form ShippingDetails y LEE los mismos valores (CP,
+// estado, ciudad, colonia) que el buyer capturó ahí — así no puede
+// haber divergencia entre el CP que se cotizó y el CP al que se
+// entrega.
 //
-// Escenarios manejados:
-//  1. Listing con sellerCoversShipping=true → banner "Envío gratis 🎁"
+// Escenarios:
+//  1. Listing con sellerCoversShipping=true → banner "Envío gratis"
 //     y auto-selecciona un rate especial {carrier:'seller-cubre', total:0}.
-//     El parent debe interpretarlo como "shipping fee = 0".
-//  2. Listing normal → form de dirección + botón "Cotizar" → rates.
-//  3. Error de cotización (422/504) → mensaje con retry.
-//
-// Notas de UX:
-//  - El buyer llena CP/estado/municipio/colonia. Estos NO se persisten
-//    aquí; la dirección real de envío la captura el ShippingDetails que
-//    viene debajo (form principal del checkout).
-//  - Los rates se muestran como cards (radio buttons visuales) ordenados
-//    por precio. Al clickear uno se marca seleccionado y notifica parent.
-//  - En mobile los cards se apilan; en desktop 2 columnas.
+//     Ignora los values de la dirección (no necesita cotizar).
+//  2. Listing normal → apenas los 4 campos (CP + estado + ciudad +
+//     colonia) están completos y válidos, cotiza automáticamente
+//     (debounce 500ms). El buyer sólo elige la paquetería en las
+//     tarjetas resultantes.
+//  3. Si el buyer edita cualquiera de los 4 campos después de haber
+//     seleccionado un rate, la selección se invalida y se re-cotiza.
+//  4. Error de cotización (422/504) → mensaje con retry.
 
 const QuoteRequestState = {
   IDLE: 'idle',
@@ -43,6 +40,18 @@ const FREE_RATE = {
   isFreeShipping: true,
 };
 
+const QUOTE_DEBOUNCE_MS = 500;
+
+// Construye la clave "signature" de un destino — usada para saber
+// si el buyer cambió algo desde la última cotización.
+const signatureOf = destination =>
+  [
+    (destination.postal_code || '').trim(),
+    (destination.area_level1 || '').trim().toLowerCase(),
+    (destination.area_level2 || '').trim().toLowerCase(),
+    (destination.area_level3 || '').trim().toLowerCase(),
+  ].join('|');
+
 const isValidDestination = d =>
   /^\d{5}$/.test(String(d.postal_code || '').trim()) &&
   String(d.area_level1 || '').trim().length > 0 &&
@@ -57,86 +66,91 @@ const ShippingRateSelector = props => {
     shippingPricingMode,
     sellerCoversShipping,
     onRateSelected,
-    // XOLOLO Cart.6: cantidad del primary + items extra del carrito
-    // (mismo shape que orderData.additionalCartItems: [{listingId, quantity}]).
-    // Se envían al server para agregar peso/dimensiones del carrito.
+    // XOLOLO Cart.6
     primaryQuantity,
     additionalCartItems,
+    // XOLOLO: destino tomado del Final Form values del ShippingDetails.
+    // Shape esperado: {postal_code, area_level1, area_level2, area_level3}
+    destination,
   } = props;
 
-  const [destination, setDestination] = useState({
-    postal_code: '',
-    area_level1: '',
-    area_level2: '',
-    area_level3: '',
-  });
   const [state, setState] = useState({ status: QuoteRequestState.IDLE, rates: [], error: null });
   const [selectedRateId, setSelectedRateId] = useState(null);
+  const lastSigRef = useRef(null);
+  const debounceRef = useRef(null);
+  const abortRef = useRef(null);
 
-  // Si el listing no es carrier, este componente no aplica.
-  if (shippingPricingMode !== 'carrier') return null;
+  // Escenario 1: seller absorbe. Auto-seleccionamos FREE_RATE al montar.
+  // (useEffect para no llamar setState durante render — bug del template previo.)
+  useEffect(() => {
+    if (shippingPricingMode !== 'carrier') return;
+    if (!sellerCoversShipping) return;
+    if (selectedRateId === FREE_RATE.id) return;
+    setSelectedRateId(FREE_RATE.id);
+    if (typeof onRateSelected === 'function') onRateSelected(FREE_RATE);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shippingPricingMode, sellerCoversShipping]);
 
-  const classes = classNames(rootClassName || css.root, className);
+  // XOLOLO: auto-cotización cuando el destino cambia y está válido.
+  // Debounce para no golpear el endpoint mientras el buyer teclea.
+  useEffect(() => {
+    if (shippingPricingMode !== 'carrier') return;
+    if (sellerCoversShipping) return;
+    if (!destination) return;
 
-  // Escenario 1: seller absorbe. Auto-seleccionamos FREE_RATE al montar
-  // y no mostramos el form de cotización.
-  if (sellerCoversShipping) {
-    // Notificamos una sola vez (useEffect no aplica aquí porque el effect
-    // en cascada sería innecesario — parent guarda el rate al montarse).
-    if (selectedRateId !== FREE_RATE.id) {
-      setSelectedRateId(FREE_RATE.id);
-      if (typeof onRateSelected === 'function') onRateSelected(FREE_RATE);
-    }
-    return (
-      <section className={classes}>
-        <div className={css.freeBanner}>
-          <span className={css.freeBadge}>🎁</span>
-          <div>
-            <strong className={css.freeTitle}>Envío gratis</strong>
-            <p className={css.freeSubtitle}>
-              El vendedor absorbe el costo de envío en esta compra.
-            </p>
-          </div>
-        </div>
-      </section>
-    );
-  }
+    const sig = signatureOf(destination);
+    if (sig === lastSigRef.current) return; // sin cambio real
 
-  const changeField = (name, value) => {
-    setDestination(d => ({ ...d, [name]: value }));
-    // Al modificar la dirección invalidamos rates previos y selección.
-    if (state.status === QuoteRequestState.SUCCESS) {
+    // Invalida rate previo — si cambió el CP, el rate ya no aplica.
+    if (state.status === QuoteRequestState.SUCCESS || selectedRateId) {
       setState({ status: QuoteRequestState.IDLE, rates: [], error: null });
       setSelectedRateId(null);
       if (typeof onRateSelected === 'function') onRateSelected(null);
     }
-  };
 
-  const fetchRates = async () => {
-    if (!isValidDestination(destination)) {
-      setState({
-        status: QuoteRequestState.ERROR,
-        rates: [],
-        error: 'Completa CP (5 dígitos), estado, municipio y colonia.',
-      });
-      return;
-    }
+    if (!isValidDestination(destination)) return;
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      lastSigRef.current = sig;
+      fetchRatesFor(destination);
+    }, QUOTE_DEBOUNCE_MS);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    destination?.postal_code,
+    destination?.area_level1,
+    destination?.area_level2,
+    destination?.area_level3,
+    shippingPricingMode,
+    sellerCoversShipping,
+  ]);
+
+  const fetchRatesFor = async dest => {
+    // Cancela request previo si hay uno en vuelo.
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setState({ status: QuoteRequestState.LOADING, rates: [], error: null });
     try {
       const hasCart = Array.isArray(additionalCartItems) && additionalCartItems.length > 0;
       const res = await fetch(`${apiBaseUrl()}/api/shipping-quote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           listingId,
-          destination,
+          destination: dest,
           ...(primaryQuantity ? { quantity: primaryQuantity } : {}),
           ...(hasCart ? { additionalCartItems } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        // Mapeamos códigos a mensajes amables.
         const msgByError = {
           origin_not_configured: 'El vendedor aún no configuró su código postal de origen.',
           listing_not_shippable:
@@ -153,6 +167,7 @@ const ShippingRateSelector = props => {
       }
       setState({ status: QuoteRequestState.SUCCESS, rates: data.rates, error: null });
     } catch (e) {
+      if (e.name === 'AbortError') return; // request cancelado por cambio de dirección
       setState({ status: QuoteRequestState.ERROR, rates: [], error: e.message });
     }
   };
@@ -162,70 +177,43 @@ const ShippingRateSelector = props => {
     if (typeof onRateSelected === 'function') onRateSelected(rate);
   };
 
+  if (shippingPricingMode !== 'carrier') return null;
+
+  const classes = classNames(rootClassName || css.root, className);
+
+  if (sellerCoversShipping) {
+    return (
+      <section className={classes}>
+        <div className={css.freeBanner}>
+          <span className={css.freeBadge}>🎁</span>
+          <div>
+            <strong className={css.freeTitle}>Envío gratis</strong>
+            <p className={css.freeSubtitle}>
+              El vendedor absorbe el costo de envío en esta compra.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const destinationReady = isValidDestination(destination || {});
+
   return (
     <section className={classes}>
-      <h3 className={css.title}>Envío a domicilio</h3>
-      <p className={css.hint}>
-        Ingresa la dirección de entrega para ver las paqueterías disponibles.
-      </p>
-
-      <div className={css.formGrid}>
-        <label className={css.field}>
-          <span className={css.label}>Código postal *</span>
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={5}
-            className={css.input}
-            value={destination.postal_code}
-            onChange={e => changeField('postal_code', e.target.value.replace(/\D/g, ''))}
-            placeholder="91000"
-          />
-        </label>
-        <label className={css.field}>
-          <span className={css.label}>Estado *</span>
-          <input
-            type="text"
-            className={css.input}
-            value={destination.area_level1}
-            onChange={e => changeField('area_level1', e.target.value)}
-            placeholder="Veracruz"
-          />
-        </label>
-        <label className={css.field}>
-          <span className={css.label}>Municipio / Ciudad *</span>
-          <input
-            type="text"
-            className={css.input}
-            value={destination.area_level2}
-            onChange={e => changeField('area_level2', e.target.value)}
-            placeholder="Xalapa"
-          />
-        </label>
-        <label className={css.field}>
-          <span className={css.label}>Colonia *</span>
-          <input
-            type="text"
-            className={css.input}
-            value={destination.area_level3}
-            onChange={e => changeField('area_level3', e.target.value)}
-            placeholder="Centro"
-          />
-        </label>
-      </div>
-
-      <button
-        type="button"
-        className={css.quoteBtn}
-        onClick={fetchRates}
-        disabled={state.status === QuoteRequestState.LOADING}
-      >
-        {state.status === QuoteRequestState.LOADING
-          ? 'Cotizando…'
-          : state.status === QuoteRequestState.SUCCESS
-          ? 'Volver a cotizar'
-          : 'Ver opciones de envío'}
-      </button>
+      <h3 className={css.title}>Opciones de envío</h3>
+      {!destinationReady ? (
+        <p className={css.hint}>
+          Completa la dirección de envío arriba (CP, estado, ciudad y colonia)
+          para ver las paqueterías disponibles.
+        </p>
+      ) : state.status === QuoteRequestState.LOADING ? (
+        <p className={css.hint}>Cotizando envío a CP {destination.postal_code}…</p>
+      ) : state.status === QuoteRequestState.SUCCESS ? (
+        <p className={css.hint}>
+          Cotización para CP {destination.postal_code} · elige tu paquetería:
+        </p>
+      ) : null}
 
       {state.status === QuoteRequestState.ERROR ? (
         <p className={css.error}>{state.error}</p>

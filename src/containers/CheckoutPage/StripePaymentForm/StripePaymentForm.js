@@ -606,11 +606,12 @@ class StripePaymentForm extends Component {
       showInitialMessageInput || (hasTransactionFieldConfigs && showTransactionFields);
 
     // XOLOLO: si el listing está en modo 'carrier', mostramos el widget
-    // ShippingRateSelector ARRIBA de la ShippingDetails para que el buyer
-    // elija paquetería antes de llenar su dirección. Al seleccionar un
-    // rate, lo persistimos en el form state via formApi.change y también
-    // notificamos al parent (CheckoutPageWithPayment) por si quiere
-    // re-speculate para actualizar el OrderBreakdown en vivo.
+    // ShippingRateSelector DEBAJO de la ShippingDetails. El buyer llena
+    // su dirección primero; el widget lee esos values y cotiza
+    // automáticamente cuando CP + estado + ciudad + colonia están
+    // completos. Al seleccionar un rate, lo persistimos en el form
+    // state via formApi.change y notificamos al parent
+    // (CheckoutPageWithPayment) para re-speculate del OrderBreakdown.
     const showRateSelector = listingShippingPricingMode === 'carrier';
     const handleRateSelected = rate => {
       formApi.change('selectedShippingRate', rate || undefined);
@@ -619,18 +620,24 @@ class StripePaymentForm extends Component {
       }
     };
 
+    // XOLOLO: destino que consume el ShippingRateSelector — es el
+    // MISMO dato que el buyer captura en el ShippingDetails de arriba.
+    // Al leer del form values evitamos que el buyer teclee CP de un
+    // lado y otro CP distinto del otro (bug 2026-09-21).
+    const rateSelectorDestination = {
+      postal_code: values?.recipientPostal,
+      area_level1: values?.recipientState,
+      area_level2: values?.recipientCity,
+      area_level3: values?.recipientNeighborhood || values?.recipientCity,
+    };
+
     return hasStripeKey ? (
       <Form className={classes} onSubmit={handleSubmit} enforcePagePreloadFor="OrderDetailsPage">
-        {showRateSelector ? (
-          <ShippingRateSelector
-            listingId={listingId}
-            shippingPricingMode={listingShippingPricingMode}
-            sellerCoversShipping={listingSellerCoversShipping}
-            onRateSelected={handleRateSelected}
-            primaryQuantity={primaryQuantity}
-            additionalCartItems={additionalCartItems}
-          />
-        ) : null}
+        {/*
+          XOLOLO: primero la DIRECCIÓN (captura), después el SELECTOR
+          de paquetería (cotiza contra esa dirección). Antes iban al
+          revés y podían divergir.
+        */}
         <LocationOrShippingDetails
           askShippingDetails={askShippingDetails}
           showPickUpLocation={showPickUpLocation}
@@ -642,6 +649,17 @@ class StripePaymentForm extends Component {
           locale={locale}
           intl={intl}
         />
+        {showRateSelector ? (
+          <ShippingRateSelector
+            listingId={listingId}
+            shippingPricingMode={listingShippingPricingMode}
+            sellerCoversShipping={listingSellerCoversShipping}
+            onRateSelected={handleRateSelected}
+            primaryQuantity={primaryQuantity}
+            additionalCartItems={additionalCartItems}
+            destination={rateSelectorDestination}
+          />
+        ) : null}
 
         {billingDetailsNeeded && !loadingData ? (
           <React.Fragment>
