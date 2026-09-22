@@ -28,6 +28,8 @@
 
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { sendEventNotifications } = require('../api-util/notifications');
+const { buildTxContext } = require('../api-util/notifications/context');
 
 module.exports = async (req, res) => {
   try {
@@ -186,6 +188,25 @@ module.exports = async (req, res) => {
         xololoAcceptanceProof: acceptanceProof,
       },
     });
+
+    // XOLOLO D.9: notificar disputa a ambos (buyer confirm + seller
+    // heads-up). Fire-and-forget: el buyer ya recibió su response 200.
+    (async () => {
+      try {
+        const fresh = await isdk.transactions.show({ id: transactionId });
+        const context = await buildTxContext(isdk, fresh.data.data, {
+          dispute: {
+            issueDetail: dispute.issueDetail,
+            openedAt: dispute.openedAt,
+          },
+        });
+        await sendEventNotifications('order.dispute_opened', context);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[order-survey] notify error:', err?.message);
+      }
+    })();
+
     return res.json({ ok: true, outcome: 'bad', acceptanceProof, dispute });
   } catch (e) {
     // eslint-disable-next-line no-console

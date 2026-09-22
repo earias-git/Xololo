@@ -16,6 +16,8 @@
 // (no hay estado que perder — es idempotente).
 
 const sharetribeSdkIntegration = require('sharetribe-flex-integration-sdk');
+const { sendEventNotifications } = require('../api-util/notifications');
+const { buildTxContext } = require('../api-util/notifications/context');
 
 const TACIT_WINDOW_MS = 48 * 60 * 60 * 1000; // 48h
 const RUN_EVERY_MS = 60 * 60 * 1000; // cada hora
@@ -121,6 +123,29 @@ const runTick = async () => {
             deliveredAt
           ).toISOString()} → afirmativa ficta aplicada + tx transicionada`
         );
+
+        // XOLOLO D.9: notificar al seller que su pago fue liberado por
+        // afirmativa ficta. El buyer no notificamos (no le interesa; no
+        // hizo nada, ya recibió su producto). Fire-and-forget.
+        (async () => {
+          try {
+            const fresh = await sdk.transactions.show({ id: tx.id.uuid });
+            const context = await buildTxContext(sdk, fresh.data.data, {
+              acceptance: {
+                type: 'tacit',
+                deliveredAt,
+                acceptedAt: nowIso,
+              },
+            });
+            await sendEventNotifications('order.tacit_acceptance', context);
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error(
+              `[tacit-acceptance] notify falló para tx ${tx.id.uuid}:`,
+              err?.message
+            );
+          }
+        })();
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error(
