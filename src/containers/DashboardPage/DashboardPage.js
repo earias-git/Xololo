@@ -20,22 +20,24 @@ import {
   autoGranularity,
   bucketTransactions,
   formatSubunitsAsMxn,
+  previousPeriodOf,
+  computeDelta,
+  clampCustomRange,
 } from './dashboardUtils';
 
 import css from './DashboardPage.module.css';
 
 // XOLOLO F3 · Dashboard analytics para sellers en /dashboard.
+// Sprint 1: rango custom + delta vs período previo + toggle métrico.
 //
-// Trae las ventas del rango elegido (endpoint /api/seller-analytics),
-// las buckets por día/semana/mes según granularidad (auto o manual) y
-// muestra:
-//   - Filtro de período (presets + rango custom)
-//   - Selector de granularidad (auto / día / semana / mes)
-//   - KPI hero adaptado al período
-//   - Gráfica de barras Recharts (ventas por bucket)
-//   - Tabla desglose con totales
+// Trae en paralelo:
+//   - Ventas del período actual (según preset o rango custom)
+//   - Ventas del período previo comparable (mismo # de días, justo
+//     antes) — usado para calcular %vs en KPIs.
 //
-// Recharts se carga lazy — es ~90kb gzip y sólo la necesita esta ruta.
+// Los buckets y summary se calculan client-side sobre las tx delgadas.
+// La gráfica alterna entre 4 métricas (Ventas MXN / Pedidos / Ticket
+// promedio / Neto) con un toggle inline.
 
 const BarChartLazy = loadable(() => import('./DashboardChart'));
 
@@ -46,61 +48,138 @@ const GRANULARITIES = [
   { key: 'month', label: 'Mes' },
 ];
 
-const DashboardPage = props => {
+const METRICS = [
+  { key: 'salesAmount', label: 'Ventas MXN', money: true },
+  { key: 'count', label: 'Pedidos', money: false },
+  { key: 'ticketAverage', label: 'Ticket promedio', money: true },
+  { key: 'providerAmount', label: 'Neto', money: true },
+];
+
+const ymdOf = (date = new Date()) => date.toISOString().slice(0, 10);
+const monthsAgo = n => {
+  const d = new Date();
+  d.setMonth(d.getMonth() - n);
+  return ymdOf(d);
+};
+
+const fetchAnalytics = async ({ from, to }) => {
+  const url = `${apiBaseUrl()}/api/seller-analytics?from=${from}&to=${to}`;
+  const res = await fetch(url, { credentials: 'include' });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || 'fetch_failed');
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+};
+
+// Pinta un ticket promedio "virtual" en cada bucket para que la
+// gráfica pueda alternar entre métricas sin recalcular todo.
+const enrichBucketsWithTicket = buckets =>
+  buckets.map(b => ({
+    ...b,
+    ticketAverage: b.count > 0 ? Math.round(b.salesAmount / b.count) : 0,
+  }));
+
+const DashboardPage = () => {
   const scrollingDisabled = useSelector(isScrollingDisabled);
-  const currentUser = useSelector(state => state.user?.currentUser || null);
 
-  // Período por default: este mes.
+  // Período: puede ser preset ('month', 'lastMonth', ...) o 'custom'.
   const [periodKey, setPeriodKey] = useState('month');
-  const [granKey, setGranKey] = useState('auto');
-  const [state, setState] = useState({ status: 'idle', data: null, error: null });
+  const [customFrom, setCustomFrom] = useState(monthsAgo(1));
+  const [customTo, setCustomTo] = useState(ymdOf());
+  const [customError, setCustomError] = useState(null);
 
+  const [granKey, setGranKey] = useState('auto');
+  const [metricKey, setMetricKey] = useState('salesAmount');
+
+  const [current, setCurrent] = useState({ status: 'idle', data: null, error: null });
+  const [previous, setPrevious] = useState({ status: 'idle', data: null });
+
+  // Resolver el período real: preset → range() ; custom → validar.
   const period = useMemo(() => {
+    if (periodKey === 'custom') {
+      const clamped = clampCustomRange(customFrom, customTo);
+      if (!clamped) return null;
+      return clamped;
+    }
     const preset = PERIOD_PRESETS.find(p => p.key === periodKey) || PERIOD_PRESETS[0];
     return preset.range();
-  }, [periodKey]);
+  }, [periodKey, customFrom, customTo]);
 
   const granularity =
-    granKey === 'auto' ? autoGranularity(period.from, period.to) : granKey;
+    granKey === 'auto' ? (period ? autoGranularity(period.from, period.to) : 'day') : granKey;
 
   useEffect(() => {
+    if (!period) {
+      setCustomError('Rango inválido — revisa las fechas.');
+      return;
+    }
+    setCustomError(null);
     let aborted = false;
-    setState({ status: 'loading', data: null, error: null });
-    const url = `${apiBaseUrl()}/api/seller-analytics?from=${period.from}&to=${period.to}`;
-    fetch(url, { credentials: 'include' })
-      .then(async res => {
-        const data = await res.json().catch(() => ({}));
-        if (aborted) return;
-        if (!res.ok) {
-          setState({ status: 'error', data: null, error: data.error || 'fetch_failed' });
-          return;
-        }
-        setState({ status: 'ok', data, error: null });
-      })
-      .catch(err => {
-        if (aborted) return;
-        setState({ status: 'error', data: null, error: err.message });
-      });
+    setCurrent({ status: 'loading', data: null, error: null });
+    setPrevious({ status: 'loading', data: null });
+
+    const prev = previousPeriodOf(period);
+
+    Promise.allSettled([fetchAnalytics(period), fetchAnalytics(prev)]).then(([curR, prevR]) => {
+      if (aborted) return;
+      if (curR.status === 'fulfilled') {
+        setCurrent({ status: 'ok', data: curR.value, error: null });
+      } else {
+        setCurrent({
+          status: 'error',
+          data: null,
+          error: curR.reason?.message || 'fetch_failed',
+        });
+      }
+      if (prevR.status === 'fulfilled') {
+        setPrevious({ status: 'ok', data: prevR.value });
+      } else {
+        // No es fatal si el previo falla — mostramos KPIs sin delta.
+        setPrevious({ status: 'error', data: null });
+      }
+    });
     return () => {
       aborted = true;
     };
-  }, [period.from, period.to]);
+  }, [period?.from, period?.to]);
 
   const buckets = useMemo(() => {
-    if (state.status !== 'ok') return [];
-    return bucketTransactions(
-      state.data.transactions,
+    if (current.status !== 'ok' || !period) return [];
+    const raw = bucketTransactions(
+      current.data.transactions,
       period.from,
       period.to,
       granularity
     );
-  }, [state.status, state.data, period.from, period.to, granularity]);
+    return enrichBucketsWithTicket(raw);
+  }, [current.status, current.data, period, granularity]);
 
-  const summary = state.data?.summary || null;
+  const summary = current.data?.summary || null;
   const ticketAverage =
     summary && summary.count > 0 ? Math.round(summary.salesAmount / summary.count) : 0;
 
-  const isSeller = !!currentUser?.attributes?.profile?.publicData; // heurística ligera
+  const prevSummary = previous.data?.summary || null;
+  const prevTicketAverage =
+    prevSummary && prevSummary.count > 0
+      ? Math.round(prevSummary.salesAmount / prevSummary.count)
+      : 0;
+
+  // Deltas para cada KPI (null si no tenemos previo).
+  const deltas = useMemo(() => {
+    if (previous.status !== 'ok' || !summary || !prevSummary) return null;
+    return {
+      salesAmount: computeDelta(summary.salesAmount, prevSummary.salesAmount),
+      count: computeDelta(summary.count, prevSummary.count),
+      ticketAverage: computeDelta(ticketAverage, prevTicketAverage),
+      commissionAmount: computeDelta(summary.commissionAmount, prevSummary.commissionAmount),
+      providerAmount: computeDelta(summary.providerAmount, prevSummary.providerAmount),
+    };
+  }, [previous.status, summary, prevSummary, ticketAverage, prevTicketAverage]);
+
+  const activeMetric = METRICS.find(m => m.key === metricKey) || METRICS[0];
 
   return (
     <Page title="Dashboard de ventas" scrollingDisabled={scrollingDisabled}>
@@ -142,8 +221,16 @@ const DashboardPage = props => {
             <div>
               <h2 className={css.pageTitle}>Ventas</h2>
               <p className={css.pageSubtitle}>
-                Rango: <strong>{period.from}</strong> → <strong>{period.to}</strong>
-                {state.data?.cached ? <span className={css.cachedBadge}>caché 5min</span> : null}
+                {period ? (
+                  <>
+                    Rango: <strong>{period.from}</strong> → <strong>{period.to}</strong>
+                    {current.data?.cached ? (
+                      <span className={css.cachedBadge}>caché 5min</span>
+                    ) : null}
+                  </>
+                ) : (
+                  <span>Ajusta el rango arriba.</span>
+                )}
               </p>
             </div>
           </header>
@@ -156,22 +243,48 @@ const DashboardPage = props => {
                   <button
                     key={p.key}
                     type="button"
-                    className={
-                      p.key === periodKey ? css.chipActive : css.chip
-                    }
+                    className={p.key === periodKey ? css.chipActive : css.chip}
                     onClick={() => setPeriodKey(p.key)}
                   >
                     {p.label}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  className={periodKey === 'custom' ? css.chipActive : css.chip}
+                  onClick={() => setPeriodKey('custom')}
+                >
+                  Personalizado
+                </button>
               </div>
+              {periodKey === 'custom' ? (
+                <div className={css.customRange}>
+                  <input
+                    type="date"
+                    value={customFrom}
+                    max={customTo}
+                    onChange={e => setCustomFrom(e.target.value)}
+                    aria-label="Desde"
+                  />
+                  <span aria-hidden>→</span>
+                  <input
+                    type="date"
+                    value={customTo}
+                    min={customFrom}
+                    max={ymdOf()}
+                    onChange={e => setCustomTo(e.target.value)}
+                    aria-label="Hasta"
+                  />
+                  {customError ? <span className={css.customError}>{customError}</span> : null}
+                </div>
+              ) : null}
             </div>
+
             <div className={css.filterGroup}>
               <span className={css.filterLabel}>Granularidad</span>
               <div className={css.filterChips}>
                 {GRANULARITIES.map(g => {
-                  const active =
-                    g.key === granKey || (g.key === 'auto' && granKey === 'auto');
+                  const active = g.key === granKey;
                   return (
                     <button
                       key={g.key}
@@ -195,49 +308,79 @@ const DashboardPage = props => {
             </div>
           </div>
 
-          {state.status === 'loading' ? (
+          {current.status === 'loading' ? (
             <div className={css.loading}>
               <IconSpinner />
               <p>Trayendo tus ventas…</p>
             </div>
           ) : null}
 
-          {state.status === 'error' ? (
+          {current.status === 'error' ? (
             <div className={css.errorBox}>
-              <strong>No pudimos cargar tus datos.</strong> ({state.error})
+              <strong>No pudimos cargar tus datos.</strong> ({current.error})
             </div>
           ) : null}
 
-          {state.status === 'ok' && summary ? (
+          {current.status === 'ok' && summary ? (
             <>
               <div className={css.kpiGrid}>
-                <div className={css.kpi}>
-                  <p className={css.kpiLabel}>Ventas totales</p>
-                  <p className={css.kpiValue}>{formatSubunitsAsMxn(summary.salesAmount)}</p>
-                </div>
-                <div className={css.kpi}>
-                  <p className={css.kpiLabel}>Pedidos</p>
-                  <p className={css.kpiValue}>{summary.count}</p>
-                </div>
-                <div className={css.kpi}>
-                  <p className={css.kpiLabel}>Ticket promedio</p>
-                  <p className={css.kpiValue}>{formatSubunitsAsMxn(ticketAverage)}</p>
-                </div>
-                <div className={css.kpi}>
-                  <p className={css.kpiLabel}>Comisión Xololo</p>
-                  <p className={css.kpiValue}>{formatSubunitsAsMxn(summary.commissionAmount)}</p>
-                </div>
-                <div className={css.kpi}>
-                  <p className={css.kpiLabel}>Neto para ti</p>
-                  <p className={css.kpiValue}>{formatSubunitsAsMxn(summary.providerAmount)}</p>
-                </div>
+                <KpiCard
+                  label="Ventas totales"
+                  value={formatSubunitsAsMxn(summary.salesAmount)}
+                  delta={deltas?.salesAmount}
+                />
+                <KpiCard
+                  label="Pedidos"
+                  value={summary.count}
+                  delta={deltas?.count}
+                />
+                <KpiCard
+                  label="Ticket promedio"
+                  value={formatSubunitsAsMxn(ticketAverage)}
+                  delta={deltas?.ticketAverage}
+                />
+                <KpiCard
+                  label="Comisión Xololo"
+                  value={formatSubunitsAsMxn(summary.commissionAmount)}
+                  delta={deltas?.commissionAmount}
+                />
+                <KpiCard
+                  label="Neto para ti"
+                  value={formatSubunitsAsMxn(summary.providerAmount)}
+                  delta={deltas?.providerAmount}
+                />
               </div>
 
               {buckets.length > 0 ? (
                 <>
                   <section className={css.chartSection}>
-                    <h3 className={css.sectionTitle}>Ventas por {granularity === 'day' ? 'día' : granularity === 'week' ? 'semana' : 'mes'}</h3>
-                    <BarChartLazy buckets={buckets} />
+                    <div className={css.chartHeader}>
+                      <h3 className={css.sectionTitle}>
+                        {activeMetric.label} por{' '}
+                        {granularity === 'day'
+                          ? 'día'
+                          : granularity === 'week'
+                          ? 'semana'
+                          : 'mes'}
+                      </h3>
+                      <div className={css.metricToggle} role="tablist" aria-label="Métrica">
+                        {METRICS.map(m => (
+                          <button
+                            key={m.key}
+                            type="button"
+                            className={m.key === metricKey ? css.metricOn : css.metricOff}
+                            onClick={() => setMetricKey(m.key)}
+                          >
+                            {m.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <BarChartLazy
+                      buckets={buckets}
+                      metricKey={activeMetric.key}
+                      metricIsMoney={activeMetric.money}
+                    />
                   </section>
 
                   <section className={css.tableSection}>
@@ -285,6 +428,29 @@ const DashboardPage = props => {
         </div>
       </LayoutSideNavigation>
     </Page>
+  );
+};
+
+// KPI card con delta opcional debajo del valor.
+const KpiCard = ({ label, value, delta }) => {
+  let deltaEl = null;
+  if (delta) {
+    if (delta.isNew) {
+      deltaEl = <span className={`${css.kpiDelta} ${css.kpiDeltaNew}`}>nuevo</span>;
+    } else if (delta.direction === 'up') {
+      deltaEl = <span className={`${css.kpiDelta} ${css.kpiDeltaUp}`}>↑ {delta.pct}%</span>;
+    } else if (delta.direction === 'down') {
+      deltaEl = <span className={`${css.kpiDelta} ${css.kpiDeltaDown}`}>↓ {Math.abs(delta.pct)}%</span>;
+    } else {
+      deltaEl = <span className={`${css.kpiDelta} ${css.kpiDeltaFlat}`}>— sin cambio</span>;
+    }
+  }
+  return (
+    <div className={css.kpi}>
+      <p className={css.kpiLabel}>{label}</p>
+      <p className={css.kpiValue}>{value}</p>
+      {deltaEl}
+    </div>
   );
 };
 

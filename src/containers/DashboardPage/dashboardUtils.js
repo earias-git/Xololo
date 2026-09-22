@@ -188,3 +188,49 @@ export const formatSubunitsAsMxn = subunits => {
     maximumFractionDigits: 0,
   });
 };
+
+// ---------- período previo comparable ----------
+// Recibe {from, to} en YYYY-MM-DD y devuelve el rango previo del mismo
+// número de días. Ej: {from:'2026-07-01', to:'2026-09-30'} (92 días)
+// → {from:'2026-03-31', to:'2026-06-30'} (92 días anteriores).
+// Se usa para calcular delta% vs período anterior en los KPIs.
+export const previousPeriodOf = ({ from, to }) => {
+  const fromD = new Date(from);
+  const toD = new Date(to);
+  const spanMs = toD.getTime() - fromD.getTime();
+  const prevTo = new Date(fromD.getTime() - 24 * 60 * 60 * 1000); // día antes del from
+  const prevFrom = new Date(prevTo.getTime() - spanMs);
+  return { from: toYmd(prevFrom), to: toYmd(prevTo) };
+};
+
+// ---------- delta helper ----------
+// Devuelve {pct, direction:'up'|'down'|'flat', isNew:bool}.
+// isNew=true cuando el previo era 0 y ahora hay valor → sin base de
+// comparación, mostrar como "nuevo" en vez de +∞.
+export const computeDelta = (current, previous) => {
+  const cur = Number(current) || 0;
+  const prev = Number(previous) || 0;
+  if (prev === 0 && cur === 0) return { pct: 0, direction: 'flat', isNew: false };
+  if (prev === 0 && cur > 0) return { pct: null, direction: 'up', isNew: true };
+  const pct = Math.round(((cur - prev) / prev) * 100);
+  const direction = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+  return { pct, direction, isNew: false };
+};
+
+// ---------- date validation para rango custom ----------
+export const isValidYmd = s => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ''));
+
+export const clampCustomRange = (from, to) => {
+  if (!isValidYmd(from) || !isValidYmd(to)) return null;
+  const fromD = new Date(from);
+  const toD = new Date(to);
+  if (isNaN(fromD) || isNaN(toD)) return null;
+  if (fromD > toD) return null;
+  // Máximo 24 meses (mismo límite que el server).
+  const maxMs = 24 * 31 * 24 * 60 * 60 * 1000;
+  if (toD.getTime() - fromD.getTime() > maxMs) return null;
+  // No permitir "to" en el futuro.
+  const now = new Date();
+  if (toD > now) return { from, to: toYmd(now) };
+  return { from, to };
+};

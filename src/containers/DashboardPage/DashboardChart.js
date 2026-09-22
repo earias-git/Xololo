@@ -13,13 +13,18 @@ import { formatSubunitsAsMxn } from './dashboardUtils';
 
 import css from './DashboardChart.module.css';
 
-// XOLOLO F3 · Gráfica standalone para el bucketing del dashboard.
-// Se carga lazy desde DashboardPage (Recharts pesa ~90kb gzip y sólo
-// se necesita aquí).
+// XOLOLO F3 · Gráfica para el dashboard.
+// Recibe la métrica activa (salesAmount / count / ticketAverage /
+// providerAmount) y adapta el yAxis + tooltip. Standalone lazy — sólo
+// se carga cuando el user entra a /dashboard (recharts ~90kb gzip).
 
-const CustomTooltip = ({ active, payload }) => {
+const XOLOLO_PRIMARY = '#232d40'; // navy oficial Xololo
+
+const CustomTooltip = ({ active, payload, metricKey, metricIsMoney }) => {
   if (!active || !payload?.length) return null;
   const b = payload[0].payload;
+  const rawValue = b[metricKey] || 0;
+  const displayValue = metricIsMoney ? formatSubunitsAsMxn(rawValue) : rawValue;
   return (
     <div className={css.tooltip}>
       <p className={css.tooltipLabel}>{b.label}</p>
@@ -32,18 +37,28 @@ const CustomTooltip = ({ active, payload }) => {
       <p className={css.tooltipLine}>
         <span>Neto:</span> <strong>{formatSubunitsAsMxn(b.providerAmount)}</strong>
       </p>
+      {metricKey !== 'salesAmount' && metricKey !== 'count' && metricKey !== 'providerAmount' ? (
+        <p className={css.tooltipLine}>
+          <span>Ticket:</span> <strong>{displayValue}</strong>
+        </p>
+      ) : null}
     </div>
   );
 };
 
-const yTickFormatter = value => {
-  const mxn = value / 100;
-  if (mxn >= 1_000_000) return `${(mxn / 1_000_000).toFixed(1)}M`;
-  if (mxn >= 1_000) return `${(mxn / 1_000).toFixed(1)}k`;
-  return mxn.toFixed(0);
+// yTickFormatter: para money reducimos con k/M; para count devolvemos entero.
+const buildYTickFormatter = metricIsMoney => value => {
+  if (metricIsMoney) {
+    const mxn = value / 100;
+    if (mxn >= 1_000_000) return `${(mxn / 1_000_000).toFixed(1)}M`;
+    if (mxn >= 1_000) return `${(mxn / 1_000).toFixed(1)}k`;
+    return mxn.toFixed(0);
+  }
+  return Math.round(value).toString();
 };
 
-const DashboardChart = ({ buckets }) => {
+const DashboardChart = ({ buckets, metricKey = 'salesAmount', metricIsMoney = true }) => {
+  const yTickFormatter = buildYTickFormatter(metricIsMoney);
   return (
     <div className={css.wrap}>
       <ResponsiveContainer width="100%" height={280}>
@@ -61,14 +76,20 @@ const DashboardChart = ({ buckets }) => {
             tick={{ fill: '#6b7280', fontSize: 11 }}
             axisLine={{ stroke: '#e5e7eb' }}
             tickLine={false}
-            width={44}
+            width={48}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(35, 45, 64, 0.04)' }} />
+          <Tooltip
+            content={
+              <CustomTooltip metricKey={metricKey} metricIsMoney={metricIsMoney} />
+            }
+            cursor={{ fill: 'rgba(35, 45, 64, 0.04)' }}
+          />
           <Bar
-            dataKey="salesAmount"
-            fill="#1f8f52"
+            dataKey={metricKey}
+            fill={XOLOLO_PRIMARY}
             radius={[4, 4, 0, 0]}
             maxBarSize={40}
+            isAnimationActive={false}
           />
         </BarChart>
       </ResponsiveContainer>
