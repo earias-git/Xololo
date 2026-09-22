@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 
-import { apiBaseUrl } from '../../util/api';
 import { formatMoney } from '../../util/currency';
 import { useIntl } from '../../util/reactIntl';
 import { useConfiguration } from '../../context/configurationContext';
+import { useRouteConfiguration } from '../../context/routeConfigurationContext';
+import { createResourceLocatorString, findRouteByRouteName } from '../../util/routes';
+import { createSlug } from '../../util/urlHelpers';
 import { types as sdkTypes } from '../../util/sdkLoader';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
+import { initializeCardPaymentData } from '../../ducks/stripe.duck';
+import { getListingsById } from '../../ducks/marketplaceData.duck';
+import { showListing } from '../ListingPage/ListingPage.duck';
 import {
   selectCartForSeller,
   selectCartHydrated,
@@ -21,7 +27,7 @@ import FooterContainer from '../FooterContainer/FooterContainer';
 
 import css from './CartPage.module.css';
 
-const { Money } = sdkTypes;
+const { Money, UUID } = sdkTypes;
 
 // XOLOLO Cart.4: página del carrito de un seller específico.
 // Ruta: /cart/:sellerId
@@ -59,6 +65,8 @@ const useSellerBySlug = sellerId => {
 
 const CartPage = props => {
   const config = useConfiguration();
+  const routes = useRouteConfiguration();
+  const history = useHistory();
   const intl = useIntl();
   const dispatch = useDispatch();
   const params = props?.params || {};
@@ -67,7 +75,9 @@ const CartPage = props => {
   const scrollingDisabled = useSelector(isScrollingDisabled);
   const hydrated = useSelector(selectCartHydrated);
   const cart = useSelector(sellerId ? selectCartForSeller(sellerId) : () => null);
+  const currentUser = useSelector(state => state.user?.currentUser || null);
   const [redirecting, setRedirecting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState(null);
 
   // Espera a hidratación desde localStorage para no mostrar "carrito vacío"
   // en el primer render antes de leer el storage.
@@ -123,16 +133,77 @@ const CartPage = props => {
   };
 
   const handleCheckout = async () => {
-    // Cart.5: el server acepta un checkout multi-item; por ahora hacemos
-    // un placeholder que redirige al listing del primer item (checkout
-    // single) para no bloquear el flow del buyer. Cuando Cart.5 esté
-    // listo, cambiamos por POST /api/checkout-cart {sellerId} que crea
-    // una tx con multi-item.
+    // XOLOLO Cart.5: checkout multi-item.
+    // Estrategia:
+    //  1. El primer item del carrito es el "primary listing" — su
+    //     transaction process (default-purchase), su publicData de
+    //     envío, y su stock reservation se usan para la orden.
+    //  2. Los items adicionales viajan en orderData.additionalCartItems
+    //     y el server los agrega como líneas 'line-item/item' extras.
+    //  3. La comisión se recalcula sobre el total agregado en
+    //     server/api-util/lineItems.js.
+    //  4. Redirigimos a la CheckoutPage estándar (/l/:slug/:id/checkout).
     setRedirecting(true);
-    const first = cart.items[0];
-    // Redirect al listing del primer item — el buyer completa checkout
-    // individual mientras terminamos Cart.5.
-    window.location.href = `/l/product/${first.listingId}/checkout`;
+    setCheckoutError(null);
+    try {
+      const primary = cart.items[0];
+      const rest = cart.items.slice(1);
+
+      // Hidrata la primary listing en el store — necesitamos la entidad
+      // Sharetribe completa (author, price, publicData) para el checkout.
+      const primaryUuid = new UUID(primary.listingId);
+      await dispatch(showListing(primaryUuid, config));
+
+      // Releemos el store (post-hidratación) vía un thunk trivial para
+      // obtener el listing denormalizado con sus relaciones.
+      const listing = await new Promise(resolve => {
+        dispatch((_, getState) => {
+          const [l] = getListingsById(getState(), [primaryUuid]);
+          resolve(l || null);
+        });
+      });
+
+      if (!listing) {
+        throw new Error('No se pudo cargar el producto principal.');
+      }
+
+      const additionalCartItems = rest.map(i => ({
+        listingId: i.listingId,
+        quantity: i.quantity,
+      }));
+
+      const initialValues = {
+        listing,
+        orderData: {
+          quantity: primary.quantity,
+          deliveryMethod: 'shipping', // default; el buyer puede cambiarlo en la CheckoutPage
+          ...(additionalCartItems.length > 0 ? { additionalCartItems } : {}),
+        },
+        confirmPaymentError: null,
+      };
+
+      const checkoutRoute = findRouteByRouteName('CheckoutPage', routes);
+      const saveToSessionStorage = !currentUser;
+      dispatch(checkoutRoute.setInitialValues(initialValues, saveToSessionStorage));
+
+      // Limpia errores previos de Stripe.
+      dispatch(initializeCardPaymentData());
+
+      history.push(
+        createResourceLocatorString(
+          'CheckoutPage',
+          routes,
+          {
+            id: listing.id.uuid,
+            slug: createSlug(listing.attributes.title || 'listing'),
+          },
+          {}
+        )
+      );
+    } catch (e) {
+      setRedirecting(false);
+      setCheckoutError(e?.message || 'No se pudo iniciar el checkout.');
+    }
   };
 
   // Seller mínimo para SellerBrandFrame — reconstruimos shape esperado
@@ -274,12 +345,11 @@ const CartPage = props => {
                   {redirecting ? 'Un momento…' : 'Ir a checkout →'}
                 </button>
               </div>
-              <p className={css.pendingHint}>
-                <strong>Nota v1:</strong> el checkout multi-item se completa en
-                Cart.5 (próximo commit). Por ahora "Ir a checkout" te lleva al
-                primer producto para pagarlo individualmente. Los demás items
-                quedan en el carrito para siguientes compras.
-              </p>
+              {checkoutError ? (
+                <p className={css.pendingHint} role="alert">
+                  <strong>No se pudo iniciar el checkout:</strong> {checkoutError}
+                </p>
+              ) : null}
             </div>
           </main>
         </LayoutSingleColumn>

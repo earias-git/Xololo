@@ -132,6 +132,24 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
   };
 };
 
+// XOLOLO Cart.5: extrae y valida additionalCartItems de orderData.
+// Devuelve [{listingId, quantity}] limpio; ignora entradas inválidas.
+// El listingId primario NO puede repetirse aquí (se filtra).
+const sanitizeAdditionalCartItems = (orderData, primaryListingId) => {
+  const raw = Array.isArray(orderData?.additionalCartItems) ? orderData.additionalCartItems : [];
+  const seen = new Set([primaryListingId]);
+  const cleaned = [];
+  for (const it of raw) {
+    const id = it?.listingId;
+    const qty = Number(it?.quantity);
+    if (!id || !Number.isInteger(qty) || qty <= 0) continue;
+    if (seen.has(id)) continue; // dedupe + evita duplicar primario
+    seen.add(id);
+    cleaned.push({ listingId: id, quantity: qty });
+  }
+  return cleaned;
+};
+
 module.exports = (req, res) => {
   const { isSpeculative, orderData, bodyParams, queryParams } = req.body || {};
   const transitionName = bodyParams.transition;
@@ -139,19 +157,54 @@ module.exports = (req, res) => {
   let lineItems = null;
   let metadataMaybe = {};
   let xololoShipping = null;
+  let xololoCart = null;
 
-  Promise.all([listingPromise(sdk, bodyParams?.params?.listingId), fetchCommission(sdk)])
-    .then(([showListingResponse, fetchAssetsResponse]) => {
+  const primaryListingId = bodyParams?.params?.listingId;
+  const additionalCartRaw = sanitizeAdditionalCartItems(orderData, primaryListingId);
+
+  Promise.all([
+    listingPromise(sdk, primaryListingId),
+    ...additionalCartRaw.map(x => listingPromise(sdk, x.listingId)),
+    fetchCommission(sdk),
+  ])
+    .then(responses => {
+      const nExtra = additionalCartRaw.length;
+      const showListingResponse = responses[0];
+      const additionalResponses = responses.slice(1, 1 + nExtra);
+      const fetchAssetsResponse = responses[1 + nExtra];
+
       const listing = showListingResponse.data.data;
+      const additionalListings = additionalResponses.map(r => r.data.data);
       const commissionAsset = fetchAssetsResponse.data.data[0];
+
+      // XOLOLO Cart.5: validar que todos los items adicionales sean del
+      // mismo seller que el primario. Multi-seller cart NO se soporta
+      // en v1 (ver docs/LOGISTICS_V1.md §1).
+      const primaryAuthorId = listing.relationships?.author?.data?.id?.uuid;
+      const additionalCartItems = additionalListings.map((l, i) => {
+        const authorId = l.relationships?.author?.data?.id?.uuid;
+        if (!primaryAuthorId || authorId !== primaryAuthorId) {
+          const err = new Error('cart_cross_seller');
+          err.status = 400;
+          err.statusText = 'Additional cart items must belong to the same seller as the primary listing';
+          err.data = { primaryListingId, offendingListingId: l.id?.uuid };
+          throw err;
+        }
+        return { listing: l, quantity: additionalCartRaw[i].quantity };
+      });
 
       const currency = listing.attributes.price?.currency || orderData.currency;
       const { providerCommission, customerCommission } =
         commissionAsset?.type === 'jsonAsset' ? commissionAsset.attributes.data : {};
 
+      const fullOrderData = {
+        ...getFullOrderData(orderData, bodyParams, currency),
+        additionalCartItems,
+      };
+
       lineItems = transactionLineItems(
         listing,
-        getFullOrderData(orderData, bodyParams, currency),
+        fullOrderData,
         providerCommission,
         customerCommission
       );
@@ -162,17 +215,36 @@ module.exports = (req, res) => {
       // el listing (que puede cambiar entre initiate y capture).
       xololoShipping = buildXololoShipping(listing, orderData, { isSpeculative });
 
+      // XOLOLO Cart.5: snapshot del carrito en protectedData. Guardamos
+      // solo la info mínima para que fulfillment sepa qué extras se
+      // vendieron sin re-consultar los listings (que pueden mutar).
+      // Cart.6 usará esta info para agregar peso/dimensiones al cotizar
+      // la guía Skydropx real y para decrementar stock de cada extra.
+      xololoCart =
+        additionalCartItems.length > 0
+          ? {
+              items: additionalCartItems.map(({ listing: l, quantity: q }) => ({
+                listingId: l.id.uuid,
+                title: l.attributes.title,
+                quantity: q,
+                priceInSubunits: l.attributes.price.amount,
+                currency: l.attributes.price.currency,
+              })),
+            }
+          : null;
+
       return getTrustedSdk(req);
     })
     .then(trustedSdk => {
       const { params } = bodyParams;
-      // Merge xololoShipping en el protectedData existente. El buyer
-      // puede haber mandado sus propios campos ahí (ej. shippingDetails
-      // recipient info) — los preservamos, solo agregamos/pisamos la
-      // key xololoShipping.
+      // Merge xololoShipping y xololoCart en el protectedData existente.
+      // El buyer puede haber mandado sus propios campos ahí (ej.
+      // shippingDetails recipient info) — los preservamos, solo
+      // agregamos/pisamos las keys de Xololo.
       const mergedProtectedData = {
         ...(params?.protectedData || {}),
         xololoShipping,
+        ...(xololoCart ? { xololoCart } : {}),
       };
 
       // Add lineItems to the body params

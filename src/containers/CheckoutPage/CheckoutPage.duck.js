@@ -30,6 +30,10 @@ const initiateOrderPayloadCreator = (
     // persistir el snapshot xololoShipping en protectedData.
     selectedShippingRate,
     shippingQuotationId,
+    // XOLOLO Cart.5: items adicionales del mismo seller (checkout multi-item).
+    // Viajan en orderData; server los valida (mismo seller) y agrega una
+    // línea 'line-item/item' por cada uno. Ver server/api-util/lineItems.js.
+    additionalCartItems,
     ...otherOrderParams
   } = orderParams;
   const quantityMaybe = quantity ? { stockReservationQuantity: quantity } : {};
@@ -40,6 +44,9 @@ const initiateOrderPayloadCreator = (
     ...(deliveryMethod ? { deliveryMethod } : {}),
     ...(selectedShippingRate ? { selectedShippingRate } : {}),
     ...(shippingQuotationId ? { shippingQuotationId } : {}),
+    ...(Array.isArray(additionalCartItems) && additionalCartItems.length > 0
+      ? { additionalCartItems }
+      : {}),
   };
 
   // Parameters for Marketplace API
@@ -286,6 +293,9 @@ const speculateTransactionPayloadCreator = (
     // cuando el buyer cambia de paquetería).
     selectedShippingRate,
     shippingQuotationId,
+    // XOLOLO Cart.5: extras del carrito también viajan en el speculative
+    // para que el OrderBreakdown de preview refleje el total correcto.
+    additionalCartItems,
     ...otherOrderParams
   } = orderParams;
   const quantityMaybe = quantity ? { stockReservationQuantity: quantity } : {};
@@ -297,6 +307,9 @@ const speculateTransactionPayloadCreator = (
     ...(priceVariantName ? { priceVariantName } : {}),
     ...(selectedShippingRate ? { selectedShippingRate } : {}),
     ...(shippingQuotationId ? { shippingQuotationId } : {}),
+    ...(Array.isArray(additionalCartItems) && additionalCartItems.length > 0
+      ? { additionalCartItems }
+      : {}),
   };
 
   // Parameters for Marketplace API

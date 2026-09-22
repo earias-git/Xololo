@@ -2,6 +2,7 @@ const {
   calculateQuantityFromDates,
   calculateQuantityFromHours,
   calculateShippingFee,
+  calculateTotalFromLineItems,
   getProviderCommissionMaybe,
   getCustomerCommissionMaybe,
 } = require('./lineItemHelpers');
@@ -286,13 +287,48 @@ exports.transactionLineItems = (listing, orderData, providerCommission, customer
     includeFor: ['customer', 'provider'],
   };
 
+  // XOLOLO Cart.5: items adicionales del carrito (mismo seller) se
+  // agregan como líneas 'line-item/item' extras después del primary.
+  // Requiere unitType='item'; para bookings/offers ignoramos.
+  // orderData.additionalCartItems = [{ listing, quantity }] con los
+  // listings YA fetched (el caller — initiate-privileged o
+  // transaction-line-items — los resuelve antes de llamar aquí).
+  const additionalCartItems =
+    unitType === 'item' && Array.isArray(orderData?.additionalCartItems)
+      ? orderData.additionalCartItems.filter(
+          x => x && x.listing && x.listing.attributes?.price && x.quantity > 0
+        )
+      : [];
+
+  const additionalOrderLineItems = additionalCartItems.map(({ listing: l, quantity: q }) => ({
+    code: 'line-item/item',
+    unitPrice: l.attributes.price,
+    quantity: q,
+    includeFor: ['customer', 'provider'],
+  }));
+
+  // Para calcular comisiones sobre el AGREGADO de todos los productos del
+  // carrito (primary + extras), construimos un pseudo-order con el total
+  // sumado. Sharetribe sólo admite UNA línea de provider-commission y UNA
+  // de customer-commission por transacción, así que este es el patrón.
+  const commissionOrder =
+    additionalOrderLineItems.length > 0
+      ? {
+          code,
+          unitPrice: calculateTotalFromLineItems([order, ...additionalOrderLineItems]),
+          quantity: 1,
+          includeFor: ['customer', 'provider'],
+        }
+      : order;
+
   // Let's keep the base price (order) as first line item and provider and customer commissions as last.
   // Note: the order matters only if OrderBreakdown component doesn't recognize line-item.
   const lineItems = [
     order,
+    ...additionalOrderLineItems,
     ...extraLineItems,
-    ...getProviderCommissionMaybe(providerCommission, order, currency),
-    ...getCustomerCommissionMaybe(customerCommission, order, currency),
+    ...getProviderCommissionMaybe(providerCommission, commissionOrder, currency),
+    ...getCustomerCommissionMaybe(customerCommission, commissionOrder, currency),
   ];
 
   return lineItems;

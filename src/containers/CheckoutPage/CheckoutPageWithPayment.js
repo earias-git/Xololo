@@ -136,6 +136,13 @@ const getOrderParams = (
   // que llega al server como snapshot de la intención del cliente).
   const selectedShippingRateMaybe = selectedShippingRate ? { selectedShippingRate } : {};
   const shippingQuotationIdMaybe = shippingQuotationId ? { shippingQuotationId } : {};
+  // XOLOLO Cart.5: additionalCartItems se guarda en pageData.orderData
+  // desde CartPage.handleCheckout. Aquí solo lo propagamos a orderParams.
+  const additionalCartItems = pageData.orderData?.additionalCartItems;
+  const additionalCartItemsMaybe =
+    Array.isArray(additionalCartItems) && additionalCartItems.length > 0
+      ? { additionalCartItems }
+      : {};
   const { listingType, unitType, priceVariants } = pageData?.listing?.attributes?.publicData || {};
 
   // price variant data for fixed duration bookings
@@ -175,6 +182,7 @@ const getOrderParams = (
     ...priceVariantNameMaybe,
     ...selectedShippingRateMaybe,
     ...shippingQuotationIdMaybe,
+    ...additionalCartItemsMaybe,
     ...protectedDataMaybe,
     ...optionalPaymentParams,
   };
