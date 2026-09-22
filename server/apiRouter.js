@@ -33,7 +33,6 @@ const sellerMonthlyReportPreview = require('./api/seller-monthly-report-preview'
 const adminMetrics = require('./api/admin-metrics');
 const publicStoreStats = require('./api/public-store-stats');
 const buyerDashboard = require('./api/buyer-dashboard');
-const debugTxShape = require('./api/_debug-tx-shape');
 const trackEvent = require('./api/track-event');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
@@ -166,9 +165,6 @@ router.get('/public-store-stats', publicStoreStats);
 // pendientes, buy again). Auth required — devuelve sólo SUS pedidos.
 router.get('/buyer-dashboard', buyerDashboard);
 
-// XOLOLO TEMPORAL: debug del shape real de tx en producción.
-// Gated por DEBUG_TX_SHAPE_TOKEN. BORRAR cuando termine debug.
-router.get('/_debug/tx-shape', debugTxShape);
 
 // XOLOLO F3 Sprint 2: recibe eventos de tracking del cliente.
 // Público, rate-limited por IP. Encola y responde 200 inmediato.
