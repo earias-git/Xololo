@@ -125,19 +125,24 @@ const markTracked = key => {
 // options:
 //   - dedupe: (default true) si false, se manda siempre (útil para
 //     shares donde cada click cuenta).
+//
+// payload.listingId identifica el target para la mayoría de eventos.
+// payload.sellerId se usa en su lugar para 'store.viewed' (vistas del
+// storefront de un seller — no hay listing involucrado).
 export const trackEvent = (event, payload = {}, options = {}) => {
   if (!isBrowser()) return;
 
-  const { listingId, source, channel } = payload;
-  if (!event || !listingId) return;
+  const { listingId, sellerId, source, channel } = payload;
+  const targetId = listingId || sellerId;
+  if (!event || !targetId) return;
 
   const dedupeEnabled = options.dedupe !== false;
-  const dedupeKey = `${event}::${listingId}`;
+  const dedupeKey = `${event}::${targetId}`;
   if (dedupeEnabled && wasTracked(dedupeKey)) return;
 
   const body = {
     event,
-    listingId,
+    ...(listingId ? { listingId } : { sellerId }),
     source: source || 'direct',
     sessionId: getSessionId() || 'anon',
   };

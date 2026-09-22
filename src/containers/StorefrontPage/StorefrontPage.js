@@ -257,6 +257,21 @@ const StorefrontPageComponent = props => {
     }
   }, [slug, seller, notFound, onFetchSeller]);
 
+  // XOLOLO F3 · ampliación admin: dispara store.viewed una vez por
+  // sesión por seller. Alimenta la sección "Tráfico" de /admin
+  // (analytics de páginas de sellers). Fire-and-forget, dedupe por
+  // sesión en sessionStorage — no cuenta re-renders ni refresh.
+  const sellerIdForTracking = seller?.id;
+  useEffect(() => {
+    if (!sellerIdForTracking) return;
+    // eslint-disable-next-line global-require
+    const { trackEvent, detectSource } = require('../../util/tracking');
+    trackEvent('store.viewed', {
+      sellerId: sellerIdForTracking,
+      source: detectSource(),
+    });
+  }, [sellerIdForTracking]);
+
   if (inProgress && !seller) {
     return (
       <main className={css.loadingRoot}>

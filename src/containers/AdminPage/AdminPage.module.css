@@ -1,7 +1,25 @@
 @import '../../styles/customMediaQueries.css';
 
-.mobileTopbar,
-.desktopTopbar {
+/* XOLOLO fix: sin este @media, mobileRootClassName reemplaza por
+   completo la clase .container del Topbar (que trae el display:none
+   a partir de viewportLarge) — resultado: mobile y desktop topbar
+   quedaban visibles a la vez en pantallas grandes. Mismo fix que ya
+   tenía DashboardPage.module.css. */
+.mobileTopbar {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1;
+
+  @media (--viewportLarge) {
+    display: none;
+  }
+}
+
+.desktopTopbar,
+.mobileTopbar {
   box-shadow: none;
 }
 

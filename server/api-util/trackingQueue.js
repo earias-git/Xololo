@@ -1,17 +1,26 @@
-// XOLOLO F3 · Sprint 2: cola in-memory + agregador de eventos de tracking.
+// XOLOLO F3 · Sprint 2 (+ ampliación admin): cola in-memory + agregador
+// de eventos de tracking.
 //
 // Diseño:
-//   - Los eventos entran por /api/track/event y se pushean a `queue`.
-//   - Un timer flush cada FLUSH_INTERVAL_MS agrupa por listingId y hace
-//     UN updateMetadata por listing (Integration SDK) con los deltas.
-//   - Storage por listing en metadata.xololoAnalytics:
+//   - Los eventos entran por /api/track/event y se pushean a una de dos
+//     colas según el evento:
+//       · listingQueue  (listing.viewed, listing.added_to_cart,
+//         checkout.started, listing.shared_external) — agrupados por
+//         listingId, se persisten en listing.metadata.xololoAnalytics.
+//       · storeViewQueue (store.viewed) — agrupados por sellerId, se
+//         persisten en user.metadata.xololoStoreAnalytics. Esto es lo
+//         que alimenta "analytics de páginas de sellers" en /admin.
+//   - Un timer flush cada FLUSH_INTERVAL_MS vacía ambas colas y hace
+//     UN updateProfile/update por recurso (Integration SDK) con los
+//     deltas acumulados.
+//   - Storage (mismo shape para listing y user):
 //       {
 //         totals: { [event]: { [source]: n } },
 //         byDay:  { 'YYYY-MM-DD': { [event]: { [source]: n } } },
 //         updatedAt: ISO,
 //       }
 //   - byDay se recorta a últimos BYDAY_KEEP_DAYS = 90 días en cada
-//     flush del listing.
+//     flush del recurso.
 //   - Trade-off aceptado (v1): la queue en memoria se pierde si el
 //     server reinicia. Máximo perdemos FLUSH_INTERVAL_MS de tracking.
 //     En v2 se promueve a queue durable (Redis / DB row).
@@ -31,7 +40,12 @@ const VALID_EVENTS = new Set([
   'listing.added_to_cart',
   'checkout.started',
   'listing.shared_external',
+  'store.viewed',
 ]);
+
+// Eventos que se agrupan por sellerId (user.metadata) en vez de
+// listingId (listing.metadata).
+const USER_KEYED_EVENTS = new Set(['store.viewed']);
 
 // Sources válidas. Sync con src/util/tracking.js.
 const VALID_SOURCES = new Set([
@@ -57,11 +71,12 @@ const VALID_CHANNELS = new Set([
   'other',
 ]);
 
-let queue = [];
+let listingQueue = [];
+let storeViewQueue = [];
 let flushTimer = null;
 let started = false;
 
-// --------- helpers ---------
+// --------- helpers compartidos (listing y user usan el mismo shape) ---------
 
 const todayYmd = () => new Date().toISOString().slice(0, 10);
 
@@ -71,21 +86,23 @@ const cutoffYmd = daysAgo => {
   return d.toISOString().slice(0, 10);
 };
 
-// Agrupa la queue por listingId: { listingId → deltas por evento y source }
-const groupByListing = events => {
+// Agrupa eventos por una key (listingId o sellerId) → deltas por
+// evento y source.
+const groupByKey = (events, keyField) => {
   const out = new Map();
   for (const evt of events) {
-    const { listingId, event, source, channel } = evt;
+    const key = evt[keyField];
+    const { event, source, channel } = evt;
     // Para shared_external tratamos `channel` como sub-source dentro
-    // del "totals.shares" — Simplifica el shape del metadata.
+    // del "totals.shares" — simplifica el shape del metadata.
     const bucketEvent = event;
     const bucketSource = event === 'listing.shared_external' ? channel : source;
-    if (!bucketSource) continue;
+    if (!bucketSource || !key) continue;
 
-    let entry = out.get(listingId);
+    let entry = out.get(key);
     if (!entry) {
       entry = { totals: {}, day: {} };
-      out.set(listingId, entry);
+      out.set(key, entry);
     }
     if (!entry.totals[bucketEvent]) entry.totals[bucketEvent] = {};
     entry.totals[bucketEvent][bucketSource] =
@@ -120,7 +137,7 @@ const trimByDay = byDay => {
   return trimmed;
 };
 
-// Aplica los deltas a la analytics existente del listing y devuelve
+// Aplica los deltas a la analytics existente del recurso y devuelve
 // el objeto nuevo listo para persistir.
 const applyDeltas = (existing, delta) => {
   const totals = { ...(existing?.totals || {}) };
@@ -140,24 +157,22 @@ const applyDeltas = (existing, delta) => {
   };
 };
 
-// --------- flush ---------
+// --------- flush: listings (xololoAnalytics) ---------
 
 const flushOnce = async () => {
-  if (queue.length === 0) return { flushed: 0 };
-  const batch = queue;
-  queue = [];
+  if (listingQueue.length === 0) return { flushed: 0 };
+  const batch = listingQueue;
+  listingQueue = [];
 
   const sdk = getIntegrationSdk();
   if (!sdk) {
-    // Integration SDK missing → devolvemos los eventos a la queue para
-    // reintentar en el próximo tick (no perdemos data en dev local).
-    queue = batch.concat(queue);
+    listingQueue = batch.concat(listingQueue);
     // eslint-disable-next-line no-console
     console.warn('[tracking] flush: Integration SDK missing, requeued', batch.length);
     return { flushed: 0, requeued: batch.length };
   }
 
-  const grouped = groupByListing(batch);
+  const grouped = groupByKey(batch, 'listingId');
   let ok = 0;
   let fail = 0;
 
@@ -183,19 +198,76 @@ const flushOnce = async () => {
   return { flushed: ok, failed: fail, events: batch.length };
 };
 
+// --------- flush: sellers/stores (xololoStoreAnalytics) ---------
+//
+// Mismo patrón que flushOnce pero persiste en user.metadata via
+// sdk.users.updateProfile (Integration API expone metadata en el
+// profile update, igual que listings.update). Alimenta la sección
+// "Tráfico" de /admin con vistas de storefront por seller.
+
+const flushStoreViewsOnce = async () => {
+  if (storeViewQueue.length === 0) return { flushed: 0 };
+  const batch = storeViewQueue;
+  storeViewQueue = [];
+
+  const sdk = getIntegrationSdk();
+  if (!sdk) {
+    storeViewQueue = batch.concat(storeViewQueue);
+    // eslint-disable-next-line no-console
+    console.warn('[tracking] store flush: Integration SDK missing, requeued', batch.length);
+    return { flushed: 0, requeued: batch.length };
+  }
+
+  const grouped = groupByKey(batch, 'sellerId');
+  let ok = 0;
+  let fail = 0;
+
+  for (const [sellerId, delta] of grouped) {
+    try {
+      const showResp = await sdk.users.show({ id: sellerId });
+      const existing = showResp.data.data.attributes?.metadata?.xololoStoreAnalytics || null;
+      const next = applyDeltas(existing, delta);
+      await sdk.users.updateProfile({
+        id: sellerId,
+        metadata: { xololoStoreAnalytics: next },
+      });
+      ok += 1;
+    } catch (err) {
+      fail += 1;
+      // eslint-disable-next-line no-console
+      console.warn('[tracking] store flush failed:', sellerId, err?.message);
+    }
+  }
+
+  return { flushed: ok, failed: fail, events: batch.length };
+};
+
 // --------- public API ---------
 
 const enqueue = evt => {
-  if (!evt || !evt.listingId) return { ok: false, reason: 'invalid' };
+  if (!evt) return { ok: false, reason: 'invalid' };
   if (!VALID_EVENTS.has(evt.event)) return { ok: false, reason: 'invalid_event' };
   if (evt.source && !VALID_SOURCES.has(evt.source)) evt.source = 'other';
   if (evt.channel && !VALID_CHANNELS.has(evt.channel)) evt.channel = 'other';
-  if (queue.length >= MAX_QUEUE_SIZE) {
+
+  if (USER_KEYED_EVENTS.has(evt.event)) {
+    if (!evt.sellerId) return { ok: false, reason: 'invalid' };
+    if (storeViewQueue.length >= MAX_QUEUE_SIZE) {
+      // eslint-disable-next-line no-console
+      console.warn('[tracking] store queue full — dropping oldest');
+      storeViewQueue.shift();
+    }
+    storeViewQueue.push({ ...evt, at: Date.now() });
+    return { ok: true, queued: true };
+  }
+
+  if (!evt.listingId) return { ok: false, reason: 'invalid' };
+  if (listingQueue.length >= MAX_QUEUE_SIZE) {
     // eslint-disable-next-line no-console
     console.warn('[tracking] queue full — dropping oldest');
-    queue.shift();
+    listingQueue.shift();
   }
-  queue.push({ ...evt, at: Date.now() });
+  listingQueue.push({ ...evt, at: Date.now() });
   return { ok: true, queued: true };
 };
 
@@ -204,15 +276,15 @@ const start = () => {
   started = true;
   // Primer flush a los 30s para no coincidir con arranque del server.
   setTimeout(() => {
-    flushOnce().then(r => {
+    Promise.all([flushOnce(), flushStoreViewsOnce()]).then(([listingR, storeR]) => {
       // eslint-disable-next-line no-console
-      console.log('[tracking] first flush:', r);
+      console.log('[tracking] first flush:', { listings: listingR, stores: storeR });
     });
     flushTimer = setInterval(() => {
-      flushOnce().then(r => {
-        if (r.flushed || r.failed) {
+      Promise.all([flushOnce(), flushStoreViewsOnce()]).then(([listingR, storeR]) => {
+        if (listingR.flushed || listingR.failed || storeR.flushed || storeR.failed) {
           // eslint-disable-next-line no-console
-          console.log('[tracking] flush:', r);
+          console.log('[tracking] flush:', { listings: listingR, stores: storeR });
         }
       });
     }, FLUSH_INTERVAL_MS);
@@ -232,8 +304,11 @@ module.exports = {
   start,
   stop,
   flushOnce,
+  flushStoreViewsOnce,
   VALID_EVENTS,
   VALID_SOURCES,
   VALID_CHANNELS,
-  _queueSize: () => queue.length, // testing
+  USER_KEYED_EVENTS,
+  _queueSize: () => listingQueue.length, // testing
+  _storeQueueSize: () => storeViewQueue.length, // testing
 };

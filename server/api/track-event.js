@@ -1,12 +1,14 @@
-// XOLOLO F3 · Sprint 2: recibe eventos de tracking del cliente y los
-// encola. Fire-and-forget desde el cliente — respondemos 200 inmediato.
+// XOLOLO F3 · Sprint 2 (+ ampliación admin): recibe eventos de tracking
+// del cliente y los encola. Fire-and-forget — respondemos 200 inmediato.
 //
 // Contrato:
 //   POST /api/track/event
 //   Body: {
 //     event: 'listing.viewed' | 'listing.added_to_cart' |
-//            'checkout.started' | 'listing.shared_external',
-//     listingId: uuid,
+//            'checkout.started' | 'listing.shared_external' |
+//            'store.viewed',
+//     listingId: uuid,       // requerido salvo para store.viewed
+//     sellerId: uuid,        // requerido SÓLO para store.viewed
 //     source: 'direct' | 'xololo' | 'seller_store' | ...
 //     channel?: 'whatsapp' | 'facebook' | ... (para shared_external),
 //     sessionId: string,
@@ -22,6 +24,7 @@
 const {
   enqueue,
   VALID_EVENTS,
+  USER_KEYED_EVENTS,
 } = require('../api-util/trackingQueue');
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 60s
@@ -85,12 +88,17 @@ module.exports = (req, res) => {
       return res.status(429).json({ error: 'rate_limited' });
     }
 
-    const { event, listingId, source, channel, sessionId } = req.body || {};
+    const { event, listingId, sellerId, source, channel, sessionId } = req.body || {};
 
     if (!event || typeof event !== 'string' || !VALID_EVENTS.has(event)) {
       return res.status(400).json({ error: 'invalid_event' });
     }
-    if (!listingId || typeof listingId !== 'string' || listingId.length < 8) {
+    const isUserKeyed = USER_KEYED_EVENTS.has(event);
+    if (isUserKeyed) {
+      if (!sellerId || typeof sellerId !== 'string' || sellerId.length < 8) {
+        return res.status(400).json({ error: 'invalid_request', details: 'sellerId requerido.' });
+      }
+    } else if (!listingId || typeof listingId !== 'string' || listingId.length < 8) {
       return res.status(400).json({ error: 'invalid_request', details: 'listingId requerido.' });
     }
     if (!sessionId || typeof sessionId !== 'string') {
@@ -102,7 +110,7 @@ module.exports = (req, res) => {
 
     const result = enqueue({
       event,
-      listingId,
+      ...(isUserKeyed ? { sellerId } : { listingId }),
       source: source || 'direct',
       channel: channel || null,
       sessionId,
