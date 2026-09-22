@@ -13,9 +13,11 @@ import css from './OrderTimeline.module.css';
 //
 // Se muestra en OrderDetailsPage (buyer) y TransactionPage (seller).
 // Layout:
-//   - Desktop: los 8 estados expandidos verticalmente con puntos, líneas
-//     y detalle.
-//   - Mobile: solo los últimos 3 relevantes; el resto tras "Ver detalle".
+//   - Desktop: los 8 estados en stepper HORIZONTAL (dots conectados por
+//     una línea, label debajo). El detalle largo sólo se muestra en el
+//     estado activo para no cargar la UI.
+//   - Mobile: layout vertical; sólo los estados alrededor del activo,
+//     el resto se despliega con "Ver todos los estados".
 
 const STATES = [
   {

@@ -59,7 +59,10 @@
   display: none;
 
   @media (--viewportMedium) {
-    display: block;
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-top: 4px;
   }
 }
 
@@ -71,6 +74,7 @@
   }
 }
 
+/* ---------- Item base (móvil: layout vertical grid con dot izquierda) ---------- */
 .item {
   display: grid;
   grid-template-columns: 22px 1fr;
@@ -136,6 +140,94 @@
   font-size: 11.5px;
   color: var(--colorGrey500);
   font-weight: 600;
+}
+
+/* ---------- Desktop: stepper horizontal ---------- */
+/*
+ * Cada item es una columna que crece equitativamente (flex:1).
+ * Dot arriba centrado; la línea entre dots la pinta el dotWrap con un
+ * pseudo-elemento ::after, así el último item no tiene línea y no
+ * necesitamos el <span.line> renderizado en JSX (que sigue existiendo
+ * para móvil).
+ */
+@media (--viewportMedium) {
+  .listDesktop .item {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0;
+    gap: 8px;
+  }
+
+  .listDesktop .dotWrap {
+    width: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 22px;
+  }
+
+  .listDesktop .dot {
+    margin-top: 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Línea horizontal: la que va escrita en JSX (span.line) la
+     re-usamos aquí como línea que sale del dot hacia la derecha
+     hasta el borde derecho del item. El último item no tiene span.line. */
+  .listDesktop .line {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: calc(50% + 8px);
+    right: -50%;
+    width: auto;
+    height: 2px;
+    bottom: auto;
+    background-color: var(--colorGrey100);
+    z-index: 1;
+  }
+
+  .listDesktop .itemBody {
+    align-items: center;
+    text-align: center;
+    padding: 0 4px;
+    width: 100%;
+  }
+
+  .listDesktop .itemLabel {
+    font-size: 12.5px;
+    justify-content: center;
+    line-height: 1.25;
+    /* Permite wrap para labels largos como "Encuesta abierta" */
+    flex-wrap: wrap;
+  }
+
+  .listDesktop .itemIcon {
+    font-size: 13px;
+  }
+
+  /* En horizontal el detail ocupa mucho — lo escondemos por default y
+     lo dejamos visible solo en el estado activo (útil para saber qué
+     está pasando ahorita sin cargar la UI). */
+  .listDesktop .itemDetail {
+    display: none;
+  }
+  .listDesktop .itemActive .itemDetail {
+    display: block;
+    font-size: 11.5px;
+    line-height: 1.35;
+    max-width: 140px;
+  }
+
+  .listDesktop .itemTime {
+    font-size: 11px;
+  }
 }
 
 /* ---------- Estado done (previo al activo) ---------- */
