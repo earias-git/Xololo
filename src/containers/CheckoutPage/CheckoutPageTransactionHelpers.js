@@ -100,24 +100,36 @@ export const getShippingDetailsMaybe = formValues => {
     recipientCity,
     recipientState,
     recipientCountry,
+    // XOLOLO: colonia + indicaciones al chofer. No caben en el shape
+    // estándar `shippingDetails.address` de Sharetribe, así que las
+    // persistimos como top-level dentro de protectedData
+    // (recipientNeighborhood / recipientReferences) — el server las
+    // lee en generate-shipping-guide para armar el address_to y la
+    // reference del envío Skydropx.
+    recipientNeighborhood,
+    recipientReferences,
   } = formValues;
 
-  return recipientName && recipientAddressLine1 && recipientPostal
-    ? {
-        shippingDetails: {
-          name: recipientName,
-          phoneNumber: recipientPhoneNumber,
-          address: {
-            city: recipientCity,
-            country: recipientCountry,
-            line1: recipientAddressLine1,
-            line2: recipientAddressLine2,
-            postalCode: recipientPostal,
-            state: recipientState,
-          },
-        },
-      }
-    : {};
+  if (!recipientName || !recipientAddressLine1 || !recipientPostal) {
+    return {};
+  }
+
+  return {
+    shippingDetails: {
+      name: recipientName,
+      phoneNumber: recipientPhoneNumber,
+      address: {
+        city: recipientCity,
+        country: recipientCountry,
+        line1: recipientAddressLine1,
+        line2: recipientAddressLine2,
+        postalCode: recipientPostal,
+        state: recipientState,
+      },
+    },
+    ...(recipientNeighborhood ? { recipientNeighborhood } : {}),
+    ...(recipientReferences ? { recipientReferences } : {}),
+  };
 };
 
 /**

@@ -146,7 +146,23 @@ module.exports = async (req, res) => {
 
     const providerPd = provider?.attributes?.profile?.publicData || {};
     const providerProtectedData = provider?.attributes?.profile?.privateData || {};
-    const shippingDetails = tx.attributes.protectedData || {};
+
+    // La dirección del buyer viene del form ShippingDetails del checkout.
+    // Sharetribe la persiste en tx.protectedData.shippingDetails con este
+    // shape anidado (no keys planos):
+    //   protectedData.shippingDetails = {
+    //     name, phoneNumber,
+    //     address: { line1, line2, city, state, postalCode, country }
+    //   }
+    // Ver src/containers/CheckoutPage/CheckoutPageTransactionHelpers.js
+    // (getShippingDetailsMaybe).
+    const shippingDetails = tx.attributes.protectedData?.shippingDetails || {};
+    const buyerAddress = shippingDetails.address || {};
+    // XOLOLO: colonia y referencias las capturamos como campos extra
+    // fuera del address estándar de Sharetribe (que no los soporta) —
+    // el form ShippingDetails los guarda en protectedData al nivel raíz.
+    const buyerColonia = tx.attributes.protectedData?.recipientNeighborhood || '';
+    const buyerReferences = tx.attributes.protectedData?.recipientReferences || '';
 
     const pickupAddr = providerPd.pickupAddress || providerPd.legalAddress || {};
     const pickupRefs = providerPd.pickupReferences || '';
@@ -158,16 +174,23 @@ module.exports = async (req, res) => {
       });
     }
 
-    // La dirección del buyer viene de ShippingDetails (form del checkout).
-    // Sharetribe la persiste en tx.protectedData con estos keys estándar.
-    if (
-      !shippingDetails.recipientAddressLine1 ||
-      !shippingDetails.recipientPostal ||
-      !shippingDetails.recipientCity
-    ) {
+    // Validación de la dirección del buyer. name+phone son obligatorios
+    // para que la paquetería pueda contactar; line1+city+postalCode+state
+    // son obligatorios para poder entregar. Colonia y referencias las
+    // pedimos también (LOGISTICS_V1 §5) pero si faltan tiramos default
+    // razonable para no bloquear al buyer que ya pagó.
+    const missing = [];
+    if (!shippingDetails.name) missing.push('nombre');
+    if (!shippingDetails.phoneNumber) missing.push('teléfono');
+    if (!buyerAddress.line1) missing.push('calle y número');
+    if (!buyerAddress.city) missing.push('ciudad');
+    if (!buyerAddress.postalCode) missing.push('código postal');
+    if (!buyerAddress.state) missing.push('estado');
+    if (missing.length > 0) {
       return res.status(409).json({
         error: 'buyer_address_incomplete',
-        details: 'La dirección de entrega del buyer está incompleta en la transacción.',
+        details: `Faltan campos en la dirección del comprador: ${missing.join(', ')}.`,
+        missing,
       });
     }
 
@@ -261,17 +284,17 @@ module.exports = async (req, res) => {
           'vendedor@xololo.mx',
       },
       addressTo: {
-        name: shippingDetails.recipientName || 'Comprador',
-        company: shippingDetails.recipientName || 'Comprador',
-        street1: [shippingDetails.recipientAddressLine1, shippingDetails.recipientAddressLine2]
-          .filter(Boolean)
-          .join(', '),
-        reference: 'N/D',
-        postal_code: shippingDetails.recipientPostal,
-        area_level1: shippingDetails.recipientState || 'México',
-        area_level2: shippingDetails.recipientCity,
-        area_level3: shippingDetails.recipientCity, // fallback si no capturamos colonia
-        phone: shippingDetails.recipientPhoneNumber || '5555555555',
+        name: shippingDetails.name || 'Comprador',
+        company: shippingDetails.name || 'Comprador',
+        street1: [buyerAddress.line1, buyerAddress.line2].filter(Boolean).join(', '),
+        reference: buyerReferences || 'N/D',
+        postal_code: buyerAddress.postalCode,
+        area_level1: buyerAddress.state || 'México',
+        area_level2: buyerAddress.city,
+        // Colonia va como area_level3 si el buyer la capturó; sino
+        // fallback a la ciudad (Skydropx exige el campo).
+        area_level3: buyerColonia || buyerAddress.city,
+        phone: shippingDetails.phoneNumber || '5555555555',
         email: customer?.attributes?.email || 'comprador@xololo.mx',
       },
       parcels: [aggregatedParcel],

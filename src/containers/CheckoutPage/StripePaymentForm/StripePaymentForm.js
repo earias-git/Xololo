@@ -219,6 +219,9 @@ const LocationOrShippingDetails = props => {
     showLocation,
     listingLocation,
     formApi,
+    // XOLOLO: `values` viene de Final Form; ShippingDetails lo necesita
+    // para su hook usePostalCodeLookup (dispara al CP a 5 dígitos).
+    values,
     locale,
     isFuzzyLocation,
     intl,
@@ -231,7 +234,7 @@ const LocationOrShippingDetails = props => {
     : intl.formatMessage({ id: 'StripePaymentForm.locationUnknown' });
 
   return askShippingDetails ? (
-    <ShippingDetails intl={intl} formApi={formApi} locale={locale} />
+    <ShippingDetails intl={intl} formApi={formApi} values={values} locale={locale} />
   ) : showPickUpLocation ? (
     <div className={css.locationWrapper}>
       <Heading as="h3" rootClassName={css.heading}>
@@ -635,6 +638,7 @@ class StripePaymentForm extends Component {
           listingLocation={listingLocation}
           isFuzzyLocation={isFuzzyLocation}
           formApi={formApi}
+          values={values}
           locale={locale}
           intl={intl}
         />
