@@ -71,6 +71,21 @@ export const ListingPageComponent = props => {
     setMounted(true);
   }, []);
 
+  // XOLOLO F3 Sprint 2: dispara listing.viewed una vez por sesión por
+  // listing. Con source auto-detectado (referrer + utm_source). Fire-
+  // and-forget — nunca bloquea render. El dedupe (sessionStorage)
+  // evita spam si el seller ve su propio listing varias veces.
+  const listingIdForTracking = props.params?.id;
+  useEffect(() => {
+    if (!listingIdForTracking) return;
+    // eslint-disable-next-line global-require
+    const { trackEvent, detectSource } = require('../../util/tracking');
+    trackEvent('listing.viewed', {
+      listingId: listingIdForTracking,
+      source: detectSource(),
+    });
+  }, [listingIdForTracking]);
+
   const {
     isAuthenticated,
     currentUser,

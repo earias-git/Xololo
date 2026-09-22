@@ -27,6 +27,7 @@ const skydropxWebhook = require('./api/webhooks/skydropx');
 const orderSurvey = require('./api/order-survey');
 const postalCode = require('./api/postal-code');
 const sellerAnalytics = require('./api/seller-analytics');
+const trackEvent = require('./api/track-event');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -129,6 +130,10 @@ router.get('/postal-code', postalCode);
 // XOLOLO F3: analytics de ventas para el dashboard del seller.
 // Auth: user logueado. Devuelve las tx del provider en rango [from, to].
 router.get('/seller-analytics', sellerAnalytics);
+
+// XOLOLO F3 Sprint 2: recibe eventos de tracking del cliente.
+// Público, rate-limited por IP. Encola y responde 200 inmediato.
+router.post('/track/event', bodyParser.json(), trackEvent);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

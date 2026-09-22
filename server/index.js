@@ -384,6 +384,18 @@ const server = app.listen(PORT, () => {
       console.error('[xololo] tacit-acceptance job failed to start:', e.message); // eslint-disable-line no-console
     }
   }
+
+  // XOLOLO F3 Sprint 2: arranca el agregador de tracking. Corre en
+  // dev también — así podemos probar el flow completo local (con
+  // Integration SDK configurado). Se flushea cada 5 min.
+  try {
+    // eslint-disable-next-line global-require
+    const trackingQueue = require('./api-util/trackingQueue');
+    trackingQueue.start();
+    console.log('[xololo] tracking aggregator scheduled'); // eslint-disable-line no-console
+  } catch (e) {
+    console.error('[xololo] tracking aggregator failed to start:', e.message); // eslint-disable-line no-console
+  }
 });
 
 // Graceful shutdown:

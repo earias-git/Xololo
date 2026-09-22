@@ -73,6 +73,19 @@ export const ListingPageComponent = props => {
     setMounted(true);
   }, []);
 
+  // XOLOLO F3 Sprint 2: dispara listing.viewed una vez por sesión por
+  // listing. Fire-and-forget. Ver ListingPageCarousel para detalles.
+  const listingIdForTracking = props.params?.id;
+  useEffect(() => {
+    if (!listingIdForTracking) return;
+    // eslint-disable-next-line global-require
+    const { trackEvent, detectSource } = require('../../util/tracking');
+    trackEvent('listing.viewed', {
+      listingId: listingIdForTracking,
+      source: detectSource(),
+    });
+  }, [listingIdForTracking]);
+
   const {
     isAuthenticated,
     currentUser,
