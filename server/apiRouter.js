@@ -23,6 +23,9 @@ const shippingQuote = require('./api/shipping-quote');
 const verifyPickupCode = require('./api/verify-pickup-code');
 const generateShippingGuide = require('./api/generate-shipping-guide');
 const uploadSosPhoto = require('./api/upload-sos-photo');
+const uploadLegalDoc = require('./api/upload-legal-doc');
+const sellerLegalDocs = require('./api/seller-legal-docs');
+const adminLegalDocs = require('./api/admin-legal-docs');
 const skydropxWebhook = require('./api/webhooks/skydropx');
 const orderSurvey = require('./api/order-survey');
 const postalCode = require('./api/postal-code');
@@ -112,6 +115,16 @@ router.post('/generate-shipping-guide', bodyParser.json(), generateShippingGuide
 // El seller sube por slot antes de poder generar la guía. Persiste la
 // URL en tx.metadata.xololoShippingSosPhotos vía trustedSdk.
 router.post('/upload-sos-photo', uploadSosPhoto);
+
+// XOLOLO Track B: documentos legales del seller (docs/SUBSCRIPTIONS_V1.md §2).
+// Upload multipart por slot (identificación, comprobante domicilio, etc).
+router.post('/upload-legal-doc', uploadLegalDoc);
+// GET status propio (personType + docs con su status) / POST fija personType.
+router.get('/seller-legal-docs', sellerLegalDocs);
+router.post('/seller-legal-docs', bodyParser.json(), sellerLegalDocs);
+// Admin: cola de revisión + aprobar/rechazar un documento.
+router.get('/admin/legal-docs', adminLegalDocs.list);
+router.post('/admin/legal-docs/review', bodyParser.json(), adminLegalDocs.review);
 
 // XOLOLO: webhook receiver de Skydropx. Recibe eventos de tracking
 // (packages: in_transit, delivered, in_return, etc), valida token o
