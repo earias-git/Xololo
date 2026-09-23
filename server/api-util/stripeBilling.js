@@ -82,6 +82,17 @@ const STRIPE_TO_XOLOLO_STATUS = {
 // user.attributes.profile.metadata.xololoSubscription. No pisa
 // `warningsSent`/`lastWarningAt` salvo que se pasen explícitamente en
 // `extra` — eso lo maneja el handler de invoice.payment_failed.
+//
+// `onboardingFeePaid` NUNCA se asume true por default — sólo se
+// setea a true si ya estaba en true, o si el caller lo pasa
+// explícitamente en `extra` (lo hace checkout.session.completed
+// cuando confirma, vía session.metadata.xololoOnboardingIncluded,
+// que a su vez create-subscription-checkout.js calculó ANTES de
+// cobrar). Bug real que esto evita: si se asumiera true siempre, un
+// seller cuya suscripción se creó fuera del checkout normal (o cuyo
+// primer sync llega antes de que el checkout confirme el cobro)
+// quedaría marcado "ya pagó onboarding" sin haberlo pagado — y en su
+// próxima resuscripción nunca se le cobraría.
 const syncSubscriptionMetadata = async ({ isdk, sellerId, subscription, plan, extra = {} }) => {
   const existingResp = await isdk.users.show({ id: sellerId });
   const existing = existingResp.data.data.attributes?.profile?.metadata?.xololoSubscription || {};
@@ -94,7 +105,7 @@ const syncSubscriptionMetadata = async ({ isdk, sellerId, subscription, plan, ex
     stripeSubscriptionId: subscription.id,
     currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
     cancelAtPeriodEnd: subscription.cancel_at_period_end === true,
-    onboardingFeePaid: true,
+    onboardingFeePaid: existing.onboardingFeePaid === true,
     warningsSent: existing.warningsSent || [],
     lastWarningAt: existing.lastWarningAt || null,
     ...extra,

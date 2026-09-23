@@ -106,9 +106,23 @@ module.exports = async (req, res) => {
       success_url: `${rootUrl}/account/subscription?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${rootUrl}/account/subscription?checkout=canceled`,
       subscription_data: {
-        metadata: { xololoSellerId: sellerId, xololoPlan: plan },
+        metadata: {
+          xololoSellerId: sellerId,
+          xololoPlan: plan,
+          xololoOnboardingIncluded: String(!onboardingAlreadyPaid),
+        },
       },
-      metadata: { xololoSellerId: sellerId, xololoPlan: plan },
+      metadata: {
+        xololoSellerId: sellerId,
+        xololoPlan: plan,
+        // XOLOLO: única fuente de verdad de "¿este checkout cobró el
+        // onboarding?" — la lee la confirmación (webhook + manual) para
+        // decidir si marca onboardingFeePaid, en vez de asumirlo siempre
+        // true (bug real: eso re-cobraba de más a nadie, pero SÍ podía
+        // marcar como "ya pagado" a un seller que nunca lo pagó si su
+        // suscripción se creó fuera de este checkout).
+        xololoOnboardingIncluded: String(!onboardingAlreadyPaid),
+      },
     });
 
     return res.json({ url: session.url });

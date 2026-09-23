@@ -134,11 +134,13 @@ module.exports = async (req, res) => {
         return res.status(200).json({ ok: true, processed: false, reason: 'not_applicable', type: event.type });
       }
       const subscription = await stripe.subscriptions.retrieve(session.subscription);
+      const onboardingIncluded = session.metadata?.xololoOnboardingIncluded === 'true';
       const updated = await syncSubscriptionMetadata({
         isdk,
         sellerId,
         subscription,
         plan: session.metadata?.xololoPlan,
+        extra: onboardingIncluded ? { onboardingFeePaid: true } : {},
       });
       await notifySeller(isdk, sellerId, 'seller.subscription_started', updated);
     } else if (event.type === 'invoice.payment_failed') {

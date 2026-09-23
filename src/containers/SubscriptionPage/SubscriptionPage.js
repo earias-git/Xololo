@@ -227,13 +227,18 @@ const SubscriptionPageComponent = () => {
                   />
                 ))}
               </div>
-              {!sub?.onboardingFeePaid ? (
+              {sub?.onboardingFeePaid ? (
+                <p className={css.onboardingNoteOk}>
+                  ✓ Ya pagaste tu cuota de onboarding anteriormente — no se te va a cobrar de
+                  nuevo, sólo el plan que elijas.
+                </p>
+              ) : (
                 <p className={css.onboardingNote}>
                   Ambos planes incluyen una cuota única de onboarding de {ONBOARDING_FEE_LABEL}{' '}
                   (hasta 3 horas de asesoría con un consultor Xololo) — se cobra junto con tu
                   primer pago, no se repite después.
                 </p>
-              ) : null}
+              )}
             </>
           )}
         </div>

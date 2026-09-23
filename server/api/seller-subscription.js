@@ -97,11 +97,13 @@ const confirmCheckout = async (req, res) => {
       return res.status(400).json({ error: 'invalid_request', details: 'checkout_not_paid' });
     }
 
+    const onboardingIncluded = session.metadata?.xololoOnboardingIncluded === 'true';
     const updated = await syncSubscriptionMetadata({
       isdk,
       sellerId,
       subscription,
       plan: session.metadata?.xololoPlan,
+      extra: onboardingIncluded ? { onboardingFeePaid: true } : {},
     });
 
     return res.json({ ok: true, status: updated.status });

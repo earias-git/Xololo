@@ -253,6 +253,28 @@ dentro de la nueva sección Suscripción:
   vez a la primera factura de una subscription — se hace exactamente
   así, un solo Checkout Session que crea la Subscription + agrega el
   item de $499 a la primera invoice.
+- **Re-suscripción sin doble cobro — 🟢 implementado y probado.**
+  Caso: seller mensual que ya pagó el onboarding, se le suspende la
+  cuenta por falta de pago (o pausa y deja vencer), y luego vuelve a
+  suscribirse (mismo aplica al plan anual). `create-subscription-checkout.js`
+  lee `xololoSubscription.onboardingFeePaid` ANTES de armar el
+  Checkout Session — si ya es `true`, arma el session con **un solo**
+  line_item (el plan, sin el onboarding). La sesión guarda
+  `metadata.xololoOnboardingIncluded` ('true'/'false') como única
+  fuente de verdad de "¿esta sesión específica cobró onboarding?" —
+  tanto el webhook (`checkout.session.completed`) como la confirmación
+  manual (`seller-subscription.js` POST) la leen para decidir si
+  marcan `onboardingFeePaid: true`, en vez de asumirlo siempre (bug
+  real encontrado y corregido: `syncSubscriptionMetadata` marcaba
+  `onboardingFeePaid: true` incondicionalmente en cada sync — no
+  causaba doble cobro en el flujo normal, pero sí podía marcar "ya
+  pagó" a un seller que nunca pagó si su suscripción se creaba fuera
+  del checkout normal). Ahora el default preserva el valor existente
+  y sólo se setea a `true` cuando el checkout específico lo incluyó.
+  **UI:** `SubscriptionPage` muestra un mensaje explícito y distinto
+  según el caso — "ya pagaste tu onboarding, no se te cobra de nuevo"
+  (verde) vs. el aviso normal de que se cobrará junto con el primer
+  pago — para que quede claro al seller sin que tenga que adivinar.
 
 ### 3.3. Gating de publicación 🟢
 
