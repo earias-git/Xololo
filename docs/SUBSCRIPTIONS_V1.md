@@ -335,11 +335,32 @@ la nueva).
   UI: `SubscriptionPage` (`/account/subscription`, tab "Suscripción"
   entre Mi tienda y Documentos legales) con las 2 tarjetas de plan +
   estado activo. `AccountProgressClock` ya incluye el paso.
-- Webhook nuevo `server/api/webhooks/stripe-billing.js` escuchando:
-  `checkout.session.completed` (activar suscripción),
-  `invoice.payment_failed` (disparar aviso al seller),
-  `customer.subscription.updated` (sync de status: active/past_due/
-  unpaid/canceled → aplicar o quitar el gate).
+- Webhook `server/api/webhooks/stripe-billing.js` — **🟢 implementado
+  y probado end-to-end** contra la cuenta Stripe real (eventos reales
+  disparados vía API, firmados con `stripe.webhooks.generateTestHeaderString`
+  y enviados al servidor local; se confirmó verificación de firma,
+  rechazo de firma inválida, dedup de eventos repetidos, y la
+  escritura correcta en `xololoSubscription`). Escucha:
+  - `checkout.session.completed` → activa la suscripción (alta
+    inicial) + dispara `seller.subscription_started`.
+  - `invoice.payment_failed` → agrega a `warningsSent[]` + dispara
+    `seller.payment_failed_warning`.
+  - `customer.subscription.updated` → sync silencioso de status/
+    currentPeriodEnd/cancelAtPeriodEnd (sin notificación propia; el
+    gate real que reaccionará a esto es el roadmap #6).
+  - `customer.subscription.deleted` → status final `canceled` +
+    dispara `seller.subscription_canceled`.
+  - Toda la persistencia pasa por `syncSubscriptionMetadata()` en
+    `server/api-util/stripeBilling.js` — la misma función que usa
+    `seller-subscription.js` (POST) para el alta manual, así que
+    ambos caminos nunca pueden desincronizarse entre sí.
+  - Requiere `STRIPE_BILLING_WEBHOOK_SECRET` — **🔴 pendiente**: hay
+    que crear el endpoint real en Stripe Dashboard (Developers →
+    Webhooks → Add endpoint, URL `https://<host>/api/webhooks/stripe-billing`,
+    eventos: los 4 de arriba) y pegar el signing secret en `.env`
+    (local) y Render (`xololo-staging`). Sin el secret configurado, el
+    endpoint acepta sin verificar firma (sólo para pruebas — nunca así
+    en producción, hay un `console.warn` que lo recuerda en cada request).
 - Estado de suscripción persistido en
   `user.attributes.profile.metadata.xololoSubscription`:
   ```json
@@ -349,9 +370,10 @@ la nueva).
     "stripeCustomerId": "...",
     "stripeSubscriptionId": "...",
     "currentPeriodEnd": "ISO",
+    "cancelAtPeriodEnd": false,
     "onboardingFeePaid": true,
-    "warningsSent": 0,
-    "lastWarningAt": null
+    "warningsSent": ["ISO", ...],
+    "lastWarningAt": "ISO" | null
   }
   ```
 - Enforcement del gate: en `SearchPage`/`StorefrontPage`/`ListingPage`
@@ -378,7 +400,7 @@ la nueva).
 | 2 | Ajustes de copy/labels en signup (lo que sí es código) | A | Confirmación de earias sobre campos reales vistos |
 | 3 | Repositorio de documentos legales (upload + admin review) | B | Lista de documentos confirmada |
 | 4 | 🟢 Stripe Billing: products/prices + checkout de suscripción | C | Respuestas §3.4 y confirmación de auto-renovación anual |
-| 5 | Webhook Stripe + estado de suscripción + notificaciones | C | #4 |
+| 5 | 🟢 Webhook Stripe + estado de suscripción + notificaciones | C | #4 |
 | 6 | Gating de publicación en Search/Storefront/Listing | C | #5 |
 | 7 | Dunning: avisos + suspensión automática tras N intentos | C | #6 |
 | 8 | Avisos de renovación (30/15/3/1 días) — job diario | C | #5 |

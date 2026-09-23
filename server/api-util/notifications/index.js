@@ -77,6 +77,20 @@ const MATRIX = {
   'seller.monthly_report': {
     seller: ['email'],
   },
+  // XOLOLO Track C (docs/SUBSCRIPTIONS_V1.md §3.6): eventos de
+  // suscripción, disparados desde server/api/webhooks/stripe-billing.js.
+  // 'seller.subscription_suspended' se agrega cuando exista el gate
+  // real de publicación (roadmap #6) — sin eso todavía no hay nada
+  // concreto que avisar más allá de payment_failed_warning.
+  'seller.subscription_started': {
+    seller: ['email'],
+  },
+  'seller.payment_failed_warning': {
+    seller: ['email', 'push'],
+  },
+  'seller.subscription_canceled': {
+    seller: ['email'],
+  },
 };
 
 const CHANNELS = { email, push, whatsapp };

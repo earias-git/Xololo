@@ -30,22 +30,12 @@
 
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
-const { getStripeBilling } = require('../api-util/stripeBilling');
+const { getStripeBilling, syncSubscriptionMetadata } = require('../api-util/stripeBilling');
 
 const getCurrentSellerId = async (req, res) => {
   const sdk = getSdk(req, res);
   const uResp = await sdk.currentUser.show();
   return uResp.data.data.id.uuid;
-};
-
-const STRIPE_TO_XOLOLO_STATUS = {
-  active: 'active',
-  trialing: 'active',
-  past_due: 'past_due',
-  unpaid: 'past_due',
-  canceled: 'canceled',
-  incomplete: 'past_due',
-  incomplete_expired: 'canceled',
 };
 
 const getStatus = async (req, res) => {
@@ -107,29 +97,14 @@ const confirmCheckout = async (req, res) => {
       return res.status(400).json({ error: 'invalid_request', details: 'checkout_not_paid' });
     }
 
-    const existingResp = await isdk.users.show({ id: sellerId });
-    const existing = existingResp.data.data.attributes?.profile?.metadata?.xololoSubscription || {};
-
-    const status = STRIPE_TO_XOLOLO_STATUS[subscription.status] || 'active';
-    const updated = {
-      ...existing,
-      plan: session.metadata?.xololoPlan || existing.plan || null,
-      status,
-      stripeCustomerId: session.customer,
-      stripeSubscriptionId: subscription.id,
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end === true,
-      onboardingFeePaid: true,
-      warningsSent: existing.warningsSent || [],
-      lastWarningAt: existing.lastWarningAt || null,
-    };
-
-    await isdk.users.updateProfile({
-      id: sellerId,
-      metadata: { xololoSubscription: updated },
+    const updated = await syncSubscriptionMetadata({
+      isdk,
+      sellerId,
+      subscription,
+      plan: session.metadata?.xololoPlan,
     });
 
-    return res.json({ ok: true, status });
+    return res.json({ ok: true, status: updated.status });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[seller-subscription] confirm error:', e?.message);

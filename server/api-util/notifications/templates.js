@@ -335,6 +335,52 @@ const TEMPLATES = {
       },
     },
   },
+  'seller.subscription_started': {
+    email: {
+      seller: {
+        subject: '¡Tu suscripción Xololo está activa!',
+        bodyText:
+          'Hola {seller.name},\n\n' +
+          'Tu suscripción al plan {subscription.planLabel} ya está activa. Tus productos y tu ' +
+          'tienda ya pueden publicarse en xololo.mx.\n\n' +
+          'Se renovará automáticamente el {subscription.currentPeriodEndLabel}.\n\n' +
+          'Administra tu suscripción cuando quieras: {subscription.url}',
+      },
+    },
+  },
+  'seller.payment_failed_warning': {
+    email: {
+      seller: {
+        subject: '⚠️ No pudimos cobrar tu suscripción Xololo',
+        bodyText:
+          'Hola {seller.name},\n\n' +
+          'Intentamos cobrar tu suscripción {subscription.planLabel} y la tarjeta fue rechazada. ' +
+          'Vamos a reintentar automáticamente, pero si el problema sigue, tu tienda podría dejar ' +
+          'de publicarse en xololo.mx.\n\n' +
+          'Actualiza tu método de pago aquí: {subscription.url}',
+      },
+    },
+    push: {
+      seller: {
+        title: '⚠️ Pago de suscripción rechazado',
+        body: 'Actualiza tu tarjeta para no perder tu publicación en Xololo',
+        url: '{subscription.url}',
+      },
+    },
+  },
+  'seller.subscription_canceled': {
+    email: {
+      seller: {
+        subject: 'Tu suscripción Xololo terminó',
+        bodyText:
+          'Hola {seller.name},\n\n' +
+          'Tu suscripción {subscription.planLabel} terminó y tu tienda/productos ya no se ' +
+          'muestran en xololo.mx. Puedes reactivarla cuando quieras — no se te vuelve a cobrar ' +
+          'la cuota de onboarding.\n\n' +
+          'Reactivar: {subscription.url}',
+      },
+    },
+  },
 };
 
 const get = (event, channel, actor) => {

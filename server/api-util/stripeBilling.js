@@ -63,4 +63,63 @@ const getOrCreateStripeCustomer = async ({ stripe, isdk, sellerId, email, name }
   return customer.id;
 };
 
-module.exports = { getStripeBilling, resolvePricesByLookupKeys, getOrCreateStripeCustomer };
+// Mapa de status de Stripe Subscription → status interno de Xololo.
+// Usado tanto por la confirmación manual (seller-subscription.js) como
+// por el webhook (server/api/webhooks/stripe-billing.js) — una sola
+// fuente de verdad para no desincronizar los dos caminos.
+const STRIPE_TO_XOLOLO_STATUS = {
+  active: 'active',
+  trialing: 'active',
+  past_due: 'past_due',
+  unpaid: 'past_due',
+  canceled: 'canceled',
+  incomplete: 'past_due',
+  incomplete_expired: 'canceled',
+};
+
+// Persiste el estado de una Stripe Subscription en
+// user.attributes.profile.metadata.xololoSubscription. No pisa
+// `warningsSent`/`lastWarningAt` salvo que se pasen explícitamente en
+// `extra` — eso lo maneja el handler de invoice.payment_failed.
+const syncSubscriptionMetadata = async ({ isdk, sellerId, subscription, plan, extra = {} }) => {
+  const existingResp = await isdk.users.show({ id: sellerId });
+  const existing = existingResp.data.data.attributes?.profile?.metadata?.xololoSubscription || {};
+
+  const updated = {
+    ...existing,
+    plan: plan || existing.plan || null,
+    status: STRIPE_TO_XOLOLO_STATUS[subscription.status] || 'active',
+    stripeCustomerId: subscription.customer,
+    stripeSubscriptionId: subscription.id,
+    currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+    cancelAtPeriodEnd: subscription.cancel_at_period_end === true,
+    onboardingFeePaid: true,
+    warningsSent: existing.warningsSent || [],
+    lastWarningAt: existing.lastWarningAt || null,
+    ...extra,
+  };
+
+  await isdk.users.updateProfile({
+    id: sellerId,
+    metadata: { xololoSubscription: updated },
+  });
+
+  return updated;
+};
+
+// Busca al seller por Stripe customer/subscription metadata. Siempre
+// escribimos `xololoSellerId` en subscription_data.metadata al crear
+// el Checkout Session — Stripe lo propaga a todos los objetos
+// derivados (Subscription, y sus Invoices), así que esto es la forma
+// confiable de volver de "evento de Stripe" a "user de Sharetribe"
+// sin tener que mantener un índice propio.
+const getSellerIdFromSubscription = subscription => subscription?.metadata?.xololoSellerId || null;
+
+module.exports = {
+  getStripeBilling,
+  resolvePricesByLookupKeys,
+  getOrCreateStripeCustomer,
+  syncSubscriptionMetadata,
+  getSellerIdFromSubscription,
+  STRIPE_TO_XOLOLO_STATUS,
+};
