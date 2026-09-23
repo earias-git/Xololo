@@ -81,3 +81,12 @@ services:
         value: noreply@xololo.mx
       - key: EMAIL_REPLY_TO
         value: soporte@xololo.mx
+      # XOLOLO Track C: Stripe Billing — suscripción de sellers (docs/SUBSCRIPTIONS_V1.md §3.5).
+      # Cuenta Stripe SEPARADA de la de Connect. Mientras el track no esté
+      # terminado (checkout + webhook + gating), usar aquí sólo la key de
+      # TEST (sk_test_...) — nunca la live hasta que esto esté probado.
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      # Se usa a partir del roadmap #5 (webhook de Stripe Billing).
+      - key: STRIPE_BILLING_WEBHOOK_SECRET
+        sync: false
