@@ -54,6 +54,7 @@ import EmailVerificationInfo from './EmailVerificationInfo';
 import SocialLoginButtons from './SocialLoginButtons/SocialLoginButtons';
 
 import { TOS_ASSET_NAME, PRIVACY_POLICY_ASSET_NAME } from './AuthenticationPage.duck';
+import { excludeStoreFields } from '../../util/xololoStoreFields';
 
 import css from './AuthenticationPage.module.css';
 
@@ -254,7 +255,12 @@ export const AuthenticationPageComponent = props => {
   const userTypeInAuthInfo = isConfirm && authInfo?.userType ? authInfo?.userType : null;
   const userType = pathParams?.userType || userTypeInPushState || userTypeInAuthInfo || null;
 
-  const { userTypes = [], userFields = [] } = config.user;
+  const { userTypes = [], userFields: allUserFields = [] } = config.user;
+  // XOLOLO: el registro debe pedir sólo lo básico (email, nombre,
+  // password) — los campos de tienda se configuran DESPUÉS, en "Mi
+  // tienda", no en el signup. Feedback directo de earias tras navegar
+  // el sitio (2026-09-24).
+  const userFields = excludeStoreFields(allUserFields);
   const preselectedUserType = userTypes.find(conf => conf.userType === userType)?.userType || null;
   const signupRouteName = !!preselectedUserType ? 'SignupForUserTypePage' : 'SignupPage';
   const userTypeMaybe = preselectedUserType ? { userType: preselectedUserType } : {};
