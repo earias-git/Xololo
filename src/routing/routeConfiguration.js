@@ -47,7 +47,11 @@ const NoAccessPage = loadable(() => import(/* webpackChunkName: "NoAccessPage" *
 // Styleguide helps you to review current components and develop new ones
 const StyleguidePage = loadable(() => import(/* webpackChunkName: "StyleguidePage" */ '../containers/StyleguidePage/StyleguidePage'));
 
+// XOLOLO: ProfileSettingsPage se fusionó a este grupo (dejó de ser un
+// botón de nivel superior separado en el Topbar) — ahora es el primer
+// tab dentro de "Mi cuenta". Orden refleja docs/SUBSCRIPTIONS_V1.md §1.2.
 export const ACCOUNT_SETTINGS_PAGES = [
+  'ProfileSettingsPage',
   'ContactDetailsPage',
   'PasswordChangePage',
   'StripePayoutPage',
@@ -362,7 +366,9 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       name: 'AccountSettingsPage',
       auth: true,
       authPage: 'LoginPage',
-      component: () => <NamedRedirect name="ContactDetailsPage" />,
+      // XOLOLO: primer tab de "Mi cuenta" ahora es Datos personales
+      // (antes redirigía a ContactDetailsPage).
+      component: () => <NamedRedirect name="ProfileSettingsPage" />,
     },
     {
       path: '/account/contact-details',

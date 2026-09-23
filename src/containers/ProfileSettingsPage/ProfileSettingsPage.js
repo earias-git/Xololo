@@ -12,15 +12,17 @@ import {
   isUserAuthorized,
   pickUserFieldsData,
   showCreateListingLinkForUser,
+  showPaymentDetailsForUser,
 } from '../../util/userHelpers';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 
-import { H3, Page, UserNav, NamedLink, LayoutSingleColumn } from '../../components';
+import { H3, Page, UserNav, NamedLink, LayoutSideNavigation } from '../../components';
 
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
 import FooterContainer from '../../containers/FooterContainer/FooterContainer';
 
 import ProfileSettingsForm from './ProfileSettingsForm/ProfileSettingsForm';
+import AccountProgressClock from './AccountProgressClock';
 
 import { updateProfile, uploadImage } from './ProfileSettingsPage.duck';
 import css from './ProfileSettingsPage.module.css';
@@ -158,10 +160,19 @@ export const ProfileSettingsPageComponent = props => {
   const title = intl.formatMessage({ id: 'ProfileSettingsPage.title' });
 
   const showManageListingsLink = showCreateListingLinkForUser(config, currentUser);
+  // XOLOLO: ahora vive dentro del grupo "Mi cuenta" (LayoutSideNavigation
+  // + useAccountSettingsNav), igual que ContactDetailsPage/etc — ver
+  // docs/SUBSCRIPTIONS_V1.md §1.3.
+  const { showPayoutDetails, showPaymentMethods } = showPaymentDetailsForUser(config, currentUser);
+  const accountSettingsNavProps = {
+    currentPage: 'ProfileSettingsPage',
+    showPaymentMethods,
+    showPayoutDetails,
+  };
 
   return (
     <Page className={css.root} title={title} scrollingDisabled={scrollingDisabled}>
-      <LayoutSingleColumn
+      <LayoutSideNavigation
         topbar={
           <>
             <TopbarContainer />
@@ -171,9 +182,16 @@ export const ProfileSettingsPageComponent = props => {
             />
           </>
         }
+        sideNav={null}
+        useAccountSettingsNav
+        accountSettingsNavProps={accountSettingsNavProps}
         footer={<FooterContainer />}
+        intl={intl}
       >
         <div className={css.content}>
+          {/* XOLOLO: reloj de avance — sólo visible en la pantalla de
+              entrada de "Mi cuenta". Ver docs/SUBSCRIPTIONS_V1.md §1.4. */}
+          <AccountProgressClock currentUser={currentUser} />
           <div className={css.headingContainer}>
             <H3 as="h1" className={css.heading}>
               <FormattedMessage id="ProfileSettingsPage.heading" />
@@ -183,7 +201,7 @@ export const ProfileSettingsPageComponent = props => {
           </div>
           {profileSettingsForm}
         </div>
-      </LayoutSingleColumn>
+      </LayoutSideNavigation>
     </Page>
   );
 };

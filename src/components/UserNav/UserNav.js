@@ -33,22 +33,19 @@ const UserNav = props => {
       ]
     : [];
 
+  // XOLOLO: "Configuración de perfil" dejó de ser un tab separado —
+  // ProfileSettingsPage ahora es el primer tab DENTRO del grupo "Mi
+  // cuenta" (ver LayoutWrapperAccountSettingsSideNav.js y
+  // docs/SUBSCRIPTIONS_V1.md §1.3). Antes había 2 entradas
+  // (perfil/cuenta) que se sentían redundantes para un seller.
   const tabs = [
     ...manageListingsTabMaybe,
-    {
-      text: <FormattedMessage id="UserNav.profileSettings" />,
-      selected: currentPage === 'ProfileSettingsPage',
-      disabled: false,
-      linkProps: {
-        name: 'ProfileSettingsPage',
-      },
-    },
     {
       text: <FormattedMessage id="UserNav.accountSettings" />,
       selected: ACCOUNT_SETTINGS_PAGES.includes(currentPage),
       disabled: false,
       linkProps: {
-        name: 'ContactDetailsPage',
+        name: 'ProfileSettingsPage',
       },
     },
   ];

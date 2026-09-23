@@ -9,7 +9,15 @@
 
   @media (--viewportMedium) {
     max-width: 565px;
-    margin: 55px auto 56px auto;
+    margin: 32px auto 0 auto;
+  }
+
+  /* XOLOLO: ahora vive dentro de LayoutSideNavigation (grupo "Mi
+     cuenta") junto a ContactDetailsPage/PasswordChangePage/etc — sin
+     este margin:0 quedaba con un padding-top propio (55px) distinto
+     al de sus 6 páginas hermanas dentro del mismo sidebar. */
+  @media (--viewportLarge) {
+    margin: 0;
   }
 }
 

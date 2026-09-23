@@ -121,6 +121,17 @@ const LayoutWrapperAccountSettingsSideNav = props => {
 
   const tabs = [
     {
+      // XOLOLO: ex-ProfileSettingsPage — fusionado aquí como primer tab
+      // en vez de vivir como botón separado en el Topbar (ver
+      // docs/SUBSCRIPTIONS_V1.md §1.3).
+      text: <FormattedMessage id="LayoutWrapperAccountSettingsSideNav.profileTabTitle" />,
+      selected: currentPage === 'ProfileSettingsPage',
+      id: 'ProfileSettingsPageTab',
+      linkProps: {
+        name: 'ProfileSettingsPage',
+      },
+    },
+    {
       text: <FormattedMessage id="LayoutWrapperAccountSettingsSideNav.contactDetailsTabTitle" />,
       selected: currentPage === 'ContactDetailsPage',
       id: 'ContactDetailsPageTab',

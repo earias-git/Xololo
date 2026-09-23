@@ -124,15 +124,10 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
             </NamedLink>
           </MenuItem>
         ) : null}
-        <MenuItem key="ProfileSettingsPage">
-          <NamedLink
-            className={classNames(css.menuLink, currentPageClass('ProfileSettingsPage'))}
-            name="ProfileSettingsPage"
-          >
-            <span className={css.menuItemBorder} />
-            <FormattedMessage id="TopbarDesktop.profileSettingsLink" />
-          </NamedLink>
-        </MenuItem>
+        {/* XOLOLO: "Configuración de perfil" se fusionó dentro de "Mi
+            cuenta" (ahora es su primer tab) — ver
+            docs/SUBSCRIPTIONS_V1.md §1.3. Antes había 2 entradas
+            separadas aquí que se sentían redundantes. */}
         <MenuItem key="AccountSettingsPage">
           <NamedLink
             className={classNames(css.menuLink, currentPageClass('AccountSettingsPage'))}

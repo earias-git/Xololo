@@ -181,11 +181,8 @@ const TopbarMobileMenu = props => {
             </NamedLink>
           </li>
           {manageListingsLinkMaybe}
-          <li className={classNames(css.navigationLink, currentPageClass('ProfileSettingsPage'))}>
-            <NamedLink name="ProfileSettingsPage">
-              <FormattedMessage id="TopbarMobileMenu.profileSettingsLink" />
-            </NamedLink>
-          </li>
+          {/* XOLOLO: "Configuración de perfil" se fusionó dentro de "Mi
+              cuenta" (primer tab) — ver docs/SUBSCRIPTIONS_V1.md §1.3. */}
           <li className={classNames(css.navigationLink, currentPageClass('AccountSettingsPage'))}>
             <NamedLink name="AccountSettingsPage">
               <FormattedMessage id="TopbarMobileMenu.accountSettingsLink" />
