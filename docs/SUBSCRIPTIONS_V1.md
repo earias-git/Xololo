@@ -120,20 +120,41 @@ Barra de progreso + checklist con links directos a cada paso pendiente.
 
 ## 2. Track B — Documentos legales del seller
 
-### 2.1. Qué se pide 🟡 (confirmar lista exacta)
+### 2.1. Qué se pide 🟡
 
-Documentos default propuestos (México, persona física/moral vendiendo
-en marketplace + requisitos típicos de Stripe Connect):
+Decisión: pedir lo que exige el **SAT** según el tipo de persona
+(física vs moral), **excluyendo** lo que Facturama vaya a solicitar
+por su cuenta cuando se integre para timbrado CFDI (para no duplicar
+captura). Facturama típicamente ya captura RFC + Constancia de
+Situación Fiscal + (si el seller quiere auto-timbrar) sus propios
+Certificados de Sello Digital — si Xololo timbra CENTRALIZADO con su
+propio CSD a nombre de cada seller como emisor, Facturama sólo
+necesita RFC + régimen fiscal + código postal fiscal, no certificados
+del seller. 🔴 **Confirmar con earias qué modalidad de Facturama se va
+a usar** (timbrado centralizado vs que cada seller conecte su propio
+CSD) — esto decide si además hace falta pedir `.cer`/`.key` + password
+del CSD como documento, o no.
 
-- **Identificación oficial** (INE o pasaporte) — Stripe también lo
-  pide directo en su propio onboarding de Connect, pero puede
-  pedirse aparte como respaldo.
-- **Comprobante de domicilio** (recibo de luz/agua/teléfono, <3 meses).
-- **RFC / Constancia de situación fiscal** (SAT).
-- **Comprobante de cuenta bancaria** (CLABE) — Stripe normalmente lo
-  captura directo en su flujo de Connect, no como archivo.
-- 🔴 earias confirma si hay algo adicional específico de Xololo (ej.
-  carta de antecedentes no penales, permiso municipal, etc.)
+**Lista propuesta (a reserva de la respuesta de arriba):**
+
+**Persona física:**
+- Identificación oficial (INE o pasaporte) — respaldo además del que
+  pida Stripe Connect en su propio onboarding.
+- Comprobante de domicilio (recibo de luz/agua/teléfono, <3 meses).
+- RFC / Constancia de Situación Fiscal (SAT) — *omitir si Facturama ya
+  lo captura en su propio flujo*.
+- CURP (si no viene incluida en la Constancia de Situación Fiscal).
+
+**Persona moral (empresa):**
+- Acta constitutiva.
+- Poder notarial del representante legal.
+- Identificación oficial del representante legal.
+- RFC de la empresa / Constancia de Situación Fiscal — *mismo caso,
+  omitir si lo captura Facturama*.
+- Comprobante de domicilio fiscal.
+
+- 🔴 earias confirma si falta/sobra algo específico de Xololo (ej.
+  permiso municipal, carta de antecedentes no penales, etc.)
 
 ### 2.2. Storage 🟢
 
@@ -168,11 +189,52 @@ hoy con `xololoStoreAnalytics`).
 
 | Plan | Precio | Cobro | Renovación |
 |------|--------|-------|------------|
-| **Anual** | $2,028 MXN (IVA incluido) | Un solo cargo al inscribirse | 🟡 se propone auto-renovación anual vía Stripe Subscription (interval=year) — mismo monto se vuelve a cobrar automáticamente cada aniversario, salvo que el seller cancele antes. **Confirmar con earias.** |
-| **Mensual** | $229 MXN/mes (IVA incluido) | Cargo automático recurrente | Cancelable cuando quiera, efectivo al fin del período ya pagado |
+| **Anual** | $2,028 MXN (IVA incluido) | Un solo cargo al inscribirse | 🟢 Se auto-renueva cada año (Stripe Subscription, interval=year) — mismo monto se vuelve a cobrar automáticamente en el aniversario, salvo que el seller pause antes. |
+| **Mensual** | $229 MXN/mes (IVA incluido) | Cargo automático recurrente | Se auto-renueva cada mes, mismo mecanismo de pausa |
 
 El "$169/mes" que aparece en marketing es sólo comparativo (para
 mostrar el ahorro del plan anual) — **no es una unidad de cobro real.**
+
+### 3.1.1. Avisos de renovación 🟢
+
+Ambos planes se auto-renuevan. Antes de cada renovación (mensual o
+anual) se le avisa al seller en una cadencia fija — vía email + push
+(mismo pipeline D.9):
+
+- **30 días antes**
+- **15 días antes**
+- **3 días antes**
+- **1 día antes**
+
+Cada aviso incluye el monto que se cobrará y un link directo a
+"Pausar mi cuenta" (§3.1.2) por si no desea continuar. Implementación:
+job diario (similar a `tacit-acceptance.js` / `monthly-report.js`) que
+recorre suscripciones activas, calcula días hasta
+`currentPeriodEnd`, y dispara el evento correspondiente si hoy matchea
+uno de los 4 hitos (idempotente: un flag `remindersSent: [30,15,3,1]`
+en el metadata de la suscripción evita reenvíos si el job corre más
+de una vez el mismo día).
+
+### 3.1.2. Pausar cuenta (no cancelar) 🟢
+
+Acción nueva y **distinta** de "Eliminar cuenta" (que ya existe en
+`ManageAccountPage` y borra todo permanentemente). "Pausar" vive
+dentro de la nueva sección Suscripción:
+
+- El seller marca "Pausar mi cuenta" (o simplemente no responde a los
+  avisos de renovación y deja que se cumpla el período).
+- Técnicamente: `stripe.subscriptions.update(id, { cancel_at_period_end: true })`
+  — Stripe NO vuelve a cobrar en el próximo aniversario; la suscripción
+  sigue activa (y los listings siguen publicados) hasta
+  `currentPeriodEnd`, momento en que Stripe la cierra sola
+  (`customer.subscription.deleted`) y ahí se aplica el gate.
+- El seller puede "despausar" (deshacer `cancel_at_period_end`) en
+  cualquier momento ANTES de que llegue esa fecha, sin re-onboarding
+  ni re-cobro de los $499 (el onboarding fee es una sola vez de por
+  vida, no por período).
+- Después de pausada/vencida, el seller puede reactivar suscribiéndose
+  de nuevo — eso sí dispara un nuevo checkout (pero SIN el cargo de
+  onboarding otra vez, ver arriba).
 
 ### 3.2. Onboarding fee 🟢
 
@@ -203,11 +265,19 @@ mostrar el ahorro del plan anual) — **no es una unidad de cobro real.**
     3: día 1, día 3, día 7 tras el primer fallo — alineado con el
     schedule default de Stripe Smart Retries).
 
-### 3.4. Retroactividad 🔴 pendiente confirmar
+### 3.4. Retroactividad 🟢
 
-Sin respuesta aún. Default propuesto: **sólo sellers nuevos** de aquí
-en adelante — los que ya operan (Kike Pruebas, etc.) quedan exentos
-por ahora, sin fecha límite definida todavía. **earias confirma.**
+No aplica: los sellers actuales (Kike Pruebas, etc.) son **cuentas de
+prueba** que se van a borrar más adelante antes de lanzar en real, no
+sellers reales a los que haya que dar de alta retroactivamente. No se
+construye lógica de migración/retroactividad — el sistema de
+suscripción aplica desde cero a cada seller que se registre a partir
+de que esto se lance.
+
+**Nota de seguridad:** esta sesión NO va a borrar ninguna cuenta o
+dato existente por su cuenta — el borrado de las cuentas de prueba
+es una acción destructiva que earias hará cuando decida, no algo
+que se dispare como parte de este trabajo.
 
 ### 3.5. Arquitectura técnica 🟡
 
@@ -271,24 +341,30 @@ propia cuenta Stripe** (Stripe Billing), con:
 | 5 | Webhook Stripe + estado de suscripción + notificaciones | C | #4 |
 | 6 | Gating de publicación en Search/Storefront/Listing | C | #5 |
 | 7 | Dunning: avisos + suspensión automática tras N intentos | C | #6 |
+| 8 | Avisos de renovación (30/15/3/1 días) — job diario | C | #5 |
+| 9 | "Pausar mi cuenta" (cancel_at_period_end) + reactivación | C | #5 |
 
 ---
 
 ## 5. Preguntas abiertas 🔴
 
-1. **Auto-renovación del plan anual**: ¿el cargo de $2,028 se repite
-   automáticamente cada año (Stripe Subscription interval=year), o es
-   un acceso de 1 año que el seller debe renovar manualmente?
-2. **Retroactividad**: ¿sellers existentes quedan exentos indefinida-
-   mente, o se les da una fecha límite para suscribirse también?
-3. **Campos reales del signup en producción**: earias — ¿qué ves
+Resueltas: auto-renovación (§3.1, sí ambos planes) y retroactividad
+(§3.4, no aplica — sellers actuales son de prueba). Quedan:
+
+1. **Campos reales del signup en producción**: earias — ¿qué ves
    exactamente hoy en `xololo.mx/signup`? (no pude verificarlo yo
    mismo — el sitio está detrás de Basic Auth y no debo escribir esa
    contraseña).
-4. **Lista definitiva de documentos legales** — ¿la propuesta en §2.1
+2. **Modalidad de Facturama** (§2.1): ¿timbrado centralizado con CSD
+   de Xololo, o cada seller conecta su propio CSD? Decide si hace
+   falta pedir certificados `.cer`/`.key` como documento legal o no.
+3. **Lista definitiva de documentos legales** — ¿la propuesta en §2.1
    es completa, o falta/sobra algo específico de Xololo?
-5. **Número de avisos antes de suspender** por tarjeta fallida — ¿3
-   está bien, o prefieres otro número/cadencia?
+4. **Número/cadencia de avisos antes de suspender por tarjeta
+   fallida** (dunning, distinto de los avisos de renovación de
+   §3.1.1) — propuesta default: 3 avisos, alineados a los reintentos
+   de Stripe Smart Retries (~día 1, día 3, día 7 tras el primer
+   fallo). ¿Está bien, o prefieres otra cadencia?
 
 ---
 
@@ -298,3 +374,9 @@ propia cuenta Stripe** (Stripe Billing), con:
   conversación (planes, precios, cobro de onboarding, gating con
   dunning). Arquitectura Stripe Billing propuesta pendiente de
   confirmar auto-renovación anual y retroactividad.
+- **2026-09-22 (cont.):** confirmado auto-renovación (ambos planes) +
+  cadencia de avisos de renovación (30/15/3/1 días) + concepto nuevo
+  "pausar cuenta" (distinto de eliminar cuenta) + retroactividad
+  resuelta (no aplica, sellers actuales son de prueba) + lista de
+  documentos legales split por persona física/moral condicionada a
+  la modalidad de integración con Facturama (pendiente confirmar).
