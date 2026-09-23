@@ -10,6 +10,7 @@
 //   if (!stripe) return res.status(500).json({ error: 'stripe_billing_missing' });
 
 const Stripe = require('stripe');
+const { applyPublicationGate } = require('./publicationGate');
 
 let cached = null;
 
@@ -103,6 +104,32 @@ const syncSubscriptionMetadata = async ({ isdk, sellerId, subscription, plan, ex
     id: sellerId,
     metadata: { xololoSubscription: updated },
   });
+
+  // XOLOLO roadmap #6: gate de publicación. Sólo actuamos cuando el
+  // status cruza la frontera activo/no-activo — evita re-escanear los
+  // listings del seller en cada sync que no cambia esa condición (ej.
+  // dos webhooks seguidos que ambos dejan el status en 'active').
+  const wasActive = (existing.status || 'none') === 'active';
+  const isActive = updated.status === 'active';
+  if (wasActive !== isActive) {
+    try {
+      const gateResult = await applyPublicationGate({
+        isdk,
+        sellerId,
+        shouldBeVisible: isActive,
+      });
+      // eslint-disable-next-line no-console
+      console.log(
+        `[stripeBilling] gate aplicado para ${sellerId} (${existing.status || 'none'} → ${updated.status}):`,
+        gateResult
+      );
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(`[stripeBilling] applyPublicationGate falló para ${sellerId}:`, e.message);
+      // No relanzamos — un fallo del gate no debe tumbar la
+      // sincronización del status de la suscripción en sí.
+    }
+  }
 
   return updated;
 };
