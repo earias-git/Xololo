@@ -14,6 +14,7 @@ import AdminUsersView from './AdminUsersView';
 import AdminTrafficView from './AdminTrafficView';
 import AdminDisputesView from './AdminDisputesView';
 import AdminSellersView from './AdminSellersView';
+import AdminLegalDocsView from './AdminLegalDocsView';
 
 import css from './AdminPage.module.css';
 
@@ -42,6 +43,7 @@ const SECTIONS = [
   { key: 'traffic', label: 'Tráfico' },
   { key: 'disputes', label: 'Disputas activas' },
   { key: 'sellers', label: 'Sellers destacados' },
+  { key: 'legal-docs', label: 'Documentos legales' },
 ];
 
 const DEFAULT_SECTION = 'health';
@@ -59,6 +61,7 @@ const VIEW_BY_SECTION = {
   traffic: AdminTrafficView,
   disputes: AdminDisputesView,
   sellers: AdminSellersView,
+  'legal-docs': AdminLegalDocsView,
 };
 
 const AdminPage = () => {

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
 
+import { apiBaseUrl } from '../../util/api';
 import { NamedLink } from '../../components';
 
 import css from './AccountProgressClock.module.css';
@@ -10,10 +11,12 @@ import css from './AccountProgressClock.module.css';
 // seller nuevo para quedar completamente configurado. Vive en la
 // pantalla de entrada de "Mi cuenta" (ProfileSettingsPage, primer tab).
 //
-// v1 sólo trackea pasos que YA existen y se pueden derivar de
-// `currentUser` sin fetches nuevos (nada de Suscripción/Documentos
-// legales todavía — esos llegan con Track C/B de
-// docs/SUBSCRIPTIONS_V1.md y se agregan aquí cuando existan).
+// La mayoría de los pasos se derivan de `currentUser` sin fetches
+// nuevos. "Documentos legales" (Track B) es la excepción: ese dato
+// vive en metadata, que el cliente no puede leer de su propio
+// currentUser (sólo vía Integration API en el server), así que se
+// resuelve con un fetch liviano a /api/seller-legal-docs. Falta
+// todavía el paso de Suscripción (Track C).
 //
 // Diseño deliberado: NO es un gate — es sólo un indicador informativo.
 // Ningún paso bloquea a otro.
@@ -51,10 +54,41 @@ const STEPS = [
   },
 ];
 
+const LEGAL_DOCS_STEP = {
+  key: 'legalDocs',
+  label: 'Documentos legales',
+  routeName: 'LegalDocsPage',
+};
+
+const isLegalDocsStepDone = legalDocsStatus => {
+  if (!legalDocsStatus?.personType || !legalDocsStatus.requiredSlots?.length) return false;
+  const docs = legalDocsStatus.docs || {};
+  return legalDocsStatus.requiredSlots.every(slot => !!docs[slot.key]);
+};
+
 const AccountProgressClock = ({ currentUser, className, rootClassName }) => {
+  const [legalDocsStatus, setLegalDocsStatus] = useState(null);
+
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    let cancelled = false;
+    fetch(`${apiBaseUrl()}/api/seller-legal-docs`, { credentials: 'include' })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (!cancelled && data) setLegalDocsStatus(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser?.id]);
+
   if (!currentUser?.id) return null;
 
-  const results = STEPS.map(step => ({ ...step, done: step.check(currentUser) }));
+  const results = [
+    ...STEPS.map(step => ({ ...step, done: step.check(currentUser) })),
+    { ...LEGAL_DOCS_STEP, done: isLegalDocsStepDone(legalDocsStatus) },
+  ];
   const doneCount = results.filter(r => r.done).length;
   const total = results.length;
   const pct = Math.round((doneCount / total) * 100);
