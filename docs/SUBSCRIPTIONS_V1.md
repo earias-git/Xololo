@@ -120,6 +120,14 @@ Barra de progreso + checklist con links directos a cada paso pendiente.
 
 ## 2. Track B — Documentos legales del seller
 
+**Estado: 🟢 implementado** (backend + UI seller + revisión admin +
+paso en el reloj de avance). La lista de slots de abajo es la que
+quedó cableada en `server/api-util/legalDocSlots.js` /
+`src/config/legalDocSlots.js` — sigue sujeta al 🔴 de Facturama: si la
+modalidad cambia, sólo hay que editar esos dos archivos (mismo slot
+key en ambos) y el resto del flujo (upload, revisión, reloj) no
+cambia.
+
 ### 2.1. Qué se pide 🟡
 
 Decisión: pedir lo que exige el **SAT** según el tipo de persona
