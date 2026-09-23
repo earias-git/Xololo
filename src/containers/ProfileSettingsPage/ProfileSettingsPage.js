@@ -23,9 +23,47 @@ import FooterContainer from '../../containers/FooterContainer/FooterContainer';
 
 import ProfileSettingsForm from './ProfileSettingsForm/ProfileSettingsForm';
 import AccountProgressClock from './AccountProgressClock';
+import OpenStoreBanner from './OpenStoreBanner';
 
 import { updateProfile, uploadImage } from './ProfileSettingsPage.duck';
 import css from './ProfileSettingsPage.module.css';
+
+// XOLOLO: estos userFields (configurados en Sharetribe Console, scope
+// 'public') son en realidad campos de TIENDA — ManageStorePage tiene
+// su propio formulario dedicado para ellos (src/containers/ManageStorePage/).
+// El formulario genérico de ProfileSettingsForm los renderiza TODOS
+// por default (cualquier userField público), duplicándolos aquí en
+// "Datos personales" — feedback directo de earias (b.2) tras navegar
+// el sitio: se excluyen de esta pantalla para que sólo vivan en "Mi
+// tienda". Se filtran tanto de lo que se RENDERIZA como de lo que
+// handleSubmit LEE de `values` — si sólo se excluyeran del render,
+// guardar este formulario borraría esos campos (pickUserFieldsData
+// los mandaría como undefined al no existir en `values`).
+const STORE_FIELD_KEYS = new Set([
+  'slug',
+  'shortDescription',
+  'longDescription',
+  'brandPrimaryColor',
+  'brandSecondaryColor',
+  'logoUrl',
+  'bannerUrl',
+  'bannerUrl2',
+  'bannerUrl3',
+  'whatsapp',
+  'instagram',
+  'facebook',
+  'legalName',
+  'legalAddress',
+  'commercialAddress',
+  'pickupAddress',
+  'commercialSameAsLegal',
+  'pickupSameAsLegal',
+  'pickupReferences',
+  'address',
+  'originPostalCode',
+  'primaryCategory',
+  'showCalendar',
+]);
 
 const onImageUploadHandler = (values, fn) => {
   const { id, imageId, file } = values;
@@ -87,7 +125,9 @@ export const ProfileSettingsPageComponent = props => {
   } = props;
 
   const { userFields, userTypes = [] } = config.user;
-  const publicUserFields = userFields.filter(uf => uf.scope === 'public');
+  const publicUserFields = userFields.filter(
+    uf => uf.scope === 'public' && !STORE_FIELD_KEYS.has(uf.key)
+  );
 
   const handleSubmit = (values, userType) => {
     const { firstName, lastName, displayName, bio: rawBio, ...rest } = values;
@@ -105,7 +145,9 @@ export const ProfileSettingsPageComponent = props => {
       ...displayNameMaybe,
       bio,
       publicData: {
-        ...pickUserFieldsData(rest, 'public', userType, userFields),
+        // XOLOLO: publicUserFields (no userFields) — excluye los
+        // campos de tienda, ver STORE_FIELD_KEYS arriba.
+        ...pickUserFieldsData(rest, 'public', userType, publicUserFields),
       },
     };
     const uploadedImage = props.image;
@@ -142,7 +184,7 @@ export const ProfileSettingsPageComponent = props => {
         ...displayNameMaybe,
         bio,
         profileImage: user.profileImage,
-        ...initialValuesForUserFields(publicData, 'public', userType, userFields),
+        ...initialValuesForUserFields(publicData, 'public', userType, publicUserFields),
       }}
       profileImage={profileImage}
       onImageUpload={e => onImageUploadHandler(e, onImageUpload)}
@@ -189,6 +231,9 @@ export const ProfileSettingsPageComponent = props => {
         intl={intl}
       >
         <div className={css.content}>
+          {/* XOLOLO: banner "Abre tu Tienda Virtual Xololo" — sólo para
+              quien todavía no tiene tienda configurada. Ver OpenStoreBanner.js. */}
+          <OpenStoreBanner currentUser={currentUser} />
           {/* XOLOLO: reloj de avance — sólo visible en la pantalla de
               entrada de "Mi cuenta". Ver docs/SUBSCRIPTIONS_V1.md §1.4. */}
           <AccountProgressClock currentUser={currentUser} />

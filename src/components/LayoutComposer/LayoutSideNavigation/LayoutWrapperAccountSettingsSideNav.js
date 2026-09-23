@@ -3,6 +3,7 @@
  * Navigational 'aside' content should be added to this wrapper.
  */
 import React, { useEffect, useState } from 'react';
+import classNames from 'classnames';
 
 import { FormattedMessage } from '../../../util/reactIntl';
 
@@ -177,9 +178,13 @@ const LayoutWrapperAccountSettingsSideNav = props => {
       },
     },
     {
+      // XOLOLO: feedback de earias (b.3) — "Gestionar cuenta" (cancelar
+      // cuenta) va al final y visualmente de-enfatizado, chico y gris
+      // claro, para que no compita con los pasos reales de onboarding.
       text: <FormattedMessage id="LayoutWrapperAccountSettingsSideNav.manageAccountTabTitle" />,
       selected: currentPage === 'ManageAccountPage',
       id: 'ManageAccountPageTab',
+      className: classNames(css.tab, css.tabMuted),
       linkProps: {
         name: 'ManageAccountPage',
       },
