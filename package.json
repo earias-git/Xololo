@@ -63,6 +63,7 @@
     "sitemap": "^9.0.1",
     "smoothscroll-polyfill": "^0.4.0",
     "source-map-support": "^0.5.21",
+    "stripe": "^22.6.2",
     "unified": "^9.2.2"
   },
   "devDependencies": {
@@ -230,7 +231,8 @@
     "test-server": "jest --roots ./server --testMatch='**/server/**/*.test.js' --testEnvironment=node",
     "heroku-postbuild": "yarn run build",
     "postinstall": "patch-package",
-    "translate": "node scripts/translations.js"
+    "translate": "node scripts/translations.js",
+    "setup-stripe-billing": "node server/scripts/setup-stripe-billing.js"
   },
   "browserslist": {
     "production": [
