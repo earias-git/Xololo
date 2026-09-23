@@ -407,6 +407,9 @@ export const LINE_ITEM_CUSTOMER_COMMISSION = 'line-item/customer-commission';
 export const LINE_ITEM_PROVIDER_COMMISSION = 'line-item/provider-commission';
 export const LINE_ITEM_SHIPPING_FEE = 'line-item/shipping-fee';
 export const LINE_ITEM_PICKUP_FEE = 'line-item/pickup-fee';
+// XOLOLO: cargo fijo de $14 + IVA por transacción (a.3 del modelo de
+// negocio) — ver server/api-util/xololoFees.js.
+export const LINE_ITEM_XOLOLO_SERVICE_FEE = 'line-item/xololo-service-fee';
 
 export const LINE_ITEMS = [
   LINE_ITEM_NIGHT,
@@ -420,6 +423,7 @@ export const LINE_ITEMS = [
   LINE_ITEM_PROVIDER_COMMISSION,
   LINE_ITEM_SHIPPING_FEE,
   LINE_ITEM_PICKUP_FEE,
+  LINE_ITEM_XOLOLO_SERVICE_FEE,
 ];
 export const LISTING_UNIT_TYPES = [
   LINE_ITEM_NIGHT,

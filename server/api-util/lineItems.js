@@ -4,8 +4,12 @@ const {
   calculateShippingFee,
   calculateTotalFromLineItems,
   getProviderCommissionMaybe,
-  getCustomerCommissionMaybe,
 } = require('./lineItemHelpers');
+const {
+  PROVIDER_COMMISSION_PERCENTAGE,
+  FIXED_SERVICE_FEE_SUBUNITS,
+  LINE_ITEM_XOLOLO_SERVICE_FEE,
+} = require('./xololoFees');
 const { types } = require('sharetribe-flex-sdk');
 const { Money } = types;
 
@@ -191,11 +195,17 @@ const getDateRangeQuantityAndLineItems = (orderData, code) => {
  * @param {Object} orderData
  * @param {string} [orderData.priceVariantName] - The name of the price variant (potentially used with bookable unit types)
  * @param {Money} [orderData.offer] - The offer for the offer (if transition intent is "make-offer")
- * @param {Object} providerCommission
- * @param {Object} customerCommission
+ * @param {Object} _providerCommissionUnused - ignorado, ver nota XOLOLO abajo
+ * @param {Object} _customerCommissionUnused - ignorado, ver nota XOLOLO abajo
  * @returns {Array} lineItems
  */
-exports.transactionLineItems = (listing, orderData, providerCommission, customerCommission) => {
+// XOLOLO: los parámetros providerCommission/customerCommission que
+// mandan los callers (fetchCommission → asset de Sharetribe Console)
+// se ignoran a propósito. El modelo de negocio real de Xololo vive en
+// server/api-util/xololoFees.js (hardcoded, auditable en código) — no
+// depende de que Console esté configurado correctamente. Ver ese
+// archivo para el detalle de a.1/a.2/a.3 del modelo de negocio.
+exports.transactionLineItems = (listing, orderData, _providerCommissionUnused, _customerCommissionUnused) => {
   const publicData = listing.attributes.publicData;
   // Note: the unitType needs to be one of the following:
   // day, night, hour, fixed, or item (these are related to payment processes)
@@ -321,14 +331,35 @@ exports.transactionLineItems = (listing, orderData, providerCommission, customer
         }
       : order;
 
+  // XOLOLO: cargo fijo de $14 + IVA por transacción (a.3), se
+  // descuenta del payout del seller igual que la comisión — línea
+  // propia con code custom porque el slot `line-item/provider-commission`
+  // ya lo usa el 3.6%+IVA de abajo. quantity:-1 con unitPrice positivo
+  // = mismo patrón que Sharetribe usa para "minimum commission" (línea
+  // 388-395 de lineItemHelpers.js) para lograr un monto fijo negativo.
+  const xololoServiceFeeLineItem = {
+    code: LINE_ITEM_XOLOLO_SERVICE_FEE,
+    unitPrice: new Money(FIXED_SERVICE_FEE_SUBUNITS, currency),
+    quantity: -1,
+    includeFor: ['provider'],
+  };
+
   // Let's keep the base price (order) as first line item and provider and customer commissions as last.
   // Note: the order matters only if OrderBreakdown component doesn't recognize line-item.
+  //
+  // XOLOLO: providerCommission siempre {percentage: PROVIDER_COMMISSION_PERCENTAGE}
+  // (3.6%+IVA, a.2) y customerCommission siempre ausente (sin comisión
+  // por venta al comprador, a.1) — ver xololoFees.js.
   const lineItems = [
     order,
     ...additionalOrderLineItems,
     ...extraLineItems,
-    ...getProviderCommissionMaybe(providerCommission, commissionOrder, currency),
-    ...getCustomerCommissionMaybe(customerCommission, commissionOrder, currency),
+    ...getProviderCommissionMaybe(
+      { percentage: PROVIDER_COMMISSION_PERCENTAGE },
+      commissionOrder,
+      currency
+    ),
+    xololoServiceFeeLineItem,
   ];
 
   return lineItems;
