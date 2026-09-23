@@ -8,7 +8,7 @@ import PreviewResolverPage from '../containers/PreviewResolverPage/PreviewResolv
 // routeConfiguration needs to initialize containers first
 // Otherwise, components will import form container eventually and
 // at that point css bundling / imports will happen in wrong order.
-import { NamedRedirect } from '../components';
+import { NamedRedirect, RequireSellerOnboarding } from '../components';
 
 const pageDataLoadingAPI = getPageDataLoadingAPI();
 
@@ -189,7 +189,17 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/l/:slug/:id/:type/:tab',
       name: 'EditListingPage',
       auth: true,
-      component: EditListingPage,
+      // XOLOLO Track A: "onboarding incompleto" — sólo gatea la
+      // creación de una listing NUEVA (type 'new'), nunca editar una
+      // ya existente. Ver src/components/RequireSellerOnboarding.
+      component: props =>
+        props.params?.type === 'new' ? (
+          <RequireSellerOnboarding>
+            <EditListingPage {...props} />
+          </RequireSellerOnboarding>
+        ) : (
+          <EditListingPage {...props} />
+        ),
       loadData: pageDataLoadingAPI.EditListingPage.loadData,
       prioritizeLibraryLoading: {
         stripe: true,
@@ -362,7 +372,15 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       name: 'ManageListingsPage',
       auth: true,
       authPage: 'LoginPage',
-      component: ManageListingsPage,
+      // XOLOLO Track A: "onboarding incompleto" — un seller nuevo (sin
+      // listings todavía) que intenta gestionar su catálogo se manda
+      // primero a terminar "Mi cuenta". Un seller establecido nunca
+      // se toca. Ver src/components/RequireSellerOnboarding.
+      component: props => (
+        <RequireSellerOnboarding>
+          <ManageListingsPage {...props} />
+        </RequireSellerOnboarding>
+      ),
       loadData: pageDataLoadingAPI.ManageListingsPage.loadData,
     },
     {

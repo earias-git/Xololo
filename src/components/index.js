@@ -60,6 +60,7 @@ export { default as OutsideClickHandler } from './OutsideClickHandler/OutsideCli
 export { default as Promised } from './Promised/Promised';
 export { default as PropertyGroup } from './PropertyGroup/PropertyGroup';
 export { default as RangeSlider } from './RangeSlider/RangeSlider';
+export { default as RequireSellerOnboarding } from './RequireSellerOnboarding/RequireSellerOnboarding';
 export { default as ResponsiveImage } from './ResponsiveImage/ResponsiveImage';
 export { default as ResponsiveBackgroundImageContainer } from './ResponsiveBackgroundImageContainer/ResponsiveBackgroundImageContainer';
 export { default as TimeRange } from './TimeRange/TimeRange';

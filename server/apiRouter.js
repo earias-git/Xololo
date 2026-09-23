@@ -28,6 +28,7 @@ const sellerLegalDocs = require('./api/seller-legal-docs');
 const adminLegalDocs = require('./api/admin-legal-docs');
 const createSubscriptionCheckout = require('./api/create-subscription-checkout');
 const sellerSubscription = require('./api/seller-subscription');
+const sellerHasListings = require('./api/seller-has-listings');
 const stripeBillingWebhook = require('./api/webhooks/stripe-billing');
 const skydropxWebhook = require('./api/webhooks/skydropx');
 const orderSurvey = require('./api/order-survey');
@@ -135,6 +136,10 @@ router.post('/create-subscription-checkout', bodyParser.json(), createSubscripti
 // GET status propio / POST confirma un Checkout Session recién pagado.
 router.get('/seller-subscription', sellerSubscription);
 router.post('/seller-subscription', bodyParser.json(), sellerSubscription);
+
+// XOLOLO: ¿este seller ya tiene alguna listing publicada? Usado por
+// RequireSellerOnboarding para distinguir seller nuevo vs establecido.
+router.get('/seller-has-listings', sellerHasListings);
 
 // XOLOLO: webhook receiver de Stripe Billing (renovaciones, fallos de
 // pago, cancelaciones). Body-parser RAW porque necesitamos los bytes

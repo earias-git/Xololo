@@ -89,6 +89,45 @@ nuevos, y se agrega detección de "onboarding incompleto" para dirigir
 al seller nuevo por este flow en su primer login (no forzar a un
 seller ya establecido a repetirlo).
 
+**Detección de "onboarding incompleto" — 🟢 implementado.** Disparador
+final acordado con earias: NO es "justo después de verificar email"
+(nagearía a un comprador puro que nunca va a vender), sino **la
+primera vez que un user intenta actuar como seller** — visita
+"Mis productos" (`ManageListingsPage`) o le da a "Publicar producto"
+(`EditListingPage` con `type: 'new'`, nunca al editar una listing YA
+existente). Si el checklist de 6 pasos no está completo, se le manda
+a `/account` antes de dejarlo continuar.
+
+- `src/hooks/useOnboardingStatus.js` — el checklist de 6 pasos se
+  extrajo de `AccountProgressClock` a un hook compartido, para que el
+  gate y el widget informativo nunca puedan desincronizarse.
+- `src/components/RequireSellerOnboarding/` — envuelve las 2 rutas
+  (`ManageListingsPage`, `EditListingPage` sólo `type==='new'`) en
+  `routeConfiguration.js`.
+- **Decisión de diseño clave: "seller establecido" (ya tiene ≥1
+  listing publicada) nunca se toca**, sin importar qué tan incompleto
+  esté el checklist — esto es lo que evita que un seller real, activo
+  desde antes de que existiera Suscripción/Documentos legales, de
+  repente no pueda editar su propio catálogo. Se resuelve vía nuevo
+  endpoint `GET /api/seller-has-listings` (Integration API
+  server-side, mismo patrón que `publicationGate.js`) — **NO** vía el
+  flag `currentUserHasListings` de Redux del template (`sdk.ownListings.query()`
+  client-side): se probó en vivo y resultó no confiable en este
+  ambiente (el fetch nunca se dispara por el debounce interno de
+  `fetchCurrentUser` tras SSR, o falla con 401 según el estado del
+  token del SDK en el browser) — no es algo que dependa de código de
+  Xololo, es mecanismo stock del template.
+- **Falla ABIERTO ante cualquier duda**: si `/api/seller-has-listings`
+  falla, o los 2 fetches del checklist (suscripción/docs legales)
+  fallan, se deja pasar sin gatear — bloquear de más a un seller real
+  por un hiccup de infraestructura es peor que ocasionalmente no
+  gatear a alguien genuinamente nuevo.
+- Esto también cierra el hueco que había quedado documentado en el
+  gate de publicación (§3.3): antes, un seller que JAMÁS tocaba el
+  sistema de suscripción podía publicar sin que nada lo detectara —
+  ahora no puede ni llegar a publicar su primera listing sin pasar
+  primero por Suscripción.
+
 ### 1.3. Fusión "Configuración de perfil" con "Configuración de cuenta" 🟢
 
 **Hallazgo:** no hay duplicación de CAMPOS — `ProfileSettingsPage`
@@ -433,17 +472,13 @@ la nueva).
   `listing.attributes.metadata.xololoGatedClosed` distingue "cerrado
   por Xololo" de "cerrado por el seller a propósito" — al reactivar
   sólo se reabre lo que Xololo cerró.
-  **Fuera de alcance de v1 (documentado, no bloqueante):** esto sólo
+  **Hueco original ya cerrado (🟢):** este gate por sí solo sólo
   reacciona a sellers que YA interactuaron con el sistema de
-  suscripción (vía webhook o confirmación manual). Un seller que
-  jamás se suscribió (status `'none'` implícito, sin
-  `xololoSubscription` en metadata) puede seguir publicando sin que
-  nada lo cierre — cerrar ESE caso requeriría o un barrido periódico,
-  o interceptar el flujo de publish en `ManageListingsPage`. Ninguno
-  de los dos existe todavía; se resuelve cuando se construya la
-  detección de "onboarding incompleto" (roadmap Track A, item #2 de
-  la tabla de abajo) que fuerza a todo seller NUEVO a pasar por
-  Suscripción antes de poder publicar.
+  suscripción (vía webhook o confirmación manual) — un seller que
+  jamás se suscribió podía publicar sin que nada lo detectara. Se
+  cerró con la detección de "onboarding incompleto" (§1.2,
+  `RequireSellerOnboarding`): ahora ningún seller nuevo llega siquiera
+  a publicar su primera listing sin pasar antes por Suscripción.
 
 ### 3.6. Notificaciones nuevas (pipeline D.9 existente) 🟡
 
