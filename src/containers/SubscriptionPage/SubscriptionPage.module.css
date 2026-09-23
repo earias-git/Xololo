@@ -1,0 +1,197 @@
+@import '../../styles/customMediaQueries.css';
+
+.content {
+  width: calc(100% - 48px);
+  margin: 12px 24px 24px 24px;
+
+  @media (--viewportMedium) {
+    max-width: 680px;
+    margin: 32px auto 0 auto;
+  }
+
+  @media (--viewportLarge) {
+    margin: 0;
+  }
+}
+
+.intro {
+  margin: 8px 0 20px;
+  font-size: 14px;
+  color: var(--colorGrey500);
+  line-height: 1.5;
+}
+
+.loading {
+  padding: 40px 0;
+  text-align: center;
+}
+
+.errorBox {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.banner {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  margin-bottom: 16px;
+}
+
+.banner--success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.banner--error {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.banner--info {
+  background-color: var(--colorGrey50, #f7f4ee);
+  color: var(--colorGrey700);
+}
+
+/* ---------- Plan cards ---------- */
+.planGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+
+  @media (--viewportSmall) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.planCard {
+  position: relative;
+  padding: 20px;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.planCardHighlight {
+  border-color: #232d40;
+}
+
+.planBadge {
+  position: absolute;
+  top: -10px;
+  right: 16px;
+  background-color: #5dcaa5;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.planName {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+}
+
+.planPrice {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #232d40;
+}
+
+.planPeriod {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--colorGrey500);
+}
+
+.planHint {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--colorGrey500);
+  line-height: 1.4;
+  flex-grow: 1;
+}
+
+.subscribeBtn {
+  margin-top: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: none;
+  background-color: #232d40;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.subscribeBtn:hover:not(:disabled) {
+  background-color: #1a2130;
+}
+
+.subscribeBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.onboardingNote {
+  margin: 16px 0 0;
+  font-size: 12.5px;
+  color: var(--colorGrey500);
+  line-height: 1.5;
+}
+
+/* ---------- Active subscription card ---------- */
+.activeCard {
+  padding: 20px;
+  border-radius: 12px;
+  background-color: var(--colorGrey50, #f7f4ee);
+}
+
+.activeHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+}
+
+.activeDetail {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--colorGrey700);
+}
+
+.statusPill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.statusPill--pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.statusPill--approved {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.statusPill--rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}

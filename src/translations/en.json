@@ -544,6 +544,7 @@
   "LayoutWrapperAccountSettingsSideNav.paymentMethodsTabTitle": "Payment methods",
   "LayoutWrapperAccountSettingsSideNav.paymentsTabTitle": "Payout details",
   "LayoutWrapperAccountSettingsSideNav.profileTabTitle": "Personal details",
+  "LayoutWrapperAccountSettingsSideNav.subscriptionTabTitle": "Subscription",
   "LimitedAccessBanner.fallbackMessage": "You're logged in as {firstName} {lastName}.",
   "LimitedAccessBanner.fullRightsMessage": "You're logged in as {firstName} {lastName}. You have full access rights. In a Live environment, you will have limited rights.",
   "LimitedAccessBanner.logout": "Log out",

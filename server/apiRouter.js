@@ -26,6 +26,8 @@ const uploadSosPhoto = require('./api/upload-sos-photo');
 const uploadLegalDoc = require('./api/upload-legal-doc');
 const sellerLegalDocs = require('./api/seller-legal-docs');
 const adminLegalDocs = require('./api/admin-legal-docs');
+const createSubscriptionCheckout = require('./api/create-subscription-checkout');
+const sellerSubscription = require('./api/seller-subscription');
 const skydropxWebhook = require('./api/webhooks/skydropx');
 const orderSurvey = require('./api/order-survey');
 const postalCode = require('./api/postal-code');
@@ -125,6 +127,13 @@ router.post('/seller-legal-docs', bodyParser.json(), sellerLegalDocs);
 // Admin: cola de revisión + aprobar/rechazar un documento.
 router.get('/admin/legal-docs', adminLegalDocs.list);
 router.post('/admin/legal-docs/review', bodyParser.json(), adminLegalDocs.review);
+
+// XOLOLO Track C: Stripe Billing — suscripción de sellers.
+// Crea el Checkout Session (plan + onboarding fee en un solo pago).
+router.post('/create-subscription-checkout', bodyParser.json(), createSubscriptionCheckout);
+// GET status propio / POST confirma un Checkout Session recién pagado.
+router.get('/seller-subscription', sellerSubscription);
+router.post('/seller-subscription', bodyParser.json(), sellerSubscription);
 
 // XOLOLO: webhook receiver de Skydropx. Recibe eventos de tracking
 // (packages: in_transit, delivered, in_return, etc), valida token o

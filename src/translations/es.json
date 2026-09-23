@@ -544,6 +544,7 @@
   "LayoutWrapperAccountSettingsSideNav.paymentMethodsTabTitle": "Formas de pago",
   "LayoutWrapperAccountSettingsSideNav.paymentsTabTitle": "Detalles de pago",
   "LayoutWrapperAccountSettingsSideNav.profileTabTitle": "Datos personales",
+  "LayoutWrapperAccountSettingsSideNav.subscriptionTabTitle": "Suscripción",
   "LimitedAccessBanner.fallbackMessage": "Has iniciado sesión como {firstName} {lastName}.",
   "LimitedAccessBanner.fullRightsMessage": "Has iniciado sesión como {firstName} {lastName}. Tienes todos los derechos de acceso. En el entorno Live, tendrás derechos limitados.",
   "LimitedAccessBanner.logout": "Cerrar sesión",

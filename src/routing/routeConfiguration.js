@@ -29,6 +29,7 @@ const ListingPageCarousel = loadable(() => import(/* webpackChunkName: "ListingP
 const ManageListingsPage = loadable(() => import(/* webpackChunkName: "ManageListingsPage" */ '../containers/ManageListingsPage/ManageListingsPage'));
 const ManageAccountPage = loadable(() => import(/* webpackChunkName: "ManageAccountPage" */ '../containers/ManageAccountPage/ManageAccountPage'));
 const LegalDocsPage = loadable(() => import(/* webpackChunkName: "LegalDocsPage" */ '../containers/LegalDocsPage/LegalDocsPage'));
+const SubscriptionPage = loadable(() => import(/* webpackChunkName: "SubscriptionPage" */ '../containers/SubscriptionPage/SubscriptionPage'));
 const PasswordChangePage = loadable(() => import(/* webpackChunkName: "PasswordChangePage" */ '../containers/PasswordChangePage/PasswordChangePage'));
 const PasswordRecoveryPage = loadable(() => import(/* webpackChunkName: "PasswordRecoveryPage" */ '../containers/PasswordRecoveryPage/PasswordRecoveryPage'));
 const PasswordResetPage = loadable(() => import(/* webpackChunkName: "PasswordResetPage" */ '../containers/PasswordResetPage/PasswordResetPage'));
@@ -58,6 +59,7 @@ export const ACCOUNT_SETTINGS_PAGES = [
   'StripePayoutPage',
   'PaymentMethodsPage',
   'ManageStorePage',
+  'SubscriptionPage',
   'LegalDocsPage',
   'ManageAccountPage'
 ];
@@ -434,6 +436,14 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       auth: true,
       authPage: 'LoginPage',
       component: ManageStorePage,
+    },
+    {
+      // XOLOLO Track C: suscripción del seller (docs/SUBSCRIPTIONS_V1.md §3)
+      path: '/account/subscription',
+      name: 'SubscriptionPage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: SubscriptionPage,
     },
     {
       // XOLOLO Track B: documentos legales del seller (docs/SUBSCRIPTIONS_V1.md §2)

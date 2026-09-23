@@ -323,8 +323,18 @@ la nueva).
   mezclar 1 price recurrente + N prices de una sola vez en los
   `line_items` de un Checkout Session en modo `subscription`).
 - Checkout Session con `mode: 'subscription'` + `line_items` (price
-  del plan elegido + price del onboarding). **🔴 Pendiente** (roadmap
-  #4, siguiente paso de este track).
+  del plan elegido + price del onboarding, sólo si no lo pagó antes).
+  **🟢 Implementado y probado end-to-end** contra la cuenta Stripe
+  real (modo test): `server/api/create-subscription-checkout.js`
+  (crea/reusa el Stripe Customer, resuelve precios por `lookup_key`,
+  arma el Checkout Session) + `server/api/seller-subscription.js` (GET
+  status propio, POST confirma un Checkout Session recién pagado desde
+  el `success_url` y persiste `xololoSubscription` en metadata — esto
+  es un puente hasta que exista el webhook del roadmap #5; cubre el
+  alta inicial pero no renovaciones/fallos de pago posteriores).
+  UI: `SubscriptionPage` (`/account/subscription`, tab "Suscripción"
+  entre Mi tienda y Documentos legales) con las 2 tarjetas de plan +
+  estado activo. `AccountProgressClock` ya incluye el paso.
 - Webhook nuevo `server/api/webhooks/stripe-billing.js` escuchando:
   `checkout.session.completed` (activar suscripción),
   `invoice.payment_failed` (disparar aviso al seller),
@@ -367,7 +377,7 @@ la nueva).
 | 1 | Fusión nav Perfil/Cuenta + reloj de progreso | A | Nada |
 | 2 | Ajustes de copy/labels en signup (lo que sí es código) | A | Confirmación de earias sobre campos reales vistos |
 | 3 | Repositorio de documentos legales (upload + admin review) | B | Lista de documentos confirmada |
-| 4 | Stripe Billing: products/prices + checkout de suscripción | C | Respuestas §3.4 y confirmación de auto-renovación anual |
+| 4 | 🟢 Stripe Billing: products/prices + checkout de suscripción | C | Respuestas §3.4 y confirmación de auto-renovación anual |
 | 5 | Webhook Stripe + estado de suscripción + notificaciones | C | #4 |
 | 6 | Gating de publicación en Search/Storefront/Listing | C | #5 |
 | 7 | Dunning: avisos + suspensión automática tras N intentos | C | #6 |

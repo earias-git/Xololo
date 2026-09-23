@@ -159,6 +159,15 @@ const LayoutWrapperAccountSettingsSideNav = props => {
       },
     },
     {
+      // XOLOLO Track C: suscripción del seller (docs/SUBSCRIPTIONS_V1.md §3)
+      text: <FormattedMessage id="LayoutWrapperAccountSettingsSideNav.subscriptionTabTitle" />,
+      selected: currentPage === 'SubscriptionPage',
+      id: 'SubscriptionPageTab',
+      linkProps: {
+        name: 'SubscriptionPage',
+      },
+    },
+    {
       // XOLOLO Track B: documentos legales del seller (docs/SUBSCRIPTIONS_V1.md §2)
       text: <FormattedMessage id="LayoutWrapperAccountSettingsSideNav.legalDocsTabTitle" />,
       selected: currentPage === 'LegalDocsPage',

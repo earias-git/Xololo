@@ -12,11 +12,11 @@ import css from './AccountProgressClock.module.css';
 // pantalla de entrada de "Mi cuenta" (ProfileSettingsPage, primer tab).
 //
 // La mayoría de los pasos se derivan de `currentUser` sin fetches
-// nuevos. "Documentos legales" (Track B) es la excepción: ese dato
-// vive en metadata, que el cliente no puede leer de su propio
-// currentUser (sólo vía Integration API en el server), así que se
-// resuelve con un fetch liviano a /api/seller-legal-docs. Falta
-// todavía el paso de Suscripción (Track C).
+// nuevos. "Suscripción" (Track C) y "Documentos legales" (Track B) son
+// la excepción: ese dato vive en metadata, que el cliente no puede
+// leer de su propio currentUser (sólo vía Integration API en el
+// server), así que se resuelven con fetches livianos a
+// /api/seller-subscription y /api/seller-legal-docs.
 //
 // Diseño deliberado: NO es un gate — es sólo un indicador informativo.
 // Ningún paso bloquea a otro.
@@ -54,6 +54,12 @@ const STEPS = [
   },
 ];
 
+const SUBSCRIPTION_STEP = {
+  key: 'subscription',
+  label: 'Suscripción activa',
+  routeName: 'SubscriptionPage',
+};
+
 const LEGAL_DOCS_STEP = {
   key: 'legalDocs',
   label: 'Documentos legales',
@@ -66,27 +72,34 @@ const isLegalDocsStepDone = legalDocsStatus => {
   return legalDocsStatus.requiredSlots.every(slot => !!docs[slot.key]);
 };
 
-const AccountProgressClock = ({ currentUser, className, rootClassName }) => {
-  const [legalDocsStatus, setLegalDocsStatus] = useState(null);
-
+const useLightFetch = (path, enabled) => {
+  const [data, setData] = useState(null);
   useEffect(() => {
-    if (!currentUser?.id) return;
+    if (!enabled) return;
     let cancelled = false;
-    fetch(`${apiBaseUrl()}/api/seller-legal-docs`, { credentials: 'include' })
+    fetch(`${apiBaseUrl()}${path}`, { credentials: 'include' })
       .then(res => (res.ok ? res.json() : null))
-      .then(data => {
-        if (!cancelled && data) setLegalDocsStatus(data);
+      .then(d => {
+        if (!cancelled && d) setData(d);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [currentUser?.id]);
+  }, [path, enabled]);
+  return data;
+};
 
-  if (!currentUser?.id) return null;
+const AccountProgressClock = ({ currentUser, className, rootClassName }) => {
+  const hasUser = !!currentUser?.id;
+  const legalDocsStatus = useLightFetch('/api/seller-legal-docs', hasUser);
+  const subscriptionStatus = useLightFetch('/api/seller-subscription', hasUser);
+
+  if (!hasUser) return null;
 
   const results = [
     ...STEPS.map(step => ({ ...step, done: step.check(currentUser) })),
+    { ...SUBSCRIPTION_STEP, done: subscriptionStatus?.status === 'active' },
     { ...LEGAL_DOCS_STEP, done: isLegalDocsStepDone(legalDocsStatus) },
   ];
   const doneCount = results.filter(r => r.done).length;
