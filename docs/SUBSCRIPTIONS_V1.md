@@ -391,12 +391,37 @@ la nueva).
     "lastWarningAt": "ISO" | null
   }
   ```
-- Enforcement del gate: en `SearchPage`/`StorefrontPage`/`ListingPage`
-  (rutas públicas), filtrar/ocultar listings cuyo autor tenga
-  `xololoSubscription.status !== 'active'`. Implementación concreta a
-  definir (filtro server-side en los endpoints que alimentan estas
-  vistas, ej. `seller-by-slug.js`, `featured-stores.js`, y un nuevo
-  chequeo en el fetch de listings del buscador).
+- **Enforcement del gate: 🟢 implementado y probado end-to-end contra
+  Sharetribe real.** `server/api-util/publicationGate.js` cierra/abre
+  los listings del seller (`isdk.listings.close`/`open`) cuando
+  `xololoSubscription.status` cruza la frontera activo/no-activo —
+  wireado dentro de `syncSubscriptionMetadata()` (se dispara solo
+  desde ahí, ningún endpoint individual lo llama a mano).
+  **Decisión de diseño clave: cero cambios en `SearchPage`,
+  `StorefrontPage` ni `ListingPage`.** En vez de un flag
+  `publicData`/`metadata` custom + filtro `pub_`/`meta_` en la
+  búsqueda (que hubiera requerido habilitar el campo "for search" a
+  mano en Sharetribe Console), se reusa el mecanismo NATIVO de
+  Sharetribe: `listing.attributes.state` = `'published'` ↔
+  `'closed'`. `SearchPage` y el storefront ya excluyen listings
+  `closed` automáticamente (comportamiento estándar de
+  `sdk.listings.query()`), y `ListingPage` ya maneja bien ese estado
+  para un comprador que llega por link directo (deshabilita la
+  compra, sin 404) — nada de eso hubo que tocarlo.
+  `listing.attributes.metadata.xololoGatedClosed` distingue "cerrado
+  por Xololo" de "cerrado por el seller a propósito" — al reactivar
+  sólo se reabre lo que Xololo cerró.
+  **Fuera de alcance de v1 (documentado, no bloqueante):** esto sólo
+  reacciona a sellers que YA interactuaron con el sistema de
+  suscripción (vía webhook o confirmación manual). Un seller que
+  jamás se suscribió (status `'none'` implícito, sin
+  `xololoSubscription` en metadata) puede seguir publicando sin que
+  nada lo cierre — cerrar ESE caso requeriría o un barrido periódico,
+  o interceptar el flujo de publish en `ManageListingsPage`. Ninguno
+  de los dos existe todavía; se resuelve cuando se construya la
+  detección de "onboarding incompleto" (roadmap Track A, item #2 de
+  la tabla de abajo) que fuerza a todo seller NUEVO a pasar por
+  Suscripción antes de poder publicar.
 
 ### 3.6. Notificaciones nuevas (pipeline D.9 existente) 🟡
 
@@ -416,7 +441,7 @@ la nueva).
 | 3 | Repositorio de documentos legales (upload + admin review) | B | Lista de documentos confirmada |
 | 4 | 🟢 Stripe Billing: products/prices + checkout de suscripción | C | Respuestas §3.4 y confirmación de auto-renovación anual |
 | 5 | 🟢 Webhook Stripe + estado de suscripción + notificaciones | C | #4 |
-| 6 | Gating de publicación en Search/Storefront/Listing | C | #5 |
+| 6 | 🟢 Gating de publicación en Search/Storefront/Listing | C | #5 |
 | 7 | Dunning: avisos + suspensión automática tras N intentos | C | #6 |
 | 8 | Avisos de renovación (30/15/3/1 días) — job diario | C | #5 |
 | 9 | "Pausar mi cuenta" (cancel_at_period_end) + reactivación | C | #5 |
