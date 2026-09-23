@@ -354,13 +354,28 @@ la nueva).
     `server/api-util/stripeBilling.js` — la misma función que usa
     `seller-subscription.js` (POST) para el alta manual, así que
     ambos caminos nunca pueden desincronizarse entre sí.
-  - Requiere `STRIPE_BILLING_WEBHOOK_SECRET` — **🔴 pendiente**: hay
-    que crear el endpoint real en Stripe Dashboard (Developers →
-    Webhooks → Add endpoint, URL `https://<host>/api/webhooks/stripe-billing`,
-    eventos: los 4 de arriba) y pegar el signing secret en `.env`
-    (local) y Render (`xololo-staging`). Sin el secret configurado, el
-    endpoint acepta sin verificar firma (sólo para pruebas — nunca así
-    en producción, hay un `console.warn` que lo recuerda en cada request).
+  - Requiere `STRIPE_BILLING_WEBHOOK_SECRET`. **🟢 Configurado y
+    validado end-to-end contra `xololo-staging` desplegado** (endpoint
+    real creado en Stripe Dashboard → Workbench → Webhooks, eventos
+    reales disparados vía API y confirmados escritos en
+    `xololoSubscription`). Sin el secret configurado, el endpoint
+    acepta sin verificar firma (sólo para pruebas — nunca así en
+    producción, hay un `console.warn` que lo recuerda en cada request).
+  - **Bug real encontrado y corregido durante la validación**: el
+    body-parser de reportes CSP (`server/index.js`) estaba montado sin
+    scope de path (`app.use(bodyParser.json(...))` en vez de
+    `app.use(cspReportUrl, bodyParser.json(...))`), lo cual podía
+    interferir con cualquier webhook que necesite el body crudo. Se
+    corrigió — no era la causa raíz del problema de firma que se
+    investigó esa sesión (se confirmó con un repro aislado), pero es
+    un fix legítimo que se queda.
+  - **Gap real encontrado y corregido**: `SHARETRIBE_INTEGRATION_CLIENT_ID`/
+    `SHARETRIBE_INTEGRATION_CLIENT_SECRET` nunca se habían configurado
+    en el servicio Render `xololo-staging` — sólo existían en `.env`
+    local. Esto hacía fallar silenciosamente CUALQUIER endpoint que
+    dependa de Integration API en ese ambiente desplegado (el webhook,
+    pero también Documentos Legales y las vistas de Admin) aunque
+    todo funcionara bien en local. Ya están configuradas.
 - Estado de suscripción persistido en
   `user.attributes.profile.metadata.xololoSubscription`:
   ```json
