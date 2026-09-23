@@ -97,17 +97,37 @@ module.exports = async (req, res) => {
   const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body || {}));
 
   // XOLOLO DEBUG TEMPORAL (borrar una vez resuelto el bug de firma):
-  // eslint-disable-next-line no-console
-  console.log('[webhook stripe-billing][DEBUG]', {
-    bodyWasBuffer: Buffer.isBuffer(req.body),
-    contentType: req.headers['content-type'],
-    contentLength: req.headers['content-length'],
-    rawBodyLength: rawBody.length,
-    rawBodyFirst80: rawBody.toString('utf8').slice(0, 80),
-    rawBodyLast40: rawBody.toString('utf8').slice(-40),
-    signatureHeaderPresent: !!req.headers['stripe-signature'],
-    webhookSecretLength: (WEBHOOK_SECRET || '').length,
-  });
+  {
+    // eslint-disable-next-line global-require
+    const crypto = require('crypto');
+    const sigHeader = req.headers['stripe-signature'] || '';
+    const parts = Object.fromEntries(
+      sigHeader.split(',').map(p => {
+        const [k, v] = p.split('=');
+        return [k, v];
+      })
+    );
+    const localComputed =
+      parts.t && WEBHOOK_SECRET
+        ? crypto.createHmac('sha256', WEBHOOK_SECRET).update(`${parts.t}.${rawBody.toString('utf8')}`).digest('hex')
+        : null;
+    // eslint-disable-next-line no-console
+    console.log('[webhook stripe-billing][DEBUG]', {
+      bodyWasBuffer: Buffer.isBuffer(req.body),
+      contentType: req.headers['content-type'],
+      contentLength: req.headers['content-length'],
+      rawBodyLength: rawBody.length,
+      rawBodyFirst80: rawBody.toString('utf8').slice(0, 80),
+      rawBodyLast40: rawBody.toString('utf8').slice(-40),
+      signatureHeaderPresent: !!req.headers['stripe-signature'],
+      signatureHeaderRaw: sigHeader,
+      webhookSecretLength: (WEBHOOK_SECRET || '').length,
+      webhookSecretFirst9: (WEBHOOK_SECRET || '').slice(0, 9),
+      receivedV1: parts.v1,
+      locallyComputedV1: localComputed,
+      match: parts.v1 === localComputed,
+    });
+  }
 
   let event;
   if (WEBHOOK_SECRET) {
