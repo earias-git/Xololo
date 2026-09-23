@@ -1,0 +1,232 @@
+@import '../../styles/customMediaQueries.css';
+
+.content {
+  width: calc(100% - 48px);
+  margin: 12px 24px 24px 24px;
+
+  @media (--viewportMedium) {
+    max-width: 620px;
+    margin: 32px auto 0 auto;
+  }
+
+  @media (--viewportLarge) {
+    margin: 0;
+  }
+}
+
+.intro {
+  margin: 8px 0 20px;
+  font-size: 14px;
+  color: var(--colorGrey500);
+  line-height: 1.5;
+}
+
+.loading {
+  padding: 40px 0;
+  text-align: center;
+}
+
+.errorBox {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+/* ---------- Person type picker ---------- */
+.pickerCard {
+  padding: 20px;
+  background-color: var(--colorGrey50, #f7f4ee);
+  border-radius: 12px;
+}
+
+.pickerHint {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  color: var(--colorGrey700);
+}
+
+.pickerButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  @media (--viewportSmall) {
+    flex-direction: row;
+  }
+}
+
+.pickerBtn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  border: 1.5px solid var(--colorGrey100);
+  background-color: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.pickerBtn:hover:not(:disabled) {
+  border-color: #232d40;
+}
+
+.pickerBtn strong {
+  font-size: 14.5px;
+  color: var(--colorGrey900);
+}
+
+.pickerBtn span {
+  font-size: 12.5px;
+  color: var(--colorGrey500);
+}
+
+/* ---------- Person type bar (once chosen) ---------- */
+.personTypeBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: var(--colorGrey50, #f7f4ee);
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: var(--colorGrey700);
+  margin-bottom: 16px;
+}
+
+.changeTypeBtn {
+  background: none;
+  border: none;
+  color: #232d40;
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+/* ---------- Doc list ---------- */
+.docList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.docRow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 10px;
+
+  @media (--viewportSmall) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.docMain {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.docLabel {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+}
+
+.docHint {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--colorGrey500);
+}
+
+.docRejectNote {
+  margin: 6px 0 0;
+  padding: 6px 10px;
+  background-color: #fef2f2;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #991b1b;
+}
+
+.docAction {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.statusPill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.statusPill--pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.statusPill--approved {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.statusPill--rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.statusPill--missing {
+  background-color: var(--colorGrey100);
+  color: var(--colorGrey500);
+}
+
+.viewLink {
+  font-size: 12px;
+  color: #232d40;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.uploadBtn {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--colorGrey100);
+  background-color: #ffffff;
+  color: #232d40;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.uploadBtn:hover:not(:disabled) {
+  background-color: var(--colorGrey50, #f7f4ee);
+}
+
+.uploadBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
