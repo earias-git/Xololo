@@ -287,35 +287,41 @@ dato existente por su cuenta — el borrado de las cuentas de prueba
 es una acción destructiva que earias hará cuando decida, no algo
 que se dispare como parte de este trabajo.
 
-### 3.5. Arquitectura técnica 🟡
+### 3.5. Arquitectura técnica 🟢
 
-**Stripe: cuenta separada de la de Connect.** El template ya integra
-Stripe Connect (pagos marketplace, gestionado por Sharetribe backend —
-no requiere secret key propio en este repo). La suscripción es un
-producto DISTINTO: Xololo cobra directo a sus sellers usando **su
-propia cuenta Stripe** (Stripe Billing), con:
+**Decisión final (earias, al momento de configurar la key): misma
+cuenta Stripe que Connect**, no una separada. El plan original
+proponía una cuenta aparte para no mezclar contabilidad de Connect
+(pagos marketplace) con Billing (suscripciones de sellers) — se
+descartó por simplicidad. Cuenta usada: `acct_1UDorBQx9xcPVJwM`
+("Xololo Test", modo test). Implicación a tener presente más adelante:
+los reportes de Stripe (Balance, Payouts) van a mezclar ambos flujos;
+si algún día se vuelve confuso para contabilidad, la migración a una
+cuenta separada sigue siendo posible (crear cuenta nueva + volver a
+correr `setup-stripe-billing.js` ahí + apuntar `STRIPE_SECRET_KEY` a
+la nueva).
 
-- `STRIPE_SECRET_KEY` nuevo (env var, cuenta Xololo — nunca la misma
-  que la de Connect). **🟢 Scaffolded** en `.env` (vacío — falta que
-  earias cree la cuenta Stripe de billing y pegue su secret key, modo
-  test para empezar).
+- `STRIPE_SECRET_KEY` (env var). **🟢 Configurado** en `.env` local y
+  en Render (`xololo-staging`), modo test.
 - 2 Products/Prices en Stripe: `xololo-plan-anual` ($2028/año),
-  `xololo-plan-mensual` ($229/mes). **🟢 Implementado**:
-  `server/api-util/billingPlans.js` es la fuente de verdad de montos +
-  `lookup_key`, y `server/scripts/setup-stripe-billing.js`
-  (`yarn setup-stripe-billing`) los crea en Stripe de forma idempotente
-  (busca por `lookup_key` antes de crear — correrlo de nuevo no
-  duplica nada). Precios se resuelven en runtime por `lookup_key`, no
-  se guardan Price IDs en env vars (si cambia un monto: archivar el
-  Price viejo en el Dashboard y volver a correr el script).
+  `xololo-plan-mensual` ($229/mes). **🟢 Implementado y creado en
+  Stripe** (modo test): `server/api-util/billingPlans.js` es la fuente
+  de verdad de montos + `lookup_key`, y
+  `server/scripts/setup-stripe-billing.js` (`yarn setup-stripe-billing`)
+  los crea de forma idempotente (busca por `lookup_key` antes de crear
+  — correrlo de nuevo no duplica nada). IDs actuales (modo test):
+  `price_1UIfJ1Qx9xcPVJwM4EbIpSVb` (anual),
+  `price_1UIfJ1Qx9xcPVJwMfL88ksXc` (mensual). Precios se resuelven en
+  runtime por `lookup_key`, no se guardan estos IDs en env vars (si
+  cambia un monto: archivar el Price viejo en el Dashboard y volver a
+  correr el script).
 - 1 Price adicional para el onboarding ($499, one-time) — **🟢
-  implementado** en el mismo `billingPlans.js`/script
-  (`xololo-onboarding-fee`, sin `recurring`). Se agrega como segundo
-  `line_item` en el Checkout Session de modo `subscription` (Stripe
-  sólo lo cobra en la primera invoice; no es parte de
-  `invoice_creation`, es soporte nativo de mezclar 1 price recurrente +
-  N prices de una sola vez en los `line_items` de un Checkout Session
-  en modo `subscription`).
+  implementado y creado** (`xololo-onboarding-fee`,
+  `price_1UIfJ2Qx9xcPVJwM80CaDwCI`, sin `recurring`). Se agrega como
+  segundo `line_item` en el Checkout Session de modo `subscription`
+  (Stripe sólo lo cobra en la primera invoice; es soporte nativo de
+  mezclar 1 price recurrente + N prices de una sola vez en los
+  `line_items` de un Checkout Session en modo `subscription`).
 - Checkout Session con `mode: 'subscription'` + `line_items` (price
   del plan elegido + price del onboarding). **🔴 Pendiente** (roadmap
   #4, siguiente paso de este track).
