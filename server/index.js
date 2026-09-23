@@ -113,7 +113,16 @@ if (cspEnabled) {
 
   // When a CSP directive is violated, the browser posts a JSON body
   // to the defined report URL and we need to parse this body.
+  //
+  // XOLOLO: esto DEBE estar scoped a `cspReportUrl` (2do arg de app.use).
+  // Sin el path, bodyParser.json() con type 'json' hace match de
+  // Content-Type: application/json en TODAS las rutas — incluyendo
+  // webhooks que llegan después (Skydropx, Stripe) y que necesitan el
+  // body crudo (Buffer) para verificar su firma. Con el body ya
+  // consumido/parseado aquí, esas verificaciones fallan silenciosamente
+  // (bug real encontrado al conectar el webhook de Stripe Billing).
   app.use(
+    cspReportUrl,
     bodyParser.json({
       type: ['json', 'application/csp-report'],
     })

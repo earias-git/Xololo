@@ -96,6 +96,19 @@ module.exports = async (req, res) => {
 
   const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body || {}));
 
+  // XOLOLO DEBUG TEMPORAL (borrar una vez resuelto el bug de firma):
+  // eslint-disable-next-line no-console
+  console.log('[webhook stripe-billing][DEBUG]', {
+    bodyWasBuffer: Buffer.isBuffer(req.body),
+    contentType: req.headers['content-type'],
+    contentLength: req.headers['content-length'],
+    rawBodyLength: rawBody.length,
+    rawBodyFirst80: rawBody.toString('utf8').slice(0, 80),
+    rawBodyLast40: rawBody.toString('utf8').slice(-40),
+    signatureHeaderPresent: !!req.headers['stripe-signature'],
+    webhookSecretLength: (WEBHOOK_SECRET || '').length,
+  });
+
   let event;
   if (WEBHOOK_SECRET) {
     try {
