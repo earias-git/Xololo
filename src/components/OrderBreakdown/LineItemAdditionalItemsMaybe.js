@@ -21,7 +21,9 @@ import css from './OrderBreakdown.module.css';
  * @returns {JSX.Element|null}
  */
 const LineItemAdditionalItemsMaybe = props => {
-  const { lineItems, intl } = props;
+  // `titles`: array de títulos de los items adicionales, indexado
+  // 1:1 con los line-item/item posiciones 2..N (excluye el primary).
+  const { lineItems, intl, titles } = props;
 
   const itemLineItems = lineItems.filter(li => li.code === LINE_ITEM_ITEM && !li.reversal);
   const additionalItems = itemLineItems.slice(1);
@@ -34,13 +36,24 @@ const LineItemAdditionalItemsMaybe = props => {
         const quantity = li.units ? li.units.toString() : li.quantity ? li.quantity.toString() : null;
         const unitPrice = formatMoney(intl, li.unitPrice);
         const total = formatMoney(intl, li.lineTotal);
+        const title = titles?.[idx];
         return (
           <div key={`additional-item-${idx}`} className={css.lineItem}>
             <span className={css.itemLabel}>
-              <FormattedMessage
-                id="OrderBreakdown.baseUnitQuantity"
-                values={{ unitPrice, quantity }}
-              />
+              {title ? (
+                <>
+                  <span>{title}</span>
+                  <br />
+                  <small style={{ color: 'var(--colorGrey500)', fontSize: '13px' }}>
+                    {quantity} × {unitPrice}
+                  </small>
+                </>
+              ) : (
+                <FormattedMessage
+                  id="OrderBreakdown.baseUnitQuantity"
+                  values={{ unitPrice, quantity }}
+                />
+              )}
             </span>
             <span className={css.itemValue}>{total}</span>
           </div>

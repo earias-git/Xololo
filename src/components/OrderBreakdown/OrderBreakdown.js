@@ -46,6 +46,8 @@ export const OrderBreakdownComponent = props => {
     currency,
     marketplaceName,
     intl,
+    // XOLOLO Cart.5: títulos indexados por line-item/item (primary + adicionales)
+    itemTitles,
   } = props;
 
   const isCustomer = userRole === 'customer';
@@ -115,9 +117,18 @@ export const OrderBreakdownComponent = props => {
         timeZone={timeZone}
       />
 
-      <LineItemBasePriceMaybe lineItems={lineItems} code={lineItemUnitType} intl={intl} />
+      <LineItemBasePriceMaybe
+        lineItems={lineItems}
+        code={lineItemUnitType}
+        intl={intl}
+        title={itemTitles?.[0]}
+      />
       {/* XOLOLO Cart.5: renderiza items adicionales del carrito multi-producto. */}
-      <LineItemAdditionalItemsMaybe lineItems={lineItems} intl={intl} />
+      <LineItemAdditionalItemsMaybe
+        lineItems={lineItems}
+        intl={intl}
+        titles={itemTitles?.slice(1)}
+      />
       <LineItemShippingFeeMaybe lineItems={lineItems} intl={intl} />
       <LineItemPickupFeeMaybe lineItems={lineItems} intl={intl} />
       <LineItemUnknownItemsMaybe lineItems={lineItems} isProvider={isProvider} intl={intl} />

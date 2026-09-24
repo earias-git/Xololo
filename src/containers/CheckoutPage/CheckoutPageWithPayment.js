@@ -503,6 +503,17 @@ export const CheckoutPageWithPayment = props => {
 
   // Show breakdown only when (speculated?) transaction is loaded
   // (i.e. it has an id and lineItems)
+  // XOLOLO Cart.5: títulos de items para el breakdown (primary + adicionales).
+  // El orden debe empatar con el orden de los `line-item/item` en la
+  // transacción — el server los emite en el mismo orden en que llegan
+  // aquí (primary primero, luego additionalCartItems).
+  const primaryTitleForBreakdown = pageData?.listing?.attributes?.title || null;
+  const additionalCartItemsForBreakdown = pageData?.orderData?.additionalCartItems || [];
+  const itemTitles = [
+    primaryTitleForBreakdown,
+    ...additionalCartItemsForBreakdown.map(x => x?.title || null),
+  ];
+
   const breakdown =
     tx.id && tx.attributes.lineItems?.length > 0 ? (
       <OrderBreakdown
@@ -512,6 +523,7 @@ export const CheckoutPageWithPayment = props => {
         {...txBookingMaybe}
         currency={config.currency}
         marketplaceName={config.marketplaceName}
+        itemTitles={itemTitles}
       />
     ) : null;
 

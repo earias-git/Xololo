@@ -24,7 +24,12 @@ import css from './OrderBreakdown.module.css';
  * @returns {JSX.Element}
  */
 const LineItemBasePriceMaybe = props => {
-  const { lineItems, code, intl } = props;
+  // XOLOLO Cart.5: `title` es el nombre del listing primary, usado
+  // para etiquetar la línea cuando el carrito tiene 2+ items del
+  // mismo seller (así el buyer distingue cuál es cada uno en el
+  // desglose). Sólo aplica al code `line-item/item`; los otros
+  // (bookings, hours) mantienen su etiqueta original.
+  const { lineItems, code, intl, title } = props;
   const isNightly = code === LINE_ITEM_NIGHT;
   const isDaily = code === LINE_ITEM_DAY;
   const isHourly = code === LINE_ITEM_HOUR;
@@ -67,9 +72,23 @@ const LineItemBasePriceMaybe = props => {
     <FormattedMessage id={translationKey} values={{ unitPrice, quantity }} />
   );
 
+  // XOLOLO: si viene título (multi-cart), lo usamos como etiqueta
+  // principal y el `unitPrice × quantity` va debajo, más chico.
+  const useTitleLayout = !!title && code === 'line-item/item';
+
   return quantity && total ? (
     <div className={css.lineItem}>
-      <span className={css.itemLabel}>{message}</span>
+      {useTitleLayout ? (
+        <span className={css.itemLabel}>
+          <span>{title}</span>
+          <br />
+          <small style={{ color: 'var(--colorGrey500)', fontSize: '13px' }}>
+            {quantity} × {unitPrice}
+          </small>
+        </span>
+      ) : (
+        <span className={css.itemLabel}>{message}</span>
+      )}
       <span className={css.itemValue}>{total}</span>
     </div>
   ) : null;

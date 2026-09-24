@@ -170,6 +170,10 @@ const CartPage = props => {
       const additionalCartItems = rest.map(i => ({
         listingId: i.listingId,
         quantity: i.quantity,
+        // XOLOLO: title es sólo para display en el breakdown del
+        // checkout (LineItemAdditionalItemsMaybe). El server no confía
+        // en este valor — re-lee cada listing y usa su título real.
+        title: i.title,
       }));
 
       const initialValues = {
