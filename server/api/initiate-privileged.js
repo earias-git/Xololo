@@ -289,6 +289,19 @@ module.exports = (req, res) => {
         .end();
     })
     .catch(e => {
+      // XOLOLO DEBUG TEMPORAL (borrar tras resolver bug del multi-item checkout):
+      // eslint-disable-next-line no-console
+      console.error('[initiate-privileged][DEBUG]', {
+        isSpeculative,
+        transitionName,
+        primaryListingId,
+        additionalCartCount: additionalCartRaw?.length || 0,
+        additionalIds: additionalCartRaw?.map(x => x.listingId) || [],
+        errStatus: e?.status,
+        errStatusText: e?.statusText,
+        errMessage: e?.message,
+        errData: JSON.stringify(e?.data || null).slice(0, 800),
+      });
       handleError(res, e);
     });
 };
