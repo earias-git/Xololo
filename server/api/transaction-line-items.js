@@ -24,14 +24,19 @@ module.exports = (req, res) => {
 
   const sdk = getSdk(req, res);
 
+  // XOLOLO: include=author para que la validación same-seller de
+  // multi-item cart no falle con undefined === undefined. Mismo bug
+  // que se arregló en initiate-privileged.js.
   const listingPromise = id =>
-    isOwnListing ? sdk.ownListings.show({ id }) : sdk.listings.show({ id });
+    isOwnListing
+      ? sdk.ownListings.show({ id, include: ['author'] })
+      : sdk.listings.show({ id, include: ['author'] });
 
   const additionalCartRaw = sanitizeAdditionalCartItems(orderData, listingId);
 
   Promise.all([
     listingPromise(listingId),
-    ...additionalCartRaw.map(x => sdk.listings.show({ id: x.listingId })),
+    ...additionalCartRaw.map(x => sdk.listings.show({ id: x.listingId, include: ['author'] })),
     fetchCommission(sdk),
   ])
     .then(responses => {
