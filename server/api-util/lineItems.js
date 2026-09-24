@@ -81,11 +81,28 @@ const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
       }
     } else {
       // Modo flat (default Sharetribe): precio fijo del listing.
+      //
+      // XOLOLO Cart.5: con carrito multi-producto (mismo seller), el
+      // shipping se calcula sobre el TOTAL de unidades (primary +
+      // additionalCartItems), no sólo el quantity del primary — así
+      // se aplica correctamente la lógica "primer item paga
+      // oneItem, adicionales pagan additionalItems". Esto usa las
+      // tarifas del listing PRIMARY (todos los items se envían
+      // juntos desde ese seller, por eso su tarifa manda).
+      const additionalCartItems = Array.isArray(orderData?.additionalCartItems)
+        ? orderData.additionalCartItems
+        : [];
+      const additionalUnitsTotal = additionalCartItems.reduce(
+        (sum, x) => sum + (Number.isInteger(x?.quantity) ? x.quantity : 0),
+        0
+      );
+      const totalShippingUnits = (Number(quantity) || 0) + additionalUnitsTotal;
+
       const shippingFee = calculateShippingFee(
         shippingPriceInSubunitsOneItem,
         shippingPriceInSubunitsAdditionalItems,
         currency,
-        quantity
+        totalShippingUnits
       );
       if (shippingFee) {
         extraLineItems.push({

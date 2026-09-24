@@ -20,6 +20,7 @@ import {
 
 import LineItemBookingPeriod from './LineItemBookingPeriod';
 import LineItemBasePriceMaybe from './LineItemBasePriceMaybe';
+import LineItemAdditionalItemsMaybe from './LineItemAdditionalItemsMaybe';
 import LineItemSubTotalMaybe from './LineItemSubTotalMaybe';
 import LineItemShippingFeeMaybe from './LineItemShippingFeeMaybe';
 import LineItemPickupFeeMaybe from './LineItemPickupFeeMaybe';
@@ -115,6 +116,8 @@ export const OrderBreakdownComponent = props => {
       />
 
       <LineItemBasePriceMaybe lineItems={lineItems} code={lineItemUnitType} intl={intl} />
+      {/* XOLOLO Cart.5: renderiza items adicionales del carrito multi-producto. */}
+      <LineItemAdditionalItemsMaybe lineItems={lineItems} intl={intl} />
       <LineItemShippingFeeMaybe lineItems={lineItems} intl={intl} />
       <LineItemPickupFeeMaybe lineItems={lineItems} intl={intl} />
       <LineItemUnknownItemsMaybe lineItems={lineItems} isProvider={isProvider} intl={intl} />
