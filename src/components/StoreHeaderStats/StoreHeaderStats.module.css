@@ -1,0 +1,81 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  color: var(--colorGrey700);
+  line-height: 1.2;
+  flex-wrap: wrap;
+
+  @media (--viewportMedium) {
+    font-size: 14px;
+  }
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.ratingLink {
+  cursor: pointer;
+}
+
+.ratingLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: var(--colorBlack);
+}
+
+.stars {
+  display: inline-flex;
+  align-items: center;
+  color: var(--colorGrey200);
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.star {
+  display: inline-block;
+  transition: color 0.15s ease;
+}
+
+.starFull {
+  color: #f5b400;
+}
+
+/* Media estrella: usamos un gradient de background-clip para pintar
+   la mitad izquierda amarilla y la derecha gris. */
+.starHalf {
+  background: linear-gradient(90deg, #f5b400 50%, var(--colorGrey200) 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.ratingAvg {
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey900);
+}
+
+.ratingCount {
+  color: var(--colorGrey500);
+}
+
+.sales {
+  color: var(--colorGrey700);
+}
+
+.salesValue {
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey900);
+}

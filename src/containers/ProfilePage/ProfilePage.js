@@ -93,7 +93,7 @@ export const MobileReviews = props => {
   const reviewsOfProvider = reviews.filter(r => r.attributes.type === REVIEW_TYPE_OF_PROVIDER);
   const reviewsOfCustomer = reviews.filter(r => r.attributes.type === REVIEW_TYPE_OF_CUSTOMER);
   return (
-    <div className={css.mobileReviews}>
+    <div id="reviews" className={css.mobileReviews}>
       <H4 as="h2" className={css.mobileReviewsTitle}>
         <FormattedMessage
           id="ProfilePage.reviewsFromMyCustomersTitle"
@@ -163,7 +163,7 @@ export const DesktopReviews = props => {
   const desktopReviewTabs = [...providerReviewsMaybe, ...customerReviewsMaybe];
 
   return (
-    <div className={css.desktopReviews}>
+    <div id="reviews" className={css.desktopReviews}>
       <div className={css.desktopReviewsWrapper}>
         <ButtonTabNavHorizontal
           className={css.desktopReviewsTabNav}

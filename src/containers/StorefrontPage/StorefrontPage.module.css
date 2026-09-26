@@ -69,6 +69,21 @@
   }
 }
 
+/* XOLOLO P2: barra de stats debajo del header nav (nueva ubicación de
+   las estrellas + reseñas + ventas — antes vivían en el body). */
+.headerStats {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  @media (--viewportMedium) {
+    padding: 0 40px 12px 40px;
+  }
+}
+
 .navLink {
   font-size: 14px;
   font-weight: 600;

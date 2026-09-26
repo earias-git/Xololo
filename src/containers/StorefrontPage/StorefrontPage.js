@@ -15,7 +15,7 @@ import { selectCartItemCount } from '../../ducks/cart.duck';
 
 import FeaturedListings from '../../components/FeaturedListings/FeaturedListings';
 import VerifiedBand from '../../components/VerifiedBand/VerifiedBand';
-import StoreStatsWidget from '../../components/StoreStatsWidget/StoreStatsWidget';
+import StoreHeaderStats from '../../components/StoreHeaderStats/StoreHeaderStats';
 
 import css from './StorefrontPage.module.css';
 
@@ -362,6 +362,15 @@ const StorefrontPageComponent = props => {
             <StorefrontCartLink sellerId={seller.id} />
           </nav>
         </div>
+        {/* XOLOLO P2: barra compacta con estrellas + reseñas + ventas.
+            Se auto-oculta si no hay ratings ni ventas. Click en las
+            estrellas navega a la ProfilePage (sección de reseñas). */}
+        <div className={css.headerStats}>
+          <StoreHeaderStats
+            sellerId={seller.id}
+            reviewsHref={`/u/${seller.id}#reviews`}
+          />
+        </div>
       </header>
 
       <BannerCarousel banners={banners} />
@@ -391,13 +400,9 @@ const StorefrontPageComponent = props => {
           (mismo layout, mismos íconos, mismo copy "Xololo Verified™"). */}
       <VerifiedBand />
 
-      {/* XOLOLO F3 · Fase 4: prueba social pública. Se auto-oculta si
-          el seller aún no cumple el threshold (≥5 ventas). */}
-      {seller?.id ? (
-        <div className={css.statsWrap}>
-          <StoreStatsWidget sellerId={seller.id} />
-        </div>
-      ) : null}
+      {/* XOLOLO P2: la barra de stats se mudó al header (StoreHeaderStats).
+          Antes vivía aquí como StoreStatsWidget grande — la info clave
+          (estrellas, reseñas, ventas) ahora está visible sin scroll. */}
 
       <section id="catalogo" className={css.catalog}>
         {listings?.length ? (

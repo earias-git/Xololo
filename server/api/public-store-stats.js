@@ -63,6 +63,36 @@ const setCached = (key, value) => {
   cache.set(key, { at: Date.now(), value });
 };
 
+// XOLOLO P2: agrega rating average + count desde las reviews públicas
+// que apuntan al seller como subject (ofProvider). Devuelve null si no
+// hay reviews todavía — así la UI decide si mostrar estrellas o no.
+const fetchSellerRating = async (isdk, sellerId) => {
+  let sum = 0;
+  let count = 0;
+  for (let page = 1; page <= 20; page++) {
+    const resp = await isdk.reviews.query({
+      subjectId: sellerId,
+      state: 'public',
+      page,
+      perPage: 100,
+    });
+    const data = resp.data.data || [];
+    for (const r of data) {
+      // Sólo reviews de provider (ratings al seller). No a las
+      // reviews que el seller dejó al buyer.
+      if (r.attributes?.type !== 'ofProvider') continue;
+      const rating = Number(r.attributes?.rating);
+      if (!Number.isFinite(rating) || rating < 1 || rating > 5) continue;
+      sum += rating;
+      count += 1;
+    }
+    const totalPages = resp.data.meta?.totalPages || 1;
+    if (page >= totalPages) break;
+  }
+  if (count === 0) return null;
+  return { average: sum / count, count };
+};
+
 // Cuenta ventas confirmadas del seller + unidades vendidas.
 // No filtramos por rango — es histórico total (prueba social se
 // beneficia de números grandes).
@@ -146,8 +176,16 @@ module.exports = async (req, res) => {
     const profile = sellerAttrs.profile || {};
     const pd = profile.publicData || {};
 
-    // Fetch stats.
-    const { ordersTotal, productsSold } = await fetchSellerStats(isdk, seller.id.uuid);
+    // Fetch stats + rating en paralelo.
+    const [statsResult, ratingResult] = await Promise.all([
+      fetchSellerStats(isdk, seller.id.uuid),
+      fetchSellerRating(isdk, seller.id.uuid).catch(e => {
+        // eslint-disable-next-line no-console
+        console.error('[public-store-stats] rating fetch falló:', e?.message);
+        return null;
+      }),
+    ]);
+    const { ordersTotal, productsSold } = statsResult;
 
     // Miembro desde: usamos createdAt del user.
     const createdAt = sellerAttrs.createdAt || null;
@@ -175,6 +213,15 @@ module.exports = async (req, res) => {
         productsSold,
         verified,
         memberMonths,
+      };
+    }
+    // XOLOLO P2: exponemos rating separado de `stats` (que sólo aparece
+    // cuando eligible=true). Un seller nuevo puede tener 1 review con
+    // 5 estrellas y queremos mostrarla aunque aún no tenga ≥5 ventas.
+    if (ratingResult) {
+      response.rating = {
+        average: Number(ratingResult.average.toFixed(2)),
+        count: ratingResult.count,
       };
     }
     setCached(cacheK, response);
