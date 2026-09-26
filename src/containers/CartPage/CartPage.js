@@ -173,7 +173,8 @@ const CartPage = props => {
         // XOLOLO: title es sólo para display en el breakdown del
         // checkout (LineItemAdditionalItemsMaybe). El server no confía
         // en este valor — re-lee cada listing y usa su título real.
-        title: i.title,
+        // El campo en el cart storage es `listingTitle` (ver cart.duck.js).
+        title: i.listingTitle,
       }));
 
       const initialValues = {
