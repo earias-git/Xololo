@@ -1,0 +1,94 @@
+@import '../../styles/customMediaQueries.css';
+
+/* Wrapper del link/menu-label — imita layout de topbarLink. */
+.root {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12px;
+  border-bottom: 0px solid;
+  transition: var(--transitionStyleButton);
+  color: var(--colorGrey700);
+  cursor: pointer;
+}
+.root:hover {
+  color: var(--colorBlack);
+  border-bottom: 4px solid var(--marketplaceColor);
+  border-radius: 0;
+  text-decoration: none;
+}
+
+.rootOpen {
+  color: var(--colorBlack);
+}
+
+.iconWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 24px 0;
+}
+
+.icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* Badge con el número — pill roja arriba a la derecha. */
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-size: 11px;
+  line-height: 18px;
+  font-weight: var(--fontWeightSemiBold);
+  text-align: center;
+}
+
+/* Dropdown de multi-cart */
+.menuContent {
+  min-width: 240px;
+  padding: 8px 0;
+}
+
+.menuHeader {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.menuLink {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  color: var(--colorGrey700);
+  text-decoration: none;
+}
+.menuLink:hover {
+  background-color: var(--colorGrey50);
+  color: var(--colorBlack);
+  text-decoration: none;
+}
+
+.menuSellerName {
+  font-weight: var(--fontWeightMedium);
+  font-size: 14px;
+}
+
+.menuCount {
+  font-size: 12px;
+  color: var(--colorGrey500);
+  margin-left: 12px;
+}

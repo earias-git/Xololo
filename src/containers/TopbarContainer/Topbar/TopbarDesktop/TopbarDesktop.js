@@ -5,6 +5,7 @@ import { FormattedMessage } from '../../../../util/reactIntl';
 import { ACCOUNT_SETTINGS_PAGES } from '../../../../routing/routeConfiguration';
 import {
   Avatar,
+  CartIndicator,
   InlineTextButton,
   LinkedLogo,
   Menu,
@@ -255,6 +256,9 @@ const TopbarDesktop = props => {
         hasClientSideContentReady={authenticatedOnClientSide || !isAuthenticatedOrJustHydrated}
         showCreateListingsLink={showCreateListingsLink}
       />
+
+      {/* XOLOLO C1: indicador de carrito. Se auto-oculta si no hay items. */}
+      <CartIndicator />
 
       {inboxLinkMaybe}
       {profileMenuMaybe}

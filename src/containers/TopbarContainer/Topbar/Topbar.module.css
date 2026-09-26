@@ -118,6 +118,16 @@
   margin: 9px 0;
 }
 
+/* XOLOLO C1: overrides para el CartIndicator dentro de la barra móvil. */
+.mobileCart {
+  height: 100%;
+  padding: 0 12px;
+  margin-left: auto;
+}
+.mobileCart:hover {
+  border-bottom: none;
+}
+
 .notificationDot {
   /* Dimensions */
   width: 12px;

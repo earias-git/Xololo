@@ -12,6 +12,7 @@ import { parse, stringify } from '../../../util/urlHelpers';
 import { createResourceLocatorString, matchPathname, pathByRouteName } from '../../../util/routes';
 import {
   Button,
+  CartIndicator,
   IconArrowHead,
   LimitedAccessBanner,
   LinkedLogo,
@@ -364,6 +365,8 @@ const TopbarComponent = props => {
           alt={intl.formatMessage({ id: 'Topbar.logoIcon' })}
           linkToExternalSite={config?.topbar?.logoLink}
         />
+        {/* XOLOLO C1: indicador de carrito móvil. Se auto-oculta si no hay items. */}
+        <CartIndicator className={css.mobileCart} />
         {mobileSearchButtonMaybe}
       </nav>
       <div className={css.desktop}>
