@@ -87,7 +87,14 @@ module.exports = async (req, res) => {
     try {
       const promises = [
         sdk.listings.show({ id: listingId, include: ['author'] }),
-        ...additionalCartRaw.map(x => sdk.listings.show({ id: x.listingId })),
+        // XOLOLO: include=author es necesario para que
+        // relationships.author.data.id venga poblado; sin él la
+        // validación same-seller de la línea 118 falla siempre porque
+        // authorId === undefined !== primaryAuthorId (mismo bug que
+        // ya arreglamos en initiate-privileged.js).
+        ...additionalCartRaw.map(x =>
+          sdk.listings.show({ id: x.listingId, include: ['author'] })
+        ),
       ];
       const results = await Promise.all(promises);
       listingResp = results[0];
