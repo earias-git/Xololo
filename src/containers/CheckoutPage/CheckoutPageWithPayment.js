@@ -514,6 +514,16 @@ export const CheckoutPageWithPayment = props => {
     ...additionalCartItemsForBreakdown.map(x => x?.title || null),
   ];
 
+  // XOLOLO Cart.C2-foto: items adicionales para mostrar en la sidebar
+  // del checkout (miniaturas + título + cantidad). El title y el image
+  // los pasa la CartPage al construir el initialValues del checkout
+  // (ver src/containers/CartPage/CartPage.js).
+  const additionalItemsForSidebar = additionalCartItemsForBreakdown.map(x => ({
+    title: x?.title || null,
+    imageUrl: x?.image || null,
+    quantity: x?.quantity || 1,
+  }));
+
   const breakdown =
     tx.id && tx.attributes.lineItems?.length > 0 ? (
       <OrderBreakdown
@@ -647,6 +657,7 @@ export const CheckoutPageWithPayment = props => {
           firstImage={firstImage}
           layoutListingImageConfig={config.layout.listingImage}
           showListingImage={showListingImage}
+          additionalItems={additionalItemsForSidebar}
         />
         <main className={css.orderFormContainer}>
           <div className={css.headingContainer}>
@@ -732,6 +743,7 @@ export const CheckoutPageWithPayment = props => {
           isInquiryProcess={false}
           processName={processName}
           breakdown={breakdown}
+          additionalItems={additionalItemsForSidebar}
           showListingImage={showListingImage}
           intl={intl}
         />

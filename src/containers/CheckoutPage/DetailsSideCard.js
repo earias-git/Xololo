@@ -47,6 +47,12 @@ const DetailsSideCard = props => {
     breakdown,
     showListingImage,
     intl,
+    // XOLOLO Cart.C2-foto: items adicionales del carrito. Cada uno:
+    // { title, imageUrl, quantity }. Cuando hay al menos uno, la
+    // sidebar cambia a modo "resumen multi-item": el primary sigue
+    // siendo la imagen grande, y debajo listamos miniaturas de los
+    // demás para que el buyer confirme visualmente qué está pagando.
+    additionalItems = [],
   } = props;
 
   const { price, publicData } = listing?.attributes || {};
@@ -103,6 +109,30 @@ const DetailsSideCard = props => {
         </div>
         {speculateTransactionErrorMessage}
       </div>
+
+      {additionalItems.length > 0 ? (
+        <ul className={css.additionalItemsList} aria-label="Productos adicionales en tu pedido">
+          {additionalItems.map((it, idx) => (
+            <li key={`extra-${idx}`} className={css.additionalItem}>
+              <div className={css.additionalItemThumb}>
+                {it.imageUrl ? (
+                  <img src={it.imageUrl} alt={it.title || 'Producto'} />
+                ) : (
+                  <div className={css.additionalItemThumbEmpty}>📦</div>
+                )}
+              </div>
+              <div className={css.additionalItemMain}>
+                <span className={css.additionalItemTitle}>
+                  {it.title || 'Producto'}
+                </span>
+                <span className={css.additionalItemQty}>
+                  Cantidad: {it.quantity}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       {!!breakdown ? (
         <div className={css.orderBreakdownHeader}>

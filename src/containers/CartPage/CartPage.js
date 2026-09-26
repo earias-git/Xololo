@@ -170,11 +170,12 @@ const CartPage = props => {
       const additionalCartItems = rest.map(i => ({
         listingId: i.listingId,
         quantity: i.quantity,
-        // XOLOLO: title es sólo para display en el breakdown del
-        // checkout (LineItemAdditionalItemsMaybe). El server no confía
-        // en este valor — re-lee cada listing y usa su título real.
-        // El campo en el cart storage es `listingTitle` (ver cart.duck.js).
+        // XOLOLO: title e image son sólo para DISPLAY en el checkout
+        // (breakdown + sidebar). El server no confía en estos valores —
+        // re-lee cada listing y usa el título/precio real.
+        // Campos en el cart storage: listingTitle, listingImageUrl.
         title: i.listingTitle,
+        image: i.listingImageUrl || null,
       }));
 
       const initialValues = {
