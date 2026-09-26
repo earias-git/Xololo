@@ -174,10 +174,35 @@ const MonthlyEmailBlock = () => {
         setStatus({ state: 'error', message: data.error || data.details || 'Falló el envío.' });
         return;
       }
-      setStatus({
-        state: 'ok',
-        message: `Enviado — resumen de ${data.monthLabel} con ${data.count} pedidos. Revisa tu bandeja.`,
-      });
+
+      // XOLOLO P1: mostramos el estado REAL del envío.
+      // - sent:true + mode:'resend' → llegó a Resend, esperar bandeja.
+      // - sent:false + mode:'log_only' → falta RESEND_API_KEY en el env.
+      // - sent:false + error → Resend rechazó (dominio no verificado, etc).
+      // - sent:false + no recipientEmail → el user no tiene email registrado.
+      if (data.sent) {
+        setStatus({
+          state: 'ok',
+          message:
+            `Enviado a ${data.recipientEmail || 'tu correo'} — resumen de ${data.monthLabel} ` +
+            `con ${data.count} pedidos. Revisa bandeja de entrada y carpeta de spam.`,
+        });
+        return;
+      }
+      // sent:false — reportar por qué.
+      let reason;
+      if (data.mode === 'log_only') {
+        reason =
+          'El servidor no tiene RESEND_API_KEY configurado — el email quedó sólo en logs, no se envió realmente. ' +
+          'Configúralo en el env de Render.';
+      } else if (!data.recipientEmail) {
+        reason = 'No hay email registrado para tu cuenta.';
+      } else if (data.error) {
+        reason = `Resend rechazó el envío: ${data.error}`;
+      } else {
+        reason = 'El email no se envió (razón desconocida). Revisa los logs del server.';
+      }
+      setStatus({ state: 'error', message: reason });
     } catch (e) {
       setStatus({ state: 'error', message: e?.message || 'Falló el envío.' });
     }

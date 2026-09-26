@@ -50,13 +50,33 @@ module.exports = async (req, res) => {
     }
 
     const ctx = await buildMonthlyReportForSeller(isdk, userId, { year, month });
-    await sendEventNotifications('seller.monthly_report', ctx);
+
+    // XOLOLO P1: reportamos el estado REAL del envío al cliente en vez
+    // de asumir sent:true. Antes esto ocultaba que el email caía en
+    // modo log_only (sin RESEND_API_KEY) o que Resend lo rechazaba.
+    // Inspeccionamos el resultado del canal 'email' para el seller y
+    // exponemos: sent, mode (resend|log_only|skipped), recipientEmail
+    // y error si aplica.
+    const notifResult = await sendEventNotifications('seller.monthly_report', ctx);
+    const emailResult = (notifResult?.results || []).find(r => r?.channel === 'email') || {};
+    const recipientEmail = ctx?.seller?.email || null;
+    const sent = emailResult.sent === true;
+    const mode = emailResult.mode || (emailResult.skipped ? `skipped:${emailResult.skipped}` : null);
+    const errorMsg = emailResult.error || null;
+    // eslint-disable-next-line no-console
+    console.log(
+      `[monthly-report-preview] userId=${userId} recipient=${recipientEmail || 'NONE'} ` +
+        `sent=${sent} mode=${mode || 'n/a'} error=${errorMsg || 'none'}`
+    );
 
     return res.json({
       ok: true,
       monthLabel: ctx.report.monthLabel,
       count: Number(ctx.report.count) || 0,
-      sent: true,
+      sent,
+      mode,
+      recipientEmail,
+      error: errorMsg,
     });
   } catch (e) {
     // eslint-disable-next-line no-console
