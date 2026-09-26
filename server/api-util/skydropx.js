@@ -133,6 +133,16 @@ const getAccessToken = async () => {
 const getQuotationRates = async ({ from, to, parcel }) => {
   const token = await getAccessToken();
 
+  // XOLOLO Bug 2a: log del parcel + destino para poder auditar por qué
+  // Skydropx devuelve tal o cual precio. Los usuarios reportan tarifas
+  // "altas" — con este log el operador ve dimensiones/peso/ruta y puede
+  // sanity-check contra Skydropx dashboard.
+  // eslint-disable-next-line no-console
+  console.log(
+    `[skydropx.quote] parcel L=${parcel?.length}cm W=${parcel?.width}cm H=${parcel?.height}cm ` +
+      `weight=${parcel?.weight}kg | ${from?.postal_code} → ${to?.postal_code}`
+  );
+
   const createRes = await fetch(QUOTATION_URL, {
     method: 'POST',
     headers: {
@@ -186,6 +196,14 @@ const getQuotationRates = async ({ from, to, parcel }) => {
       // El cliente y checkout ven `total` = precio público final.
       // `pricing` desglosa por si se necesita auditar o mostrar en el UI.
       const pricing = applyPricingPolicy(Number(r.total));
+      // XOLOLO Bug 2a: log del breakdown por rate para poder rastrear
+      // "por qué salió $X" — Skydropx neto + SOS + margen = precio público.
+      // eslint-disable-next-line no-console
+      console.log(
+        `[skydropx.rate] ${r.provider_display_name} ${r.provider_service_name}: ` +
+          `skydropx=$${pricing.skydropxTotal} +SOS=$${pricing.sosInsurance} ` +
+          `+margin=$${pricing.xololoMargin} → público=$${pricing.totalPublico}`
+      );
       return {
         id: r.id,
         carrier: r.provider_display_name,

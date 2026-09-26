@@ -26,6 +26,7 @@ import { includeCSSProperties } from './util/style';
 import { IncludeScripts } from './util/includeScripts';
 
 import { MaintenanceMode, WhatsAppButton } from './components';
+import CartUserSync from './components/CartUserSync/CartUserSync';
 
 // routing
 import routeConfiguration from './routing/routeConfiguration';
@@ -286,6 +287,10 @@ export const ClientApp = props => {
               <Routes logLoadDataCalls={logLoadDataCalls} />
             </BrowserRouter>
             <WhatsAppButton />
+            {/* XOLOLO Bug 1: re-hidrata el carrito cuando cambia el
+                user logueado (evita que un browser compartido muestre
+                el carrito de otra cuenta). */}
+            <CartUserSync />
           </HelmetProvider>
         </Provider>
       </IntlProvider>

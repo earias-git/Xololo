@@ -43,6 +43,8 @@ import {
   processCheckoutWithPayment,
   setOrderPageInitialValues,
 } from './CheckoutPageTransactionHelpers.js';
+import { clearSellerCart } from '../../ducks/cart.duck';
+
 import { getErrorMessages } from './ErrorMessages';
 
 import StripePaymentForm from './StripePaymentForm/StripePaymentForm';
@@ -368,6 +370,21 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
     .then(response => {
       const { orderId, paymentMethodSaved } = response;
       setSubmitting(false);
+
+      // XOLOLO Bug 2b: pago confirmado → limpiar el carrito del seller.
+      // Antes el badge del topbar seguía mostrando los items comprados
+      // hasta que el buyer los borraba a mano. sellerId = author del
+      // listing primary (los carritos son por-seller). Sólo se limpia
+      // el de ESTE seller — otros carritos del buyer no se tocan.
+      const primarySellerId = pageData?.listing?.author?.id?.uuid;
+      if (primarySellerId) {
+        try {
+          dispatch(clearSellerCart({ sellerId: primarySellerId }));
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.warn('[checkout] clearSellerCart post-pago falló:', e?.message);
+        }
+      }
 
       const orderDetailsPath = pathByRouteName('OrderDetailsPage', routeConfiguration, {
         id: orderId.uuid,
