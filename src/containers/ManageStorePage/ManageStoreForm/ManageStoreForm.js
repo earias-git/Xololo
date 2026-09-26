@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Form as FinalForm, Field } from 'react-final-form';
 import classNames from 'classnames';
 
+import * as validators from '../../../util/validators';
+
 import { Form, PrimaryButton, FieldTextInput, FieldSelect } from '../../../components';
 
 import ImageUploadField from './ImageUploadField';
@@ -217,55 +219,81 @@ const SlugPreview = ({ slug }) => {
 // Se usa 3 veces en el form: legal, comercial, recolección. Los campos
 // son sub-props del name padre (ej. name="legalAddress" → legalAddress.street,
 // legalAddress.colonia, etc.). Final Form maneja objetos anidados nativos.
-const AddressBlock = ({ name, title, hint }) => (
-  <div className={css.addressBlock}>
-    <h4 className={css.addressBlockTitle}>{title}</h4>
-    {hint ? <p className={css.hint}>{hint}</p> : null}
-    <div className={css.addressGrid}>
-      <FieldTextInput
-        className={classNames(css.field, css.addressFieldWide)}
-        type="text"
-        id={`${name}.street`}
-        name={`${name}.street`}
-        label="Calle y número"
-        placeholder="Ej. Av. Insurgentes Sur 1234"
-      />
-      <FieldTextInput
-        className={css.field}
-        type="text"
-        id={`${name}.colonia`}
-        name={`${name}.colonia`}
-        label="Colonia"
-        placeholder="Ej. Del Valle"
-      />
-      <FieldTextInput
-        className={css.field}
-        type="text"
-        id={`${name}.postalCode`}
-        name={`${name}.postalCode`}
-        label="Código postal"
-        placeholder="03100"
-        maxLength={5}
-      />
-      <FieldTextInput
-        className={css.field}
-        type="text"
-        id={`${name}.city`}
-        name={`${name}.city`}
-        label="Ciudad o municipio"
-        placeholder="Ej. Xalapa"
-      />
-      <FieldTextInput
-        className={css.field}
-        type="text"
-        id={`${name}.state`}
-        name={`${name}.state`}
-        label="Estado"
-        placeholder="Ej. Veracruz"
-      />
+//
+// XOLOLO D: `required` (opcional) valida que los 5 campos estén
+// llenos. Cuando el bloque es "opcional" (ej. domicilio comercial que
+// el seller marcó como "mismo que legal") no lo pasamos y el bloque
+// no se renderea. Cuando SÍ se renderea, todos los campos son
+// obligatorios: una dirección con street pero sin CP no sirve para
+// cotizar envío ni cumplir SAT.
+const AddressBlock = ({ name, title, hint, required = false }) => {
+  const req = required
+    ? validators.required('Este campo es requerido.')
+    : undefined;
+  const cp = required
+    ? validators.composeValidators(
+        validators.required('Este campo es requerido.'),
+        v =>
+          /^\d{5}$/.test(String(v || '').trim())
+            ? undefined
+            : 'Debe ser un código postal de 5 dígitos.'
+      )
+    : undefined;
+  return (
+    <div className={css.addressBlock}>
+      <h4 className={css.addressBlockTitle}>{title}</h4>
+      {hint ? <p className={css.hint}>{hint}</p> : null}
+      <div className={css.addressGrid}>
+        <FieldTextInput
+          className={classNames(css.field, css.addressFieldWide)}
+          type="text"
+          id={`${name}.street`}
+          name={`${name}.street`}
+          label="Calle y número"
+          placeholder="Ej. Av. Insurgentes Sur 1234"
+          validate={req}
+        />
+        <FieldTextInput
+          className={css.field}
+          type="text"
+          id={`${name}.colonia`}
+          name={`${name}.colonia`}
+          label="Colonia"
+          placeholder="Ej. Del Valle"
+          validate={req}
+        />
+        <FieldTextInput
+          className={css.field}
+          type="text"
+          id={`${name}.postalCode`}
+          name={`${name}.postalCode`}
+          label="Código postal"
+          placeholder="03100"
+          maxLength={5}
+          validate={cp}
+        />
+        <FieldTextInput
+          className={css.field}
+          type="text"
+          id={`${name}.city`}
+          name={`${name}.city`}
+          label="Ciudad o municipio"
+          placeholder="Ej. Xalapa"
+          validate={req}
+        />
+        <FieldTextInput
+          className={css.field}
+          type="text"
+          id={`${name}.state`}
+          name={`${name}.state`}
+          label="Estado"
+          placeholder="Ej. Veracruz"
+          validate={req}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ManageStoreForm = props => (
   <FinalForm
@@ -463,6 +491,7 @@ const ManageStoreForm = props => (
               name="legalAddress"
               title="Domicilio legal (SAT)"
               hint="Debe coincidir con tu Constancia de Situación Fiscal del SAT. Se usa para facturación electrónica."
+              required
             />
 
             <div className={css.addressSameRow}>
@@ -482,6 +511,7 @@ const ManageStoreForm = props => (
                     name="commercialAddress"
                     title="Domicilio comercial"
                     hint="Dónde opera tu tienda físicamente. Aparece en el footer de tu storefront con botón a Google Maps."
+                    required
                   />
                 )
               }
@@ -504,6 +534,7 @@ const ManageStoreForm = props => (
                     name="pickupAddress"
                     title="Domicilio de recolección"
                     hint="Desde aquí recoge el courier los paquetes. Puede ser tu bodega o cualquier punto distinto al legal."
+                    required
                   />
                 )
               }

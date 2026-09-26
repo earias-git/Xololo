@@ -134,6 +134,23 @@ export const emailFormatValid = message => value => {
   return value && EMAIL_RE.test(value) ? VALID : message;
 };
 
+// XOLOLO D: validación de teléfono para México.
+// Acepta:
+//   - 10 dígitos (formato local: 5512345678, 55 1234 5678, 55-1234-5678)
+//   - 12 dígitos con lada país (521 5512345678, +52 55 1234 5678)
+//   - 13 dígitos si incluye 1 tras el 52 (formato Whatsapp: 5215512345678)
+// Ignora espacios, guiones, paréntesis, '+', y punto.
+// Rechaza cualquier cosa que no llegue a 10 dígitos limpios, o
+// combinaciones que no empiecen con lada México cuando exceden 10.
+const PHONE_MX_RE = /^\d{10}$|^52\d{10}$|^521\d{10}$/;
+const normalizePhone = raw =>
+  String(raw || '').replace(/[\s\-().+]/g, '');
+export const phoneMxFormatValid = message => value => {
+  if (!value) return VALID; // dejamos que `required` se encargue si el campo es obligatorio
+  const clean = normalizePhone(value);
+  return PHONE_MX_RE.test(clean) ? VALID : message;
+};
+
 export const moneySubUnitAmountAtLeast = (message, minValue) => value => {
   return value instanceof Money && value.amount >= minValue ? VALID : message;
 };

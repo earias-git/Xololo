@@ -37,15 +37,20 @@ const PhoneNumberMaybe = props => {
   const { required } = userTypeConfig?.phoneNumberSettings || {};
   const isRequired = required === true;
 
-  const validateMaybe = isRequired
-    ? {
-        validate: validators.required(
-          intl.formatMessage({
-            id: 'ContactDetailsForm.phoneRequired',
-          })
-        ),
-      }
-    : {};
+  // XOLOLO D: además de required (cuando aplica), siempre validamos
+  // formato de teléfono MX. Sin validación de formato el usuario podía
+  // guardar "123" o texto libre y luego el sistema fallaba al mandar
+  // Whatsapp o notificaciones.
+  const formatValidator = validators.phoneMxFormatValid(
+    intl.formatMessage({ id: 'ContactDetailsForm.phoneInvalid' })
+  );
+  const validate = isRequired
+    ? validators.composeValidators(
+        validators.required(intl.formatMessage({ id: 'ContactDetailsForm.phoneRequired' })),
+        formatValidator
+      )
+    : formatValidator;
+  const validateMaybe = { validate };
 
   return (
     <FieldPhoneNumberInput

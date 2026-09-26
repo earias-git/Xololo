@@ -156,8 +156,15 @@ const ShippingDetails = props => {
         placeholder={intl.formatMessage({
           id: 'ShippingDetails.recipientPhoneNumberPlaceholder',
         })}
-        validate={validators.required(
-          intl.formatMessage({ id: 'ShippingDetails.recipientPhoneNumberRequired' })
+        validate={validators.composeValidators(
+          validators.required(
+            intl.formatMessage({ id: 'ShippingDetails.recipientPhoneNumberRequired' })
+          ),
+          // XOLOLO D: teléfono destinatario debe tener formato MX válido
+          // — es el # que usa la paquetería si hay problemas de entrega.
+          validators.phoneMxFormatValid(
+            intl.formatMessage({ id: 'ShippingDetails.recipientPhoneNumberInvalid' })
+          )
         )}
         onUnmount={() => formApi.change('recipientPhoneNumber', undefined)}
       />

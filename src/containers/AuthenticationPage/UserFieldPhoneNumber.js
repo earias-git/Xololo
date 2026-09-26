@@ -31,16 +31,25 @@ const UserFieldPhoneNumber = props => {
     return null;
   }
 
+  // XOLOLO D: además de "required" cuando el userType lo pide,
+  // SIEMPRE validamos que sea un teléfono MX válido (10 dígitos, con
+  // o sin lada 52). Antes se aceptaba cualquier cosa — buyers y
+  // sellers metían "123", nombres, o teléfonos incompletos y llegaban
+  // errores en Whatsapp / envíos. Si el campo es opcional y viene
+  // vacío, no validamos formato (respeta que sea opcional).
   const isRequired = required === true;
-  const validateMaybe = isRequired
-    ? {
-        validate: validators.required(
-          intl.formatMessage({
-            id: `${formName}.phoneNumberRequired`,
-          })
+  const formatValidator = validators.phoneMxFormatValid(
+    intl.formatMessage({ id: `${formName}.phoneNumberInvalid` })
+  );
+  const validate = isRequired
+    ? validators.composeValidators(
+        validators.required(
+          intl.formatMessage({ id: `${formName}.phoneNumberRequired` })
         ),
-      }
-    : {};
+        formatValidator
+      )
+    : formatValidator;
+  const validateMaybe = { validate };
 
   return (
     <FieldPhoneNumberInput
