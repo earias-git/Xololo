@@ -53,6 +53,11 @@
   }
 }
 
+/* XOLOLO P3: badge Xololo Verified junto al logo/nombre de la tienda. */
+.brandVerified {
+  margin-left: 10px;
+}
+
 /* ---------- Right side of header ---------- */
 .headerRight {
   display: inline-flex;

@@ -173,4 +173,5 @@ export { default as ShareListingButton } from './ShareListingButton/ShareListing
 export { default as StoreStatsWidget } from './StoreStatsWidget/StoreStatsWidget';
 export { default as AddToCartCta } from './AddToCartCta/AddToCartCta';
 export { default as CartIndicator } from './CartIndicator/CartIndicator';
+export { default as VerifiedBadge } from './VerifiedBadge/VerifiedBadge';
 export { default as ModalMissingInformation } from './ModalMissingInformation/ModalMissingInformation';

@@ -116,6 +116,16 @@ const syncSubscriptionMetadata = async ({ isdk, sellerId, subscription, plan, ex
     metadata: { xololoSubscription: updated },
   });
 
+  // XOLOLO P3: re-computa badge Xololo Verified tras el cambio de sub.
+  // Silent-fail dentro del util — no rompe el sync si falla.
+  try {
+    const { syncVerifiedBadge } = require('./sellerVerified');
+    await syncVerifiedBadge({ isdk, sellerId });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[stripeBilling] syncVerifiedBadge falló:', e?.message);
+  }
+
   // XOLOLO roadmap #6: gate de publicación. Sólo actuamos cuando el
   // status cruza la frontera activo/no-activo — evita re-escanear los
   // listings del seller en cada sync que no cambia esa condición (ej.

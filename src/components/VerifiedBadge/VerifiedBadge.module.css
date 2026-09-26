@@ -1,0 +1,74 @@
+@import '../../styles/customMediaQueries.css';
+
+/* Pill verde con checkmark blanco. Diseño simple, alto contraste,
+   legible en dark backgrounds (storefront con branding). */
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background-color: #10b981; /* verde marca de confianza */
+  color: var(--colorWhite);
+  padding: 3px 10px 3px 6px;
+  font-weight: var(--fontWeightSemiBold);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: help; /* indica que hay tooltip (`title`) */
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--colorWhite);
+  color: #10b981;
+}
+
+.checkIcon {
+  display: block;
+}
+
+.label {
+  letter-spacing: 0.2px;
+}
+
+/* Sizes */
+.sizeSm {
+  padding: 2px 8px 2px 4px;
+  font-size: 10px;
+}
+.sizeSm .check {
+  width: 14px;
+  height: 14px;
+}
+.sizeSm .checkIcon {
+  width: 10px;
+  height: 10px;
+}
+
+.sizeMd {
+  padding: 3px 10px 3px 6px;
+  font-size: 12px;
+}
+.sizeMd .check {
+  width: 18px;
+  height: 18px;
+}
+.sizeMd .checkIcon {
+  width: 12px;
+  height: 12px;
+}
+
+.sizeLg {
+  padding: 4px 14px 4px 8px;
+  font-size: 14px;
+}
+.sizeLg .check {
+  width: 22px;
+  height: 22px;
+}
+.sizeLg .checkIcon {
+  width: 14px;
+  height: 14px;
+}

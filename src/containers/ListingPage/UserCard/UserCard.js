@@ -7,7 +7,7 @@ import { richText } from '../../../util/richText';
 import { ensureUser, ensureCurrentUser } from '../../../util/data';
 import { propTypes } from '../../../util/types';
 
-import { AvatarLarge, NamedLink, InlineTextButton } from '../../../components';
+import { AvatarLarge, NamedLink, InlineTextButton, VerifiedBadge } from '../../../components';
 
 import css from './UserCard.module.css';
 
@@ -177,6 +177,8 @@ const UserCard = props => {
         <div className={css.info}>
           <div className={css.headingRow}>
             <FormattedMessage id="UserCard.heading" values={{ name: displayName }} />
+            {/* XOLOLO P3: badge Xololo Verified junto al nombre. */}
+            <VerifiedBadge seller={ensuredUser} size="sm" className={css.verifiedBadge} />
             {editProfileDesktop}
           </div>
           {hasBio ? <ExpandableBio className={css.desktopBio} bio={bio} /> : null}

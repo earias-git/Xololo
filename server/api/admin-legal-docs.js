@@ -123,6 +123,15 @@ const review = async (req, res) => {
     });
     // Invalida cache de la lista — el próximo GET refleja el cambio.
     cache = null;
+    // XOLOLO P3: al aprobar/rechazar un doc, re-computa el badge.
+    // El sync es silent-fail; no rompe la respuesta al admin.
+    try {
+      const { syncVerifiedBadge } = require('../api-util/sellerVerified');
+      await syncVerifiedBadge({ isdk, sellerId });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[admin-legal-docs] syncVerifiedBadge falló:', e?.message);
+    }
     return res.json({ ok: true });
   } catch (e) {
     // eslint-disable-next-line no-console

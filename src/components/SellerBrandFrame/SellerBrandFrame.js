@@ -4,6 +4,8 @@ import classNames from 'classnames';
 
 import { selectCartItemCount } from '../../ducks/cart.duck';
 
+import VerifiedBadge from '../VerifiedBadge/VerifiedBadge';
+
 import css from './SellerBrandFrame.module.css';
 
 // XOLOLO: contenedor que aplica el branding del SELLER (colores, logo)
@@ -84,6 +86,8 @@ const SellerBrandFrame = ({ seller, children, className, showFooter = true }) =>
           ) : (
             <span className={css.brandFallback}>{name}</span>
           )}
+          {/* XOLOLO P3: badge Xololo Verified, se auto-oculta si no aplica. */}
+          <VerifiedBadge seller={seller} size="sm" className={css.brandVerified} />
         </a>
         <div className={css.headerRight}>
           {cartCount > 0 ? (

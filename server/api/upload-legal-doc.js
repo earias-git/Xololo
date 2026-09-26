@@ -165,6 +165,16 @@ module.exports = async (req, res) => {
         id: sellerId,
         metadata: { xololoLegalDocs: mergedDocs },
       });
+      // XOLOLO P3: subir un nuevo doc resetea el slot a 'pending' —
+      // si el seller estaba verificado, deja de estarlo hasta que el
+      // admin re-apruebe. Sync silent-fail.
+      try {
+        const { syncVerifiedBadge } = require('../api-util/sellerVerified');
+        await syncVerifiedBadge({ isdk, sellerId });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('[upload-legal-doc] syncVerifiedBadge falló:', e?.message);
+      }
     }
   } catch (err) {
     // eslint-disable-next-line no-console
