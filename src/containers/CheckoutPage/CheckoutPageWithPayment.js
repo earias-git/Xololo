@@ -647,9 +647,12 @@ export const CheckoutPageWithPayment = props => {
   // If your marketplace works mostly in one country you can use initial values to select country automatically
   // e.g. {country: 'FI'}
 
-  // XOLOLO Envíos v2: pre-selecciona el primer método habilitado para
-  // que el radio del selector aparezca marcado desde el primer render
-  // (matching el default server-side de lineItems.js).
+  // XOLOLO Envíos v2: default para pre-seleccionar visualmente el
+  // primer método habilitado (matching el default server-side de
+  // lineItems.js). NO va en initialValues del form — si el default
+  // cambia entre renders y FinalForm reinicializa, se pierde la
+  // selección del buyer. En su lugar se pasa como prop suelto al
+  // XololoShippingMethodSelector que decide qué radio marcar.
   const xoloDefaultMethod = xoloMethodsForCheckout
     ? xoloMethodsForCheckout.pickup?.enabled
       ? 'pickup'
@@ -659,11 +662,7 @@ export const CheckoutPageWithPayment = props => {
       ? 'freight'
       : null
     : null;
-  const initialValuesForStripePayment = {
-    name: userName,
-    recipientName: userName,
-    ...(xoloDefaultMethod ? { selectedShippingMethod: xoloDefaultMethod } : {}),
-  };
+  const initialValuesForStripePayment = { name: userName, recipientName: userName };
   const askShippingDetails =
     orderData?.deliveryMethod === 'shipping' &&
     !hasTransactionPassedPendingPayment(existingTransaction, process);
@@ -792,6 +791,7 @@ export const CheckoutPageWithPayment = props => {
                 primaryQuantity={pageData?.orderData?.quantity}
                 additionalCartItems={pageData?.orderData?.additionalCartItems}
                 xololoShippingMethods={xoloMethodsForCheckout}
+                xololoDefaultShippingMethod={xoloDefaultMethod}
                 xololoCurrencyFormatter={xoloCurrencyFormatter}
                 onXololoShippingMethodSelected={methodKey => {
                   // XOLOLO Envíos v2: al cambiar el método, re-speculate

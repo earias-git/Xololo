@@ -115,10 +115,14 @@ export const EditListingDeliveryForm = props => (
       const submitInProgress = updateInProgress;
       // XOLOLO Envíos v2: submit permitido si hay AL MENOS un método
       // activo (legacy pickup/shipping O nuevo xoloMethods).
+      // FieldCheckbox con `value` guarda ['true']|[] (array), y `!!array`
+      // es siempre true — hay que checar length. Aceptamos también
+      // boolean true por defensa (si en el futuro cambiamos el shape).
+      const xoloIsOnRobust = v => (Array.isArray(v) ? v.length > 0 : v === true);
       const xoloHasAny =
-        !!values.xololoMethods?.pickup?.enabled ||
-        !!values.xololoMethods?.localDelivery?.enabled ||
-        !!values.xololoMethods?.freight?.enabled;
+        xoloIsOnRobust(values.xololoMethods?.pickup?.enabled) ||
+        xoloIsOnRobust(values.xololoMethods?.localDelivery?.enabled) ||
+        xoloIsOnRobust(values.xololoMethods?.freight?.enabled);
       const submitDisabled =
         invalid ||
         disabled ||
@@ -142,12 +146,12 @@ export const EditListingDeliveryForm = props => (
 
       // XOLOLO Envíos v2: sección nueva de 3 métodos. Vive en
       // values.xololoMethods.{pickup|localDelivery|freight}.
-      // La sección legacy más abajo se mantiene por compatibilidad
-      // mientras el server y checkout migran (Sub-commit B).
+      // La sección legacy se OCULTA cuando cualquier método v2 está
+      // activo — ver `xoloHasAny` arriba.
       const xoloMethods = values.xololoMethods || {};
-      const xoloPickupOn = !!xoloMethods.pickup?.enabled;
-      const xoloLocalOn = !!xoloMethods.localDelivery?.enabled;
-      const xoloFreightOn = !!xoloMethods.freight?.enabled;
+      const xoloPickupOn = xoloIsOnRobust(xoloMethods.pickup?.enabled);
+      const xoloLocalOn = xoloIsOnRobust(xoloMethods.localDelivery?.enabled);
+      const xoloFreightOn = xoloIsOnRobust(xoloMethods.freight?.enabled);
 
       return (
         <Form className={classes} onSubmit={handleSubmit}>

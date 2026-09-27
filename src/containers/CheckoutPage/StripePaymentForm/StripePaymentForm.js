@@ -517,6 +517,7 @@ class StripePaymentForm extends Component {
       // menos uno, mostramos el XololoShippingMethodSelector en vez del
       // widget legacy de rates.
       xololoShippingMethods,
+      xololoDefaultShippingMethod,
       onXololoShippingMethodSelected,
       xololoCurrencyFormatter,
       values,
@@ -688,6 +689,7 @@ class StripePaymentForm extends Component {
           <XololoShippingMethodSelector
             methods={xololoShippingMethods}
             value={values?.selectedShippingMethod || null}
+            defaultMethod={xololoDefaultShippingMethod}
             onChange={handleXololoMethodSelected}
             currencyFormatter={xololoCurrencyFormatter}
           />

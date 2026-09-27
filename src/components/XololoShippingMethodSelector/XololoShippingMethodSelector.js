@@ -21,7 +21,13 @@ import css from './XololoShippingMethodSelector.module.css';
 //   currencyFormatter(subunits): función que formatea $ (viene del padre
 //     porque ya tenemos intl/formatMoney allí)
 
-const XololoShippingMethodSelector = ({ methods, value, onChange, currencyFormatter }) => {
+const XololoShippingMethodSelector = ({
+  methods,
+  value,
+  defaultMethod,
+  onChange,
+  currencyFormatter,
+}) => {
   const list = [];
   if (methods?.pickup?.enabled) {
     list.push({
@@ -61,12 +67,19 @@ const XololoShippingMethodSelector = ({ methods, value, onChange, currencyFormat
     );
   }
 
+  // XOLOLO Bug envíos v2: si el buyer no ha elegido explícitamente,
+  // usamos `defaultMethod` para que el radio se vea pre-seleccionado.
+  // Sin este fallback la primera vez se veían todas sin marcar y al
+  // hacer clic la selección "no pegaba" por conflicto con initialValues
+  // del form (que re-inicializaba en cada re-speculate).
+  const effectiveValue = value || defaultMethod || null;
+
   return (
     <div className={css.root}>
       <h4 className={css.title}>¿Cómo quieres recibir tu pedido?</h4>
       <ul className={css.list}>
         {list.map(m => {
-          const checked = value === m.key;
+          const checked = effectiveValue === m.key;
           return (
             <li
               key={m.key}
@@ -81,13 +94,13 @@ const XololoShippingMethodSelector = ({ methods, value, onChange, currencyFormat
                   onChange={() => onChange(m.key)}
                   className={css.radio}
                 />
-                <span className={css.itemBody}>
-                  <span className={css.itemHeader}>
+                <div className={css.itemBody}>
+                  <div className={css.itemHeader}>
                     <span className={css.itemTitle}>{m.title}</span>
                     <span className={css.itemPrice}>{m.priceLabel}</span>
-                  </span>
-                  <span className={css.itemNote}>{m.note}</span>
-                </span>
+                  </div>
+                  <div className={css.itemNote}>{m.note}</div>
+                </div>
               </label>
             </li>
           );
