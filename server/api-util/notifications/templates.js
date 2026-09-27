@@ -381,6 +381,51 @@ const TEMPLATES = {
       },
     },
   },
+  // XOLOLO Envíos v2 — Sub-commit C: loop de cotización de flete.
+  'shipping.quote_ready': {
+    email: {
+      buyer: {
+        subject: 'Cotización de envío lista · {listing.title}',
+        bodyText:
+          'Hola {buyer.name},\n\n' +
+          'El vendedor {seller.name} cotizó el envío por flete de tu pedido:\n\n' +
+          '  {listing.title}\n' +
+          '  Envío: {quote.amountLabel}\n\n' +
+          'Revisa la cotización y autorízala desde el detalle del pedido para que ' +
+          'el vendedor pueda coordinar el envío contigo:\n\n{order.url}',
+      },
+    },
+    push: {
+      buyer: {
+        title: 'Envío cotizado: {quote.amountLabel}',
+        body: '{seller.name} · {listing.title}',
+        url: '{order.url}',
+      },
+    },
+  },
+  'shipping.quote_authorized': {
+    email: {
+      seller: {
+        subject: 'Envío autorizado · {listing.title}',
+        bodyText:
+          'Hola {seller.name},\n\n' +
+          'El comprador {buyer.name} autorizó la cotización de envío por ' +
+          '{quote.amountLabel} para el pedido de:\n\n' +
+          '  {listing.title}\n\n' +
+          'Ya puedes coordinar el envío directamente con el comprador ' +
+          '(WhatsApp / transferencia / etc). El pago del flete se maneja fuera ' +
+          'de la plataforma; el pedido de los productos ya fue pagado.\n\n' +
+          'Ver pedido: {order.url}',
+      },
+    },
+    push: {
+      seller: {
+        title: 'Envío autorizado: {quote.amountLabel}',
+        body: '{buyer.name} · {listing.title}',
+        url: '{order.url}',
+      },
+    },
+  },
 };
 
 const get = (event, channel, actor) => {

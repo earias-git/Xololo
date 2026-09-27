@@ -173,6 +173,7 @@ export { default as ShareListingButton } from './ShareListingButton/ShareListing
 export { default as StoreStatsWidget } from './StoreStatsWidget/StoreStatsWidget';
 export { default as StoreHeaderStats } from './StoreHeaderStats/StoreHeaderStats';
 export { default as XololoShippingMethodSelector } from './XololoShippingMethodSelector/XololoShippingMethodSelector';
+export { default as ShippingQuoteFreight } from './ShippingQuoteFreight/ShippingQuoteFreight';
 export { default as AddToCartCta } from './AddToCartCta/AddToCartCta';
 export { default as CartIndicator } from './CartIndicator/CartIndicator';
 export { default as VerifiedBadge } from './VerifiedBadge/VerifiedBadge';

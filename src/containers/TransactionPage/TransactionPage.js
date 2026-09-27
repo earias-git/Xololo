@@ -51,6 +51,7 @@ import {
   LayoutSingleColumn,
   OrderFulfillmentPanel,
   OrderTimeline,
+  ShippingQuoteFreight,
   PostDeliverySurvey,
   SellerBrandFrame,
 } from '../../components';
@@ -1024,6 +1025,14 @@ export const TransactionPageComponent = props => {
         }
       >
         <div className={css.root}>
+          {/* XOLOLO Envíos v2 (Sub-commit C): loop de cotización del
+              método "flete". Se auto-oculta si la tx no es freight. */}
+          {isDataAvailable ? (
+            <ShippingQuoteFreight
+              transaction={transaction}
+              role={transactionRole}
+            />
+          ) : null}
           {/* XOLOLO: timeline de la orden (Fase D.7). Visible para ambas
               partes — cada uno ve el estado en tiempo real alimentado
               por los eventos del webhook Skydropx (D.6). */}

@@ -91,6 +91,16 @@ const MATRIX = {
   'seller.subscription_canceled': {
     seller: ['email'],
   },
+  // XOLOLO Envíos v2 — Sub-commit C: loop de cotización de flete.
+  // Cuando el seller cotiza el envío tras la compra del método freight,
+  // avisamos al buyer para que autorice. Cuando el buyer autoriza,
+  // avisamos al seller para que coordine el envío.
+  'shipping.quote_ready': {
+    buyer: ['email', 'push'],
+  },
+  'shipping.quote_authorized': {
+    seller: ['email', 'push'],
+  },
 };
 
 const CHANNELS = { email, push, whatsapp };

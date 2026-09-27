@@ -20,6 +20,7 @@ const sellerBySlug = require('./api/seller-by-slug');
 const featuredStores = require('./api/featured-stores');
 const uploadStoreImage = require('./api/upload-store-image');
 const shippingQuote = require('./api/shipping-quote');
+const xololoShippingQuote = require('./api/xololo-shipping-quote');
 const verifyPickupCode = require('./api/verify-pickup-code');
 const generateShippingGuide = require('./api/generate-shipping-guide');
 const uploadSosPhoto = require('./api/upload-sos-photo');
@@ -100,6 +101,13 @@ router.post('/upload-store-image', uploadStoreImage);
 // y que el seller haya configurado originPostalCode en /account/store.
 // body-parser JSON explícito porque el cliente manda application/json.
 router.post('/shipping-quote', bodyParser.json(), shippingQuote);
+
+// XOLOLO Envíos v2 — Sub-commit C: loop de cotización del método "flete".
+// submit lo llama el SELLER para cotizar; authorize lo llama el BUYER
+// para aceptar. Ambos actualizan metadata.xololoShippingQuote y disparan
+// notificación a la contraparte.
+router.post('/xololo-shipping-quote/submit', bodyParser.json(), xololoShippingQuote.submit);
+router.post('/xololo-shipping-quote/authorize', bodyParser.json(), xololoShippingQuote.authorize);
 
 // XOLOLO: verificar código de 6 dígitos que el buyer muestra al seller
 // al recoger. Solo el provider de la transacción puede llamarlo. 3
