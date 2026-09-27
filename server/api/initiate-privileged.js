@@ -83,11 +83,31 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
   const shippingPricingMode = publicData.shippingPricingMode;
   const sellerCoversShipping = !!publicData.sellerCoversShipping;
 
-  // XOLOLO Envíos v2: si el buyer eligió uno de los 3 métodos nuevos
-  // (pickup/localDelivery/freight), construimos el shape v2 en
-  // protectedData.xololoShipping. El resto del sistema (fulfillment,
-  // dashboard, notificaciones) lee este objeto y actúa según `mode`.
-  const selectedV2 = orderData?.selectedShippingMethod;
+  // XOLOLO Envíos v2: derivamos el método efectivo con la misma
+  // lógica de default que server/api-util/lineItems.js — si el
+  // listing tiene métodos v2 habilitados y el buyer no eligió uno,
+  // usamos el primero habilitado. Esto evita divergencia entre el
+  // shape guardado en protectedData.xololoShipping y el shipping-fee
+  // real del breakdown.
+  const {
+    getShippingMethodsFromListing: getMethodsV2,
+    METHOD_PICKUP: MP,
+    METHOD_LOCAL_DELIVERY: ML,
+    METHOD_FREIGHT: MF,
+  } = require('../api-util/xololoShippingMethods');
+  const methodsV2 = getMethodsV2(listing);
+  const enabledV2 = [
+    methodsV2.pickup.enabled ? MP : null,
+    methodsV2.localDelivery.enabled ? ML : null,
+    methodsV2.freight.enabled ? MF : null,
+  ].filter(Boolean);
+  const requestedV2 = orderData?.selectedShippingMethod;
+  const selectedV2 =
+    enabledV2.length > 0
+      ? enabledV2.includes(requestedV2)
+        ? requestedV2
+        : enabledV2[0]
+      : null;
   if (selectedV2 === 'pickup') {
     const pickupCode = isSpeculative
       ? null

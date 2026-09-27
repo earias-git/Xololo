@@ -59,25 +59,39 @@ const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
   const extraLineItems = [];
 
   // ============================================================
-  // XOLOLO Envíos v2: nuevo path — el buyer eligió uno de los 3
-  // métodos configurados por el seller en xololoShippingMethods.
-  // Se resuelve ANTES del path legacy y hace early return si aplica.
+  // XOLOLO Envíos v2: path nuevo (fuente de verdad cuando el listing
+  // tiene métodos v2 habilitados). Estructura:
+  //   - Si hay métodos v2 habilitados → SIEMPRE resolvemos por v2 y
+  //     NO caemos al legacy (evita el bug de doble-cobro de envío
+  //     donde el breakdown inicial usa shippingPriceInSubunitsOneItem
+  //     de $XXX aunque el buyer elija pickup gratis).
+  //   - Si el buyer no eligió método aún, defaultea al PRIMERO
+  //     habilitado (orden: pickup → localDelivery → freight).
+  //   - Si NO hay v2 habilitados → fall-through al path legacy de
+  //     abajo (listings viejos siguen funcionando sin migración).
   // ============================================================
-  const selectedShippingMethod = orderData?.selectedShippingMethod;
-  if (
-    selectedShippingMethod &&
-    [METHOD_PICKUP, METHOD_LOCAL_DELIVERY, METHOD_FREIGHT].includes(selectedShippingMethod)
-  ) {
-    const methods = getShippingMethodsFromListing({ attributes: { publicData } });
+  const methodsV2 = getShippingMethodsFromListing({ attributes: { publicData } });
+  const enabledV2 = [
+    methodsV2.pickup.enabled ? METHOD_PICKUP : null,
+    methodsV2.localDelivery.enabled ? METHOD_LOCAL_DELIVERY : null,
+    methodsV2.freight.enabled ? METHOD_FREIGHT : null,
+  ].filter(Boolean);
+  const hasAnyV2 = enabledV2.length > 0;
+  const requestedV2 = orderData?.selectedShippingMethod;
+  const chosenV2 =
+    hasAnyV2 && enabledV2.includes(requestedV2)
+      ? requestedV2
+      : hasAnyV2
+      ? enabledV2[0]
+      : null;
 
-    if (selectedShippingMethod === METHOD_PICKUP && methods.pickup.enabled) {
-      // Pickup en domicilio del seller: siempre $0. No agregamos línea
-      // (Sharetribe acepta orden sin shipping-fee cuando es gratis).
+  if (chosenV2) {
+    if (chosenV2 === METHOD_PICKUP) {
+      // Pickup en domicilio del seller: siempre $0. Sin línea de shipping-fee.
       return { quantity, extraLineItems: [] };
     }
-
-    if (selectedShippingMethod === METHOD_LOCAL_DELIVERY && methods.localDelivery.enabled) {
-      const priceSubunits = Number(methods.localDelivery.priceSubunits) || 0;
+    if (chosenV2 === METHOD_LOCAL_DELIVERY) {
+      const priceSubunits = Number(methodsV2.localDelivery.priceSubunits) || 0;
       if (priceSubunits > 0) {
         extraLineItems.push({
           code: 'line-item/shipping-fee',
@@ -88,17 +102,12 @@ const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
       }
       return { quantity, extraLineItems };
     }
-
-    if (selectedShippingMethod === METHOD_FREIGHT && methods.freight.enabled) {
-      // Flete "por cotizar": el buyer paga $0 de envío ahora. El seller
-      // cotizará y cobrará por separado en la Fase 2 (loop de aprobación).
-      // El flag `xololoShippingQuotePending` se agrega en protectedData
-      // desde initiate-privileged.js — aquí sólo omitimos la línea.
+    if (chosenV2 === METHOD_FREIGHT) {
+      // Flete "por cotizar": $0 ahora; loop de cotización posterior
+      // (server/api/xololo-shipping-quote.js). El flag quotePending se
+      // marca en initiate-privileged.js.
       return { quantity, extraLineItems: [] };
     }
-    // Si el método pedido no está habilitado en el listing, caemos al
-    // path legacy — protección defensiva por si el cliente manda algo
-    // inválido; no rompemos la orden, sólo ignoramos el override.
   }
 
   if (isShipping) {

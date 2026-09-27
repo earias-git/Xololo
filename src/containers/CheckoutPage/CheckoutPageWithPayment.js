@@ -504,6 +504,9 @@ export const CheckoutPageWithPayment = props => {
     transactionFieldConfigs = [],
     showTransactionFields,
     config,
+    // XOLOLO Envíos v2: para re-speculate cuando el buyer cambia el
+    // método de envío (así el breakdown se actualiza al instante).
+    fetchSpeculatedTransaction,
   } = props;
 
   // Since the listing data is already given from the ListingPage
@@ -644,7 +647,23 @@ export const CheckoutPageWithPayment = props => {
   // If your marketplace works mostly in one country you can use initial values to select country automatically
   // e.g. {country: 'FI'}
 
-  const initialValuesForStripePayment = { name: userName, recipientName: userName };
+  // XOLOLO Envíos v2: pre-selecciona el primer método habilitado para
+  // que el radio del selector aparezca marcado desde el primer render
+  // (matching el default server-side de lineItems.js).
+  const xoloDefaultMethod = xoloMethodsForCheckout
+    ? xoloMethodsForCheckout.pickup?.enabled
+      ? 'pickup'
+      : xoloMethodsForCheckout.localDelivery?.enabled
+      ? 'localDelivery'
+      : xoloMethodsForCheckout.freight?.enabled
+      ? 'freight'
+      : null
+    : null;
+  const initialValuesForStripePayment = {
+    name: userName,
+    recipientName: userName,
+    ...(xoloDefaultMethod ? { selectedShippingMethod: xoloDefaultMethod } : {}),
+  };
   const askShippingDetails =
     orderData?.deliveryMethod === 'shipping' &&
     !hasTransactionPassedPendingPayment(existingTransaction, process);
@@ -774,6 +793,32 @@ export const CheckoutPageWithPayment = props => {
                 additionalCartItems={pageData?.orderData?.additionalCartItems}
                 xololoShippingMethods={xoloMethodsForCheckout}
                 xololoCurrencyFormatter={xoloCurrencyFormatter}
+                onXololoShippingMethodSelected={methodKey => {
+                  // XOLOLO Envíos v2: al cambiar el método, re-speculate
+                  // la tx para que el breakdown refleje el nuevo costo
+                  // (pickup=$0, localDelivery=$XX, freight=$0). Sin esto
+                  // el buyer ve el default del server pero al cambiar
+                  // seguía viendo el anterior en el sidebar.
+                  const shippingDetails = {};
+                  const optionalPaymentParams = {};
+                  const nextOrderParams = getOrderParams(
+                    // inyectamos el método elegido en pageData.orderData temporalmente
+                    { ...pageData, orderData: { ...(pageData?.orderData || {}), selectedShippingMethod: methodKey } },
+                    shippingDetails,
+                    optionalPaymentParams,
+                    config,
+                    {},
+                    null,
+                    undefined,
+                    undefined,
+                    methodKey
+                  );
+                  fetchSpeculatedTransactionIfNeeded(
+                    nextOrderParams,
+                    pageData,
+                    fetchSpeculatedTransaction
+                  );
+                }}
                 isFuzzyLocation={config.maps.fuzzy.enabled}
                 transactionFieldConfigs={transactionFieldConfigs}
                 showTransactionFields={showTransactionFields}

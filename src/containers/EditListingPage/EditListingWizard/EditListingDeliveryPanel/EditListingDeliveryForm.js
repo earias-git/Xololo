@@ -235,12 +235,15 @@ export const EditListingDeliveryForm = props => (
           </fieldset>
 
           {/* ============================================================
-              LEGACY: los campos de abajo se mantienen mientras el checkout
-              termina de migrar al nuevo modelo (Sub-commit B). Cuando el
-              seller edita, guardamos AMBOS shapes: xololoMethods (nuevo,
-              fuente de verdad futura) y deliveryOptions/shippingPricingMode
-              (legacy, aún leído por el checkout).
+              LEGACY: los campos de abajo se ocultan cuando el seller ya
+              tiene AL MENOS un método v2 activo — el server ignora el
+              legacy en ese caso (ver server/api-util/lineItems.js). Se
+              mantienen visibles sólo para listings viejos que aún no
+              han migrado. Al ocultarse también dejan de bloquear el
+              submit por validación required.
               ============================================================ */}
+          {xoloHasAny ? null : (
+          <>
           <FieldCheckbox
             id={formId ? `${formId}.pickup` : 'pickup'}
             className={classNames(css.deliveryCheckbox, { [css.hidden]: !displayMultipleDelivery })}
@@ -512,6 +515,8 @@ export const EditListingDeliveryForm = props => (
               cobrará el envío en el checkout. El costo lo asumes tú.
             </p>
           </div>
+          </>
+          )}
 
           <Button
             className={css.submitButton}
