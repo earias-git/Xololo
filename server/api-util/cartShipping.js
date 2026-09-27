@@ -73,13 +73,18 @@ const aggregateParcel = items => {
 // cotizable (falta peso o dimensiones).
 const parcelDataFromListing = (listing, quantity = 1) => {
   const pd = listing?.attributes?.publicData || {};
+  // XOLOLO Envíos v2: prefiere las medidas del método
+  // xololoShippingMethods.skydropxCarrier cuando existen (fuente de
+  // verdad nueva). Cae al legacy (pd.weightGrams / dimensionXCm) para
+  // listings sin migrar.
+  const v2 = pd.xololoShippingMethods?.skydropxCarrier || {};
   return {
     listingId: listing?.id?.uuid,
     title: listing?.attributes?.title,
-    weightGrams: pd.weightGrams,
-    dimensionLengthCm: pd.dimensionLengthCm,
-    dimensionWidthCm: pd.dimensionWidthCm,
-    dimensionHeightCm: pd.dimensionHeightCm,
+    weightGrams: v2.weightGrams ?? pd.weightGrams,
+    dimensionLengthCm: v2.dimensionLengthCm ?? pd.dimensionLengthCm,
+    dimensionWidthCm: v2.dimensionWidthCm ?? pd.dimensionWidthCm,
+    dimensionHeightCm: v2.dimensionHeightCm ?? pd.dimensionHeightCm,
     quantity,
   };
 };

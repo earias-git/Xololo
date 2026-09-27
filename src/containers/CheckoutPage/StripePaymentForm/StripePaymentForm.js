@@ -632,7 +632,15 @@ class StripePaymentForm extends Component {
     // completos. Al seleccionar un rate, lo persistimos en el form
     // state via formApi.change y notificamos al parent
     // (CheckoutPageWithPayment) para re-speculate del OrderBreakdown.
-    const showRateSelector = listingShippingPricingMode === 'carrier';
+    // XOLOLO Envíos v2: mostramos el rate selector cuando el listing
+    // legacy es carrier O cuando el buyer eligió skydropxCarrier en el
+    // selector v2. El rate elegido se sigue guardando en
+    // formValues.selectedShippingRate (misma key legacy) para no
+    // duplicar toda la lógica del rate selector.
+    const isXoloSkydropxSelected =
+      (xololoSelectedShippingMethod || xololoDefaultShippingMethod) === 'skydropxCarrier';
+    const showRateSelector =
+      listingShippingPricingMode === 'carrier' || isXoloSkydropxSelected;
     const handleRateSelected = rate => {
       formApi.change('selectedShippingRate', rate || undefined);
       if (typeof onShippingRateSelected === 'function') {
@@ -702,8 +710,12 @@ class StripePaymentForm extends Component {
         {showRateSelector ? (
           <ShippingRateSelector
             listingId={listingId}
-            shippingPricingMode={listingShippingPricingMode}
-            sellerCoversShipping={listingSellerCoversShipping}
+            shippingPricingMode="carrier"
+            sellerCoversShipping={
+              isXoloSkydropxSelected
+                ? !!xololoShippingMethods?.skydropxCarrier?.sellerCoversShipping
+                : listingSellerCoversShipping
+            }
             onRateSelected={handleRateSelected}
             primaryQuantity={primaryQuantity}
             additionalCartItems={additionalCartItems}

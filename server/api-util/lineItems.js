@@ -13,6 +13,7 @@ const {
 const {
   METHOD_PICKUP,
   METHOD_LOCAL_DELIVERY,
+  METHOD_SKYDROPX,
   METHOD_FREIGHT,
   getShippingMethodsFromListing,
 } = require('./xololoShippingMethods');
@@ -74,6 +75,7 @@ const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
   const enabledV2 = [
     methodsV2.pickup.enabled ? METHOD_PICKUP : null,
     methodsV2.localDelivery.enabled ? METHOD_LOCAL_DELIVERY : null,
+    methodsV2.skydropxCarrier.enabled ? METHOD_SKYDROPX : null,
     methodsV2.freight.enabled ? METHOD_FREIGHT : null,
   ].filter(Boolean);
   const hasAnyV2 = enabledV2.length > 0;
@@ -96,6 +98,26 @@ const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
         extraLineItems.push({
           code: 'line-item/shipping-fee',
           unitPrice: new Money(priceSubunits, currency),
+          quantity: 1,
+          includeFor: ['customer', 'provider'],
+        });
+      }
+      return { quantity, extraLineItems };
+    }
+    if (chosenV2 === METHOD_SKYDROPX) {
+      // Cotización dinámica: usa el rate elegido por el buyer en el
+      // ShippingRateSelector (viaja en orderData.selectedShippingRate,
+      // total en unidades mayores). sellerCoversShipping = true → línea $0.
+      const freeShipping = !!methodsV2.skydropxCarrier.sellerCoversShipping;
+      const rate = orderData?.selectedShippingRate;
+      const rateTotal = freeShipping ? 0 : Number(rate?.total);
+      const shouldAddLine =
+        freeShipping || (rate && Number.isFinite(rateTotal) && rateTotal >= 0);
+      if (shouldAddLine) {
+        const subunits = Math.round(rateTotal * 100);
+        extraLineItems.push({
+          code: 'line-item/shipping-fee',
+          unitPrice: new Money(subunits, currency),
           quantity: 1,
           includeFor: ['customer', 'provider'],
         });

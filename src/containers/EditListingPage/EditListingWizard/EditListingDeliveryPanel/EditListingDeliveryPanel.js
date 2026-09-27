@@ -91,6 +91,26 @@ const getInitialValues = props => {
       price: localPriceSubunits > 0 ? new Money(localPriceSubunits, currency) : null,
       zoneDescription: xoloMethodsCfg.localDelivery.zoneDescription || '',
     },
+    skydropxCarrier: {
+      enabled: xoloMethodsCfg.skydropxCarrier.enabled ? ['true'] : [],
+      sellerCoversShipping: xoloMethodsCfg.skydropxCarrier.sellerCoversShipping ? ['true'] : [],
+      weightGrams:
+        xoloMethodsCfg.skydropxCarrier.weightGrams != null
+          ? String(xoloMethodsCfg.skydropxCarrier.weightGrams)
+          : '',
+      dimensionLengthCm:
+        xoloMethodsCfg.skydropxCarrier.dimensionLengthCm != null
+          ? String(xoloMethodsCfg.skydropxCarrier.dimensionLengthCm)
+          : '',
+      dimensionWidthCm:
+        xoloMethodsCfg.skydropxCarrier.dimensionWidthCm != null
+          ? String(xoloMethodsCfg.skydropxCarrier.dimensionWidthCm)
+          : '',
+      dimensionHeightCm:
+        xoloMethodsCfg.skydropxCarrier.dimensionHeightCm != null
+          ? String(xoloMethodsCfg.skydropxCarrier.dimensionHeightCm)
+          : '',
+    },
     freight: {
       enabled: xoloMethodsCfg.freight.enabled ? ['true'] : [],
     },
@@ -276,6 +296,24 @@ const EditListingDeliveryPanel = props => {
                 enabled: xoloIsOn(xololoMethods?.localDelivery?.enabled),
                 priceSubunits: xololoMethods?.localDelivery?.price?.amount ?? 0,
                 zoneDescription: xololoMethods?.localDelivery?.zoneDescription || '',
+              },
+              skydropxCarrier: {
+                enabled: xoloIsOn(xololoMethods?.skydropxCarrier?.enabled),
+                sellerCoversShipping: xoloIsOn(
+                  xololoMethods?.skydropxCarrier?.sellerCoversShipping
+                ),
+                weightGrams: xololoMethods?.skydropxCarrier?.weightGrams
+                  ? Number(xololoMethods.skydropxCarrier.weightGrams)
+                  : null,
+                dimensionLengthCm: xololoMethods?.skydropxCarrier?.dimensionLengthCm
+                  ? Number(xololoMethods.skydropxCarrier.dimensionLengthCm)
+                  : null,
+                dimensionWidthCm: xololoMethods?.skydropxCarrier?.dimensionWidthCm
+                  ? Number(xololoMethods.skydropxCarrier.dimensionWidthCm)
+                  : null,
+                dimensionHeightCm: xololoMethods?.skydropxCarrier?.dimensionHeightCm
+                  ? Number(xololoMethods.skydropxCarrier.dimensionHeightCm)
+                  : null,
               },
               freight: {
                 enabled: xoloIsOn(xololoMethods?.freight?.enabled),

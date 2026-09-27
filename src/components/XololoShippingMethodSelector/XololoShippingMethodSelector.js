@@ -48,6 +48,16 @@ const XololoShippingMethodSelector = ({
         : 'Consulta con el vendedor si tu dirección está dentro de la zona.',
     });
   }
+  if (methods?.skydropxCarrier?.enabled) {
+    list.push({
+      key: 'skydropxCarrier',
+      title: 'Envío por paquetería',
+      priceLabel: methods.skydropxCarrier.sellerCoversShipping ? 'Gratis' : 'Cotización en línea',
+      note: methods.skydropxCarrier.sellerCoversShipping
+        ? 'El vendedor cubre el costo del envío.'
+        : 'Verás cotizaciones en vivo (Estafeta, FedEx, etc.) al capturar tu dirección abajo.',
+    });
+  }
   if (methods?.freight?.enabled) {
     list.push({
       key: 'freight',

@@ -122,6 +122,7 @@ export const EditListingDeliveryForm = props => (
       const xoloHasAny =
         xoloIsOnRobust(values.xololoMethods?.pickup?.enabled) ||
         xoloIsOnRobust(values.xololoMethods?.localDelivery?.enabled) ||
+        xoloIsOnRobust(values.xololoMethods?.skydropxCarrier?.enabled) ||
         xoloIsOnRobust(values.xololoMethods?.freight?.enabled);
       const submitDisabled =
         invalid ||
@@ -151,6 +152,7 @@ export const EditListingDeliveryForm = props => (
       const xoloMethods = values.xololoMethods || {};
       const xoloPickupOn = xoloIsOnRobust(xoloMethods.pickup?.enabled);
       const xoloLocalOn = xoloIsOnRobust(xoloMethods.localDelivery?.enabled);
+      const xoloSkydropxOn = xoloIsOnRobust(xoloMethods.skydropxCarrier?.enabled);
       const xoloFreightOn = xoloIsOnRobust(xoloMethods.freight?.enabled);
 
       return (
@@ -221,7 +223,68 @@ export const EditListingDeliveryForm = props => (
               </div>
             ) : null}
 
-            {/* Método 3: Flete por cotizar (Fase 1 = placeholder) */}
+            {/* Método 3: Skydropx (cotización con paquetería al momento del checkout) */}
+            <FieldCheckbox
+              id={`${formId}.xoloSkydropx`}
+              className={css.deliveryCheckbox}
+              name="xololoMethods.skydropxCarrier.enabled"
+              label="Cotizar con paquetería (Skydropx)"
+              value="true"
+            />
+            {xoloSkydropxOn ? (
+              <div style={{ marginLeft: 28, marginBottom: 12 }}>
+                <p className={css.xxHint}>
+                  El buyer verá cotizaciones en vivo (Estafeta, FedEx, etc.)
+                  contra su CP. Requiere peso y dimensiones del paquete cerrado.
+                </p>
+                <FieldTextInput
+                  id={`${formId}.xoloWeightGrams`}
+                  name="xololoMethods.skydropxCarrier.weightGrams"
+                  className={css.input}
+                  type="number"
+                  label="Peso del paquete (gramos)"
+                  placeholder="Ej. 1500"
+                  validate={required('El peso es requerido.')}
+                />
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <FieldTextInput
+                    id={`${formId}.xoloDimLength`}
+                    name="xololoMethods.skydropxCarrier.dimensionLengthCm"
+                    className={css.input}
+                    type="number"
+                    label="Largo (cm)"
+                    placeholder="Ej. 30"
+                    validate={required('Requerido.')}
+                  />
+                  <FieldTextInput
+                    id={`${formId}.xoloDimWidth`}
+                    name="xololoMethods.skydropxCarrier.dimensionWidthCm"
+                    className={css.input}
+                    type="number"
+                    label="Ancho (cm)"
+                    placeholder="Ej. 20"
+                    validate={required('Requerido.')}
+                  />
+                  <FieldTextInput
+                    id={`${formId}.xoloDimHeight`}
+                    name="xololoMethods.skydropxCarrier.dimensionHeightCm"
+                    className={css.input}
+                    type="number"
+                    label="Alto (cm)"
+                    placeholder="Ej. 15"
+                    validate={required('Requerido.')}
+                  />
+                </div>
+                <FieldCheckbox
+                  id={`${formId}.xoloSellerCovers`}
+                  name="xololoMethods.skydropxCarrier.sellerCoversShipping"
+                  label="🎁 Yo absorbo el costo del envío (el buyer ve 'Envío gratis')"
+                  value="true"
+                />
+              </div>
+            ) : null}
+
+            {/* Método 4: Flete por cotizar (Fase 1 = placeholder) */}
             <FieldCheckbox
               id={`${formId}.xoloFreight`}
               className={css.deliveryCheckbox}

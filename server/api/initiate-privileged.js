@@ -93,12 +93,14 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
     getShippingMethodsFromListing: getMethodsV2,
     METHOD_PICKUP: MP,
     METHOD_LOCAL_DELIVERY: ML,
+    METHOD_SKYDROPX: MS,
     METHOD_FREIGHT: MF,
   } = require('../api-util/xololoShippingMethods');
   const methodsV2 = getMethodsV2(listing);
   const enabledV2 = [
     methodsV2.pickup.enabled ? MP : null,
     methodsV2.localDelivery.enabled ? ML : null,
+    methodsV2.skydropxCarrier.enabled ? MS : null,
     methodsV2.freight.enabled ? MF : null,
   ].filter(Boolean);
   const requestedV2 = orderData?.selectedShippingMethod;
@@ -136,6 +138,33 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
       quotationId: null,
       // El costo ya está en el line-item/shipping-fee generado por lineItems.js.
       zoneDescription: publicData?.xololoShippingMethods?.localDelivery?.zoneDescription || '',
+    };
+  }
+  if (selectedV2 === 'skydropxCarrier') {
+    // Skydropx v2: mismo shape que el 'carrier' legacy pero marcado
+    // v2 para futura diferenciación. El rate viene de
+    // orderData.selectedShippingRate (el buyer eligió una paquetería
+    // en el ShippingRateSelector). Fulfillment (generate-shipping-guide)
+    // usa esta info para generar la etiqueta.
+    const rate = orderData?.selectedShippingRate;
+    const persistedRate = rate
+      ? {
+          id: rate.id,
+          carrier: rate.carrier,
+          carrierCode: rate.carrierCode,
+          service: rate.service,
+          serviceCode: rate.serviceCode,
+          total: Number(rate.total),
+          currency: rate.currency || 'MXN',
+          days: rate.days ?? null,
+        }
+      : null;
+    return {
+      mode: 'carrier',
+      version: 'v2',
+      sellerCoversShipping: !!methodsV2.skydropxCarrier.sellerCoversShipping,
+      rate: persistedRate,
+      quotationId: orderData?.shippingQuotationId || null,
     };
   }
   if (selectedV2 === 'freight') {

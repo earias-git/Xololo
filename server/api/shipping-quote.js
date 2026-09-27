@@ -108,7 +108,13 @@ module.exports = async (req, res) => {
     const additionalListings = additionalResps.map(r => r.data.data);
 
     // 2) Validar que el listing primario es cotizable por carrier.
-    if (!listingPd.shippingEnabled || listingPd.shippingPricingMode !== 'carrier') {
+    // Aceptamos legacy (shippingPricingMode==='carrier') y v2
+    // (xololoShippingMethods.skydropxCarrier.enabled).
+    const isCarrierLegacy =
+      listingPd.shippingEnabled && listingPd.shippingPricingMode === 'carrier';
+    const isCarrierV2 =
+      listingPd.xololoShippingMethods?.skydropxCarrier?.enabled === true;
+    if (!isCarrierLegacy && !isCarrierV2) {
       return res.status(409).json({
         error: 'listing_not_shippable',
         details: 'El listing no está configurado para cotización por paquetería.',
