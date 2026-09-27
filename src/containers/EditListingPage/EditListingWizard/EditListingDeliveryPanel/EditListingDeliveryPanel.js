@@ -11,6 +11,7 @@ import {
 } from '../../../../util/types';
 import { displayDeliveryPickup, displayDeliveryShipping } from '../../../../util/configHelpers';
 import { types as sdkTypes } from '../../../../util/sdkLoader';
+import { getShippingMethodsFromListing } from '../../../../util/xololoShippingMethods';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -71,6 +72,30 @@ const getInitialValues = props => {
   const pickupPriceAsMoney =
     pickupPriceInSubunits != null ? new Money(pickupPriceInSubunits, currency) : null;
 
+  // XOLOLO Envíos v2: initialValues del nuevo modelo xololoMethods.
+  // Lee desde publicData.xololoShippingMethods si existe; si no, deriva
+  // desde el legacy (deliveryOptions/shippingPricingMode/etc) — así los
+  // listings viejos entran al form con los checkboxes ya marcados según
+  // su config anterior. `enabled` se guarda como array porque FieldCheckbox
+  // maneja arrays; convertimos a bool al leer.
+  const xoloMethodsCfg = getShippingMethodsFromListing(listing);
+  const localPriceSubunits = Number(xoloMethodsCfg.localDelivery.priceSubunits) || 0;
+  const xoloMethodsInitial = {
+    pickup: {
+      // FieldCheckbox usa arrays: presencia del value = enabled.
+      enabled: xoloMethodsCfg.pickup.enabled ? ['true'] : [],
+      instructions: xoloMethodsCfg.pickup.instructions || '',
+    },
+    localDelivery: {
+      enabled: xoloMethodsCfg.localDelivery.enabled ? ['true'] : [],
+      price: localPriceSubunits > 0 ? new Money(localPriceSubunits, currency) : null,
+      zoneDescription: xoloMethodsCfg.localDelivery.zoneDescription || '',
+    },
+    freight: {
+      enabled: xoloMethodsCfg.freight.enabled ? ['true'] : [],
+    },
+  };
+
   // Initial values for the form
   return {
     building,
@@ -91,6 +116,8 @@ const getInitialValues = props => {
     dimensionHeightCm: dimensionHeightCm != null ? String(dimensionHeightCm) : '',
     sellerCoversShipping: sellerCoversShipping ? ['yes'] : [],
     pickupPrice: pickupPriceAsMoney,
+    // XOLOLO Envíos v2
+    xololoMethods: xoloMethodsInitial,
   };
 };
 
@@ -186,6 +213,8 @@ const EditListingDeliveryPanel = props => {
               dimensionHeightCm,
               sellerCoversShipping,
               pickupPrice,
+              // XOLOLO Envíos v2
+              xololoMethods,
             } = values;
 
             const shippingEnabled = deliveryOptions.includes('shipping');
@@ -235,6 +264,24 @@ const EditListingDeliveryPanel = props => {
                 }
               : {};
 
+            // XOLOLO Envíos v2: normaliza y guarda el shape nuevo.
+            // FieldCheckbox guarda enabled como array — presencia = true.
+            const xoloIsOn = v => Array.isArray(v) && v.length > 0;
+            const xololoShippingMethods = {
+              pickup: {
+                enabled: xoloIsOn(xololoMethods?.pickup?.enabled),
+                instructions: xololoMethods?.pickup?.instructions || '',
+              },
+              localDelivery: {
+                enabled: xoloIsOn(xololoMethods?.localDelivery?.enabled),
+                priceSubunits: xololoMethods?.localDelivery?.price?.amount ?? 0,
+                zoneDescription: xololoMethods?.localDelivery?.zoneDescription || '',
+              },
+              freight: {
+                enabled: xoloIsOn(xololoMethods?.freight?.enabled),
+              },
+            };
+
             // New values for listing attributes
             const updateValues = {
               geolocation: origin,
@@ -243,6 +290,9 @@ const EditListingDeliveryPanel = props => {
                 ...pickupDataMaybe,
                 shippingEnabled,
                 ...shippingDataMaybe,
+                // XOLOLO Envíos v2 — fuente de verdad futura del checkout
+                // (Sub-commit B lo leerá; por ahora coexiste con legacy).
+                xololoShippingMethods,
               },
             };
 
@@ -263,6 +313,8 @@ const EditListingDeliveryPanel = props => {
                 dimensionHeightCm,
                 sellerCoversShipping,
                 pickupPrice,
+                // XOLOLO Envíos v2 — preserva el shape del form entre re-renders.
+                xololoMethods,
               },
             });
             onSubmit(updateValues);

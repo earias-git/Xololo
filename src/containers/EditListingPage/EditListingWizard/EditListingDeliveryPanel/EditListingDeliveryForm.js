@@ -113,8 +113,17 @@ export const EditListingDeliveryForm = props => (
       const classes = classNames(css.root, className);
       const submitReady = (updated && pristine) || ready;
       const submitInProgress = updateInProgress;
+      // XOLOLO Envíos v2: submit permitido si hay AL MENOS un método
+      // activo (legacy pickup/shipping O nuevo xoloMethods).
+      const xoloHasAny =
+        !!values.xololoMethods?.pickup?.enabled ||
+        !!values.xololoMethods?.localDelivery?.enabled ||
+        !!values.xololoMethods?.freight?.enabled;
       const submitDisabled =
-        invalid || disabled || submitInProgress || (!shippingEnabled && !pickupEnabled);
+        invalid ||
+        disabled ||
+        submitInProgress ||
+        (!shippingEnabled && !pickupEnabled && !xoloHasAny);
 
       const shippingLabel = intl.formatMessage({ id: 'EditListingDeliveryForm.shippingLabel' });
       const pickupLabel = intl.formatMessage({ id: 'EditListingDeliveryForm.pickupLabel' });
@@ -131,8 +140,107 @@ export const EditListingDeliveryForm = props => (
       });
       const currencyConfig = appSettings.getCurrencyFormatting(marketplaceCurrency);
 
+      // XOLOLO Envíos v2: sección nueva de 3 métodos. Vive en
+      // values.xololoMethods.{pickup|localDelivery|freight}.
+      // La sección legacy más abajo se mantiene por compatibilidad
+      // mientras el server y checkout migran (Sub-commit B).
+      const xoloMethods = values.xololoMethods || {};
+      const xoloPickupOn = !!xoloMethods.pickup?.enabled;
+      const xoloLocalOn = !!xoloMethods.localDelivery?.enabled;
+      const xoloFreightOn = !!xoloMethods.freight?.enabled;
+
       return (
         <Form className={classes} onSubmit={handleSubmit}>
+          {/* ============================================================
+              XOLOLO Envíos v2: 3 métodos configurables por listing.
+              Reemplaza el modelo legacy shippingPricingMode/deliveryOptions.
+              Ver src/util/xololoShippingMethods.js.
+              ============================================================ */}
+          <fieldset className={css.xxShippingModeGroup}>
+            <legend className={css.xxShippingModeLegend}>
+              Métodos de entrega (Xololo)
+            </legend>
+            <p className={css.xxHint}>
+              Elige uno o más métodos para este producto. El comprador
+              podrá seleccionar cualquiera de los que actives.
+            </p>
+
+            {/* Método 1: Pickup en domicilio del seller (siempre $0) */}
+            <FieldCheckbox
+              id={`${formId}.xoloPickup`}
+              className={css.deliveryCheckbox}
+              name="xololoMethods.pickup.enabled"
+              label="Recolección en mi domicilio (sin costo)"
+              value="true"
+            />
+            {xoloPickupOn ? (
+              <div style={{ marginLeft: 28, marginBottom: 12 }}>
+                <FieldTextInput
+                  id={`${formId}.xoloPickupInstructions`}
+                  name="xololoMethods.pickup.instructions"
+                  className={css.input}
+                  type="textarea"
+                  label="Instrucciones para el buyer (opcional)"
+                  placeholder="Ej. Recoger de 10am a 6pm en Av. Insurgentes 123, portón azul."
+                />
+              </div>
+            ) : null}
+
+            {/* Método 2: Envío en zona local con costo fijo */}
+            <FieldCheckbox
+              id={`${formId}.xoloLocalDelivery`}
+              className={css.deliveryCheckbox}
+              name="xololoMethods.localDelivery.enabled"
+              label="Envío en zona local (costo fijo)"
+              value="true"
+            />
+            {xoloLocalOn ? (
+              <div style={{ marginLeft: 28, marginBottom: 12 }}>
+                <FieldCurrencyInput
+                  id={`${formId}.xoloLocalPrice`}
+                  name="xololoMethods.localDelivery.price"
+                  className={css.input}
+                  label="Costo del envío local"
+                  placeholder="$0.00"
+                  currencyConfig={currencyConfig}
+                  validate={required('El costo es requerido.')}
+                />
+                <FieldTextInput
+                  id={`${formId}.xoloLocalZone`}
+                  name="xololoMethods.localDelivery.zoneDescription"
+                  className={css.input}
+                  type="text"
+                  label="Zona de cobertura"
+                  placeholder="Ej. CDMX y Área Metropolitana, o Zona Sur de Guadalajara"
+                  validate={required('Describe la zona donde entregas.')}
+                />
+              </div>
+            ) : null}
+
+            {/* Método 3: Flete por cotizar (Fase 1 = placeholder) */}
+            <FieldCheckbox
+              id={`${formId}.xoloFreight`}
+              className={css.deliveryCheckbox}
+              name="xololoMethods.freight.enabled"
+              label="Envío por flete (cotizar después)"
+              value="true"
+            />
+            {xoloFreightOn ? (
+              <p className={css.xxHint} style={{ marginLeft: 28 }}>
+                El buyer completa la compra pagando sólo los productos.
+                Después, en el detalle del pedido, tú le cotizas el envío
+                y él lo autoriza para pagarlo aparte.
+              </p>
+            ) : null}
+          </fieldset>
+
+          {/* ============================================================
+              LEGACY: los campos de abajo se mantienen mientras el checkout
+              termina de migrar al nuevo modelo (Sub-commit B). Cuando el
+              seller edita, guardamos AMBOS shapes: xololoMethods (nuevo,
+              fuente de verdad futura) y deliveryOptions/shippingPricingMode
+              (legacy, aún leído por el checkout).
+              ============================================================ */}
           <FieldCheckbox
             id={formId ? `${formId}.pickup` : 'pickup'}
             className={classNames(css.deliveryCheckbox, { [css.hidden]: !displayMultipleDelivery })}
