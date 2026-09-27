@@ -68,6 +68,13 @@ const getProcessName = pageData => {
 const EnhancedCheckoutPage = props => {
   const [pageData, setPageData] = useState({});
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  // XOLOLO Envíos v2: la selección del método de envío vive AQUÍ (en
+  // EnhancedCheckoutPage, no en CheckoutPageWithPayment) porque el
+  // WithPayment se desmonta cada vez que speculateTransactionInProgress
+  // pasa a true (line 207 abajo). Si el state viviera adentro se
+  // resetearía en cada re-speculate, haciendo que el radio "salte" de
+  // vuelta al default al cambiar de método.
+  const [xoloSelectedMethod, setXoloSelectedMethod] = useState(null);
   const config = useConfiguration();
   const routeConfiguration = useRouteConfiguration();
   const intl = useIntl();
@@ -220,6 +227,8 @@ const EnhancedCheckoutPage = props => {
       showListingImage={showListingImage}
       transactionFieldConfigs={transactionFieldConfigs}
       showTransactionFields={showTransactionFields}
+      xoloSelectedMethod={xoloSelectedMethod}
+      setXoloSelectedMethod={setXoloSelectedMethod}
       {...props}
     />
   ) : (

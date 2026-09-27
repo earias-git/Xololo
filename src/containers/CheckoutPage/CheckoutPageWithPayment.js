@@ -482,13 +482,11 @@ export const CheckoutPageWithPayment = props => {
   const [submitting, setSubmitting] = useState(false);
   // Initialized stripe library is saved to state - if it's needed at some point here too.
   const [stripe, setStripe] = useState(null);
-  // XOLOLO Envíos v2: la selección del método de envío vive en React
-  // state (no en el FinalForm) para que no se pierda cuando la tx
-  // speculada se re-fetch por otro motivo y el form re-inicializa.
-  // Empieza en null; el default visual lo aporta el selector con la
-  // prop `defaultMethod`. Cuando el buyer elige, guardamos aquí +
-  // disparamos re-speculate.
-  const [xoloSelectedMethod, setXoloSelectedMethod] = useState(null);
+  // XOLOLO Envíos v2: la selección vive en el PADRE (EnhancedCheckoutPage)
+  // porque este componente se desmonta durante speculateTransactionInProgress
+  // y perdería useState local. Ver comentario en CheckoutPage.js:70.
+  const xoloSelectedMethod = props.xoloSelectedMethod;
+  const setXoloSelectedMethod = props.setXoloSelectedMethod;
 
   const {
     scrollingDisabled,
