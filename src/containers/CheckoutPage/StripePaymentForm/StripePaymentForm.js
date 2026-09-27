@@ -25,6 +25,7 @@ import {
   StripePaymentAddress,
   CustomExtendedDataField,
   ShippingRateSelector,
+  XololoShippingMethodSelector,
 } from '../../../components';
 
 import ShippingDetails from '../ShippingDetails/ShippingDetails';
@@ -511,6 +512,13 @@ class StripePaymentForm extends Component {
       // carrito para cotización agregada (peso/dims sumados en el server).
       primaryQuantity,
       additionalCartItems,
+      // XOLOLO Envíos v2: métodos que el seller habilitó en el listing
+      // (shape retornado por getShippingMethodsFromListing). Cuando hay al
+      // menos uno, mostramos el XololoShippingMethodSelector en vez del
+      // widget legacy de rates.
+      xololoShippingMethods,
+      onXololoShippingMethodSelected,
+      xololoCurrencyFormatter,
       values,
     } = formRenderProps;
 
@@ -630,6 +638,23 @@ class StripePaymentForm extends Component {
       }
     };
 
+    // XOLOLO Envíos v2: mostrar el selector nuevo cuando el listing tenga
+    // xololoShippingMethods con al menos un método habilitado. Precede al
+    // rate selector legacy (que sigue funcionando para listings viejos
+    // sin migrar).
+    const xoloMethodEnabledCount = [
+      xololoShippingMethods?.pickup?.enabled,
+      xololoShippingMethods?.localDelivery?.enabled,
+      xololoShippingMethods?.freight?.enabled,
+    ].filter(Boolean).length;
+    const showXololoMethodSelector = xoloMethodEnabledCount > 0;
+    const handleXololoMethodSelected = methodKey => {
+      formApi.change('selectedShippingMethod', methodKey || undefined);
+      if (typeof onXololoShippingMethodSelected === 'function') {
+        onXololoShippingMethodSelected(methodKey);
+      }
+    };
+
     // XOLOLO: destino que consume el ShippingRateSelector — es el
     // MISMO dato que el buyer captura en el ShippingDetails de arriba.
     // Al leer del form values evitamos que el buyer teclee CP de un
@@ -659,6 +684,14 @@ class StripePaymentForm extends Component {
           locale={locale}
           intl={intl}
         />
+        {showXololoMethodSelector ? (
+          <XololoShippingMethodSelector
+            methods={xololoShippingMethods}
+            value={values?.selectedShippingMethod || null}
+            onChange={handleXololoMethodSelected}
+            currencyFormatter={xololoCurrencyFormatter}
+          />
+        ) : null}
         {showRateSelector ? (
           <ShippingRateSelector
             listingId={listingId}

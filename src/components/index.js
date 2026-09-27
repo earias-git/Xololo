@@ -172,6 +172,7 @@ export { default as SellerDashboardHero } from './SellerDashboardHero/SellerDash
 export { default as ShareListingButton } from './ShareListingButton/ShareListingButton';
 export { default as StoreStatsWidget } from './StoreStatsWidget/StoreStatsWidget';
 export { default as StoreHeaderStats } from './StoreHeaderStats/StoreHeaderStats';
+export { default as XololoShippingMethodSelector } from './XololoShippingMethodSelector/XololoShippingMethodSelector';
 export { default as AddToCartCta } from './AddToCartCta/AddToCartCta';
 export { default as CartIndicator } from './CartIndicator/CartIndicator';
 export { default as VerifiedBadge } from './VerifiedBadge/VerifiedBadge';

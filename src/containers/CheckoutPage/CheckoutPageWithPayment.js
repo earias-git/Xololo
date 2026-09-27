@@ -44,6 +44,9 @@ import {
   setOrderPageInitialValues,
 } from './CheckoutPageTransactionHelpers.js';
 import { clearSellerCart } from '../../ducks/cart.duck';
+import { getShippingMethodsFromListing } from '../../util/xololoShippingMethods';
+import { formatMoney } from '../../util/currency';
+import { types as sdkTypes } from '../../util/sdkLoader';
 
 import { getErrorMessages } from './ErrorMessages';
 
@@ -125,7 +128,9 @@ const getOrderParams = (
   // ShippingRateSelector). Se propaga hasta orderData server-side para
   // calcular el shipping fee dinámicamente (Skydropx).
   selectedShippingRate,
-  shippingQuotationId
+  shippingQuotationId,
+  // XOLOLO Envíos v2: uno de los 3 métodos ('pickup'|'localDelivery'|'freight').
+  selectedShippingMethod
 ) => {
   const quantity = pageData.orderData?.quantity;
   const quantityMaybe = quantity ? { quantity } : {};
@@ -138,6 +143,10 @@ const getOrderParams = (
   // que llega al server como snapshot de la intención del cliente).
   const selectedShippingRateMaybe = selectedShippingRate ? { selectedShippingRate } : {};
   const shippingQuotationIdMaybe = shippingQuotationId ? { shippingQuotationId } : {};
+  // XOLOLO Envíos v2
+  const selectedShippingMethodMaybe = selectedShippingMethod
+    ? { selectedShippingMethod }
+    : {};
   // XOLOLO Cart.5: additionalCartItems se guarda en pageData.orderData
   // desde CartPage.handleCheckout. Aquí solo lo propagamos a orderParams.
   const additionalCartItems = pageData.orderData?.additionalCartItems;
@@ -184,6 +193,7 @@ const getOrderParams = (
     ...priceVariantNameMaybe,
     ...selectedShippingRateMaybe,
     ...shippingQuotationIdMaybe,
+    ...selectedShippingMethodMaybe,
     ...additionalCartItemsMaybe,
     ...protectedDataMaybe,
     ...optionalPaymentParams,
@@ -353,6 +363,9 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
   // Si el listing no es carrier, este campo será undefined y no se propaga.
   const selectedShippingRate = formValues?.selectedShippingRate;
   const shippingQuotationId = formValues?.shippingQuotationId;
+  // XOLOLO Envíos v2: método elegido por el buyer entre los que el
+  // seller habilitó en publicData.xololoShippingMethods.
+  const selectedShippingMethod = formValues?.selectedShippingMethod;
 
   const orderParams = getOrderParams(
     pageData,
@@ -362,7 +375,8 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
     transactionFieldsProtectedData,
     message,
     selectedShippingRate,
-    shippingQuotationId
+    shippingQuotationId,
+    selectedShippingMethod
   );
 
   // There are multiple XHR calls that needs to be made against Stripe API and Sharetribe Marketplace API on checkout with payments
@@ -574,6 +588,23 @@ export const CheckoutPageWithPayment = props => {
 
   const firstImage = listing?.images?.length > 0 ? listing.images[0] : null;
 
+  // XOLOLO Envíos v2: métodos habilitados por el seller en el primary
+  // listing + formateador de moneda para el selector. Ver
+  // src/components/XololoShippingMethodSelector/.
+  const xoloMethodsForCheckout = pageData?.listing
+    ? getShippingMethodsFromListing(pageData.listing)
+    : null;
+  const xoloCurrencyForFormatter = pageData?.listing?.attributes?.price?.currency || config.currency;
+  const xoloCurrencyFormatter = subunits => {
+    const n = Number(subunits) || 0;
+    if (n === 0) return 'Gratis';
+    try {
+      return formatMoney(intl, new sdkTypes.Money(Math.round(n), xoloCurrencyForFormatter));
+    } catch (e) {
+      return `$${(n / 100).toFixed(2)}`;
+    }
+  };
+
   const listingLink = (
     <NamedLink
       name="ListingPage"
@@ -741,6 +772,8 @@ export const CheckoutPageWithPayment = props => {
                 }
                 primaryQuantity={pageData?.orderData?.quantity}
                 additionalCartItems={pageData?.orderData?.additionalCartItems}
+                xololoShippingMethods={xoloMethodsForCheckout}
+                xololoCurrencyFormatter={xoloCurrencyFormatter}
                 isFuzzyLocation={config.maps.fuzzy.enabled}
                 transactionFieldConfigs={transactionFieldConfigs}
                 showTransactionFields={showTransactionFields}

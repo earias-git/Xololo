@@ -1,0 +1,99 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  margin: 24px 0;
+  padding: 20px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  background-color: var(--colorWhite);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey900);
+  margin: 0 0 12px 0;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  border: 1px solid var(--colorGrey100);
+  border-radius: 6px;
+  padding: 12px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.item:hover {
+  border-color: var(--marketplaceColor);
+}
+
+.itemChecked {
+  border-color: var(--marketplaceColor);
+  background-color: var(--colorGrey50);
+}
+
+.label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.radio {
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.itemBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.itemTitle {
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey900);
+}
+
+.itemPrice {
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+  white-space: nowrap;
+}
+
+.itemNote {
+  font-size: 13px;
+  color: var(--colorGrey500);
+  line-height: 1.4;
+}
+
+.empty {
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px dashed var(--colorGrey200);
+  border-radius: 8px;
+  color: var(--colorGrey500);
+  font-size: 13px;
+  text-align: center;
+}

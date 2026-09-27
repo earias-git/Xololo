@@ -10,6 +10,12 @@ const {
   FIXED_SERVICE_FEE_SUBUNITS,
   LINE_ITEM_XOLOLO_SERVICE_FEE,
 } = require('./xololoFees');
+const {
+  METHOD_PICKUP,
+  METHOD_LOCAL_DELIVERY,
+  METHOD_FREIGHT,
+  getShippingMethodsFromListing,
+} = require('./xololoShippingMethods');
 const { types } = require('sharetribe-flex-sdk');
 const { Money } = types;
 
@@ -51,6 +57,49 @@ const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
   } = publicData || {};
 
   const extraLineItems = [];
+
+  // ============================================================
+  // XOLOLO Envíos v2: nuevo path — el buyer eligió uno de los 3
+  // métodos configurados por el seller en xololoShippingMethods.
+  // Se resuelve ANTES del path legacy y hace early return si aplica.
+  // ============================================================
+  const selectedShippingMethod = orderData?.selectedShippingMethod;
+  if (
+    selectedShippingMethod &&
+    [METHOD_PICKUP, METHOD_LOCAL_DELIVERY, METHOD_FREIGHT].includes(selectedShippingMethod)
+  ) {
+    const methods = getShippingMethodsFromListing({ attributes: { publicData } });
+
+    if (selectedShippingMethod === METHOD_PICKUP && methods.pickup.enabled) {
+      // Pickup en domicilio del seller: siempre $0. No agregamos línea
+      // (Sharetribe acepta orden sin shipping-fee cuando es gratis).
+      return { quantity, extraLineItems: [] };
+    }
+
+    if (selectedShippingMethod === METHOD_LOCAL_DELIVERY && methods.localDelivery.enabled) {
+      const priceSubunits = Number(methods.localDelivery.priceSubunits) || 0;
+      if (priceSubunits > 0) {
+        extraLineItems.push({
+          code: 'line-item/shipping-fee',
+          unitPrice: new Money(priceSubunits, currency),
+          quantity: 1,
+          includeFor: ['customer', 'provider'],
+        });
+      }
+      return { quantity, extraLineItems };
+    }
+
+    if (selectedShippingMethod === METHOD_FREIGHT && methods.freight.enabled) {
+      // Flete "por cotizar": el buyer paga $0 de envío ahora. El seller
+      // cotizará y cobrará por separado en la Fase 2 (loop de aprobación).
+      // El flag `xololoShippingQuotePending` se agrega en protectedData
+      // desde initiate-privileged.js — aquí sólo omitimos la línea.
+      return { quantity, extraLineItems: [] };
+    }
+    // Si el método pedido no está habilitado en el listing, caemos al
+    // path legacy — protección defensiva por si el cliente manda algo
+    // inválido; no rompemos la orden, sólo ignoramos el override.
+  }
 
   if (isShipping) {
     if (shippingPricingMode === 'carrier') {

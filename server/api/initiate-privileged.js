@@ -83,6 +83,59 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
   const shippingPricingMode = publicData.shippingPricingMode;
   const sellerCoversShipping = !!publicData.sellerCoversShipping;
 
+  // XOLOLO Envíos v2: si el buyer eligió uno de los 3 métodos nuevos
+  // (pickup/localDelivery/freight), construimos el shape v2 en
+  // protectedData.xololoShipping. El resto del sistema (fulfillment,
+  // dashboard, notificaciones) lee este objeto y actúa según `mode`.
+  const selectedV2 = orderData?.selectedShippingMethod;
+  if (selectedV2 === 'pickup') {
+    const pickupCode = isSpeculative
+      ? null
+      : {
+          code: generatePickupCode(),
+          revealedAt: null,
+          verifiedAt: null,
+          attempts: 0,
+          blockedAt: null,
+        };
+    return {
+      mode: 'pickup',
+      version: 'v2',
+      sellerCoversShipping: false,
+      rate: null,
+      quotationId: null,
+      pickupCode,
+    };
+  }
+  if (selectedV2 === 'localDelivery') {
+    return {
+      mode: 'localDelivery',
+      version: 'v2',
+      sellerCoversShipping: false,
+      rate: null,
+      quotationId: null,
+      // El costo ya está en el line-item/shipping-fee generado por lineItems.js.
+      zoneDescription: publicData?.xololoShippingMethods?.localDelivery?.zoneDescription || '',
+    };
+  }
+  if (selectedV2 === 'freight') {
+    return {
+      mode: 'freight',
+      version: 'v2',
+      sellerCoversShipping: false,
+      rate: null,
+      quotationId: null,
+      // Flag clave: el seller debe cotizar y el buyer autorizar (Fase 2).
+      // El dashboard del seller filtra por este flag para mostrar el CTA
+      // "Cotizar envío para este pedido". El buyer verá "envío pendiente
+      // de cotización" en el detalle del pedido.
+      quotePending: true,
+      quotedAmount: null,
+      quotedAt: null,
+      buyerAuthorizedAt: null,
+    };
+  }
+
   if (deliveryMethod === 'pickup') {
     // XOLOLO: en el initiate REAL generamos el código de 6 dígitos para
     // que el buyer lo vea al confirmar la orden. En speculative dejamos
