@@ -482,6 +482,13 @@ export const CheckoutPageWithPayment = props => {
   const [submitting, setSubmitting] = useState(false);
   // Initialized stripe library is saved to state - if it's needed at some point here too.
   const [stripe, setStripe] = useState(null);
+  // XOLOLO Envíos v2: la selección del método de envío vive en React
+  // state (no en el FinalForm) para que no se pierda cuando la tx
+  // speculada se re-fetch por otro motivo y el form re-inicializa.
+  // Empieza en null; el default visual lo aporta el selector con la
+  // prop `defaultMethod`. Cuando el buyer elige, guardamos aquí +
+  // disparamos re-speculate.
+  const [xoloSelectedMethod, setXoloSelectedMethod] = useState(null);
 
   const {
     scrollingDisabled,
@@ -750,7 +757,17 @@ export const CheckoutPageWithPayment = props => {
               <StripePaymentForm
                 className={css.paymentForm}
                 onSubmit={values =>
-                  handleSubmit(values, process, props, stripe, submitting, setSubmitting)
+                  // XOLOLO Envíos v2: pasamos el método seleccionado del
+                  // React state (no del form) para que llegue a orderParams
+                  // aunque el FinalForm haya reseteado.
+                  handleSubmit(
+                    { ...values, selectedShippingMethod: xoloSelectedMethod || xoloDefaultMethod || undefined },
+                    process,
+                    props,
+                    stripe,
+                    submitting,
+                    setSubmitting
+                  )
                 }
                 inProgress={submitting}
                 formId="CheckoutPagePaymentForm"
@@ -792,17 +809,21 @@ export const CheckoutPageWithPayment = props => {
                 additionalCartItems={pageData?.orderData?.additionalCartItems}
                 xololoShippingMethods={xoloMethodsForCheckout}
                 xololoDefaultShippingMethod={xoloDefaultMethod}
+                xololoSelectedShippingMethod={xoloSelectedMethod}
                 xololoCurrencyFormatter={xoloCurrencyFormatter}
                 onXololoShippingMethodSelected={methodKey => {
-                  // XOLOLO Envíos v2: al cambiar el método, re-speculate
-                  // la tx para que el breakdown refleje el nuevo costo
-                  // (pickup=$0, localDelivery=$XX, freight=$0). Sin esto
-                  // el buyer ve el default del server pero al cambiar
-                  // seguía viendo el anterior en el sidebar.
+                  // XOLOLO Envíos v2:
+                  // 1) Guarda selección en React state (fuente de verdad).
+                  //    NO usamos formApi.change para evitar que el
+                  //    reinicializado del FinalForm nos pise el valor.
+                  // 2) Re-speculate la tx para que el breakdown refleje
+                  //    el nuevo costo (pickup=$0, localDelivery=$XX,
+                  //    freight=$0). Sin esto el buyer ve el default del
+                  //    server pero al cambiar seguía viendo el anterior.
+                  setXoloSelectedMethod(methodKey);
                   const shippingDetails = {};
                   const optionalPaymentParams = {};
                   const nextOrderParams = getOrderParams(
-                    // inyectamos el método elegido en pageData.orderData temporalmente
                     { ...pageData, orderData: { ...(pageData?.orderData || {}), selectedShippingMethod: methodKey } },
                     shippingDetails,
                     optionalPaymentParams,

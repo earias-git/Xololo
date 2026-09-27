@@ -518,6 +518,7 @@ class StripePaymentForm extends Component {
       // widget legacy de rates.
       xololoShippingMethods,
       xololoDefaultShippingMethod,
+      xololoSelectedShippingMethod,
       onXololoShippingMethodSelected,
       xololoCurrencyFormatter,
       values,
@@ -649,8 +650,12 @@ class StripePaymentForm extends Component {
       xololoShippingMethods?.freight?.enabled,
     ].filter(Boolean).length;
     const showXololoMethodSelector = xoloMethodEnabledCount > 0;
+    // XOLOLO Envíos v2: la selección ya NO se guarda en el FinalForm
+    // (formApi.change) porque el form se reinicializa cuando el
+    // speculatedTransaction cambia, perdiendo el value. Ahora el
+    // estado vive en el padre (React state en CheckoutPageWithPayment)
+    // y lo recibimos como prop.
     const handleXololoMethodSelected = methodKey => {
-      formApi.change('selectedShippingMethod', methodKey || undefined);
       if (typeof onXololoShippingMethodSelected === 'function') {
         onXololoShippingMethodSelected(methodKey);
       }
@@ -688,7 +693,7 @@ class StripePaymentForm extends Component {
         {showXololoMethodSelector ? (
           <XololoShippingMethodSelector
             methods={xololoShippingMethods}
-            value={values?.selectedShippingMethod || null}
+            value={xololoSelectedShippingMethod || null}
             defaultMethod={xololoDefaultShippingMethod}
             onChange={handleXololoMethodSelected}
             currencyFormatter={xololoCurrencyFormatter}
