@@ -632,15 +632,22 @@ class StripePaymentForm extends Component {
     // completos. Al seleccionar un rate, lo persistimos en el form
     // state via formApi.change y notificamos al parent
     // (CheckoutPageWithPayment) para re-speculate del OrderBreakdown.
-    // XOLOLO Envíos v2: mostramos el rate selector cuando el listing
-    // legacy es carrier O cuando el buyer eligió skydropxCarrier en el
-    // selector v2. El rate elegido se sigue guardando en
-    // formValues.selectedShippingRate (misma key legacy) para no
-    // duplicar toda la lógica del rate selector.
+    // XOLOLO Envíos v2: el rate selector (widget de cotización Skydropx)
+    // sólo se muestra cuando:
+    //   (a) el buyer eligió el método v2 skydropxCarrier, O
+    //   (b) el listing es PURAMENTE legacy (sin métodos v2 habilitados)
+    //       Y su shippingPricingMode legacy es carrier.
+    //
+    // Antes se mostraba también cuando el listing tenía legacy carrier
+    // aunque el buyer eligiera pickup/local/flete — resultado: rate
+    // selector visible sin sentido, y elegir un rate no cambiaba el
+    // total porque el server ignora el rate para métodos != Skydropx.
     const isXoloSkydropxSelected =
       (xololoSelectedShippingMethod || xololoDefaultShippingMethod) === 'skydropxCarrier';
+    const isPureLegacy = xoloMethodEnabledCount === 0;
     const showRateSelector =
-      listingShippingPricingMode === 'carrier' || isXoloSkydropxSelected;
+      isXoloSkydropxSelected ||
+      (isPureLegacy && listingShippingPricingMode === 'carrier');
     const handleRateSelected = rate => {
       formApi.change('selectedShippingRate', rate || undefined);
       if (typeof onShippingRateSelected === 'function') {
