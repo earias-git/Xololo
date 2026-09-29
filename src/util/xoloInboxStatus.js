@@ -14,17 +14,13 @@ const codeVerified = tx =>
     tx?.attributes?.metadata?.xololoPickupCodeVerified?.verifiedAt
   );
 
-export const getXoloInboxStatusLabel = (tx, transactionRole) => {
-  const attrs = tx?.attributes || {};
+export const getXoloInboxStatusLabel = (tx, transactionRole, processState) => {
   // Sólo aplicamos overrides en el state 'purchased' (donde el default
-  // "Esperando la entrega" es demasiado genérico).
-  const lastTransition = attrs.lastTransition;
-  const isPurchased =
-    lastTransition === 'transition/confirm-payment' ||
-    // Fallback via processName+state cuando la tx viene con más info
-    (attrs.processName === 'default-purchase' && attrs.state === 'purchased');
-  if (!isPurchased) return null;
+  // "Esperando la entrega" es demasiado genérico). Cuando la tx ya
+  // avanzó a delivered/received/completed, dejamos el label del template.
+  if (processState !== 'purchased') return null;
 
+  const attrs = tx?.attributes || {};
   const shipping = attrs.protectedData?.xololoShipping || {};
   const flow = attrs.metadata?.xoloFlow || {};
   const freight = attrs.metadata?.xoloFreight || {};

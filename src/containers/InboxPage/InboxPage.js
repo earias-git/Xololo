@@ -227,7 +227,7 @@ export const InboxItem = props => {
             {(() => {
               // XOLOLO Envíos v2: status label específico por modo +
               // sub-etapa + rol. Si no aplica, cae al label del template.
-              const xoloStatus = getXoloInboxStatusLabel(tx, transactionRole);
+              const xoloStatus = getXoloInboxStatusLabel(tx, transactionRole, processState);
               if (xoloStatus) return xoloStatus;
               return (
                 <FormattedMessage

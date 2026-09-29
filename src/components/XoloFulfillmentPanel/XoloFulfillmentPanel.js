@@ -573,6 +573,16 @@ const XoloFulfillmentPanel = ({ stateData, transaction, transactionRole, onRefre
           </div>
         );
       }
+      // Freight con dispatched: chofer/paquetería en camino, buyer
+      // necesita ver su código para dárselo al chofer al llegar.
+      if (stage === 'awaiting_code' && deliveryCode) {
+        return (
+          <div className={css.root}>
+            <h3 className={css.title}>En camino — Muéstrale tu código al chofer</h3>
+            <DeliveryCodeCard code={deliveryCode} mode="freight" />
+          </div>
+        );
+      }
     }
 
     // Carrier — mostrar tracking si lo hay
