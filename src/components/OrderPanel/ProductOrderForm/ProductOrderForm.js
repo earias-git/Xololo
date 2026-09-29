@@ -19,6 +19,7 @@ import {
 import EstimatedCustomerBreakdownMaybe from '../EstimatedCustomerBreakdownMaybe';
 
 import FetchLineItemsError from '../FetchLineItemsError/FetchLineItemsError.js';
+import XololoShippingMethodField from './XololoShippingMethodField';
 
 import css from './ProductOrderForm.module.css';
 
@@ -35,18 +36,32 @@ const handleFetchLineItems = ({
   isOwnListing,
   fetchLineItemsInProgress,
   onFetchTransactionLineItems,
+  // XOLOLO Envíos v2: método elegido en la ListingPage. Se manda como
+  // orderData.selectedShippingMethod para que el server calcule el
+  // shipping-fee correcto en el breakdown en vivo.
+  selectedShippingMethod,
 }) => {
   const stockReservationQuantity = Number.parseInt(quantity, 10);
   const deliveryMethodMaybe = deliveryMethod ? { deliveryMethod } : {};
+  const selectedShippingMethodMaybe = selectedShippingMethod
+    ? { selectedShippingMethod }
+    : {};
   const isBrowser = typeof window !== 'undefined';
+  // Con v2, exigimos que el buyer haya elegido método (analogous al
+  // legacy que exigía deliveryMethod).
+  const hasChosenMethod = !!deliveryMethod || !!selectedShippingMethod;
   if (
     isBrowser &&
     stockReservationQuantity &&
-    (!displayDeliveryMethod || deliveryMethod) &&
+    (!displayDeliveryMethod || hasChosenMethod) &&
     !fetchLineItemsInProgress
   ) {
     onFetchTransactionLineItems({
-      orderData: { stockReservationQuantity, ...deliveryMethodMaybe },
+      orderData: {
+        stockReservationQuantity,
+        ...deliveryMethodMaybe,
+        ...selectedShippingMethodMaybe,
+      },
       listingId,
       isOwnListing,
     });
@@ -133,8 +148,17 @@ const renderForm = formRenderProps => {
     price,
     payoutDetailsWarning,
     marketplaceName,
+    // XOLOLO Envíos v2 (rediseño): si el listing tiene métodos v2,
+    // reemplazamos el DeliveryMethodMaybe legacy con el selector nuevo.
+    xoloShippingMethods,
     values,
   } = formRenderProps;
+  const hasXoloMethods =
+    xoloShippingMethods &&
+    (xoloShippingMethods.pickup?.enabled ||
+      xoloShippingMethods.localDelivery?.enabled ||
+      xoloShippingMethods.skydropxCarrier?.enabled ||
+      xoloShippingMethods.freight?.enabled);
 
   // Note: don't add custom logic before useEffect
   useEffect(() => {
@@ -157,11 +181,13 @@ const renderForm = formRenderProps => {
 
   // If form values change, update line-items for the order breakdown
   const handleOnChange = formValues => {
-    const { quantity, deliveryMethod } = formValues.values;
+    const { quantity, deliveryMethod, selectedShippingMethod } = formValues.values;
     if (mounted) {
       handleFetchLineItems({
         quantity,
         deliveryMethod,
+        selectedShippingMethod,
+        displayDeliveryMethod,
         listingId,
         isOwnListing,
         fetchLineItemsInProgress,
@@ -173,17 +199,25 @@ const renderForm = formRenderProps => {
   // In case quantity and deliveryMethod are missing focus on that select-input.
   // Otherwise continue with the default handleSubmit function.
   const handleFormSubmit = e => {
-    const { quantity, deliveryMethod } = values || {};
+    const { quantity, deliveryMethod, selectedShippingMethod } = values || {};
+    // XOLOLO Envíos v2: si hay métodos v2, exigimos selectedShippingMethod
+    // en vez del deliveryMethod legacy.
+    const needsMethodChoice =
+      displayDeliveryMethod || hasXoloMethods;
+    const methodChosen = hasXoloMethods
+      ? !!selectedShippingMethod
+      : !!deliveryMethod;
     if (!quantity || quantity < 1) {
       e.preventDefault();
       // Blur event will show validator message
       formApi.blur('quantity');
       formApi.focus('quantity');
-    } else if (displayDeliveryMethod && !deliveryMethod) {
+    } else if (needsMethodChoice && !methodChosen) {
       e.preventDefault();
       // Blur event will show validator message
-      formApi.blur('deliveryMethod');
-      formApi.focus('deliveryMethod');
+      const fieldName = hasXoloMethods ? 'selectedShippingMethod' : 'deliveryMethod';
+      formApi.blur(fieldName);
+      formApi.focus(fieldName);
     } else {
       handleSubmit(e);
     }
@@ -250,14 +284,25 @@ const renderForm = formRenderProps => {
         </FieldSelect>
       )}
 
-      <DeliveryMethodMaybe
-        displayDeliveryMethod={displayDeliveryMethod}
-        hasMultipleDeliveryMethods={hasMultipleDeliveryMethods}
-        deliveryMethod={values?.deliveryMethod}
-        hasStock={hasStock}
-        formId={formId}
-        intl={intl}
-      />
+      {hasXoloMethods ? (
+        <XololoShippingMethodField
+          methods={xoloShippingMethods}
+          intl={intl}
+          currency={price?.currency}
+          formId={formId}
+          formApi={formApi}
+          value={values?.selectedShippingMethod}
+        />
+      ) : (
+        <DeliveryMethodMaybe
+          displayDeliveryMethod={displayDeliveryMethod}
+          hasMultipleDeliveryMethods={hasMultipleDeliveryMethods}
+          deliveryMethod={values?.deliveryMethod}
+          hasStock={hasStock}
+          formId={formId}
+          intl={intl}
+        />
+      )}
 
       {showBreakdown ? (
         <div className={css.breakdownWrapper}>

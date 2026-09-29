@@ -68,13 +68,16 @@ const getProcessName = pageData => {
 const EnhancedCheckoutPage = props => {
   const [pageData, setPageData] = useState({});
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-  // XOLOLO Envíos v2: la selección del método de envío vive AQUÍ (en
-  // EnhancedCheckoutPage, no en CheckoutPageWithPayment) porque el
-  // WithPayment se desmonta cada vez que speculateTransactionInProgress
-  // pasa a true (line 207 abajo). Si el state viviera adentro se
-  // resetearía en cada re-speculate, haciendo que el radio "salte" de
-  // vuelta al default al cambiar de método.
-  const [xoloSelectedMethod, setXoloSelectedMethod] = useState(null);
+  // XOLOLO Envíos v2 (rediseño): el método viene YA elegido desde la
+  // ListingPage (OrderPanel → orderData.selectedShippingMethod). Aquí
+  // sólo lo hidratamos como estado inicial. El estado permite todavía
+  // que el buyer lo cambie en el checkout (fallback), pero por default
+  // se muestra el ya elegido.
+  const initialMethodFromOrderData =
+    props.orderData?.selectedShippingMethod || null;
+  const [xoloSelectedMethod, setXoloSelectedMethod] = useState(
+    initialMethodFromOrderData
+  );
   const config = useConfiguration();
   const routeConfiguration = useRouteConfiguration();
   const intl = useIntl();

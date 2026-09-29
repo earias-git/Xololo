@@ -705,14 +705,39 @@ class StripePaymentForm extends Component {
           locale={locale}
           intl={intl}
         />
-        {showXololoMethodSelector ? (
-          <XololoShippingMethodSelector
-            methods={xololoShippingMethods}
-            value={xololoSelectedShippingMethod || null}
-            defaultMethod={xololoDefaultShippingMethod}
-            onChange={handleXololoMethodSelected}
-            currencyFormatter={xololoCurrencyFormatter}
-          />
+        {/* XOLOLO Envíos v2 (rediseño): el selector de método ya no vive
+            aquí — el buyer lo eligió en el ListingPage. Mostramos sólo
+            un resumen compacto del método fijado. Si necesita cambiarlo,
+            debe regresar al listing. */}
+        {showXololoMethodSelector && (xololoSelectedShippingMethod || xololoDefaultShippingMethod) ? (
+          <div style={{
+            margin: '16px 0',
+            padding: '10px 14px',
+            border: '1px solid var(--colorGrey100)',
+            borderRadius: 6,
+            background: 'var(--colorGrey50)',
+            fontSize: 13,
+            color: 'var(--colorGrey700)',
+          }}>
+            <strong style={{ fontWeight: 'var(--fontWeightSemiBold)' }}>
+              Método de entrega:
+            </strong>{' '}
+            {(() => {
+              const m = xololoSelectedShippingMethod || xololoDefaultShippingMethod;
+              if (m === 'pickup') return 'Recolección en domicilio del vendedor · Gratis';
+              if (m === 'localDelivery') {
+                const p = Number(xololoShippingMethods?.localDelivery?.priceSubunits) || 0;
+                return `Envío en zona local · ${xololoCurrencyFormatter(p)}`;
+              }
+              if (m === 'skydropxCarrier') {
+                return xololoShippingMethods?.skydropxCarrier?.sellerCoversShipping
+                  ? 'Envío por paquetería · Gratis'
+                  : 'Envío por paquetería · Cotización en línea (abajo)';
+              }
+              if (m === 'freight') return 'Envío por flete · Por cotizar después';
+              return m;
+            })()}
+          </div>
         ) : null}
         {showRateSelector ? (
           <ShippingRateSelector

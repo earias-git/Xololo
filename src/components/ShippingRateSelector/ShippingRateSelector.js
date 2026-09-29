@@ -208,7 +208,10 @@ const ShippingRateSelector = props => {
           para ver las paqueterías disponibles.
         </p>
       ) : state.status === QuoteRequestState.LOADING ? (
-        <p className={css.hint}>Cotizando envío a CP {destination.postal_code}…</p>
+        <p className={css.hint}>
+          Estamos solicitando el presupuesto para CP {destination.postal_code} —
+          esto puede tardar unos segundos…
+        </p>
       ) : state.status === QuoteRequestState.SUCCESS ? (
         <p className={css.hint}>
           Cotización para CP {destination.postal_code} · elige tu paquetería:

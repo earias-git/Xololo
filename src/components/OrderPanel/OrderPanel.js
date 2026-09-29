@@ -37,6 +37,7 @@ import {
 } from '../../transactions/transaction';
 
 import { ModalInMobile, PrimaryButton, AvatarSmall, H1, H2 } from '../../components';
+import { getShippingMethodsFromListing } from '../../util/xololoShippingMethods';
 import PriceVariantPicker from './PriceVariantPicker/PriceVariantPicker';
 import SubmitFinePrint from './SubmitFinePrint/SubmitFinePrint';
 
@@ -360,6 +361,19 @@ const OrderPanel = props => {
   const isKnownProcess = supportedProcessesInfo.map(info => info.name).includes(processName);
 
   const { pickupEnabled, shippingEnabled } = listing?.attributes?.publicData || {};
+  // XOLOLO Envíos v2: computamos aquí los métodos v2 del listing para
+  // pasarlos al ProductOrderForm. Si el listing tiene métodos v2, se
+  // muestra el selector de 4 opciones AQUÍ (ListingPage) — el buyer
+  // elige antes de "Comprar ahora". Si no, cae al selector legacy
+  // pickup/shipping.
+  const xoloShippingMethods = getShippingMethodsFromListing(listing);
+  const xoloShippingMethodsEnabledCount = [
+    xoloShippingMethods?.pickup?.enabled,
+    xoloShippingMethods?.localDelivery?.enabled,
+    xoloShippingMethods?.skydropxCarrier?.enabled,
+    xoloShippingMethods?.freight?.enabled,
+  ].filter(Boolean).length;
+  const hasXoloShippingMethods = xoloShippingMethodsEnabledCount > 0;
 
   const listingTypeConfig = validListingTypes.find(conf => conf.listingType === listingType);
   const displayShipping = displayDeliveryShipping(listingTypeConfig);
@@ -529,6 +543,7 @@ const OrderPanel = props => {
             shippingEnabled={shippingEnabled && displayShipping}
             displayDeliveryMethod={displayPickup || displayShipping}
             onContactUser={onContactUser}
+            xoloShippingMethods={hasXoloShippingMethods ? xoloShippingMethods : null}
             {...sharedProps}
           />
         ) : showInquiryForm ? (
