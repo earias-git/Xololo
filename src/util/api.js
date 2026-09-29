@@ -152,31 +152,43 @@ export const deleteUserAccount = body => {
   return post('/api/delete-account', body);
 };
 
+// XOLOLO: wrapper para endpoints Xololo que usan bodyParser.json()
+// (no transit+json). El helper `post` de arriba serializa con transit
+// por default, lo que hace que el bodyParser.json() del server reciba
+// req.body vacío y responda 400 invalid_request. Aquí forzamos JSON.
+const postJson = async (path, body) => {
+  const res = await window.fetch(`${apiBaseUrl()}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || data.details || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+};
+
 // XOLOLO: verificar código de 6 dígitos del buyer (pickup/localDelivery/
 // freight). Sólo el provider (seller) puede llamarlo. Ver
 // server/api/verify-delivery-code.js.
-export const verifyDeliveryCode = body => {
-  return post('/api/verify-delivery-code', body);
-};
+export const verifyDeliveryCode = body => postJson('/api/verify-delivery-code', body);
 
 // XOLOLO: sub-flags de flujo (readyAt / dispatchedAt) — sólo escriben
 // metadata en la tx, NO transicionan Sharetribe. Ver server/api/tx-flow.js.
-export const txMarkReady = body => {
-  return post('/api/tx/mark-ready', body);
-};
-export const txMarkDispatched = body => {
-  return post('/api/tx/mark-dispatched', body);
-};
+export const txMarkReady = body => postJson('/api/tx/mark-ready', body);
+export const txMarkDispatched = body => postJson('/api/tx/mark-dispatched', body);
 
 // XOLOLO Envíos v2 · freight: seller cotiza el envío después del
 // pago del producto. Body: { transactionId, amountSubunits,
 // description, carrierName? }. Ver server/api/freight.js.
-export const freightQuote = body => {
-  return post('/api/freight/quote', body);
-};
+export const freightQuote = body => postJson('/api/freight/quote', body);
 // Buyer inicia el pago del envío cotizado. Devuelve clientSecret
 // para confirmar con Stripe Elements.
 // Body: { transactionId }. Response: { clientSecret, paymentIntentId, ... }.
-export const freightCreatePaymentIntent = body => {
-  return post('/api/freight/create-payment-intent', body);
-};
+export const freightCreatePaymentIntent = body =>
+  postJson('/api/freight/create-payment-intent', body);

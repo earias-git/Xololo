@@ -384,7 +384,7 @@ const FreightAuthorizePayment = ({
     setError(null);
     try {
       if (!window.Stripe) {
-        setError('Stripe.js no cargó. Recarga la página.');
+        setError('Stripe.js aún no cargó. Espera unos segundos y reintenta.');
         return;
       }
       if (!stripePublishableKey) {
@@ -392,18 +392,35 @@ const FreightAuthorizePayment = ({
         return;
       }
       const resp = await freightCreatePaymentIntent({ transactionId });
+      if (!resp?.clientSecret) {
+        setError('El servidor no devolvió el token de pago. Recarga y reintenta.');
+        return;
+      }
       clientSecretRef.current = resp.clientSecret;
       const stripe = window.Stripe(stripePublishableKey);
       stripeRef.current = stripe;
       const elements = stripe.elements({ clientSecret: resp.clientSecret });
       elementsRef.current = elements;
       const paymentElement = elements.create('payment');
-      // Mount después de que el div existe.
       setReady(true);
-      // Damos un tick para que React monte el div antes de attachar Stripe.
       setTimeout(() => paymentElement.mount(mountRef.current), 0);
     } catch (e) {
-      setError('No pudimos iniciar el pago. Intenta de nuevo.');
+      // Mapeo de errores del server. Preservamos el detalle para que
+      // sepamos qué falló en vez de "no pudimos iniciar el pago" genérico.
+      const errKey = e?.data?.error || e?.message;
+      const map = {
+        invalid_request: 'Falta información en la solicitud (recarga la página).',
+        unauthorized: 'Sesión expirada. Recarga la página e inicia sesión.',
+        transaction_not_found: 'No encontramos esta orden. Recarga la página.',
+        not_freight_mode: 'Esta orden no es de envío por flete.',
+        not_quoted_yet: 'El vendedor aún no envía cotización. Espera unos minutos.',
+        already_authorized: 'Ya autorizaste este pago. Recarga la página para verlo.',
+        stripe_missing: 'Pagos no configurados en el servidor. Contacta a Xololo.',
+        internal: 'Error interno del servidor. Reintenta en unos segundos.',
+      };
+      setError(map[errKey] || `No pudimos iniciar el pago (${errKey || 'error'}).`);
+      // eslint-disable-next-line no-console
+      console.error('[freight authorize] error:', e?.data || e);
     } finally {
       setInProgress(false);
     }
