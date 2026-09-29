@@ -181,6 +181,49 @@ export const intersectShippingMethods = listings => {
 };
 
 /**
+ * XOLOLO Carrito multi-producto (Option D "comprar por grupos"):
+ * agrupa listings por compatibilidad de métodos. Dos listings son
+ * compatibles si comparten al menos un método habilitado. Los grupos
+ * resultantes se pueden pagar por separado (cada uno tiene su propio
+ * checkout con la intersección de métodos de ese grupo).
+ *
+ * Algoritmo greedy: para cada listing, intenta agregarlo al primer
+ * grupo existente donde sea compatible; si no lo es en ninguno, crea
+ * uno nuevo. Funciona correctamente para casos típicos (2-3 productos);
+ * en escenarios patológicos con muchos productos y compatibilidades
+ * cruzadas complejas puede no dar el mínimo número de grupos — pero es
+ * predecible y suficiente para v1.
+ *
+ * @param {Array<Object>} listings
+ * @returns {Array<{ listings: Array, methods, intersectionKeys }>}
+ *   — array de grupos, cada uno con sus listings y la intersección de
+ *   métodos del grupo (útil para el selector y el checkout).
+ */
+export const groupListingsByCompatibility = listings => {
+  if (!Array.isArray(listings) || listings.length === 0) return [];
+  const groups = []; // [{ listings: [...] }]
+  for (const l of listings) {
+    let placed = false;
+    for (const g of groups) {
+      const test = intersectShippingMethods([...g.listings, l]);
+      if (test.intersectionKeys.length > 0) {
+        g.listings.push(l);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      groups.push({ listings: [l] });
+    }
+  }
+  // Enriquecer cada grupo con su intersección definitiva.
+  return groups.map(g => {
+    const { methods, intersectionKeys } = intersectShippingMethods(g.listings);
+    return { listings: g.listings, methods, intersectionKeys };
+  });
+};
+
+/**
  * Label legible para el buyer (usable en checkout y confirmación).
  */
 export const methodLabel = key => {

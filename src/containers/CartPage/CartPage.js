@@ -23,6 +23,7 @@ import {
 import {
   getShippingMethodsFromListing,
   intersectShippingMethods,
+  groupListingsByCompatibility,
   METHOD_PICKUP,
   METHOD_LOCAL_DELIVERY,
   METHOD_SKYDROPX,
@@ -94,6 +95,9 @@ const CartPage = props => {
   // botones para quitar productos incompatibles.
   const [allListings, setAllListings] = useState([]);
   const [xoloSelectedMethod, setXoloSelectedMethod] = useState(null);
+  // Cuando hay grupos incompatibles, cada grupo tiene su propio método
+  // seleccionado — { [groupIndex]: 'pickup' | 'localDelivery' | ... }
+  const [groupSelectedMethods, setGroupSelectedMethods] = useState({});
 
   const listingIdsKey = cart?.items?.map(i => i.listingId).join(',') || '';
   useEffect(() => {
@@ -154,31 +158,37 @@ const CartPage = props => {
   const subtotalMoney = new Money(Math.round(subtotalAmount), currency);
   const totalItems = cart.items.reduce((sum, i) => sum + (i.quantity || 0), 0);
 
-  // XOLOLO Envíos v2 + carrito multi-producto: intersección de métodos
-  // entre todos los listings. Si sólo hay 1 item, la intersección es
-  // simplemente sus métodos. Si hay 2+, sólo aparecen los métodos que
-  // TODOS soportan.
-  const { methods: xoloShippingMethods, intersectionKeys } =
-    allListings.length > 0
-      ? intersectShippingMethods(allListings)
-      : { methods: null, intersectionKeys: [] };
-  const xoloEnabledCount = intersectionKeys.length;
-  const showXoloMethodSelector = xoloEnabledCount > 0;
-  // Detección de conflicto: hay al menos 2 items, todos con métodos v2
-  // configurados, pero la intersección es vacía. Renderemos mensaje.
-  const anyListingHasV2 = allListings.some(l => {
-    const m = getShippingMethodsFromListing(l);
-    return [m?.pickup?.enabled, m?.localDelivery?.enabled, m?.skydropxCarrier?.enabled, m?.freight?.enabled].some(Boolean);
+  // XOLOLO Envíos v2 + carrito multi-producto: agrupa por compatibilidad
+  // de métodos. Si todos comparten al menos un método → 1 grupo (todo
+  // se paga junto). Si no → 2+ grupos, cada uno con su propio checkout.
+  const compatibilityGroups = allListings.length > 0
+    ? groupListingsByCompatibility(allListings)
+    : [];
+  const hasMultipleGroups = compatibilityGroups.length > 1;
+
+  // Enriquece los grupos con los cart.items correspondientes.
+  const groupsWithCartItems = compatibilityGroups.map((g, idx) => {
+    const listingIdsInGroup = new Set(g.listings.map(l => l.id?.uuid).filter(Boolean));
+    const cartItemsForGroup = cart.items.filter(ci => listingIdsInGroup.has(ci.listingId));
+    const groupSubtotal = cartItemsForGroup.reduce(
+      (sum, i) => sum + (i.price?.amount || 0) * (i.quantity || 0),
+      0
+    );
+    return {
+      ...g,
+      groupIndex: idx,
+      cartItems: cartItemsForGroup,
+      subtotalMoney: new Money(Math.round(groupSubtotal), currency),
+    };
   });
-  const hasIncompatibleMethods =
-    allListings.length >= 2 && anyListingHasV2 && intersectionKeys.length === 0;
-  const xoloDefaultMethod = intersectionKeys[0] || null;
-  // Marca por item los métodos que soporta — útil para mostrar en el
-  // fallback de "productos incompatibles".
-  const perItemMethods = allListings.map(l => ({
-    listingId: l.id?.uuid,
-    methods: getShippingMethodsFromListing(l),
-  }));
+
+  // Escenario de 1 solo grupo — comportamiento actual (selector único).
+  const singleGroup = !hasMultipleGroups && groupsWithCartItems[0];
+  const singleGroupMethods = singleGroup?.methods || null;
+  const singleGroupIntersection = singleGroup?.intersectionKeys || [];
+  const showXoloMethodSelector = singleGroupIntersection.length > 0;
+  const xoloShippingMethods = singleGroupMethods;
+  const xoloDefaultMethod = singleGroupIntersection[0] || null;
   const xoloCurrencyFormatter = subunits => {
     const n = Number(subunits) || 0;
     if (n === 0) return 'Gratis';
@@ -188,12 +198,10 @@ const CartPage = props => {
       return `$${(n / 100).toFixed(2)}`;
     }
   };
-  // Buyer debe elegir método si hay v2 methods intersecting; también
-  // se bloquea si hay incompatibilidad (buyer debe quitar productos).
+  // Buyer debe elegir método si hay v2 methods intersecting.
   const methodChosenOrDefault = xoloSelectedMethod || xoloDefaultMethod;
   const methodBlockingCheckout =
-    hasIncompatibleMethods ||
-    (showXoloMethodSelector && !methodChosenOrDefault);
+    showXoloMethodSelector && !methodChosenOrDefault;
 
   const handleQty = (listingId, nextQty) => {
     dispatch(updateQuantity({ sellerId, listingId, quantity: Math.max(0, nextQty) }));
@@ -209,22 +217,16 @@ const CartPage = props => {
     }
   };
 
-  const handleCheckout = async () => {
-    // XOLOLO Cart.5: checkout multi-item.
-    // Estrategia:
-    //  1. El primer item del carrito es el "primary listing" — su
-    //     transaction process (default-purchase), su publicData de
-    //     envío, y su stock reservation se usan para la orden.
-    //  2. Los items adicionales viajan en orderData.additionalCartItems
-    //     y el server los agrega como líneas 'line-item/item' extras.
-    //  3. La comisión se recalcula sobre el total agregado en
-    //     server/api-util/lineItems.js.
-    //  4. Redirigimos a la CheckoutPage estándar (/l/:slug/:id/checkout).
+  // XOLOLO Envíos v2 (grupos): checkout de un subconjunto de items del
+  // carrito. Cuando hay grupos incompatibles, se llama con los items
+  // de un grupo específico. Cuando todo es compatible, se llama con
+  // todos los items del carrito.
+  const doCheckout = async (itemsSubset, chosenMethod) => {
     setRedirecting(true);
     setCheckoutError(null);
     try {
-      const primary = cart.items[0];
-      const rest = cart.items.slice(1);
+      const primary = itemsSubset[0];
+      const rest = itemsSubset.slice(1);
 
       // Hidrata la primary listing en el store — necesitamos la entidad
       // Sharetribe completa (author, price, publicData) para el checkout.
@@ -255,10 +257,10 @@ const CartPage = props => {
         image: i.listingImageUrl || null,
       }));
 
-      // XOLOLO Envíos v2: el método elegido en la CartPage viaja como
+      // XOLOLO Envíos v2: el método elegido para este grupo viaja como
       // orderData.selectedShippingMethod. El deliveryMethod legacy se
       // deriva (pickup/shipping) para satisfacer el proceso Sharetribe.
-      const chosenXoloMethod = methodChosenOrDefault;
+      const chosenXoloMethod = chosenMethod;
       const derivedDeliveryMethod =
         deriveLegacyDeliveryMethod(chosenXoloMethod) || 'shipping';
       const initialValues = {
@@ -406,80 +408,122 @@ const CartPage = props => {
               })}
             </ul>
 
-            {/* XOLOLO Envíos v2: selector de método basado en la
-                INTERSECCIÓN de métodos que TODOS los productos del
-                carrito soportan. Si la intersección es vacía, mostramos
-                mensaje explícito con botones "Quitar" en los productos
-                que no comparten métodos con los demás. */}
-            {hasIncompatibleMethods ? (
-              <div
-                style={{
-                  margin: '20px 0',
-                  padding: '16px',
-                  border: '1px solid #fecaca',
-                  borderRadius: 8,
-                  background: '#fef2f2',
-                }}
-              >
-                <h4 style={{ margin: '0 0 8px 0', color: '#991b1b', fontSize: 15 }}>
-                  Productos con métodos de entrega incompatibles
-                </h4>
-                <p style={{ margin: '0 0 12px 0', fontSize: 13, color: '#7f1d1d', lineHeight: 1.5 }}>
-                  Los productos en tu carrito no comparten ningún método
-                  de entrega en común, por eso no pueden pagarse juntos.
-                  Quita alguno de los productos para poder continuar, o
-                  crea pedidos separados.
-                </p>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {perItemMethods.map(p => {
-                    const cartItem = cart.items.find(i => i.listingId === p.listingId);
-                    if (!cartItem) return null;
-                    const methodLabels = [
-                      p.methods?.pickup?.enabled ? 'Recolección' : null,
-                      p.methods?.localDelivery?.enabled ? 'Envío local' : null,
-                      p.methods?.skydropxCarrier?.enabled ? 'Paquetería' : null,
-                      p.methods?.freight?.enabled ? 'Flete' : null,
-                    ].filter(Boolean).join(', ') || 'sin métodos configurados';
-                    return (
-                      <li
-                        key={p.listingId}
+            {/* XOLOLO Envíos v2 (Option D): grupos por compatibilidad.
+                Si todos los productos comparten métodos → 1 grupo (todo
+                se paga junto). Si no → 2+ grupos, cada uno con su
+                propio selector + botón "Comprar este grupo". */}
+            {hasMultipleGroups ? (
+              <div style={{ margin: '20px 0' }}>
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    marginBottom: 16,
+                    border: '1px solid #fde68a',
+                    borderRadius: 8,
+                    background: '#fffbeb',
+                  }}
+                >
+                  <h4 style={{ margin: '0 0 4px 0', color: '#92400e', fontSize: 14 }}>
+                    Necesitas hacer {compatibilityGroups.length} pedidos separados
+                  </h4>
+                  <p style={{ margin: 0, fontSize: 13, color: '#78350f', lineHeight: 1.5 }}>
+                    Los productos en tu carrito tienen métodos de entrega
+                    distintos. Cada grupo se paga por separado — no te
+                    preocupes, sigues comprando en una sola tienda.
+                  </p>
+                </div>
+                {groupsWithCartItems.map(g => {
+                  const groupMethodChosen =
+                    groupSelectedMethods[g.groupIndex] || g.intersectionKeys[0] || null;
+                  const groupBlocked = !groupMethodChosen;
+                  return (
+                    <div
+                      key={g.groupIndex}
+                      style={{
+                        margin: '16px 0',
+                        padding: '16px',
+                        border: '1px solid var(--colorGrey100)',
+                        borderRadius: 8,
+                        background: 'var(--colorWhite)',
+                      }}
+                    >
+                      <h5 style={{ margin: '0 0 12px 0', fontSize: 14, color: 'var(--colorGrey900)' }}>
+                        Grupo {g.groupIndex + 1} · {g.cartItems.length}{' '}
+                        {g.cartItems.length === 1 ? 'producto' : 'productos'}
+                      </h5>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 12px 0' }}>
+                        {g.cartItems.map(ci => (
+                          <li
+                            key={ci.listingId}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 10,
+                              padding: '6px 0',
+                              fontSize: 13,
+                              color: 'var(--colorGrey700)',
+                            }}
+                          >
+                            {ci.listingImageUrl ? (
+                              <img
+                                src={ci.listingImageUrl}
+                                alt={ci.listingTitle}
+                                style={{ width: 36, height: 36, borderRadius: 4, objectFit: 'cover' }}
+                              />
+                            ) : null}
+                            <span style={{ flex: 1 }}>
+                              {ci.listingTitle} × {ci.quantity}
+                            </span>
+                            <span style={{ fontWeight: 600, color: 'var(--colorGrey900)' }}>
+                              {formatMoney(
+                                intl,
+                                new Money(
+                                  Math.round((ci.price?.amount || 0) * (ci.quantity || 0)),
+                                  currency
+                                )
+                              )}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <XololoShippingMethodSelector
+                        methods={g.methods}
+                        value={groupSelectedMethods[g.groupIndex] || null}
+                        defaultMethod={g.intersectionKeys[0] || null}
+                        onChange={v =>
+                          setGroupSelectedMethods(prev => ({ ...prev, [g.groupIndex]: v }))
+                        }
+                        currencyFormatter={xoloCurrencyFormatter}
+                      />
+                      <div
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          padding: '8px 10px',
-                          background: 'var(--colorWhite)',
-                          borderRadius: 6,
-                          fontSize: 13,
+                          marginTop: 12,
+                          paddingTop: 12,
+                          borderTop: '1px solid var(--colorGrey100)',
                         }}
                       >
-                        <div>
-                          <div style={{ fontWeight: 600, color: 'var(--colorGrey900)' }}>
-                            {cartItem.listingTitle}
-                          </div>
-                          <div style={{ fontSize: 12, color: 'var(--colorGrey500)' }}>
-                            Soporta: {methodLabels}
-                          </div>
-                        </div>
+                        <span style={{ fontSize: 13, color: 'var(--colorGrey700)' }}>
+                          Subtotal grupo:{' '}
+                          <strong style={{ color: 'var(--colorGrey900)' }}>
+                            {formatMoney(intl, g.subtotalMoney)}
+                          </strong>
+                        </span>
                         <button
                           type="button"
-                          onClick={() => handleRemove(p.listingId)}
-                          style={{
-                            background: 'transparent',
-                            border: '1px solid #dc2626',
-                            color: '#dc2626',
-                            borderRadius: 6,
-                            padding: '4px 10px',
-                            fontSize: 12,
-                            cursor: 'pointer',
-                          }}
+                          className={css.primaryBtn}
+                          onClick={() => doCheckout(g.cartItems, groupMethodChosen)}
+                          disabled={redirecting || groupBlocked}
+                          title={groupBlocked ? 'Elige un método arriba' : ''}
                         >
-                          Quitar
+                          Pagar este grupo →
                         </button>
-                      </li>
-                    );
-                  })}
-                </ul>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : showXoloMethodSelector ? (
               <div style={{ margin: '20px 0' }}>
@@ -492,9 +536,9 @@ const CartPage = props => {
                 />
                 {cart.items.length > 1 ? (
                   <p style={{ fontSize: 12, color: 'var(--colorGrey500)', margin: '4px 4px 0 4px' }}>
-                    Estos métodos son los que TODOS los productos en tu
-                    carrito soportan. La configuración de precio/zona/peso
-                    se toma del primer producto.
+                    Todos los productos en tu carrito soportan estos
+                    métodos. La configuración de precio/zona/peso se
+                    toma del primer producto.
                   </p>
                 ) : null}
               </div>
@@ -506,8 +550,8 @@ const CartPage = props => {
                 <strong>{formatMoney(intl, subtotalMoney)}</strong>
               </div>
               <p className={css.summaryHint}>
-                {hasIncompatibleMethods
-                  ? 'Quita alguno de los productos incompatibles arriba para poder continuar al checkout.'
+                {hasMultipleGroups
+                  ? 'Los productos se agruparon por compatibilidad de envío. Paga cada grupo por separado usando los botones arriba.'
                   : showXoloMethodSelector
                   ? 'Al ir a checkout capturas dirección de envío. El costo final incluye envío según el método elegido arriba.'
                   : 'Al ir a checkout eliges paquetería + capturas dirección de envío. El costo final incluye tu envío ya cotizado.'}
@@ -526,9 +570,16 @@ const CartPage = props => {
                 <button
                   type="button"
                   className={css.primaryBtn}
-                  onClick={handleCheckout}
-                  disabled={redirecting || methodBlockingCheckout}
-                  title={methodBlockingCheckout ? 'Selecciona un método de entrega arriba' : ''}
+                  onClick={() => doCheckout(cart.items, methodChosenOrDefault)}
+                  disabled={redirecting || methodBlockingCheckout || hasMultipleGroups}
+                  title={
+                    hasMultipleGroups
+                      ? 'Usa los botones "Pagar este grupo" arriba'
+                      : methodBlockingCheckout
+                      ? 'Selecciona un método de entrega arriba'
+                      : ''
+                  }
+                  style={hasMultipleGroups ? { display: 'none' } : {}}
                 >
                   {redirecting ? 'Un momento…' : 'Ir a checkout →'}
                 </button>
