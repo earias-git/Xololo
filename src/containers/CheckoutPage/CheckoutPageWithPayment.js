@@ -505,6 +505,11 @@ export const CheckoutPageWithPayment = props => {
   const [submitting, setSubmitting] = useState(false);
   // Initialized stripe library is saved to state - if it's needed at some point here too.
   const [stripe, setStripe] = useState(null);
+  // XOLOLO Envíos v2: gate del checkout cuando el buyer eligió
+  // localDelivery pero su dirección queda fuera de la cobertura del
+  // listing. StripePaymentForm calcula el flag y lo empuja acá vía
+  // onLocalDeliveryCoverageChange. `true` (default) = no bloquear.
+  const [localDeliveryCovered, setLocalDeliveryCovered] = useState(true);
   // XOLOLO Envíos v2: la selección vive en el PADRE (EnhancedCheckoutPage)
   // porque este componente se desmonta durante speculateTransactionInProgress
   // y perdería useState local. Ver comentario en CheckoutPage.js:70.
@@ -779,7 +784,13 @@ export const CheckoutPageWithPayment = props => {
             {showPaymentForm ? (
               <StripePaymentForm
                 className={css.paymentForm}
-                onSubmit={values =>
+                onSubmit={values => {
+                  // XOLOLO Envíos v2: gate de cobertura. Si el buyer
+                  // eligió localDelivery pero su dirección no está
+                  // cubierta, el StripePaymentForm ya mostró el banner
+                  // rojo — el submit debe fallar aquí (no llegar al
+                  // handleSubmit que dispara el pago).
+                  if (!localDeliveryCovered) return;
                   // XOLOLO Envíos v2: el método seleccionado vive en
                   // React state (no en el FinalForm). handleSubmit lee
                   // el método desde values.formValues.selectedShippingMethod,
@@ -799,8 +810,8 @@ export const CheckoutPageWithPayment = props => {
                     stripe,
                     submitting,
                     setSubmitting
-                  )
-                }
+                  );
+                }}
                 inProgress={submitting}
                 formId="CheckoutPagePaymentForm"
                 providerDisplayName={providerDisplayName}
@@ -843,6 +854,7 @@ export const CheckoutPageWithPayment = props => {
                 xololoDefaultShippingMethod={xoloDefaultMethod}
                 xololoSelectedShippingMethod={xoloSelectedMethod}
                 xololoCurrencyFormatter={xoloCurrencyFormatter}
+                onLocalDeliveryCoverageChange={setLocalDeliveryCovered}
                 onShippingRateSelected={rate => {
                   // XOLOLO Envíos v2: al elegir una paquetería, re-speculate
                   // con el rate para que el shipping-fee aparezca en el

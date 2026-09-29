@@ -13,6 +13,7 @@ import { propTypes } from '../../../util/types';
 import { ensurePaymentMethodCard } from '../../../util/data';
 import { getPropsForCustomTransactionFieldInputs } from '../../../util/fieldHelpers';
 import { STRIPE_JS_LOADED_EVENT } from '../../../util/includeScripts';
+import { isLocalDeliveryCovered } from '../../../util/localDeliveryCoverage';
 
 import {
   Heading,
@@ -521,6 +522,10 @@ class StripePaymentForm extends Component {
       xololoSelectedShippingMethod,
       onXololoShippingMethodSelected,
       xololoCurrencyFormatter,
+      // XOLOLO Envíos v2: cuando el buyer llena su CP y el estado/
+      // municipio quedan fuera de la cobertura del listing en modo
+      // localDelivery, notificamos al padre para que bloquee el submit.
+      onLocalDeliveryCoverageChange,
       values,
     } = formRenderProps;
 
@@ -739,6 +744,68 @@ class StripePaymentForm extends Component {
             })()}
           </div>
         ) : null}
+        {(() => {
+          // XOLOLO Envíos v2 · localDelivery coverage gate.
+          // Cuando el buyer eligió localDelivery en el ListingPage y su
+          // dirección (state+city del CP lookup) queda fuera de la
+          // cobertura del listing, mostramos banner ROJO explicativo +
+          // notificamos al padre para bloquear el submit. El buyer debe
+          // volver al producto para elegir otro método (no re-abrimos el
+          // selector aquí — el diseño del rediseño de envíos elige en
+          // ListingPage, no en checkout).
+          const activeMethod = xololoSelectedShippingMethod || xololoDefaultShippingMethod;
+          if (activeMethod !== 'localDelivery') {
+            // Notify parent que la cobertura no es problema (limpia flag).
+            if (typeof onLocalDeliveryCoverageChange === 'function') {
+              onLocalDeliveryCoverageChange(true);
+            }
+            return null;
+          }
+          const buyerAddress = {
+            estado: values?.recipientState,
+            municipio: values?.recipientCity,
+          };
+          const covered = isLocalDeliveryCovered(
+            xololoShippingMethods?.localDelivery,
+            buyerAddress
+          );
+          if (typeof onLocalDeliveryCoverageChange === 'function') {
+            onLocalDeliveryCoverageChange(covered);
+          }
+          // Si aún no llenó dirección, no mostramos error (evita alarmar
+          // antes de tiempo). Sólo cuando ya hay estado ingresado.
+          if (!buyerAddress.estado) return null;
+          if (covered) return null;
+          const covStates = xololoShippingMethods?.localDelivery?.coverageStates || [];
+          const covMunis =
+            xololoShippingMethods?.localDelivery?.coverageMunicipios?.[buyerAddress.estado] || [];
+          const zonaLabel =
+            covMunis.length > 0
+              ? `${buyerAddress.estado} (${covMunis.join(', ')})`
+              : covStates.join(', ');
+          return (
+            <div
+              style={{
+                margin: '12px 0',
+                padding: '12px 14px',
+                border: '1px solid var(--colorFail)',
+                borderRadius: 6,
+                background: '#fff5f5',
+                color: 'var(--colorFail)',
+                fontSize: 13,
+              }}
+            >
+              <strong>El vendedor no cubre tu dirección con este método.</strong>
+              <br />
+              Cobertura declarada: <em>{zonaLabel || '—'}</em>. Tu dirección:{' '}
+              {buyerAddress.estado}
+              {buyerAddress.municipio ? ` · ${buyerAddress.municipio}` : ''}.
+              <br />
+              Vuelve al producto y elige otro método (recolección, paquetería o flete) para
+              continuar.
+            </div>
+          );
+        })()}
         {showRateSelector ? (
           <ShippingRateSelector
             listingId={listingId}
