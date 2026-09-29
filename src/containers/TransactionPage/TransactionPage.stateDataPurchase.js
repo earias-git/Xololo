@@ -15,7 +15,6 @@ import {
 export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
   const { transaction, transactionRole, nextTransitions } = txInfo;
   const isProviderBanned = transaction?.provider?.attributes?.banned;
-  const isShippable = transaction?.attributes?.protectedData?.deliveryMethod === 'shipping';
   const _ = CONDITIONAL_RESOLVER_WILDCARD;
 
   const {
@@ -23,8 +22,6 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
     processState,
     states,
     transitions,
-    isCustomer,
-    actionButtonProps,
     leaveReviewProps,
   } = processInfo;
 
@@ -58,18 +55,21 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
       };
     })
     .cond([states.PURCHASED, PROVIDER], () => {
-      const actionButtonTranslationId = isShippable
-        ? `TransactionPage.${processName}.${PROVIDER}.transition-mark-delivered.actionButtonShipped`
-        : `TransactionPage.${processName}.${PROVIDER}.transition-mark-delivered.actionButton`;
-
+      // XOLOLO: eliminamos el botón manual "Marcar entregado" del
+      // seller. La confirmación de entrega ahora viene por vías
+      // automáticas según el método:
+      //   - pickup / localDelivery / freight → código de 6 dígitos
+      //     que el buyer muestra al seller/chofer (endpoint
+      //     verify-delivery-code dispara MARK_DELIVERED).
+      //   - Skydropx → webhook con status='delivered' dispara
+      //     MARK_DELIVERED (ver server/api/webhooks/skydropx.js).
+      // Los sub-pasos ("listo", "en camino") viven en tx.metadata.xoloFlow
+      // y se pintan/manipulan en Commits 6-7 desde CTAs específicos por
+      // modo, no desde este primaryButton genérico.
       return {
         processName,
         processState,
         showDetailCardHeadings: true,
-        showActionButtons: true,
-        primaryButtonProps: actionButtonProps(transitions.MARK_DELIVERED, PROVIDER, {
-          actionButtonTranslationId,
-        }),
       };
     })
     .cond([states.DELIVERED, CUSTOMER], () => {

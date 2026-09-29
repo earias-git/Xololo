@@ -205,6 +205,29 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'update_failed' });
   }
 
+  // XOLOLO: cuando la paquetería confirma entrega real al buyer,
+  // disparamos la transición transition/mark-delivered en Sharetribe.
+  // Es el equivalente automático del código de 6 dígitos que usan los
+  // otros modos (pickup/localDelivery/freight). Fire-and-forget con
+  // try/catch: si la tx ya está en DELIVERED (evento duplicado, o el
+  // seller la marcó manualmente antes de retirar el botón) la
+  // transición lanza y no aplica — el metadata igual quedó actualizado.
+  if (!isDuplicate && newEvent.status === 'delivered') {
+    try {
+      await sdk.transactions.transition({
+        id: tx.id.uuid,
+        transition: 'transition/mark-delivered',
+        params: {},
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[webhook skydropx] transition mark-delivered falló para ${tx.id.uuid}:`,
+        e?.data?.errors || e?.message
+      );
+    }
+  }
+
   // XOLOLO: dispara notificaciones si el status corresponde a un evento
   // de nuestra matriz (D.9). Fire-and-forget: no bloqueamos el 200.
   const notificationEvent = !isDuplicate && STATUS_TO_EVENT[newEvent.status];
