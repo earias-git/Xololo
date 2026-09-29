@@ -143,9 +143,16 @@ const getOrderParams = (
   // que llega al server como snapshot de la intención del cliente).
   const selectedShippingRateMaybe = selectedShippingRate ? { selectedShippingRate } : {};
   const shippingQuotationIdMaybe = shippingQuotationId ? { shippingQuotationId } : {};
-  // XOLOLO Envíos v2
-  const selectedShippingMethodMaybe = selectedShippingMethod
-    ? { selectedShippingMethod }
+  // XOLOLO Envíos v2: si el caller no pasó explícitamente
+  // selectedShippingMethod, caemos al que venga en pageData.orderData
+  // (viene desde CartPage.doCheckout o desde el OrderPanel del
+  // ListingPage). Sin este fallback, el INITIAL speculate iba con
+  // selectedShippingMethod=undefined y el server defaulteaba a pickup
+  // (=$0 envío), aunque el buyer hubiera elegido localDelivery/skydropx.
+  const effectiveShippingMethod =
+    selectedShippingMethod || pageData?.orderData?.selectedShippingMethod || null;
+  const selectedShippingMethodMaybe = effectiveShippingMethod
+    ? { selectedShippingMethod: effectiveShippingMethod }
     : {};
   // XOLOLO Cart.5: additionalCartItems se guarda en pageData.orderData
   // desde CartPage.handleCheckout. Aquí solo lo propagamos a orderParams.
