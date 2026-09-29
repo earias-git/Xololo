@@ -62,12 +62,29 @@ const getShippingMethodsFromListing = listing => {
   if (pd.xololoShippingMethods && typeof pd.xololoShippingMethods === 'object') {
     const stored = pd.xololoShippingMethods;
     const base = emptyConfig();
-    return {
+    const merged = {
       pickup: { ...base.pickup, ...(stored.pickup || {}) },
       localDelivery: { ...base.localDelivery, ...(stored.localDelivery || {}) },
       skydropxCarrier: { ...base.skydropxCarrier, ...(stored.skydropxCarrier || {}) },
       freight: { ...base.freight, ...(stored.freight || {}) },
     };
+    // Mismo fallback defensivo que en el util cliente:
+    // si shape v2 existe pero todo apagado, y hay legacy → deriva del legacy.
+    const anyEnabled =
+      merged.pickup.enabled ||
+      merged.localDelivery.enabled ||
+      merged.skydropxCarrier.enabled ||
+      merged.freight.enabled;
+    if (!anyEnabled) {
+      const derived = deriveFromLegacy(pd);
+      const hasLegacy =
+        derived.pickup.enabled ||
+        derived.localDelivery.enabled ||
+        derived.skydropxCarrier.enabled ||
+        derived.freight.enabled;
+      if (hasLegacy) return derived;
+    }
+    return merged;
   }
   return deriveFromLegacy(pd);
 };

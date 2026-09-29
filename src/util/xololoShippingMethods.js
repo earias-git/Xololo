@@ -102,12 +102,32 @@ export const getShippingMethodsFromListing = listing => {
     // Merge sobre el default por si el shape guardado tiene keys faltantes.
     const stored = pd.xololoShippingMethods;
     const base = emptyConfig();
-    return {
+    const merged = {
       pickup: { ...base.pickup, ...(stored.pickup || {}) },
       localDelivery: { ...base.localDelivery, ...(stored.localDelivery || {}) },
       skydropxCarrier: { ...base.skydropxCarrier, ...(stored.skydropxCarrier || {}) },
       freight: { ...base.freight, ...(stored.freight || {}) },
     };
+    // XOLOLO: fallback defensivo — si el shape v2 existe pero TODOS los
+    // métodos están apagados (ej. seller guardó sin marcar nada, o
+    // shape se corrompió), Y hay config legacy → derivamos del legacy
+    // y OR-mergeamos con el shape v2. Esto arregla listings donde el
+    // seller olvidó marcar checkboxes v2 pero tenía legacy carrier/flat.
+    const anyEnabled =
+      merged.pickup.enabled ||
+      merged.localDelivery.enabled ||
+      merged.skydropxCarrier.enabled ||
+      merged.freight.enabled;
+    if (!anyEnabled) {
+      const derived = deriveFromLegacy(pd);
+      const hasLegacy =
+        derived.pickup.enabled ||
+        derived.localDelivery.enabled ||
+        derived.skydropxCarrier.enabled ||
+        derived.freight.enabled;
+      if (hasLegacy) return derived;
+    }
+    return merged;
   }
   return deriveFromLegacy(pd);
 };
