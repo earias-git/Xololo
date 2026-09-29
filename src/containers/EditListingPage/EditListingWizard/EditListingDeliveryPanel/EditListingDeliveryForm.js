@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import appSettings from '../../../../config/settings';
 import { required } from '../../../../util/validators';
 import { MX_STATES } from '../../../../util/mxStates';
+import { municipiosByEstado } from '../../../../util/mxMunicipios';
 
 // Import shared components
 import {
@@ -168,8 +169,8 @@ export const EditListingDeliveryForm = props => (
                 />
                 <p className={css.xxHint} style={{ marginTop: 12 }}>
                   Estados donde entregas <strong>(obligatorio marcar al menos uno)</strong>. En el
-                  checkout se bloqueará la compra si la dirección del comprador está fuera de
-                  estos estados.
+                  checkout se ocultará esta opción si la dirección del comprador está fuera de
+                  estos estados/municipios.
                 </p>
                 <div
                   style={{
@@ -189,6 +190,60 @@ export const EditListingDeliveryForm = props => (
                     />
                   ))}
                 </div>
+
+                {/* Por cada estado seleccionado, mostrar el sub-selector
+                    de municipios (opcional). Si el seller no elige ningún
+                    municipio dejamos coverageMunicipios[estado] vacío, y
+                    el checkout interpreta "vacío = todos los municipios
+                    del estado". Ver server/api-util/localDeliveryCoverage
+                    y src/util/mxMunicipios. */}
+                {(xoloMethods.localDelivery?.coverageStates || []).length > 0 ? (
+                  <div style={{ marginTop: 16 }}>
+                    <p className={css.xxHint}>
+                      <strong>Municipios por estado</strong> (opcional). Si dejas todos los
+                      municipios sin marcar, se acepta cualquier municipio del estado. Marcar
+                      algunos limita la entrega a esos municipios.
+                    </p>
+                    {(xoloMethods.localDelivery?.coverageStates || []).map(estado => {
+                      const munis = municipiosByEstado(estado);
+                      return (
+                        <details
+                          key={estado}
+                          style={{
+                            marginTop: 8,
+                            padding: '8px 12px',
+                            border: '1px solid #eee',
+                            borderRadius: 6,
+                          }}
+                        >
+                          <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
+                            {estado} · {munis.length} municipios disponibles
+                          </summary>
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                              gap: '2px 12px',
+                              marginTop: 8,
+                              maxHeight: 300,
+                              overflowY: 'auto',
+                            }}
+                          >
+                            {munis.map(municipio => (
+                              <FieldCheckbox
+                                key={`${estado}:${municipio}`}
+                                id={`${formId}.xoloLocalMuni.${estado}.${municipio}`}
+                                name={`xololoMethods.localDelivery.coverageMunicipios.${estado}`}
+                                label={municipio}
+                                value={municipio}
+                              />
+                            ))}
+                          </div>
+                        </details>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             ) : null}
 

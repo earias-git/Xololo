@@ -18,9 +18,17 @@ const ALL_METHODS = [
 
 const emptyConfig = () => ({
   pickup: { enabled: false, instructions: '' },
-  // coverageStates: array de estados de MX donde el seller entrega
-  // (bloqueo duro en el checkout). Empty = método no configurado.
-  localDelivery: { enabled: false, priceSubunits: 0, zoneDescription: '', coverageStates: [] },
+  // coverageStates: array de estados de MX donde el seller entrega.
+  // coverageMunicipios: mapa { estado → [municipios] } — ausencia de
+  // key o array vacío = "todos los municipios del estado". Se usa en
+  // el checkout para ocultar la opción cuando el buyer está fuera.
+  localDelivery: {
+    enabled: false,
+    priceSubunits: 0,
+    zoneDescription: '',
+    coverageStates: [],
+    coverageMunicipios: {},
+  },
   skydropxCarrier: {
     enabled: false,
     sellerCoversShipping: false,

@@ -46,6 +46,14 @@ const getInitialValues = props => {
         coverageStates: Array.isArray(xoloMethodsCfg.localDelivery.coverageStates)
           ? xoloMethodsCfg.localDelivery.coverageStates
           : [],
+        // Mapa { estado → [municipios] }. Vacío = todos los municipios
+        // del estado. FinalForm anida los checkboxes por estado bajo
+        // este mapa automáticamente (los name usan dot-path).
+        coverageMunicipios:
+          xoloMethodsCfg.localDelivery.coverageMunicipios &&
+          typeof xoloMethodsCfg.localDelivery.coverageMunicipios === 'object'
+            ? xoloMethodsCfg.localDelivery.coverageMunicipios
+            : {},
       },
       skydropxCarrier: {
         enabled: sk.enabled ? ['true'] : [],
@@ -149,16 +157,32 @@ const EditListingDeliveryPanel = props => {
                 enabled: xoloIsOn(xololoMethods?.pickup?.enabled),
                 instructions: xololoMethods?.pickup?.instructions || '',
               },
-              localDelivery: {
-                enabled: xoloIsOn(xololoMethods?.localDelivery?.enabled),
-                priceSubunits: xololoMethods?.localDelivery?.price?.amount ?? 0,
-                zoneDescription: xololoMethods?.localDelivery?.zoneDescription || '',
-                // Estados marcados (array de strings) — se usan en el
-                // checkout para bloquear compras fuera de zona.
-                coverageStates: Array.isArray(xololoMethods?.localDelivery?.coverageStates)
+              localDelivery: (() => {
+                // Filtrar coverageMunicipios: sólo persistir entradas de
+                // estados que sigan en coverageStates (defensa contra que
+                // el seller haya des-marcado un estado tras haber elegido
+                // municipios en él), y sólo entradas con arrays no vacíos
+                // (vacío == "todos los municipios del estado" — no hace
+                // falta guardar la key).
+                const states = Array.isArray(xololoMethods?.localDelivery?.coverageStates)
                   ? xololoMethods.localDelivery.coverageStates
-                  : [],
-              },
+                  : [];
+                const rawMuni = xololoMethods?.localDelivery?.coverageMunicipios || {};
+                const coverageMunicipios = {};
+                for (const estado of states) {
+                  const list = rawMuni[estado];
+                  if (Array.isArray(list) && list.length > 0) {
+                    coverageMunicipios[estado] = list;
+                  }
+                }
+                return {
+                  enabled: xoloIsOn(xololoMethods?.localDelivery?.enabled),
+                  priceSubunits: xololoMethods?.localDelivery?.price?.amount ?? 0,
+                  zoneDescription: xololoMethods?.localDelivery?.zoneDescription || '',
+                  coverageStates: states,
+                  coverageMunicipios,
+                };
+              })(),
               skydropxCarrier: {
                 enabled: xoloIsOn(xololoMethods?.skydropxCarrier?.enabled),
                 sellerCoversShipping: xoloIsOn(
