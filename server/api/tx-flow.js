@@ -132,10 +132,15 @@ const markDispatched = async (req, res) => {
       return res.status(409).json({ error: 'already_set' });
     }
     // En freight, el buyer debe haber autorizado el pago del envío
-    // antes de que el seller pueda marcar despachado (sino el seller
-    // sale a entregar sin haber cobrado el envío cotizado).
-    if (xShipping.mode === 'freight' && !xShipping.buyerAuthorizedAt) {
-      return res.status(409).json({ error: 'not_authorized_yet' });
+    // antes de que el seller pueda marcar despachado. `buyerAuthorizedAt`
+    // vive en tx.metadata.xoloFreight (lo escribe el webhook Stripe
+    // billing cuando llega payment_intent.succeeded), NO en
+    // protectedData.xololoShipping.
+    if (xShipping.mode === 'freight') {
+      const currentFreight = tx.attributes.metadata?.xoloFreight || {};
+      if (!currentFreight.buyerAuthorizedAt) {
+        return res.status(409).json({ error: 'not_authorized_yet' });
+      }
     }
 
     const isdk = getIntegrationSdk();

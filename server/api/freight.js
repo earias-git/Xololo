@@ -59,13 +59,26 @@ const loadTxForActor = async (req, res, role) => {
   const sdk = getSdk(req, res);
   let currentUserResp;
   try {
-    currentUserResp = await sdk.currentUser.show();
+    // Incluimos stripeCustomer para poder pasar el id al PaymentIntent
+    // y que Stripe Elements muestre payment methods guardados en el
+    // Wallet (bug reportado: al re-comprar el buyer teclea la card
+    // aunque ya la tenga guardada).
+    currentUserResp = await sdk.currentUser.show({ include: ['stripeCustomer'] });
   } catch (e) {
     res.status(401).json({ error: 'unauthorized' });
     return null;
   }
   const currentUserId = currentUserResp.data.data.id.uuid;
   const currentUserEmail = currentUserResp.data.data.attributes?.email;
+  // Extraer stripeCustomer.id del payload denormalizado. Sharetribe
+  // devuelve el customer como resource included; su id es el Stripe
+  // Customer ID que ya vive en la cuenta Connect del marketplace
+  // (misma cuenta que usamos para Billing y PaymentIntents de freight).
+  const stripeCustomerRel = currentUserResp.data.data.relationships?.stripeCustomer?.data;
+  const stripeCustomerIncluded = (currentUserResp.data.included || []).find(
+    it => it.type === 'stripeCustomer' && it.id?.uuid === stripeCustomerRel?.id?.uuid
+  );
+  const stripeCustomerId = stripeCustomerIncluded?.attributes?.stripeCustomerId || null;
 
   let txResp;
   try {
@@ -90,7 +103,14 @@ const loadTxForActor = async (req, res, role) => {
   }
 
   const xShipping = tx.attributes.protectedData?.xololoShipping || {};
-  return { tx, transactionId, xShipping, currentUserId, currentUserEmail };
+  return {
+    tx,
+    transactionId,
+    xShipping,
+    currentUserId,
+    currentUserEmail,
+    stripeCustomerId,
+  };
 };
 
 // Helper: leer el shape actual de xoloFreight (con default vacío) para
@@ -163,7 +183,14 @@ const createPaymentIntent = async (req, res) => {
   try {
     const ctx = await loadTxForActor(req, res, 'customer');
     if (!ctx) return;
-    const { transactionId, tx, xShipping, currentUserId, currentUserEmail } = ctx;
+    const {
+      transactionId,
+      tx,
+      xShipping,
+      currentUserId,
+      currentUserEmail,
+      stripeCustomerId,
+    } = ctx;
 
     if (xShipping.mode !== 'freight') {
       return res.status(409).json({ error: 'not_freight_mode' });
@@ -219,6 +246,14 @@ const createPaymentIntent = async (req, res) => {
       }
     }
 
+    // XOLOLO: si el buyer ya tiene un Stripe Customer (creado por
+    // Sharetribe cuando pagó su primer producto), lo asociamos al PI.
+    // Con `customer` seteado y `setup_future_usage='off_session'`,
+    // Stripe Elements muestra el Wallet con los payment methods
+    // guardados del buyer — no tiene que teclear card de nuevo.
+    const customerParams = stripeCustomerId
+      ? { customer: stripeCustomerId, setup_future_usage: 'off_session' }
+      : {};
     const pi = await stripe.paymentIntents.create({
       amount: currentFreight.quotedAmount,
       currency: (currentFreight.quotedCurrency || 'MXN').toLowerCase(),
@@ -227,6 +262,7 @@ const createPaymentIntent = async (req, res) => {
       automatic_payment_methods: { enabled: true },
       description: `Envío por flete · Xololo tx ${transactionId}`,
       receipt_email: currentUserEmail || undefined,
+      ...customerParams,
       metadata: {
         xololoType: 'freight_charge',
         xololoTxId: transactionId,

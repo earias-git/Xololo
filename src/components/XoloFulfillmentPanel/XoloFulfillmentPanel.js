@@ -93,7 +93,19 @@ const MarkDispatchedButton = ({ transactionId, label, onDone }) => {
       await txMarkDispatched({ transactionId });
       onDone && onDone();
     } catch (e) {
-      setError('No pudimos marcar como despachado. Intenta de nuevo.');
+      const errKey = e?.data?.error || e?.message;
+      const map = {
+        not_applicable_mode: 'Este pedido no aplica para "despachado" (revisa el método de envío).',
+        already_set: 'Ya lo habías marcado antes. Recarga la página.',
+        not_authorized_yet:
+          'El comprador aún no autoriza el pago del envío. Espera unos segundos y recarga.',
+        unauthorized: 'Sesión expirada. Recarga la página.',
+        invalid_request: 'Falta información. Recarga la página.',
+        internal: 'Error del servidor. Reintenta en unos segundos.',
+      };
+      setError(map[errKey] || `No pudimos marcar como despachado (${errKey || 'error'}).`);
+      // eslint-disable-next-line no-console
+      console.error('[markDispatched] error:', e?.data || e);
     } finally {
       setInProgress(false);
     }

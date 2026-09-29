@@ -23,6 +23,7 @@ import {
 } from '../../util/types';
 import { subtractTime } from '../../util/dates';
 import { createResourceLocatorString } from '../../util/routes';
+import { getXoloInboxStatusLabel } from '../../util/xoloInboxStatus';
 import {
   TX_TRANSITION_ACTOR_CUSTOMER,
   TX_TRANSITION_ACTOR_PROVIDER,
@@ -223,10 +224,18 @@ export const InboxItem = props => {
         ) : null}
         <div className={css.itemState}>
           <div className={stateClasses}>
-            <FormattedMessage
-              id={`InboxPage.${processName}.${processState}.status`}
-              values={{ transactionRole }}
-            />
+            {(() => {
+              // XOLOLO Envíos v2: status label específico por modo +
+              // sub-etapa + rol. Si no aplica, cae al label del template.
+              const xoloStatus = getXoloInboxStatusLabel(tx, transactionRole);
+              if (xoloStatus) return xoloStatus;
+              return (
+                <FormattedMessage
+                  id={`InboxPage.${processName}.${processState}.status`}
+                  values={{ transactionRole }}
+                />
+              );
+            })()}
           </div>
         </div>
       </NamedLink>
