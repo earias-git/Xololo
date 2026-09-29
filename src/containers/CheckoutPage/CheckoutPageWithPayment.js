@@ -663,6 +663,8 @@ export const CheckoutPageWithPayment = props => {
       ? 'pickup'
       : xoloMethodsForCheckout.localDelivery?.enabled
       ? 'localDelivery'
+      : xoloMethodsForCheckout.skydropxCarrier?.enabled
+      ? 'skydropxCarrier'
       : xoloMethodsForCheckout.freight?.enabled
       ? 'freight'
       : null

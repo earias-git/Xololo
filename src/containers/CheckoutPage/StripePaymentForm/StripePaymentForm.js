@@ -632,6 +632,17 @@ class StripePaymentForm extends Component {
     // completos. Al seleccionar un rate, lo persistimos en el form
     // state via formApi.change y notificamos al parent
     // (CheckoutPageWithPayment) para re-speculate del OrderBreakdown.
+    // XOLOLO Envíos v2: contador de métodos v2 habilitados. Va PRIMERO
+    // porque otras derivadas (isPureLegacy, showRateSelector) lo usan.
+    // Incluye los 4 métodos: pickup, localDelivery, skydropxCarrier, freight.
+    const xoloMethodEnabledCount = [
+      xololoShippingMethods?.pickup?.enabled,
+      xololoShippingMethods?.localDelivery?.enabled,
+      xololoShippingMethods?.skydropxCarrier?.enabled,
+      xololoShippingMethods?.freight?.enabled,
+    ].filter(Boolean).length;
+    const showXololoMethodSelector = xoloMethodEnabledCount > 0;
+
     // XOLOLO Envíos v2: el rate selector (widget de cotización Skydropx)
     // sólo se muestra cuando:
     //   (a) el buyer eligió el método v2 skydropxCarrier, O
@@ -654,17 +665,6 @@ class StripePaymentForm extends Component {
         onShippingRateSelected(rate);
       }
     };
-
-    // XOLOLO Envíos v2: mostrar el selector nuevo cuando el listing tenga
-    // xololoShippingMethods con al menos un método habilitado. Precede al
-    // rate selector legacy (que sigue funcionando para listings viejos
-    // sin migrar).
-    const xoloMethodEnabledCount = [
-      xololoShippingMethods?.pickup?.enabled,
-      xololoShippingMethods?.localDelivery?.enabled,
-      xololoShippingMethods?.freight?.enabled,
-    ].filter(Boolean).length;
-    const showXololoMethodSelector = xoloMethodEnabledCount > 0;
     // XOLOLO Envíos v2: la selección ya NO se guarda en el FinalForm
     // (formApi.change) porque el form se reinicializa cuando el
     // speculatedTransaction cambia, perdiendo el value. Ahora el
