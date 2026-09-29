@@ -129,6 +129,58 @@ export const enabledMethodsList = methods => {
 };
 
 /**
+ * XOLOLO Carrito multi-producto (Option D): intersección de métodos
+ * entre N listings. Retorna un shape con `enabled=true` sólo para los
+ * métodos que TODOS los listings soportan. La config de cada método
+ * (priceSubunits, zoneDescription, weight, dims) se toma del PRIMER
+ * listing — es la convención "primary controla el precio" del v1.
+ *
+ * @param {Array<Object>} listings - array de listings de Sharetribe
+ * @returns {{ methods, intersectionKeys }} — methods es el shape agregado,
+ *   intersectionKeys es el array de keys (['pickup', ...]) con enabled=true.
+ *   Si intersectionKeys.length === 0, no hay método compartido.
+ */
+export const intersectShippingMethods = listings => {
+  if (!Array.isArray(listings) || listings.length === 0) {
+    return { methods: null, intersectionKeys: [] };
+  }
+  const perListing = listings.map(l => getShippingMethodsFromListing(l));
+  const allKeys = [METHOD_PICKUP, METHOD_LOCAL_DELIVERY, METHOD_SKYDROPX, METHOD_FREIGHT];
+  const cfgKey = { pickup: 'pickup', localDelivery: 'localDelivery', skydropxCarrier: 'skydropxCarrier', freight: 'freight' };
+
+  const intersectionKeys = allKeys.filter(key => {
+    const k = cfgKey[key];
+    return perListing.every(m => m?.[k]?.enabled === true);
+  });
+
+  const primary = perListing[0];
+  // Base con todo apagado; encendemos sólo lo que está en la intersección.
+  // La config (precio, zona, peso, dims) viene del primary.
+  const base = {
+    pickup: { enabled: false, instructions: primary?.pickup?.instructions || '' },
+    localDelivery: {
+      enabled: false,
+      priceSubunits: primary?.localDelivery?.priceSubunits || 0,
+      zoneDescription: primary?.localDelivery?.zoneDescription || '',
+    },
+    skydropxCarrier: {
+      enabled: false,
+      sellerCoversShipping: !!primary?.skydropxCarrier?.sellerCoversShipping,
+      weightGrams: primary?.skydropxCarrier?.weightGrams || null,
+      dimensionLengthCm: primary?.skydropxCarrier?.dimensionLengthCm || null,
+      dimensionWidthCm: primary?.skydropxCarrier?.dimensionWidthCm || null,
+      dimensionHeightCm: primary?.skydropxCarrier?.dimensionHeightCm || null,
+    },
+    freight: { enabled: false },
+  };
+  intersectionKeys.forEach(key => {
+    base[key].enabled = true;
+  });
+
+  return { methods: base, intersectionKeys };
+};
+
+/**
  * Label legible para el buyer (usable en checkout y confirmación).
  */
 export const methodLabel = key => {

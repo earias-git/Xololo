@@ -22,6 +22,7 @@ import {
 } from '../../ducks/cart.duck';
 import {
   getShippingMethodsFromListing,
+  intersectShippingMethods,
   METHOD_PICKUP,
   METHOD_LOCAL_DELIVERY,
   METHOD_SKYDROPX,
@@ -86,29 +87,33 @@ const CartPage = props => {
   const currentUser = useSelector(state => state.user?.currentUser || null);
   const [redirecting, setRedirecting] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
-  // XOLOLO Envíos v2 (rediseño): el buyer elige el método aquí en la
-  // CartPage — así llega al checkout con el método fijado, igual que en
-  // el flujo de "Comprar ahora" desde el ListingPage. Se usan los
-  // métodos del PRIMARY listing (primer item del carrito); si productos
-  // adicionales no soportan el método elegido, el server valida y
-  // rechaza al iniciar la orden.
-  const [primaryListing, setPrimaryListing] = useState(null);
+  // XOLOLO Envíos v2 + carrito multi-producto: fetcheamos TODOS los
+  // listings del carrito para computar la INTERSECCIÓN de métodos de
+  // envío. Sólo se muestran los métodos que TODOS los productos
+  // soportan; si la intersección es vacía, mostramos mensaje con
+  // botones para quitar productos incompatibles.
+  const [allListings, setAllListings] = useState([]);
   const [xoloSelectedMethod, setXoloSelectedMethod] = useState(null);
 
-  const primaryListingId = cart?.items?.[0]?.listingId;
+  const listingIdsKey = cart?.items?.map(i => i.listingId).join(',') || '';
   useEffect(() => {
-    if (!primaryListingId) return;
-    const uuid = new UUID(primaryListingId);
-    dispatch(showListing(uuid, config)).then(() => {
-      dispatch((_, getState) => {
-        const [l] = getListingsById(getState(), [uuid]);
-        if (l) setPrimaryListing(l);
+    if (!listingIdsKey) return;
+    const ids = listingIdsKey.split(',').filter(Boolean);
+    if (ids.length === 0) return;
+    const uuids = ids.map(id => new UUID(id));
+    Promise.all(uuids.map(u => dispatch(showListing(u, config))))
+      .then(() => {
+        dispatch((_, getState) => {
+          const denorm = getListingsById(getState(), uuids).filter(Boolean);
+          setAllListings(denorm);
+        });
+      })
+      .catch(() => {
+        // silencioso
       });
-    }).catch(() => {
-      // silencioso — si no carga, el checkout intentará hidratarlo de nuevo
-    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [primaryListingId]);
+  }, [listingIdsKey]);
+  const primaryListing = allListings[0] || null;
 
   // Espera a hidratación desde localStorage para no mostrar "carrito vacío"
   // en el primer render antes de leer el storage.
@@ -149,31 +154,31 @@ const CartPage = props => {
   const subtotalMoney = new Money(Math.round(subtotalAmount), currency);
   const totalItems = cart.items.reduce((sum, i) => sum + (i.quantity || 0), 0);
 
-  // XOLOLO Envíos v2: métodos del listing primario. Cuenta enabled > 0
-  // dispara el selector.
-  const xoloShippingMethods = primaryListing
-    ? getShippingMethodsFromListing(primaryListing)
-    : null;
-  const xoloEnabledCount = xoloShippingMethods
-    ? [
-        xoloShippingMethods.pickup?.enabled,
-        xoloShippingMethods.localDelivery?.enabled,
-        xoloShippingMethods.skydropxCarrier?.enabled,
-        xoloShippingMethods.freight?.enabled,
-      ].filter(Boolean).length
-    : 0;
+  // XOLOLO Envíos v2 + carrito multi-producto: intersección de métodos
+  // entre todos los listings. Si sólo hay 1 item, la intersección es
+  // simplemente sus métodos. Si hay 2+, sólo aparecen los métodos que
+  // TODOS soportan.
+  const { methods: xoloShippingMethods, intersectionKeys } =
+    allListings.length > 0
+      ? intersectShippingMethods(allListings)
+      : { methods: null, intersectionKeys: [] };
+  const xoloEnabledCount = intersectionKeys.length;
   const showXoloMethodSelector = xoloEnabledCount > 0;
-  const xoloDefaultMethod = xoloShippingMethods
-    ? xoloShippingMethods.pickup?.enabled
-      ? METHOD_PICKUP
-      : xoloShippingMethods.localDelivery?.enabled
-      ? METHOD_LOCAL_DELIVERY
-      : xoloShippingMethods.skydropxCarrier?.enabled
-      ? METHOD_SKYDROPX
-      : xoloShippingMethods.freight?.enabled
-      ? METHOD_FREIGHT
-      : null
-    : null;
+  // Detección de conflicto: hay al menos 2 items, todos con métodos v2
+  // configurados, pero la intersección es vacía. Renderemos mensaje.
+  const anyListingHasV2 = allListings.some(l => {
+    const m = getShippingMethodsFromListing(l);
+    return [m?.pickup?.enabled, m?.localDelivery?.enabled, m?.skydropxCarrier?.enabled, m?.freight?.enabled].some(Boolean);
+  });
+  const hasIncompatibleMethods =
+    allListings.length >= 2 && anyListingHasV2 && intersectionKeys.length === 0;
+  const xoloDefaultMethod = intersectionKeys[0] || null;
+  // Marca por item los métodos que soporta — útil para mostrar en el
+  // fallback de "productos incompatibles".
+  const perItemMethods = allListings.map(l => ({
+    listingId: l.id?.uuid,
+    methods: getShippingMethodsFromListing(l),
+  }));
   const xoloCurrencyFormatter = subunits => {
     const n = Number(subunits) || 0;
     if (n === 0) return 'Gratis';
@@ -183,9 +188,12 @@ const CartPage = props => {
       return `$${(n / 100).toFixed(2)}`;
     }
   };
-  // Buyer debe elegir método si el primary tiene v2 methods.
+  // Buyer debe elegir método si hay v2 methods intersecting; también
+  // se bloquea si hay incompatibilidad (buyer debe quitar productos).
   const methodChosenOrDefault = xoloSelectedMethod || xoloDefaultMethod;
-  const methodBlockingCheckout = showXoloMethodSelector && !methodChosenOrDefault;
+  const methodBlockingCheckout =
+    hasIncompatibleMethods ||
+    (showXoloMethodSelector && !methodChosenOrDefault);
 
   const handleQty = (listingId, nextQty) => {
     dispatch(updateQuantity({ sellerId, listingId, quantity: Math.max(0, nextQty) }));
@@ -398,10 +406,82 @@ const CartPage = props => {
               })}
             </ul>
 
-            {/* XOLOLO Envíos v2: selector de método usando la config del
-                listing primario. Si el primary tiene métodos v2, el
-                buyer elige aquí; en el checkout ya viaja fijado. */}
-            {showXoloMethodSelector ? (
+            {/* XOLOLO Envíos v2: selector de método basado en la
+                INTERSECCIÓN de métodos que TODOS los productos del
+                carrito soportan. Si la intersección es vacía, mostramos
+                mensaje explícito con botones "Quitar" en los productos
+                que no comparten métodos con los demás. */}
+            {hasIncompatibleMethods ? (
+              <div
+                style={{
+                  margin: '20px 0',
+                  padding: '16px',
+                  border: '1px solid #fecaca',
+                  borderRadius: 8,
+                  background: '#fef2f2',
+                }}
+              >
+                <h4 style={{ margin: '0 0 8px 0', color: '#991b1b', fontSize: 15 }}>
+                  Productos con métodos de entrega incompatibles
+                </h4>
+                <p style={{ margin: '0 0 12px 0', fontSize: 13, color: '#7f1d1d', lineHeight: 1.5 }}>
+                  Los productos en tu carrito no comparten ningún método
+                  de entrega en común, por eso no pueden pagarse juntos.
+                  Quita alguno de los productos para poder continuar, o
+                  crea pedidos separados.
+                </p>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {perItemMethods.map(p => {
+                    const cartItem = cart.items.find(i => i.listingId === p.listingId);
+                    if (!cartItem) return null;
+                    const methodLabels = [
+                      p.methods?.pickup?.enabled ? 'Recolección' : null,
+                      p.methods?.localDelivery?.enabled ? 'Envío local' : null,
+                      p.methods?.skydropxCarrier?.enabled ? 'Paquetería' : null,
+                      p.methods?.freight?.enabled ? 'Flete' : null,
+                    ].filter(Boolean).join(', ') || 'sin métodos configurados';
+                    return (
+                      <li
+                        key={p.listingId}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '8px 10px',
+                          background: 'var(--colorWhite)',
+                          borderRadius: 6,
+                          fontSize: 13,
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--colorGrey900)' }}>
+                            {cartItem.listingTitle}
+                          </div>
+                          <div style={{ fontSize: 12, color: 'var(--colorGrey500)' }}>
+                            Soporta: {methodLabels}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(p.listingId)}
+                          style={{
+                            background: 'transparent',
+                            border: '1px solid #dc2626',
+                            color: '#dc2626',
+                            borderRadius: 6,
+                            padding: '4px 10px',
+                            fontSize: 12,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Quitar
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : showXoloMethodSelector ? (
               <div style={{ margin: '20px 0' }}>
                 <XololoShippingMethodSelector
                   methods={xoloShippingMethods}
@@ -412,9 +492,9 @@ const CartPage = props => {
                 />
                 {cart.items.length > 1 ? (
                   <p style={{ fontSize: 12, color: 'var(--colorGrey500)', margin: '4px 4px 0 4px' }}>
-                    Nota: el método se aplica a TODO el carrito. Si alguno
-                    de los productos adicionales no soporta el método
-                    elegido, el checkout te lo avisará al iniciar la orden.
+                    Estos métodos son los que TODOS los productos en tu
+                    carrito soportan. La configuración de precio/zona/peso
+                    se toma del primer producto.
                   </p>
                 ) : null}
               </div>
@@ -426,7 +506,9 @@ const CartPage = props => {
                 <strong>{formatMoney(intl, subtotalMoney)}</strong>
               </div>
               <p className={css.summaryHint}>
-                {showXoloMethodSelector
+                {hasIncompatibleMethods
+                  ? 'Quita alguno de los productos incompatibles arriba para poder continuar al checkout.'
+                  : showXoloMethodSelector
                   ? 'Al ir a checkout capturas dirección de envío. El costo final incluye envío según el método elegido arriba.'
                   : 'Al ir a checkout eliges paquetería + capturas dirección de envío. El costo final incluye tu envío ya cotizado.'}
               </p>
