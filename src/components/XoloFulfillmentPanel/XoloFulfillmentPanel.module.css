@@ -1,0 +1,201 @@
+.root {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  background: var(--colorWhite);
+}
+
+.title {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+}
+
+.subtitle {
+  margin: 0 0 16px 0;
+  font-size: 13px;
+  color: var(--colorGrey600);
+  line-height: 1.4;
+}
+
+.button {
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--colorWhite);
+  background: var(--colorPrimaryButton);
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.buttonSecondary {
+  composes: button;
+  background: var(--colorGrey200);
+  color: var(--colorGrey900);
+}
+
+.error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--colorFail);
+  color: var(--colorWhite);
+  font-size: 13px;
+}
+
+.success {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--colorSuccess);
+  color: var(--colorWhite);
+  font-size: 13px;
+}
+
+/* Delivery code card (buyer) */
+.codeCard {
+  padding: 20px;
+  border: 2px dashed var(--colorPrimary);
+  border-radius: 10px;
+  text-align: center;
+  background: var(--colorPrimaryLight, #fef6f0);
+}
+
+.codeLabel {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--colorGrey700);
+  font-weight: 700;
+}
+
+.codeDigits {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  color: var(--colorPrimary);
+  margin: 0 0 12px 0;
+}
+
+.codeHelp {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: var(--colorGrey700);
+  line-height: 1.4;
+}
+
+.copyBtn {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid var(--colorGrey300);
+  background: var(--colorWhite);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--colorGrey900);
+}
+
+/* Code input (seller) */
+.codeInputRow {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: 12px 0;
+}
+
+.codeInputBox {
+  width: 42px;
+  height: 52px;
+  font-size: 24px;
+  text-align: center;
+  border: 1px solid var(--colorGrey300);
+  border-radius: 6px;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-weight: 700;
+}
+
+.codeInputBox:focus {
+  outline: 2px solid var(--colorPrimary);
+  border-color: transparent;
+}
+
+/* Freight quote form */
+.freightRow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.freightInput {
+  padding: 10px 12px;
+  border: 1px solid var(--colorGrey300);
+  border-radius: 6px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.freightLabel {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--colorGrey700);
+}
+
+.freightQuoted {
+  padding: 14px;
+  border-radius: 8px;
+  background: var(--colorGrey50);
+  border: 1px solid var(--colorGrey100);
+  margin-bottom: 12px;
+}
+
+.freightQuotedAmount {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--colorGrey900);
+  margin: 0;
+}
+
+.freightQuotedDesc {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: var(--colorGrey700);
+  line-height: 1.4;
+}
+
+/* Small info-only stage cards */
+.stageInfo {
+  padding: 14px;
+  border-radius: 8px;
+  background: var(--colorGrey50);
+  color: var(--colorGrey700);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.stageInfoTitle {
+  font-weight: 700;
+  color: var(--colorGrey900);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.trackingLink {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--colorPrimary);
+  text-decoration: underline;
+  font-size: 13px;
+}

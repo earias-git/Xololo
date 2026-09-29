@@ -20,6 +20,8 @@ import FeedSection from './FeedSection';
 import DiminishedActionButtonMaybe from './DiminishedActionButtonMaybe';
 import PanelHeading from './PanelHeading';
 
+import XoloFulfillmentPanel from '../../../components/XoloFulfillmentPanel/XoloFulfillmentPanel';
+
 import css from './TransactionPanel.module.css';
 
 // Helper function to get display names for different roles
@@ -102,6 +104,7 @@ export class TransactionPanelComponent extends Component {
       className,
       currentUser,
       transactionRole,
+      transaction,
       listing,
       customer,
       provider,
@@ -260,6 +263,16 @@ export class TransactionPanelComponent extends Component {
                   className={css.deliveryInfoSection}
                   listing={listing}
                   showBookingLocation={showBookingLocation}
+                />
+                {/* XOLOLO Envíos v2: panel de fulfillment ramificado por
+                   modo+etapa+rol. Se auto-oculta si mode='none' o
+                   processState != 'purchased'. onRefresh recarga la
+                   página para leer el nuevo state (evita re-fetch selectivo). */}
+                <XoloFulfillmentPanel
+                  stateData={stateData}
+                  transaction={transaction}
+                  transactionRole={transactionRole}
+                  onRefresh={() => window.location.reload()}
                 />
               </div>
             ) : null}
