@@ -43,7 +43,7 @@ import {
   processCheckoutWithPayment,
   setOrderPageInitialValues,
 } from './CheckoutPageTransactionHelpers.js';
-import { clearSellerCart } from '../../ducks/cart.duck';
+import { clearSellerCart, removeItem } from '../../ducks/cart.duck';
 import { getShippingMethodsFromListing } from '../../util/xololoShippingMethods';
 import { formatMoney } from '../../util/currency';
 import { types as sdkTypes } from '../../util/sdkLoader';
@@ -385,18 +385,34 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
       const { orderId, paymentMethodSaved } = response;
       setSubmitting(false);
 
-      // XOLOLO Bug 2b: pago confirmado → limpiar el carrito del seller.
-      // Antes el badge del topbar seguía mostrando los items comprados
-      // hasta que el buyer los borraba a mano. sellerId = author del
-      // listing primary (los carritos son por-seller). Sólo se limpia
-      // el de ESTE seller — otros carritos del buyer no se tocan.
+      // XOLOLO Envíos v2 (grupos): pago confirmado → quitar SÓLO los
+      // items que se pagaron en esta orden. Antes clarábamos TODO el
+      // carrito del seller (bug 2b original), pero en el modelo de
+      // grupos por compatibilidad eso destruía los productos de otros
+      // grupos aún no pagados — el buyer los perdía y tenía que
+      // re-agregarlos. Ahora removemos sólo los IDs que iban en esta
+      // transacción (primary + additionalCartItems). Si por alguna
+      // razón no hay lista de IDs (ej. flujo legacy sin grupos),
+      // caemos al comportamiento viejo de clearSellerCart.
       const primarySellerId = pageData?.listing?.author?.id?.uuid;
+      const paidListingIds = [
+        pageData?.listing?.id?.uuid,
+        ...(pageData?.orderData?.additionalCartItems || [])
+          .map(x => x?.listingId)
+          .filter(Boolean),
+      ].filter(Boolean);
       if (primarySellerId) {
         try {
-          dispatch(clearSellerCart({ sellerId: primarySellerId }));
+          if (paidListingIds.length > 0) {
+            paidListingIds.forEach(listingId => {
+              dispatch(removeItem({ sellerId: primarySellerId, listingId }));
+            });
+          } else {
+            dispatch(clearSellerCart({ sellerId: primarySellerId }));
+          }
         } catch (e) {
           // eslint-disable-next-line no-console
-          console.warn('[checkout] clearSellerCart post-pago falló:', e?.message);
+          console.warn('[checkout] limpiar cart post-pago falló:', e?.message);
         }
       }
 
