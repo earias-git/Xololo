@@ -757,11 +757,20 @@ export const CheckoutPageWithPayment = props => {
               <StripePaymentForm
                 className={css.paymentForm}
                 onSubmit={values =>
-                  // XOLOLO Envíos v2: pasamos el método seleccionado del
-                  // React state (no del form) para que llegue a orderParams
-                  // aunque el FinalForm haya reseteado.
+                  // XOLOLO Envíos v2: el método seleccionado vive en
+                  // React state (no en el FinalForm). handleSubmit lee
+                  // el método desde values.formValues.selectedShippingMethod,
+                  // así que lo inyectamos DENTRO de formValues (nested)
+                  // — no en top-level de values.
                   handleSubmit(
-                    { ...values, selectedShippingMethod: xoloSelectedMethod || xoloDefaultMethod || undefined },
+                    {
+                      ...values,
+                      formValues: {
+                        ...(values.formValues || {}),
+                        selectedShippingMethod:
+                          xoloSelectedMethod || xoloDefaultMethod || undefined,
+                      },
+                    },
                     process,
                     props,
                     stripe,
