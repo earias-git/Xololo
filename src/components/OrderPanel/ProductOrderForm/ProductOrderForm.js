@@ -193,6 +193,20 @@ const renderForm = formRenderProps => {
         fetchLineItemsInProgress,
         onFetchTransactionLineItems,
       });
+      // XOLOLO: persistir la elección del buyer en sessionStorage para
+      // que al agregar al carrito y luego ir a CartPage, el grupo
+      // correspondiente empiece con este método pre-seleccionado (y no
+      // caiga al default "pickup"). Key: xolo:sm:<listingId>.
+      if (selectedShippingMethod && listingId?.uuid) {
+        try {
+          window.sessionStorage.setItem(
+            `xolo:sm:${listingId.uuid}`,
+            String(selectedShippingMethod)
+          );
+        } catch (e) {
+          /* storage disabled — silent */
+        }
+      }
     }
   };
 

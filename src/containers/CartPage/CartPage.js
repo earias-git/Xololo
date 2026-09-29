@@ -123,6 +123,30 @@ const CartPage = props => {
       // Mantenemos el orden del cart (primary primero) para que el
       // primary listing coincida con cart.items[0].
       setAllListings(nonNull);
+      // XOLOLO Debug (temporal): dump del shape de shipping methods
+      // por listing para diagnosticar por qué algunos productos
+      // aparecen como "sin métodos configurados" en el carrito.
+      if (typeof window !== 'undefined' && window.console) {
+        nonNull.forEach(l => {
+          const pd = l?.attributes?.publicData || {};
+          // eslint-disable-next-line no-console
+          console.log(
+            '[XOLOLO cart debug]',
+            l?.attributes?.title,
+            {
+              hasV2Shape: !!pd.xololoShippingMethods,
+              xololoShippingMethods: pd.xololoShippingMethods,
+              legacy: {
+                deliveryOptions: pd.deliveryOptions,
+                shippingPricingMode: pd.shippingPricingMode,
+                shippingPriceInSubunitsOneItem: pd.shippingPriceInSubunitsOneItem,
+                weightGrams: pd.weightGrams,
+                dimensionLengthCm: pd.dimensionLengthCm,
+              },
+            }
+          );
+        });
+      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listingIdsKey]);
@@ -175,6 +199,18 @@ const CartPage = props => {
     : [];
   const hasMultipleGroups = compatibilityGroups.length > 1;
 
+  // XOLOLO: helper para leer la preferencia del buyer que dejó en
+  // sessionStorage al elegir método en el ListingPage antes de agregar
+  // al carrito. Si aún es un método válido dentro del grupo, se usa
+  // como default (en vez de caer al primer método de la intersección).
+  const readStoredMethod = listingId => {
+    try {
+      return window.sessionStorage.getItem(`xolo:sm:${listingId}`) || null;
+    } catch (e) {
+      return null;
+    }
+  };
+
   // Enriquece los grupos con los cart.items correspondientes.
   const groupsWithCartItems = compatibilityGroups.map((g, idx) => {
     const listingIdsInGroup = new Set(g.listings.map(l => l.id?.uuid).filter(Boolean));
@@ -183,11 +219,23 @@ const CartPage = props => {
       (sum, i) => sum + (i.price?.amount || 0) * (i.quantity || 0),
       0
     );
+    // Método preferido: primero busca en los items la preferencia
+    // guardada en sessionStorage; si alguna coincide con la intersección
+    // del grupo, esa es el default. Si no, cae al primer intersecting.
+    let preferredMethod = null;
+    for (const ci of cartItemsForGroup) {
+      const stored = readStoredMethod(ci.listingId);
+      if (stored && g.intersectionKeys.includes(stored)) {
+        preferredMethod = stored;
+        break;
+      }
+    }
     return {
       ...g,
       groupIndex: idx,
       cartItems: cartItemsForGroup,
       subtotalMoney: new Money(Math.round(groupSubtotal), currency),
+      preferredMethod: preferredMethod || g.intersectionKeys[0] || null,
     };
   });
 
@@ -443,7 +491,7 @@ const CartPage = props => {
                 </div>
                 {groupsWithCartItems.map(g => {
                   const groupMethodChosen =
-                    groupSelectedMethods[g.groupIndex] || g.intersectionKeys[0] || null;
+                    groupSelectedMethods[g.groupIndex] || g.preferredMethod || null;
                   const groupBlocked = !groupMethodChosen;
                   return (
                     <div
@@ -498,7 +546,7 @@ const CartPage = props => {
                       <XololoShippingMethodSelector
                         methods={g.methods}
                         value={groupSelectedMethods[g.groupIndex] || null}
-                        defaultMethod={g.intersectionKeys[0] || null}
+                        defaultMethod={g.preferredMethod || null}
                         onChange={v =>
                           setGroupSelectedMethods(prev => ({ ...prev, [g.groupIndex]: v }))
                         }
