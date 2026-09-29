@@ -21,7 +21,7 @@ const featuredStores = require('./api/featured-stores');
 const uploadStoreImage = require('./api/upload-store-image');
 const shippingQuote = require('./api/shipping-quote');
 const xololoShippingQuote = require('./api/xololo-shipping-quote');
-const verifyPickupCode = require('./api/verify-pickup-code');
+const verifyDeliveryCode = require('./api/verify-delivery-code');
 const generateShippingGuide = require('./api/generate-shipping-guide');
 const uploadSosPhoto = require('./api/upload-sos-photo');
 const uploadLegalDoc = require('./api/upload-legal-doc');
@@ -110,10 +110,12 @@ router.post('/xololo-shipping-quote/submit', bodyParser.json(), xololoShippingQu
 router.post('/xololo-shipping-quote/authorize', bodyParser.json(), xololoShippingQuote.authorize);
 
 // XOLOLO: verificar código de 6 dígitos que el buyer muestra al seller
-// al recoger. Solo el provider de la transacción puede llamarlo. 3
-// intentos fallidos bloquean el código y disparan alerta a Xololo.
-// Ver docs/LOGISTICS_V1.md §8.
-router.post('/verify-pickup-code', bodyParser.json(), verifyPickupCode);
+// (o chofer) al momento físico de la entrega. Aplica a pickup,
+// localDelivery y freight. Solo el provider puede llamarlo. 3 intentos
+// fallidos bloquean el código y disparan alerta a Xololo.
+router.post('/verify-delivery-code', bodyParser.json(), verifyDeliveryCode);
+// Alias legacy — mantener 1 release para no romper clientes viejos.
+router.post('/verify-pickup-code', bodyParser.json(), verifyDeliveryCode);
 
 // XOLOLO: generar la guía Skydropx para una transacción "paid". Solo
 // el provider (seller) puede llamarlo, y sólo si:

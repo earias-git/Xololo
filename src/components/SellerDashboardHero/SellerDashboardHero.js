@@ -108,10 +108,16 @@ const alertsFor = tx => {
     alerts.push({ code: 'label_pending', label: 'Genera la guía', severity: 'high' });
   }
 
-  // Pickup pending: modo pickup, la orden fue pagada, aún sin código verificado.
-  if (shipping.mode === 'pickup' && shipping.pickupCode?.code && !shipping.pickupCode.verifiedAt) {
+  // Entrega pendiente: modos con código de 6 dígitos (pickup y
+  // localDelivery), la orden fue pagada, aún sin código verificado.
+  // Freight queda fuera porque su ciclo pasa antes por cotización +
+  // autorización del buyer; su alerta vive en otra rama.
+  const codeModes = ['pickup', 'localDelivery'];
+  const deliveryCode = shipping.deliveryCode || shipping.pickupCode;
+  if (codeModes.includes(shipping.mode) && deliveryCode?.code && !deliveryCode.verifiedAt) {
     if (!isDelivered(tx)) {
-      alerts.push({ code: 'pickup_pending', label: 'Recolección pendiente', severity: 'low' });
+      const label = shipping.mode === 'pickup' ? 'Recolección pendiente' : 'Entrega pendiente';
+      alerts.push({ code: 'delivery_pending', label, severity: 'low' });
     }
   }
 

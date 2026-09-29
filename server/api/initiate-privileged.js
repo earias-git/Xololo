@@ -2,13 +2,21 @@ const crypto = require('crypto');
 const sharetribeSdk = require('sharetribe-flex-sdk');
 const { transactionLineItems } = require('../api-util/lineItems');
 
-// XOLOLO: código de recolección de 6 dígitos (§8 del LOGISTICS_V1.md).
-// Se genera al momento del initiate REAL de una transacción con
-// deliveryMethod='pickup'. NUNCA lo generamos en speculative (evita
-// gasto y filtrar códigos a un buyer que aún no completa el checkout).
+// XOLOLO: código de entrega de 6 dígitos.
+// Se genera al momento del initiate REAL de una transacción cuyo
+// método requiere confirmación presencial (pickup, localDelivery,
+// freight). NUNCA en speculative (evita gasto y filtrar códigos a un
+// buyer que aún no completa el checkout).
 // crypto.randomInt es criptográficamente seguro; el rango 100000-999999
 // da exactamente 6 dígitos.
-const generatePickupCode = () => String(crypto.randomInt(100000, 1000000));
+const generateDeliveryCode = () => String(crypto.randomInt(100000, 1000000));
+const buildDeliveryCodeShape = () => ({
+  code: generateDeliveryCode(),
+  revealedAt: null,
+  verifiedAt: null,
+  attempts: 0,
+  blockedAt: null,
+});
 const { isIntentionToMakeOffer } = require('../api-util/negotiation');
 const {
   getSdk,
@@ -111,22 +119,13 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
         : enabledV2[0]
       : null;
   if (selectedV2 === 'pickup') {
-    const pickupCode = isSpeculative
-      ? null
-      : {
-          code: generatePickupCode(),
-          revealedAt: null,
-          verifiedAt: null,
-          attempts: 0,
-          blockedAt: null,
-        };
     return {
       mode: 'pickup',
       version: 'v2',
       sellerCoversShipping: false,
       rate: null,
       quotationId: null,
-      pickupCode,
+      deliveryCode: isSpeculative ? null : buildDeliveryCodeShape(),
     };
   }
   if (selectedV2 === 'localDelivery') {
@@ -138,6 +137,9 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
       quotationId: null,
       // El costo ya está en el line-item/shipping-fee generado por lineItems.js.
       zoneDescription: publicData?.xololoShippingMethods?.localDelivery?.zoneDescription || '',
+      // Mismo código de 6 dígitos que pickup — el buyer lo muestra al
+      // seller o chofer cuando llega a su domicilio.
+      deliveryCode: isSpeculative ? null : buildDeliveryCodeShape(),
     };
   }
   if (selectedV2 === 'skydropxCarrier') {
@@ -182,30 +184,25 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
       quotedAmount: null,
       quotedAt: null,
       buyerAuthorizedAt: null,
+      // Freight también usa código de 6 dígitos al entregar. Se genera
+      // desde el initiate para no ramificar la lógica, aunque no se
+      // "revele" al buyer hasta que autorice el pago del envío.
+      deliveryCode: isSpeculative ? null : buildDeliveryCodeShape(),
     };
   }
 
   if (deliveryMethod === 'pickup') {
-    // XOLOLO: en el initiate REAL generamos el código de 6 dígitos para
-    // que el buyer lo vea al confirmar la orden. En speculative dejamos
-    // pickupCode como null (no queremos generar códigos por cada
+    // XOLOLO legacy: en el initiate REAL generamos el código para que
+    // el buyer lo vea al confirmar la orden. En speculative dejamos
+    // deliveryCode como null (no queremos generar códigos por cada
     // recálculo de breakdown; solo persiste el que va a la transacción
-    // final). Ver docs/LOGISTICS_V1.md §8.
-    const pickupCode = isSpeculative
-      ? null
-      : {
-          code: generatePickupCode(),
-          revealedAt: null, // se marca cuando seller hace "Iniciar entrega"
-          verifiedAt: null, // se marca al validar código correcto
-          attempts: 0,
-          blockedAt: null, // después de 3 intentos fallidos
-        };
+    // final). Este branch es para listings sin v2 shape (fallback).
     return {
       mode: 'pickup',
       sellerCoversShipping: false,
       rate: null,
       quotationId: null,
-      pickupCode,
+      deliveryCode: isSpeculative ? null : buildDeliveryCodeShape(),
     };
   }
   if (deliveryMethod !== 'shipping') {

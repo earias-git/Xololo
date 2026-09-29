@@ -46,7 +46,7 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
       // La entrega se confirma por 2 vías automáticas:
       //   1. Webhook Skydropx con status='delivered' (paquetería)
       //   2. Código de 6 dígitos que el buyer muestra al chofer/seller
-      //      en modo pickup (endpoint /api/verify-pickup-code)
+      //      en pickup/localDelivery/freight (endpoint /api/verify-delivery-code)
       // Cuando cualquiera dispara, el cron tacit-acceptance transiciona
       // AUTO_MARK_RECEIVED tras 48h si el buyer no respondió encuesta.
       return {
