@@ -1,13 +1,17 @@
 // XOLOLO Track C (docs/SUBSCRIPTIONS_V1.md §3.5, roadmap #5): webhook
-// receiver de Stripe Billing (suscripción de sellers). Se registra en
-// el Dashboard de Stripe: Developers > Webhooks, apuntando a
-// POST https://<host>/api/webhooks/stripe-billing, escuchando:
+// receiver de Stripe Billing (suscripción de sellers y cobros
+// secundarios de freight). Se registra en el Dashboard de Stripe:
+// Developers > Webhooks, apuntando a POST /api/webhooks/stripe-billing,
+// escuchando:
 //
 //   - checkout.session.completed   → activa la suscripción (alta inicial)
 //   - invoice.payment_failed       → registra el intento fallido + avisa al seller
 //   - customer.subscription.updated → sync de status/currentPeriodEnd/cancelAtPeriodEnd
 //   - customer.subscription.deleted → cierre final (Stripe la borra sola
 //     cuando cancel_at_period_end se cumple, o por unpaid) → avisa al seller
+//   - payment_intent.succeeded     → cuando xololoType='freight_charge',
+//     marca buyerAuthorizedAt+freightPaidAt en la tx correspondiente
+//     (habilita al seller a mark-dispatched). Ver server/api/freight.js.
 //
 // Esto es el mecanismo ROBUSTO para mantener xololoSubscription al día
 // (renovaciones, fallos de pago, cancelaciones) — server/api/seller-subscription.js
@@ -179,6 +183,53 @@ module.exports = async (req, res) => {
       }
       const updated = await syncSubscriptionMetadata({ isdk, sellerId, subscription });
       await notifySeller(isdk, sellerId, 'seller.subscription_canceled', updated);
+    } else if (event.type === 'payment_intent.succeeded') {
+      // XOLOLO Envíos v2 · freight: el buyer autorizó y pagó el envío
+      // cotizado. Marcamos buyerAuthorizedAt+freightPaidAt en la tx.
+      // Otros PIs (suscripciones, etc.) pasan sin xololoType — los
+      // ignoramos silenciosamente.
+      const pi = event.data.object;
+      if (pi.metadata?.xololoType !== 'freight_charge') {
+        return res
+          .status(200)
+          .json({ ok: true, processed: false, reason: 'not_freight_pi', type: event.type });
+      }
+      const txId = pi.metadata?.xololoTxId;
+      if (!txId) {
+        return res
+          .status(200)
+          .json({ ok: true, processed: false, reason: 'no_tx_metadata', type: event.type });
+      }
+      const nowIso = new Date().toISOString();
+      try {
+        const txResp = await isdk.transactions.show({ id: txId });
+        const current = txResp.data.data.attributes.metadata?.xoloFreight || {};
+        // Idempotencia: si ya se procesó (webhook duplicado), no re-escribir.
+        if (current.buyerAuthorizedAt) {
+          return res.status(200).json({
+            ok: true,
+            processed: false,
+            reason: 'already_authorized',
+            type: event.type,
+          });
+        }
+        const xoloFreight = {
+          ...current,
+          buyerAuthorizedAt: nowIso,
+          freightPaidAt: nowIso,
+          freightPaymentIntentId: pi.id,
+          freightPaidAmount: pi.amount_received || pi.amount,
+          freightPaidCurrency: (pi.currency || 'mxn').toUpperCase(),
+        };
+        await isdk.transactions.updateMetadata({
+          id: txId,
+          metadata: { xoloFreight },
+        });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(`[webhook stripe-billing] freight_charge para ${txId}:`, e.message);
+        return res.status(500).json({ error: 'internal' });
+      }
     } else {
       return res.status(200).json({ ok: true, processed: false, reason: 'ignored_event_type', type: event.type });
     }

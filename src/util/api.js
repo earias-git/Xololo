@@ -167,3 +167,16 @@ export const txMarkReady = body => {
 export const txMarkDispatched = body => {
   return post('/api/tx/mark-dispatched', body);
 };
+
+// XOLOLO Envíos v2 · freight: seller cotiza el envío después del
+// pago del producto. Body: { transactionId, amountSubunits,
+// description, carrierName? }. Ver server/api/freight.js.
+export const freightQuote = body => {
+  return post('/api/freight/quote', body);
+};
+// Buyer inicia el pago del envío cotizado. Devuelve clientSecret
+// para confirmar con Stripe Elements.
+// Body: { transactionId }. Response: { clientSecret, paymentIntentId, ... }.
+export const freightCreatePaymentIntent = body => {
+  return post('/api/freight/create-payment-intent', body);
+};

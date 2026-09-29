@@ -23,6 +23,7 @@ const shippingQuote = require('./api/shipping-quote');
 const xololoShippingQuote = require('./api/xololo-shipping-quote');
 const verifyDeliveryCode = require('./api/verify-delivery-code');
 const txFlow = require('./api/tx-flow');
+const freight = require('./api/freight');
 const generateShippingGuide = require('./api/generate-shipping-guide');
 const uploadSosPhoto = require('./api/upload-sos-photo');
 const uploadLegalDoc = require('./api/upload-legal-doc');
@@ -123,6 +124,13 @@ router.post('/verify-pickup-code', bodyParser.json(), verifyDeliveryCode);
 // "Preparando → Listo → En camino → Entregado" en la UI. Ver tx-flow.js.
 router.post('/tx/mark-ready', bodyParser.json(), txFlow.markReady);
 router.post('/tx/mark-dispatched', bodyParser.json(), txFlow.markDispatched);
+
+// XOLOLO Envíos v2 · freight: cotización del envío por el seller y
+// creación del PaymentIntent secundario para que el buyer autorice el
+// pago. El evento payment_intent.succeeded lo procesa el webhook de
+// Stripe billing (/api/webhooks/stripe-billing). Ver server/api/freight.js.
+router.post('/freight/quote', bodyParser.json(), freight.quote);
+router.post('/freight/create-payment-intent', bodyParser.json(), freight.createPaymentIntent);
 
 // XOLOLO: generar la guía Skydropx para una transacción "paid". Solo
 // el provider (seller) puede llamarlo, y sólo si:
