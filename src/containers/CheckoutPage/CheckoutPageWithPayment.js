@@ -811,6 +811,38 @@ export const CheckoutPageWithPayment = props => {
                 xololoDefaultShippingMethod={xoloDefaultMethod}
                 xololoSelectedShippingMethod={xoloSelectedMethod}
                 xololoCurrencyFormatter={xoloCurrencyFormatter}
+                onShippingRateSelected={rate => {
+                  // XOLOLO Envíos v2: al elegir una paquetería, re-speculate
+                  // con el rate para que el shipping-fee aparezca en el
+                  // breakdown + total. Sin esto el buyer veía sólo el precio
+                  // de los productos aunque hubiera elegido FedEx/Estafeta.
+                  const currentMethod = xoloSelectedMethod || xoloDefaultMethod || undefined;
+                  const shippingDetails = {};
+                  const optionalPaymentParams = {};
+                  const nextOrderParams = getOrderParams(
+                    {
+                      ...pageData,
+                      orderData: {
+                        ...(pageData?.orderData || {}),
+                        selectedShippingMethod: currentMethod,
+                        selectedShippingRate: rate,
+                      },
+                    },
+                    shippingDetails,
+                    optionalPaymentParams,
+                    config,
+                    {},
+                    null,
+                    rate,
+                    undefined,
+                    currentMethod
+                  );
+                  fetchSpeculatedTransactionIfNeeded(
+                    nextOrderParams,
+                    pageData,
+                    fetchSpeculatedTransaction
+                  );
+                }}
                 onXololoShippingMethodSelected={methodKey => {
                   // XOLOLO Envíos v2:
                   // 1) Guarda selección en React state (fuente de verdad).
