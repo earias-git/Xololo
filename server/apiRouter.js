@@ -22,6 +22,7 @@ const uploadStoreImage = require('./api/upload-store-image');
 const shippingQuote = require('./api/shipping-quote');
 const xololoShippingQuote = require('./api/xololo-shipping-quote');
 const verifyDeliveryCode = require('./api/verify-delivery-code');
+const txFlow = require('./api/tx-flow');
 const generateShippingGuide = require('./api/generate-shipping-guide');
 const uploadSosPhoto = require('./api/upload-sos-photo');
 const uploadLegalDoc = require('./api/upload-legal-doc');
@@ -116,6 +117,12 @@ router.post('/xololo-shipping-quote/authorize', bodyParser.json(), xololoShippin
 router.post('/verify-delivery-code', bodyParser.json(), verifyDeliveryCode);
 // Alias legacy — mantener 1 release para no romper clientes viejos.
 router.post('/verify-pickup-code', bodyParser.json(), verifyDeliveryCode);
+
+// XOLOLO: sub-flags de flujo (readyAt / dispatchedAt). No transicionan
+// la tx en Sharetribe; sólo escriben metadata para pintar el timeline
+// "Preparando → Listo → En camino → Entregado" en la UI. Ver tx-flow.js.
+router.post('/tx/mark-ready', bodyParser.json(), txFlow.markReady);
+router.post('/tx/mark-dispatched', bodyParser.json(), txFlow.markDispatched);
 
 // XOLOLO: generar la guía Skydropx para una transacción "paid". Solo
 // el provider (seller) puede llamarlo, y sólo si:

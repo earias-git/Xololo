@@ -151,3 +151,19 @@ export const createUserWithIdp = body => {
 export const deleteUserAccount = body => {
   return post('/api/delete-account', body);
 };
+
+// XOLOLO: verificar código de 6 dígitos del buyer (pickup/localDelivery/
+// freight). Sólo el provider (seller) puede llamarlo. Ver
+// server/api/verify-delivery-code.js.
+export const verifyDeliveryCode = body => {
+  return post('/api/verify-delivery-code', body);
+};
+
+// XOLOLO: sub-flags de flujo (readyAt / dispatchedAt) — sólo escriben
+// metadata en la tx, NO transicionan Sharetribe. Ver server/api/tx-flow.js.
+export const txMarkReady = body => {
+  return post('/api/tx/mark-ready', body);
+};
+export const txMarkDispatched = body => {
+  return post('/api/tx/mark-dispatched', body);
+};
