@@ -123,30 +123,6 @@ const CartPage = props => {
       // Mantenemos el orden del cart (primary primero) para que el
       // primary listing coincida con cart.items[0].
       setAllListings(nonNull);
-      // XOLOLO Debug (temporal): dump del shape de shipping methods
-      // por listing para diagnosticar por qué algunos productos
-      // aparecen como "sin métodos configurados" en el carrito.
-      if (typeof window !== 'undefined' && window.console) {
-        nonNull.forEach(l => {
-          const pd = l?.attributes?.publicData || {};
-          // eslint-disable-next-line no-console
-          console.log(
-            '[XOLOLO cart debug]',
-            l?.attributes?.title,
-            {
-              hasV2Shape: !!pd.xololoShippingMethods,
-              xololoShippingMethods: pd.xololoShippingMethods,
-              legacy: {
-                deliveryOptions: pd.deliveryOptions,
-                shippingPricingMode: pd.shippingPricingMode,
-                shippingPriceInSubunitsOneItem: pd.shippingPriceInSubunitsOneItem,
-                weightGrams: pd.weightGrams,
-                dimensionLengthCm: pd.dimensionLengthCm,
-              },
-            }
-          );
-        });
-      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listingIdsKey]);

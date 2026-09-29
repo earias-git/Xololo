@@ -1,4 +1,4 @@
-import React, { act } from 'react';
+import React from 'react';
 import '@testing-library/jest-dom';
 
 import { fakeIntl } from '../../../../util/testData';
@@ -11,7 +11,7 @@ const { screen, userEvent } = testingLibrary;
 const noop = () => null;
 
 describe('EditListingDeliveryForm', () => {
-  it('Check that shipping fees can be given and submit button activates', async () => {
+  it('submit button activates once a Xololo shipping method is enabled', async () => {
     const user = userEvent.setup();
     const saveActionMsg = 'Save location';
     render(
@@ -21,7 +21,6 @@ describe('EditListingDeliveryForm', () => {
         onSubmit={noop}
         saveActionMsg={saveActionMsg}
         marketplaceCurrency="USD"
-        allowOrdersOfMultipleItems={true}
         updated={false}
         updateInProgress={false}
         disabled={false}
@@ -29,25 +28,12 @@ describe('EditListingDeliveryForm', () => {
       />
     );
 
-    // Pickup fields
-    const address = 'EditListingDeliveryForm.address';
-    expect(screen.getByText(address)).toBeInTheDocument();
-
-    const building = 'EditListingDeliveryForm.building';
-    expect(screen.getByText(building)).toBeInTheDocument();
-
-    // Test that save button is disabled at first
+    // Submit disabled until at least one v2 method is enabled.
     expect(screen.getByRole('button', { name: saveActionMsg })).toBeDisabled();
 
-    // Add shipping price
-    await user.click(screen.getByLabelText(/EditListingDeliveryForm.shippingLabel/i));
+    // Enable pickup (always $0, no extra required fields).
+    await user.click(screen.getByLabelText(/Recolección en mi domicilio/i));
 
-    const shippingOneItemLabel = 'EditListingDeliveryForm.shippingOneItemLabel';
-    const shippingAdditionalItemsLabel = 'EditListingDeliveryForm.shippingAdditionalItemsLabel';
-    await user.type(screen.getByRole('textbox', { name: shippingOneItemLabel }), '10');
-    await user.type(screen.getByRole('textbox', { name: shippingAdditionalItemsLabel }), '5');
-
-    // Test that save button is enabled
     expect(screen.getByRole('button', { name: saveActionMsg })).toBeEnabled();
   });
 });

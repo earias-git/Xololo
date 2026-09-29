@@ -793,14 +793,11 @@ describe('EditListingPage', () => {
       },
     };
 
-    const { getByText, getByRole, queryByPlaceholderText } = render(
-      <EditListingPage {...props} />,
-      {
-        initialState: initialState(listing),
-        config,
-        routeConfiguration,
-      }
-    );
+    const { getByText, getByRole, getByLabelText } = render(<EditListingPage {...props} />, {
+      initialState: initialState(listing),
+      config,
+      routeConfiguration,
+    });
 
     await waitFor(() => {
       // Navigation to tab
@@ -810,41 +807,24 @@ describe('EditListingPage', () => {
       // Tab: panel title
       expect(getByText('EditListingDeliveryPanel.title')).toBeInTheDocument();
 
-      expect(getByText('EditListingDeliveryForm.shippingLabel')).toBeInTheDocument();
+      // XOLOLO Envíos v2: los 4 checkboxes de métodos son la única UI
+      // en este panel (el modelo legacy se removió por completo).
+      expect(getByLabelText(/Recolección en mi domicilio/i)).not.toBeChecked();
+      expect(getByLabelText(/Envío en zona local/i)).not.toBeChecked();
+      expect(getByLabelText(/Cotizar con paquetería/i)).not.toBeChecked();
+      expect(getByLabelText(/Envío por flete/i)).not.toBeChecked();
 
-      // Tab/form: pickup
-      expect(
-        getByRole('checkbox', { name: /EditListingDeliveryForm.pickupLabel/i })
-      ).not.toBeChecked();
-      expect(queryByPlaceholderText('EditListingDeliveryForm.addressPlaceholder')).toBeDisabled();
-      expect(getByRole('textbox', { name: 'EditListingDeliveryForm.building' })).toBeDisabled();
-
-      // Tab/form: shipping
-      expect(
-        getByRole('checkbox', { name: /EditListingDeliveryForm.shippingLabel/i })
-      ).not.toBeChecked();
-      expect(
-        getByRole('textbox', { name: 'EditListingDeliveryForm.shippingOneItemLabel' })
-      ).toBeDisabled();
-      expect(
-        getByRole('textbox', { name: 'EditListingDeliveryForm.shippingAdditionalItemsLabel' })
-      ).toBeDisabled();
-
+      // Submit deshabilitado hasta marcar al menos un método.
       expect(
         getByRole('button', { name: 'EditListingWizard.edit.saveDelivery' })
-      ).toBeInTheDocument();
+      ).toBeDisabled();
     });
 
-    // Test intercation
-    await user.click(getByRole('checkbox', { name: /EditListingDeliveryForm.shippingLabel/i }));
+    // Marcar pickup habilita el submit (pickup no exige campos extra).
+    await user.click(getByLabelText(/Recolección en mi domicilio/i));
 
-    expect(getByRole('checkbox', { name: /EditListingDeliveryForm.shippingLabel/i })).toBeChecked();
-    expect(
-      getByRole('textbox', { name: 'EditListingDeliveryForm.shippingOneItemLabel' })
-    ).toBeEnabled();
-    expect(
-      getByRole('textbox', { name: 'EditListingDeliveryForm.shippingAdditionalItemsLabel' })
-    ).toBeEnabled();
+    expect(getByLabelText(/Recolección en mi domicilio/i)).toBeChecked();
+    expect(getByRole('button', { name: 'EditListingWizard.edit.saveDelivery' })).toBeEnabled();
   });
 
   it('Purchase: edit flow on photos tab', async () => {
@@ -977,145 +957,11 @@ describe('EditListingPage', () => {
     expect(saveButton).not.toBeDisabled();
   });
 
-  it('Purchase: edit flow no shipping on delivery tab', async () => {
-    const listingTypePurchase = listingTypesPurchase[0];
-    const purchaseNoShipping = {
-      ...listingTypePurchase,
-      defaultListingFields: { shipping: false },
-    };
-    const config = getConfig([purchaseNoShipping], listingFieldsPurchase);
-    const routeConfiguration = getRouteConfiguration(config.layout);
-    const listing = createOwnListing(
-      'listing-item',
-      {
-        title: 'the listing',
-        description: 'Lorem ipsum',
-        price: new Money(5500, 'USD'),
-        publicData: {
-          listingType: 'sell-bicycles',
-          transactionProcessAlias: 'default-purchase/release-1',
-          unitType: 'item',
-          category: 'cat_1',
-        },
-      },
-      {
-        currentStock: createStock('stock-id', { quantity: 5 }),
-      }
-    );
-
-    const props = {
-      ...commonProps,
-      params: {
-        id: listing.id.uuid,
-        slug: 'slug',
-        type: LISTING_PAGE_PARAM_TYPE_EDIT,
-        tab: DELIVERY,
-      },
-    };
-
-    const { getByText, getByRole, queryByRole, queryByPlaceholderText } = render(
-      <EditListingPage {...props} />,
-      {
-        initialState: initialState(listing),
-        config,
-        routeConfiguration,
-      }
-    );
-
-    await waitFor(() => {
-      // Navigation to tab
-      const tabLabel = 'EditListingWizard.tabLabelDelivery';
-      expect(getByText(tabLabel)).toBeInTheDocument();
-
-      // Tab: panel title
-      expect(getByText('EditListingDeliveryPanel.title')).toBeInTheDocument();
-
-      expect(getByText('EditListingDeliveryForm.shippingLabel')).toBeInTheDocument();
-
-      // Tab/form: pickup
-      expect(getByRole('checkbox', { name: /EditListingDeliveryForm.pickupLabel/i })).toBeChecked();
-      expect(
-        queryByPlaceholderText('EditListingDeliveryForm.addressPlaceholder')
-      ).not.toBeDisabled();
-      expect(getByRole('textbox', { name: 'EditListingDeliveryForm.building' })).not.toBeDisabled();
-
-      // Tab/form: no shipping
-      expect(
-        queryByRole('checkbox', { name: /EditListingDeliveryForm.shippingLabel/i }).parentNode
-      ).toHaveClass('hidden');
-    });
-  });
-
-  it('Purchase: edit flow no pickup on delivery tab', async () => {
-    const listingTypePurchase = listingTypesPurchase[0];
-    const purchaseNoPickup = { ...listingTypePurchase, defaultListingFields: { pickup: false } };
-    const config = getConfig([purchaseNoPickup], listingFieldsPurchase);
-    const routeConfiguration = getRouteConfiguration(config.layout);
-    const listing = createOwnListing(
-      'listing-item',
-      {
-        title: 'the listing',
-        description: 'Lorem ipsum',
-        price: new Money(5500, 'USD'),
-        publicData: {
-          listingType: 'sell-bicycles',
-          transactionProcessAlias: 'default-purchase/release-1',
-          unitType: 'item',
-          category: 'cat_1',
-        },
-      },
-      {
-        currentStock: createStock('stock-id', { quantity: 5 }),
-      }
-    );
-
-    const props = {
-      ...commonProps,
-      params: {
-        id: listing.id.uuid,
-        slug: 'slug',
-        type: LISTING_PAGE_PARAM_TYPE_EDIT,
-        tab: DELIVERY,
-      },
-    };
-
-    const { getByText, getByRole } = render(<EditListingPage {...props} />, {
-      initialState: initialState(listing),
-      config,
-      routeConfiguration,
-    });
-
-    await waitFor(() => {
-      // Navigation to tab
-      const tabLabel = 'EditListingWizard.tabLabelDelivery';
-      expect(getByText(tabLabel)).toBeInTheDocument();
-
-      // Tab: panel title
-      expect(getByText('EditListingDeliveryPanel.title')).toBeInTheDocument();
-
-      expect(getByText('EditListingDeliveryForm.shippingLabel')).toBeInTheDocument();
-
-      // Tab/form: pickup
-      expect(
-        getByRole('checkbox', { name: /EditListingDeliveryForm.pickupLabel/i }).parentNode
-      ).toHaveClass('hidden');
-
-      // Tab/form: no shipping
-      expect(
-        getByRole('checkbox', { name: /EditListingDeliveryForm.shippingLabel/i })
-      ).toBeChecked();
-      expect(
-        getByRole('textbox', { name: 'EditListingDeliveryForm.shippingOneItemLabel' })
-      ).toBeInTheDocument();
-      expect(
-        getByRole('textbox', { name: 'EditListingDeliveryForm.shippingAdditionalItemsLabel' })
-      ).toBeInTheDocument();
-
-      expect(
-        getByRole('button', { name: 'EditListingWizard.edit.saveDelivery' })
-      ).toBeInTheDocument();
-    });
-  });
+  // XOLOLO Envíos v2: los tests legacy "no shipping"/"no pickup" chequeaban
+  // que los listing-type-config `defaultListingFields.shipping|pickup: false`
+  // ocultaran las secciones legacy. Con el modelo v2 los 4 métodos son
+  // config del listing (no del listing-type) y el panel siempre muestra
+  // las 4 opciones — esos gates ya no aplican, por eso se removieron.
 
   it('Purchase: edit flow no delivery tab', async () => {
     const listingTypePurchase = listingTypesPurchase[0];

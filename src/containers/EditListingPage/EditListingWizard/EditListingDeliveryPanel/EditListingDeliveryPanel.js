@@ -9,7 +9,6 @@ import {
   STOCK_MULTIPLE_ITEMS,
   propTypes,
 } from '../../../../util/types';
-import { displayDeliveryPickup, displayDeliveryShipping } from '../../../../util/configHelpers';
 import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { getShippingMethodsFromListing } from '../../../../util/xololoShippingMethods';
 
@@ -22,122 +21,40 @@ import css from './EditListingDeliveryPanel.module.css';
 
 const { Money } = sdkTypes;
 
+// XOLOLO Envíos v2: initialValues del nuevo modelo xololoMethods.
+// Lee desde publicData.xololoShippingMethods si existe; si no, deriva
+// desde el legacy — así los listings viejos entran al form con los
+// checkboxes ya marcados según su config anterior. FieldCheckbox usa
+// arrays: presencia del value = enabled.
 const getInitialValues = props => {
-  const { listing, listingTypes, marketplaceCurrency } = props;
-  const { geolocation, publicData, price } = listing?.attributes || {};
-
-  const listingType = listing?.attributes?.publicData?.listingType;
-  const listingTypeConfig = listingTypes.find(conf => conf.listingType === listingType);
-  const displayShipping = displayDeliveryShipping(listingTypeConfig);
-  const displayPickup = displayDeliveryPickup(listingTypeConfig);
-  const displayMultipleDelivery = displayShipping && displayPickup;
-
-  // Only render current search if full place object is available in the URL params
-  // TODO bounds are missing - those need to be queried directly from Google Places
-  const locationFieldsPresent = publicData?.location?.address && geolocation;
-  const location = publicData?.location || {};
-  const { address, building } = location;
-  const {
-    shippingEnabled,
-    pickupEnabled,
-    shippingPriceInSubunitsOneItem,
-    shippingPriceInSubunitsAdditionalItems,
-    // XOLOLO: campos extendidos para Skydropx + recolección con costo.
-    shippingPricingMode,
-    weightGrams,
-    dimensionLengthCm,
-    dimensionWidthCm,
-    dimensionHeightCm,
-    sellerCoversShipping,
-    pickupPriceInSubunits,
-  } = publicData;
-  const deliveryOptions = [];
-
-  if (shippingEnabled || (!displayMultipleDelivery && displayShipping)) {
-    deliveryOptions.push('shipping');
-  }
-  if (pickupEnabled || (!displayMultipleDelivery && displayPickup)) {
-    deliveryOptions.push('pickup');
-  }
-
-  const currency = price?.currency || marketplaceCurrency;
-  const shippingOneItemAsMoney =
-    shippingPriceInSubunitsOneItem != null
-      ? new Money(shippingPriceInSubunitsOneItem, currency)
-      : null;
-  const shippingAdditionalItemsAsMoney =
-    shippingPriceInSubunitsAdditionalItems != null
-      ? new Money(shippingPriceInSubunitsAdditionalItems, currency)
-      : null;
-  const pickupPriceAsMoney =
-    pickupPriceInSubunits != null ? new Money(pickupPriceInSubunits, currency) : null;
-
-  // XOLOLO Envíos v2: initialValues del nuevo modelo xololoMethods.
-  // Lee desde publicData.xololoShippingMethods si existe; si no, deriva
-  // desde el legacy (deliveryOptions/shippingPricingMode/etc) — así los
-  // listings viejos entran al form con los checkboxes ya marcados según
-  // su config anterior. `enabled` se guarda como array porque FieldCheckbox
-  // maneja arrays; convertimos a bool al leer.
+  const { listing, marketplaceCurrency } = props;
+  const currency = listing?.attributes?.price?.currency || marketplaceCurrency;
   const xoloMethodsCfg = getShippingMethodsFromListing(listing);
   const localPriceSubunits = Number(xoloMethodsCfg.localDelivery.priceSubunits) || 0;
-  const xoloMethodsInitial = {
-    pickup: {
-      // FieldCheckbox usa arrays: presencia del value = enabled.
-      enabled: xoloMethodsCfg.pickup.enabled ? ['true'] : [],
-      instructions: xoloMethodsCfg.pickup.instructions || '',
-    },
-    localDelivery: {
-      enabled: xoloMethodsCfg.localDelivery.enabled ? ['true'] : [],
-      price: localPriceSubunits > 0 ? new Money(localPriceSubunits, currency) : null,
-      zoneDescription: xoloMethodsCfg.localDelivery.zoneDescription || '',
-    },
-    skydropxCarrier: {
-      enabled: xoloMethodsCfg.skydropxCarrier.enabled ? ['true'] : [],
-      sellerCoversShipping: xoloMethodsCfg.skydropxCarrier.sellerCoversShipping ? ['true'] : [],
-      weightGrams:
-        xoloMethodsCfg.skydropxCarrier.weightGrams != null
-          ? String(xoloMethodsCfg.skydropxCarrier.weightGrams)
-          : '',
-      dimensionLengthCm:
-        xoloMethodsCfg.skydropxCarrier.dimensionLengthCm != null
-          ? String(xoloMethodsCfg.skydropxCarrier.dimensionLengthCm)
-          : '',
-      dimensionWidthCm:
-        xoloMethodsCfg.skydropxCarrier.dimensionWidthCm != null
-          ? String(xoloMethodsCfg.skydropxCarrier.dimensionWidthCm)
-          : '',
-      dimensionHeightCm:
-        xoloMethodsCfg.skydropxCarrier.dimensionHeightCm != null
-          ? String(xoloMethodsCfg.skydropxCarrier.dimensionHeightCm)
-          : '',
-    },
-    freight: {
-      enabled: xoloMethodsCfg.freight.enabled ? ['true'] : [],
-    },
-  };
-
-  // Initial values for the form
+  const sk = xoloMethodsCfg.skydropxCarrier;
   return {
-    building,
-    location: locationFieldsPresent
-      ? {
-          search: address,
-          selectedPlace: { address, origin: geolocation },
-        }
-      : { search: undefined, selectedPlace: undefined },
-    deliveryOptions,
-    shippingPriceInSubunitsOneItem: shippingOneItemAsMoney,
-    shippingPriceInSubunitsAdditionalItems: shippingAdditionalItemsAsMoney,
-    // XOLOLO: defaults sanos para primera carga — flat con seller no absorbe.
-    shippingPricingMode: shippingPricingMode || 'flat',
-    weightGrams: weightGrams != null ? String(weightGrams) : '',
-    dimensionLengthCm: dimensionLengthCm != null ? String(dimensionLengthCm) : '',
-    dimensionWidthCm: dimensionWidthCm != null ? String(dimensionWidthCm) : '',
-    dimensionHeightCm: dimensionHeightCm != null ? String(dimensionHeightCm) : '',
-    sellerCoversShipping: sellerCoversShipping ? ['yes'] : [],
-    pickupPrice: pickupPriceAsMoney,
-    // XOLOLO Envíos v2
-    xololoMethods: xoloMethodsInitial,
+    xololoMethods: {
+      pickup: {
+        enabled: xoloMethodsCfg.pickup.enabled ? ['true'] : [],
+        instructions: xoloMethodsCfg.pickup.instructions || '',
+      },
+      localDelivery: {
+        enabled: xoloMethodsCfg.localDelivery.enabled ? ['true'] : [],
+        price: localPriceSubunits > 0 ? new Money(localPriceSubunits, currency) : null,
+        zoneDescription: xoloMethodsCfg.localDelivery.zoneDescription || '',
+      },
+      skydropxCarrier: {
+        enabled: sk.enabled ? ['true'] : [],
+        sellerCoversShipping: sk.sellerCoversShipping ? ['true'] : [],
+        weightGrams: sk.weightGrams != null ? String(sk.weightGrams) : '',
+        dimensionLengthCm: sk.dimensionLengthCm != null ? String(sk.dimensionLengthCm) : '',
+        dimensionWidthCm: sk.dimensionWidthCm != null ? String(sk.dimensionWidthCm) : '',
+        dimensionHeightCm: sk.dimensionHeightCm != null ? String(sk.dimensionHeightCm) : '',
+      },
+      freight: {
+        enabled: xoloMethodsCfg.freight.enabled ? ['true'] : [],
+      },
+    },
   };
 };
 
@@ -146,23 +63,21 @@ const getInitialValues = props => {
  *
  * @component
  * @param {Object} props
- * @param {string} [props.className] - Custom class that extends the default class for the root element
- * @param {string} [props.rootClassName] - Custom class that overrides the default class for the root element
- * @param {propTypes.ownListing} props.listing - The listing object
- * @param {Array<Object>} props.listingTypes - The active listing types configs
- * @param {string} props.marketplaceCurrency - The marketplace currency (e.g. 'USD')
- * @param {boolean} props.disabled - Whether the form is disabled
- * @param {boolean} props.ready - Whether the form is ready
- * @param {Function} props.onSubmit - The submit function
- * @param {string} props.submitButtonText - The submit button text
- * @param {boolean} props.panelUpdated - Whether the panel is updated
- * @param {boolean} props.updateInProgress - Whether the update is in progress
- * @param {Object} props.errors - The errors object
+ * @param {string} [props.className]
+ * @param {string} [props.rootClassName]
+ * @param {propTypes.ownListing} props.listing
+ * @param {Array<Object>} props.listingTypes
+ * @param {string} props.marketplaceCurrency
+ * @param {boolean} props.disabled
+ * @param {boolean} props.ready
+ * @param {Function} props.onSubmit
+ * @param {string} props.submitButtonText
+ * @param {boolean} props.panelUpdated
+ * @param {boolean} props.updateInProgress
+ * @param {Object} props.errors
  * @returns {JSX.Element}
  */
 const EditListingDeliveryPanel = props => {
-  // State is needed since LocationAutocompleteInput doesn't have internal state
-  // and therefore re-rendering would overwrite the values during XHR call.
   const [state, setState] = useState({ initialValues: getInitialValues(props) });
 
   const {
@@ -219,73 +134,11 @@ const EditListingDeliveryPanel = props => {
           className={css.form}
           initialValues={state.initialValues}
           onSubmit={values => {
-            const {
-              building = '',
-              location,
-              shippingPriceInSubunitsOneItem,
-              shippingPriceInSubunitsAdditionalItems,
-              deliveryOptions,
-              // XOLOLO: nuevos campos.
-              shippingPricingMode,
-              weightGrams,
-              dimensionLengthCm,
-              dimensionWidthCm,
-              dimensionHeightCm,
-              sellerCoversShipping,
-              pickupPrice,
-              // XOLOLO Envíos v2
-              xololoMethods,
-            } = values;
+            const { xololoMethods } = values;
 
-            const shippingEnabled = deliveryOptions.includes('shipping');
-            const pickupEnabled = deliveryOptions.includes('pickup');
-            const address = location?.selectedPlace?.address || null;
-            const origin = location?.selectedPlace?.origin || null;
-
-            // XOLOLO: pickup ahora tiene costo opcional (0 = gratis).
-            const pickupDataMaybe =
-              pickupEnabled && address
-                ? {
-                    location: { address, building },
-                    pickupPriceInSubunits: pickupPrice?.amount != null ? pickupPrice.amount : 0,
-                  }
-                : {};
-
-            // XOLOLO: shipping puede ser 'flat' (precio fijo Sharetribe) o
-            // 'carrier' (cotización Skydropx). En 'carrier' guardamos peso y
-            // dimensiones y NO guardamos precio (se calcula al checkout).
-            const isCarrier = shippingPricingMode === 'carrier';
-            const shippingDataMaybe = shippingEnabled
-              ? {
-                  shippingPricingMode: isCarrier ? 'carrier' : 'flat',
-                  sellerCoversShipping:
-                    Array.isArray(sellerCoversShipping) && sellerCoversShipping.includes('yes'),
-                  ...(isCarrier
-                    ? {
-                        weightGrams: weightGrams ? Number(weightGrams) : null,
-                        dimensionLengthCm: dimensionLengthCm ? Number(dimensionLengthCm) : null,
-                        dimensionWidthCm: dimensionWidthCm ? Number(dimensionWidthCm) : null,
-                        dimensionHeightCm: dimensionHeightCm ? Number(dimensionHeightCm) : null,
-                        // Carrier no usa precios fijos; los borramos para no confundir el checkout.
-                        shippingPriceInSubunitsOneItem: null,
-                        shippingPriceInSubunitsAdditionalItems: null,
-                      }
-                    : {
-                        shippingPriceInSubunitsOneItem:
-                          shippingPriceInSubunitsOneItem?.amount ?? null,
-                        shippingPriceInSubunitsAdditionalItems:
-                          shippingPriceInSubunitsAdditionalItems?.amount ?? null,
-                        // Flat no usa peso/dimensiones; los limpiamos.
-                        weightGrams: null,
-                        dimensionLengthCm: null,
-                        dimensionWidthCm: null,
-                        dimensionHeightCm: null,
-                      }),
-                }
-              : {};
-
-            // XOLOLO Envíos v2: normaliza y guarda el shape nuevo.
-            // FieldCheckbox guarda enabled como array — presencia = true.
+            // XOLOLO Envíos v2: normaliza el shape del form al que
+            // persistimos en publicData. FieldCheckbox guarda enabled
+            // como array — presencia = true.
             const xoloIsOn = v => Array.isArray(v) && v.length > 0;
             const xololoShippingMethods = {
               pickup: {
@@ -320,41 +173,26 @@ const EditListingDeliveryPanel = props => {
               },
             };
 
-            // New values for listing attributes
+            // XOLOLO: derivamos los flags legacy (pickupEnabled/
+            // shippingEnabled) desde v2 para que la UI de Sharetribe y
+            // cualquier consumer viejo que los lea sigan viendo estado
+            // consistente. El checkout usa `xololoShippingMethods` como
+            // fuente de verdad — ver server/api-util/lineItems.js.
+            const pickupEnabled = xololoShippingMethods.pickup.enabled;
+            const shippingEnabled =
+              xololoShippingMethods.localDelivery.enabled ||
+              xololoShippingMethods.skydropxCarrier.enabled ||
+              xololoShippingMethods.freight.enabled;
+
             const updateValues = {
-              geolocation: origin,
               publicData: {
                 pickupEnabled,
-                ...pickupDataMaybe,
                 shippingEnabled,
-                ...shippingDataMaybe,
-                // XOLOLO Envíos v2 — fuente de verdad futura del checkout
-                // (Sub-commit B lo leerá; por ahora coexiste con legacy).
                 xololoShippingMethods,
               },
             };
 
-            // Save the initialValues to state
-            // LocationAutocompleteInput doesn't have internal state
-            // and therefore re-rendering would overwrite the values during XHR call.
-            setState({
-              initialValues: {
-                building,
-                location: { search: address, selectedPlace: { address, origin } },
-                shippingPriceInSubunitsOneItem,
-                shippingPriceInSubunitsAdditionalItems,
-                deliveryOptions,
-                shippingPricingMode,
-                weightGrams,
-                dimensionLengthCm,
-                dimensionWidthCm,
-                dimensionHeightCm,
-                sellerCoversShipping,
-                pickupPrice,
-                // XOLOLO Envíos v2 — preserva el shape del form entre re-renders.
-                xololoMethods,
-              },
-            });
+            setState({ initialValues: { xololoMethods } });
             onSubmit(updateValues);
           }}
           listingTypeConfig={listingTypeConfig}
