@@ -17,8 +17,11 @@
 // - Solo el seller (provider) puede verificar el código.
 // - 3 intentos fallidos → se bloquea, alerta interna a Xololo, la tx
 //   no puede verificarse sin intervención manual.
-// - Al éxito: se marca verifiedAt en metadata. La transición a
-//   MARK_DELIVERED se dispara en el Commit 2 desde este mismo endpoint.
+// - Al éxito: se marca verifiedAt en metadata Y se dispara la transición
+//   transition/mark-delivered para avanzar la tx en Sharetribe. La
+//   transición se hace fire-and-forget: si falla (tx ya movida por otra
+//   vía, o error transitorio) log + 200; el verifiedAt es lo que garantiza
+//   trazabilidad y el estado real de Sharetribe se puede reconciliar.
 //
 // Compat: `POST /api/verify-pickup-code` sigue apuntando aquí. Y tx
 // viejas que guardaron el shape como `pickupCode` se leen igual (ver
@@ -123,8 +126,9 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Éxito: marcar verificado. La transición MARK_DELIVERED se dispara
-    // en el Commit 2 desde aquí mismo.
+    // Éxito: marcar verificado en metadata primero (así el registro
+    // queda aunque la transición falle) y luego disparar la transición
+    // MARK_DELIVERED para avanzar la tx en Sharetribe.
     await isdk.transactions.updateMetadata({
       id: transactionId,
       metadata: {
@@ -134,6 +138,24 @@ module.exports = async (req, res) => {
         },
       },
     });
+
+    // Mismo patrón que order-survey.js con mark-received: fire-and-forget.
+    // Si la tx ya avanzó por otra vía (webhook Skydropx, operator cancel,
+    // auto-cancel, etc.) la transición lanza y no aplica — no es error
+    // para el buyer/seller: el código sí se verificó correctamente.
+    try {
+      await isdk.transactions.transition({
+        id: transactionId,
+        transition: 'transition/mark-delivered',
+        params: {},
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[verify-delivery-code] transition mark-delivered falló para ${transactionId}:`,
+        e?.data?.errors || e?.message
+      );
+    }
 
     return res.json({ verified: true, verifiedAt: nowIso });
   } catch (e) {
