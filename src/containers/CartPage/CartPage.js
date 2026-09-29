@@ -12,6 +12,7 @@ import { types as sdkTypes } from '../../util/sdkLoader';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { initializeCardPaymentData } from '../../ducks/stripe.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
+import { denormalisedResponseEntities } from '../../util/data';
 import { showListing } from '../ListingPage/ListingPage.duck';
 import {
   selectCartForSeller,
@@ -104,17 +105,25 @@ const CartPage = props => {
     if (!listingIdsKey) return;
     const ids = listingIdsKey.split(',').filter(Boolean);
     if (ids.length === 0) return;
-    const uuids = ids.map(id => new UUID(id));
-    Promise.all(uuids.map(u => dispatch(showListing(u, config))))
-      .then(() => {
-        dispatch((_, getState) => {
-          const denorm = getListingsById(getState(), uuids).filter(Boolean);
-          setAllListings(denorm);
-        });
-      })
-      .catch(() => {
-        // silencioso
-      });
+    // XOLOLO: pedimos cada listing por separado, denormalizamos la
+    // respuesta cruda del SDK directo (evita race con
+    // addMarketplaceEntities/getListingsById). Retornamos null si
+    // alguno falla — se filtra abajo.
+    Promise.all(
+      ids.map(id =>
+        dispatch(showListing(new UUID(id), config))
+          .then(resp => {
+            const entities = denormalisedResponseEntities(resp);
+            return entities?.[0] || null;
+          })
+          .catch(() => null)
+      )
+    ).then(results => {
+      const nonNull = results.filter(Boolean);
+      // Mantenemos el orden del cart (primary primero) para que el
+      // primary listing coincida con cart.items[0].
+      setAllListings(nonNull);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listingIdsKey]);
   const primaryListing = allListings[0] || null;
