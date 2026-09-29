@@ -1,4 +1,4 @@
-import { bool, func, oneOf, shape, string } from 'prop-types';
+import { bool, func, number, oneOf, shape, string } from 'prop-types';
 import {
   BOOKING_PROCESS_NAME,
   INQUIRY_PROCESS_NAME,
@@ -25,6 +25,49 @@ const actionButtonsShape = shape({
   errorText: string,
 });
 
+// XOLOLO Envíos v2: shape que expone TransactionPage.stateDataPurchase
+// para que la UI (TransactionPanel) renderice los CTAs correctos por
+// método+sub-etapa. Ver buildXoloShippingStateData/computeStage en
+// TransactionPage.stateDataPurchase.js.
+const xoloShippingShape = shape({
+  mode: oneOf(['pickup', 'localDelivery', 'carrier', 'freight', 'none']).isRequired,
+  stage: oneOf([
+    'preparing',
+    'ready',
+    'dispatched',
+    'quoting',
+    'quoted',
+    'authorized',
+    'label_pending',
+    'label_ready',
+    'awaiting_code',
+    'done',
+    'unknown',
+  ]).isRequired,
+  flags: shape({
+    readyAt: string,
+    dispatchedAt: string,
+    quotedAt: string,
+    quotedAmount: number,
+    quotedCurrency: string,
+    quoteDescription: string,
+    quoteCarrierName: string,
+    buyerAuthorizedAt: string,
+    freightPaymentIntentId: string,
+    trackingNumber: string,
+    trackingUrl: string,
+    labelUrl: string,
+    currentStatus: string,
+    carrierName: string,
+    serviceName: string,
+    codeVerifiedAt: string,
+  }).isRequired,
+  deliveryCode: string,
+  zoneDescription: string,
+  sellerCoversShipping: bool,
+  quotePending: bool,
+});
+
 export const stateDataShape = shape({
   processName: string.isRequired,
   processState: string.isRequired,
@@ -38,6 +81,7 @@ export const stateDataShape = shape({
   showReviewAsFirstLink: bool,
   showReviewAsSecondLink: bool,
   showReviews: bool,
+  xoloShipping: xoloShippingShape,
 });
 
 // Transitions are following process.edn format: "transition/my-transtion-name"
