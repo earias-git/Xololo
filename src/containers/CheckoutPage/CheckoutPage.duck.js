@@ -30,6 +30,11 @@ const initiateOrderPayloadCreator = (
     // persistir el snapshot xololoShipping en protectedData.
     selectedShippingRate,
     shippingQuotationId,
+    // XOLOLO Envíos v2: método elegido por el buyer — mismo tratamiento
+    // que selectedShippingRate. Sin extraerlo aquí, se colaba en
+    // otherOrderParams y el server lo leía como undefined → siempre
+    // defaulteaba a pickup → total sin envío para Skydropx.
+    selectedShippingMethod,
     // XOLOLO Cart.5: items adicionales del mismo seller (checkout multi-item).
     // Viajan en orderData; server los valida (mismo seller) y agrega una
     // línea 'line-item/item' por cada uno. Ver server/api-util/lineItems.js.
@@ -44,6 +49,7 @@ const initiateOrderPayloadCreator = (
     ...(deliveryMethod ? { deliveryMethod } : {}),
     ...(selectedShippingRate ? { selectedShippingRate } : {}),
     ...(shippingQuotationId ? { shippingQuotationId } : {}),
+    ...(selectedShippingMethod ? { selectedShippingMethod } : {}),
     ...(Array.isArray(additionalCartItems) && additionalCartItems.length > 0
       ? { additionalCartItems }
       : {}),
@@ -293,6 +299,12 @@ const speculateTransactionPayloadCreator = (
     // cuando el buyer cambia de paquetería).
     selectedShippingRate,
     shippingQuotationId,
+    // XOLOLO Envíos v2: el método (pickup/localDelivery/skydropxCarrier/
+    // freight) también va en orderData — el server lo lee para decidir
+    // qué shipping-fee generar. Antes se colaba en otherOrderParams y
+    // el server veía undefined → siempre default a pickup → total sin
+    // envío aunque el buyer eligiera Skydropx con rate.
+    selectedShippingMethod,
     // XOLOLO Cart.5: extras del carrito también viajan en el speculative
     // para que el OrderBreakdown de preview refleje el total correcto.
     additionalCartItems,
@@ -307,6 +319,7 @@ const speculateTransactionPayloadCreator = (
     ...(priceVariantName ? { priceVariantName } : {}),
     ...(selectedShippingRate ? { selectedShippingRate } : {}),
     ...(shippingQuotationId ? { shippingQuotationId } : {}),
+    ...(selectedShippingMethod ? { selectedShippingMethod } : {}),
     ...(Array.isArray(additionalCartItems) && additionalCartItems.length > 0
       ? { additionalCartItems }
       : {}),
