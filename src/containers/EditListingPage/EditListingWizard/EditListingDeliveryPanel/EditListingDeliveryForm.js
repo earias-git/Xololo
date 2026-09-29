@@ -5,6 +5,7 @@ import classNames from 'classnames';
 // Import configs and util modules
 import appSettings from '../../../../config/settings';
 import { required } from '../../../../util/validators';
+import { MX_STATES } from '../../../../util/mxStates';
 
 // Import shared components
 import {
@@ -88,7 +89,15 @@ export const EditListingDeliveryForm = props => (
       const xoloSkydropxOn = xoloIsOnRobust(xoloMethods.skydropxCarrier?.enabled);
       const xoloFreightOn = xoloIsOnRobust(xoloMethods.freight?.enabled);
       const xoloHasAny = xoloPickupOn || xoloLocalOn || xoloSkydropxOn || xoloFreightOn;
-      const submitDisabled = invalid || disabled || submitInProgress || !xoloHasAny;
+      // localDelivery exige al menos un estado de cobertura marcado —
+      // sin eso el checkout no puede validar que la dirección del buyer
+      // esté en la zona del seller (bug real reportado: seller de Morelos
+      // recibió orden con dirección Querétaro sin bloqueo).
+      const xoloLocalCoverage = xoloMethods.localDelivery?.coverageStates;
+      const xoloLocalCoverageMissing =
+        xoloLocalOn && (!Array.isArray(xoloLocalCoverage) || xoloLocalCoverage.length === 0);
+      const submitDisabled =
+        invalid || disabled || submitInProgress || !xoloHasAny || xoloLocalCoverageMissing;
 
       const currencyConfig = appSettings.getCurrencyFormatting(marketplaceCurrency);
 
@@ -153,10 +162,33 @@ export const EditListingDeliveryForm = props => (
                   name="xololoMethods.localDelivery.zoneDescription"
                   className={css.input}
                   type="text"
-                  label="Zona de cobertura"
-                  placeholder="Ej. CDMX y Área Metropolitana, o Zona Sur de Guadalajara"
+                  label="Zona de cobertura (detalle)"
+                  placeholder="Ej. CDMX Sur, Zona Metropolitana de Guadalajara, colonias específicas…"
                   validate={required('Describe la zona donde entregas.')}
                 />
+                <p className={css.xxHint} style={{ marginTop: 12 }}>
+                  Estados donde entregas <strong>(obligatorio marcar al menos uno)</strong>. En el
+                  checkout se bloqueará la compra si la dirección del comprador está fuera de
+                  estos estados.
+                </p>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                    gap: '4px 12px',
+                    marginTop: 8,
+                  }}
+                >
+                  {MX_STATES.map(estado => (
+                    <FieldCheckbox
+                      key={estado}
+                      id={`${formId}.xoloLocalCoverage.${estado}`}
+                      name="xololoMethods.localDelivery.coverageStates"
+                      label={estado}
+                      value={estado}
+                    />
+                  ))}
+                </div>
               </div>
             ) : null}
 

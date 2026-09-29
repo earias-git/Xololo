@@ -42,6 +42,10 @@ const getInitialValues = props => {
         enabled: xoloMethodsCfg.localDelivery.enabled ? ['true'] : [],
         price: localPriceSubunits > 0 ? new Money(localPriceSubunits, currency) : null,
         zoneDescription: xoloMethodsCfg.localDelivery.zoneDescription || '',
+        // FieldCheckbox de multi-selección guarda un array de valores.
+        coverageStates: Array.isArray(xoloMethodsCfg.localDelivery.coverageStates)
+          ? xoloMethodsCfg.localDelivery.coverageStates
+          : [],
       },
       skydropxCarrier: {
         enabled: sk.enabled ? ['true'] : [],
@@ -149,6 +153,11 @@ const EditListingDeliveryPanel = props => {
                 enabled: xoloIsOn(xololoMethods?.localDelivery?.enabled),
                 priceSubunits: xololoMethods?.localDelivery?.price?.amount ?? 0,
                 zoneDescription: xololoMethods?.localDelivery?.zoneDescription || '',
+                // Estados marcados (array de strings) — se usan en el
+                // checkout para bloquear compras fuera de zona.
+                coverageStates: Array.isArray(xololoMethods?.localDelivery?.coverageStates)
+                  ? xololoMethods.localDelivery.coverageStates
+                  : [],
               },
               skydropxCarrier: {
                 enabled: xoloIsOn(xololoMethods?.skydropxCarrier?.enabled),

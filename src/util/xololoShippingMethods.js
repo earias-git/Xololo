@@ -38,7 +38,9 @@ export const ALL_METHODS = [
 
 const emptyConfig = () => ({
   pickup: { enabled: false, instructions: '' },
-  localDelivery: { enabled: false, priceSubunits: 0, zoneDescription: '' },
+  // coverageStates: array de estados de MX donde el seller entrega
+  // (bloqueo duro en el checkout). Empty = método no configurado.
+  localDelivery: { enabled: false, priceSubunits: 0, zoneDescription: '', coverageStates: [] },
   skydropxCarrier: {
     enabled: false,
     sellerCoversShipping: false,
