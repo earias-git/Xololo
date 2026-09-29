@@ -20,8 +20,16 @@ import {
   removeItem,
   clearSellerCart,
 } from '../../ducks/cart.duck';
+import {
+  getShippingMethodsFromListing,
+  METHOD_PICKUP,
+  METHOD_LOCAL_DELIVERY,
+  METHOD_SKYDROPX,
+  METHOD_FREIGHT,
+} from '../../util/xololoShippingMethods';
+import { deriveLegacyDeliveryMethod } from '../../components/OrderPanel/ProductOrderForm/XololoShippingMethodField';
 
-import { LayoutSingleColumn, Page, SellerBrandFrame } from '../../components';
+import { LayoutSingleColumn, Page, SellerBrandFrame, XololoShippingMethodSelector } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
@@ -78,6 +86,29 @@ const CartPage = props => {
   const currentUser = useSelector(state => state.user?.currentUser || null);
   const [redirecting, setRedirecting] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
+  // XOLOLO Envíos v2 (rediseño): el buyer elige el método aquí en la
+  // CartPage — así llega al checkout con el método fijado, igual que en
+  // el flujo de "Comprar ahora" desde el ListingPage. Se usan los
+  // métodos del PRIMARY listing (primer item del carrito); si productos
+  // adicionales no soportan el método elegido, el server valida y
+  // rechaza al iniciar la orden.
+  const [primaryListing, setPrimaryListing] = useState(null);
+  const [xoloSelectedMethod, setXoloSelectedMethod] = useState(null);
+
+  const primaryListingId = cart?.items?.[0]?.listingId;
+  useEffect(() => {
+    if (!primaryListingId) return;
+    const uuid = new UUID(primaryListingId);
+    dispatch(showListing(uuid, config)).then(() => {
+      dispatch((_, getState) => {
+        const [l] = getListingsById(getState(), [uuid]);
+        if (l) setPrimaryListing(l);
+      });
+    }).catch(() => {
+      // silencioso — si no carga, el checkout intentará hidratarlo de nuevo
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primaryListingId]);
 
   // Espera a hidratación desde localStorage para no mostrar "carrito vacío"
   // en el primer render antes de leer el storage.
@@ -117,6 +148,44 @@ const CartPage = props => {
   );
   const subtotalMoney = new Money(Math.round(subtotalAmount), currency);
   const totalItems = cart.items.reduce((sum, i) => sum + (i.quantity || 0), 0);
+
+  // XOLOLO Envíos v2: métodos del listing primario. Cuenta enabled > 0
+  // dispara el selector.
+  const xoloShippingMethods = primaryListing
+    ? getShippingMethodsFromListing(primaryListing)
+    : null;
+  const xoloEnabledCount = xoloShippingMethods
+    ? [
+        xoloShippingMethods.pickup?.enabled,
+        xoloShippingMethods.localDelivery?.enabled,
+        xoloShippingMethods.skydropxCarrier?.enabled,
+        xoloShippingMethods.freight?.enabled,
+      ].filter(Boolean).length
+    : 0;
+  const showXoloMethodSelector = xoloEnabledCount > 0;
+  const xoloDefaultMethod = xoloShippingMethods
+    ? xoloShippingMethods.pickup?.enabled
+      ? METHOD_PICKUP
+      : xoloShippingMethods.localDelivery?.enabled
+      ? METHOD_LOCAL_DELIVERY
+      : xoloShippingMethods.skydropxCarrier?.enabled
+      ? METHOD_SKYDROPX
+      : xoloShippingMethods.freight?.enabled
+      ? METHOD_FREIGHT
+      : null
+    : null;
+  const xoloCurrencyFormatter = subunits => {
+    const n = Number(subunits) || 0;
+    if (n === 0) return 'Gratis';
+    try {
+      return formatMoney(intl, new Money(Math.round(n), currency));
+    } catch (e) {
+      return `$${(n / 100).toFixed(2)}`;
+    }
+  };
+  // Buyer debe elegir método si el primary tiene v2 methods.
+  const methodChosenOrDefault = xoloSelectedMethod || xoloDefaultMethod;
+  const methodBlockingCheckout = showXoloMethodSelector && !methodChosenOrDefault;
 
   const handleQty = (listingId, nextQty) => {
     dispatch(updateQuantity({ sellerId, listingId, quantity: Math.max(0, nextQty) }));
@@ -178,11 +247,18 @@ const CartPage = props => {
         image: i.listingImageUrl || null,
       }));
 
+      // XOLOLO Envíos v2: el método elegido en la CartPage viaja como
+      // orderData.selectedShippingMethod. El deliveryMethod legacy se
+      // deriva (pickup/shipping) para satisfacer el proceso Sharetribe.
+      const chosenXoloMethod = methodChosenOrDefault;
+      const derivedDeliveryMethod =
+        deriveLegacyDeliveryMethod(chosenXoloMethod) || 'shipping';
       const initialValues = {
         listing,
         orderData: {
           quantity: primary.quantity,
-          deliveryMethod: 'shipping', // default; el buyer puede cambiarlo en la CheckoutPage
+          deliveryMethod: derivedDeliveryMethod,
+          ...(chosenXoloMethod ? { selectedShippingMethod: chosenXoloMethod } : {}),
           ...(additionalCartItems.length > 0 ? { additionalCartItems } : {}),
         },
         confirmPaymentError: null,
@@ -322,14 +398,37 @@ const CartPage = props => {
               })}
             </ul>
 
+            {/* XOLOLO Envíos v2: selector de método usando la config del
+                listing primario. Si el primary tiene métodos v2, el
+                buyer elige aquí; en el checkout ya viaja fijado. */}
+            {showXoloMethodSelector ? (
+              <div style={{ margin: '20px 0' }}>
+                <XololoShippingMethodSelector
+                  methods={xoloShippingMethods}
+                  value={xoloSelectedMethod || null}
+                  defaultMethod={xoloDefaultMethod}
+                  onChange={setXoloSelectedMethod}
+                  currencyFormatter={xoloCurrencyFormatter}
+                />
+                {cart.items.length > 1 ? (
+                  <p style={{ fontSize: 12, color: 'var(--colorGrey500)', margin: '4px 4px 0 4px' }}>
+                    Nota: el método se aplica a TODO el carrito. Si alguno
+                    de los productos adicionales no soporta el método
+                    elegido, el checkout te lo avisará al iniciar la orden.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
             <div className={css.summary}>
               <div className={css.summaryRow}>
                 <span>Subtotal ({totalItems} items)</span>
                 <strong>{formatMoney(intl, subtotalMoney)}</strong>
               </div>
               <p className={css.summaryHint}>
-                Al ir a checkout eliges paquetería + capturas dirección de envío.
-                El costo final incluye tu envío ya cotizado.
+                {showXoloMethodSelector
+                  ? 'Al ir a checkout capturas dirección de envío. El costo final incluye envío según el método elegido arriba.'
+                  : 'Al ir a checkout eliges paquetería + capturas dirección de envío. El costo final incluye tu envío ya cotizado.'}
               </p>
               <div className={css.actions}>
                 <a href={cart.sellerSlug ? `https://${cart.sellerSlug}.xololo.mx` : '/'} className={css.linkBtn}>
@@ -346,7 +445,8 @@ const CartPage = props => {
                   type="button"
                   className={css.primaryBtn}
                   onClick={handleCheckout}
-                  disabled={redirecting}
+                  disabled={redirecting || methodBlockingCheckout}
+                  title={methodBlockingCheckout ? 'Selecciona un método de entrega arriba' : ''}
                 >
                   {redirecting ? 'Un momento…' : 'Ir a checkout →'}
                 </button>
