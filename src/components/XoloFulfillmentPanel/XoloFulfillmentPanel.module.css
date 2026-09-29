@@ -114,14 +114,21 @@
 }
 
 .codeInputBox {
-  width: 42px;
-  height: 52px;
-  font-size: 24px;
+  width: 46px;
+  height: 60px;
+  font-size: 26px;
+  line-height: 1;
+  padding: 0;
   text-align: center;
   border: 1px solid var(--colorGrey300);
   border-radius: 6px;
   font-family: 'SF Mono', Menlo, Consolas, monospace;
   font-weight: 700;
+  color: var(--colorGrey900);
+  background: var(--colorWhite);
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
 }
 
 .codeInputBox:focus {

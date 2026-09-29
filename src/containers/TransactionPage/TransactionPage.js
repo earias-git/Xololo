@@ -1051,7 +1051,15 @@ export const TransactionPageComponent = props => {
             const wasDeliveredByWebhook = trackingEvents.some(e => e.status === 'delivered');
             const wasDeliveredByTx = (transaction?.attributes?.transitions || [])
               .some(t => t.transition === 'transition/mark-delivered');
-            const isDelivered = wasDeliveredByWebhook || wasDeliveredByTx;
+            // XOLOLO Envíos v2: código de 6 dígitos verificado también
+            // cuenta como "entregado" — así el buyer ve la encuesta
+            // aunque la transición mark-delivered en Sharetribe falle
+            // por alguna razón (params, actor, race). El código sólo se
+            // marca verified al éxito real en verify-delivery-code.
+            const wasDeliveredByCode =
+              !!meta.xololoDeliveryCodeVerified?.verifiedAt ||
+              !!meta.xololoPickupCodeVerified?.verifiedAt;
+            const isDelivered = wasDeliveredByWebhook || wasDeliveredByTx || wasDeliveredByCode;
             const alreadyAnswered =
               !!meta.xololoBuyerReview ||
               !!meta.xololoDispute ||

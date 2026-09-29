@@ -143,6 +143,11 @@ module.exports = async (req, res) => {
     // Si la tx ya avanzó por otra vía (webhook Skydropx, operator cancel,
     // auto-cancel, etc.) la transición lanza y no aplica — no es error
     // para el buyer/seller: el código sí se verificó correctamente.
+    // El fallback de TransactionPage.js usa xololoDeliveryCodeVerified
+    // como señal alternativa para mostrar la encuesta si esta transición
+    // falla — así el flow no se traba aunque el proceso Sharetribe
+    // rechace la transición.
+    let transitionResult = 'ok';
     try {
       await isdk.transactions.transition({
         id: transactionId,
@@ -150,6 +155,7 @@ module.exports = async (req, res) => {
         params: {},
       });
     } catch (e) {
+      transitionResult = e?.data?.errors?.[0]?.title || e?.message || 'unknown_error';
       // eslint-disable-next-line no-console
       console.warn(
         `[verify-delivery-code] transition mark-delivered falló para ${transactionId}:`,
@@ -157,7 +163,7 @@ module.exports = async (req, res) => {
       );
     }
 
-    return res.json({ verified: true, verifiedAt: nowIso });
+    return res.json({ verified: true, verifiedAt: nowIso, transition: transitionResult });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('verify-delivery-code unexpected:', e);
