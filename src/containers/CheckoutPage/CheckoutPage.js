@@ -211,7 +211,14 @@ const EnhancedCheckoutPage = props => {
       transactionFieldConfigs={transactionFieldConfigs}
       {...props}
     />
-  ) : processName && !isInquiryProcess && !speculateTransactionInProgress ? (
+  ) : processName && !isInquiryProcess && (isDataLoaded || !speculateTransactionInProgress) ? (
+    // XOLOLO Envíos v2: NO desmontar durante re-speculate. Antes se
+    // ocultaba con `!speculateTransactionInProgress` — cada re-speculate
+    // (ej. al elegir método o paquetería) destruía el FinalForm de
+    // dentro y borraba TODOS los campos capturados por el buyer
+    // (dirección, teléfono, tarjeta). Ahora dejamos que
+    // CheckoutPageWithPayment maneje su propio loading state
+    // internamente sin destruir el form.
     <CheckoutPageWithPayment
       config={config}
       routeConfiguration={routeConfiguration}
