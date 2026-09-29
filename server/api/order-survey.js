@@ -110,16 +110,42 @@ module.exports = async (req, res) => {
 
     // Validar que la orden está entregada. Se detecta si:
     // - Sharetribe registró una transición transition/mark-delivered, O
-    // - El webhook Skydropx registró un evento con status 'delivered'.
+    // - El webhook Skydropx registró un evento con status 'delivered', O
+    // - El código de 6 dígitos del buyer fue verificado (pickup/localDelivery/
+    //   freight — mismo fallback que TransactionPage.js).
     const transitions = tx.attributes.transitions || [];
     const wasDeliveredByTx = transitions.some(t => t.transition === 'transition/mark-delivered');
     const trackingEvents = meta.xololoShippingTrackingEvents || [];
     const wasDeliveredByWebhook = trackingEvents.some(e => e.status === 'delivered');
-    if (!wasDeliveredByTx && !wasDeliveredByWebhook) {
+    const wasDeliveredByCode =
+      !!meta.xololoDeliveryCodeVerified?.verifiedAt ||
+      !!meta.xololoPickupCodeVerified?.verifiedAt;
+    if (!wasDeliveredByTx && !wasDeliveredByWebhook && !wasDeliveredByCode) {
       return res.status(409).json({
         error: 'not_delivered',
         details: 'La orden aún no ha sido marcada como entregada.',
       });
+    }
+
+    // Si el código está verificado pero la transición mark-delivered
+    // en Sharetribe aún no se registró (por lo que MARK_RECEIVED más
+    // abajo también fallará), intentamos disparar mark-delivered ahora.
+    // Fire-and-forget: si falla igual seguimos porque el metadata dice
+    // que la entrega ya se confirmó.
+    if (wasDeliveredByCode && !wasDeliveredByTx) {
+      try {
+        await isdk.transactions.transition({
+          id: transactionId,
+          transition: 'transition/mark-delivered',
+          params: {},
+        });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[order-survey] retry mark-delivered falló para ${transactionId}:`,
+          e?.data?.errors || e?.message
+        );
+      }
     }
 
     const nowIso = new Date().toISOString();
