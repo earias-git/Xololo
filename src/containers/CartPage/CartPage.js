@@ -194,8 +194,16 @@ const CartPage = props => {
   // XOLOLO Envíos v2 + carrito multi-producto: agrupa por compatibilidad
   // de métodos. Si todos comparten al menos un método → 1 grupo (todo
   // se paga junto). Si no → 2+ grupos, cada uno con su propio checkout.
-  const compatibilityGroups = allListings.length > 0
-    ? groupListingsByCompatibility(allListings)
+  //
+  // Filtramos allListings a sólo los que están en el cart actual — así
+  // evitamos que un listing "ghost" de fetches previos (race condition
+  // entre re-fetches cuando el cart cambia) genere grupos vacíos.
+  const cartListingIdSet = new Set((cart.items || []).map(i => i.listingId));
+  const allListingsInCart = allListings.filter(l =>
+    cartListingIdSet.has(l?.id?.uuid)
+  );
+  const compatibilityGroups = allListingsInCart.length > 0
+    ? groupListingsByCompatibility(allListingsInCart)
     : [];
   const hasMultipleGroups = compatibilityGroups.length > 1;
 

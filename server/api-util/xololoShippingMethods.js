@@ -36,10 +36,13 @@ const deriveFromLegacy = publicData => {
   const deliveryOptions = Array.isArray(publicData.deliveryOptions)
     ? publicData.deliveryOptions
     : [];
-  if (deliveryOptions.includes('pickup')) {
+  // Pickup: aceptamos legacy vía deliveryOptions O flag pickupEnabled.
+  if (deliveryOptions.includes('pickup') || publicData.pickupEnabled === true) {
     cfg.pickup.enabled = true;
   }
-  const shippingEnabled = deliveryOptions.includes('shipping');
+  // Shipping: aceptamos ambos flags.
+  const shippingEnabled =
+    deliveryOptions.includes('shipping') || publicData.shippingEnabled === true;
   const flatPrice = Number(publicData.shippingPriceInSubunitsOneItem) || 0;
   if (shippingEnabled && publicData.shippingPricingMode === 'flat' && flatPrice > 0) {
     cfg.localDelivery.enabled = true;

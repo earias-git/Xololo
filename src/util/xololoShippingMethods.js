@@ -63,15 +63,21 @@ export const deriveFromLegacy = publicData => {
     ? publicData.deliveryOptions
     : [];
 
-  // Pickup viejo → pickup nuevo (el pickupPrice legacy se ignora — en el
-  // modelo nuevo pickup siempre es gratis; si el seller cobraba antes, lo
-  // vuelve a configurar como localDelivery con costo).
-  if (deliveryOptions.includes('pickup')) {
+  // Pickup viejo → pickup nuevo. Aceptamos legacy vía deliveryOptions
+  // O vía el flag pickupEnabled directo (algunos listings guardaron
+  // uno pero no el otro).
+  const pickupLegacy =
+    deliveryOptions.includes('pickup') || publicData.pickupEnabled === true;
+  if (pickupLegacy) {
     cfg.pickup.enabled = true;
   }
 
-  // Shipping viejo con precio flat → localDelivery con ese precio.
-  const shippingEnabled = deliveryOptions.includes('shipping');
+  // Shipping viejo. Igual — aceptamos deliveryOptions.includes('shipping')
+  // O el flag shippingEnabled=true. Con cualquiera basta para activar
+  // la derivación (algunas versiones anteriores del panel guardaban
+  // sólo uno de los dos).
+  const shippingEnabled =
+    deliveryOptions.includes('shipping') || publicData.shippingEnabled === true;
   const flatPrice = Number(publicData.shippingPriceInSubunitsOneItem) || 0;
   if (shippingEnabled && publicData.shippingPricingMode === 'flat' && flatPrice > 0) {
     cfg.localDelivery.enabled = true;
