@@ -179,7 +179,14 @@ const createPaymentIntent = async (req, res) => {
     const stripe = getStripeBilling();
     if (!stripe) {
       // eslint-disable-next-line no-console
-      console.error('[freight.createPaymentIntent] Stripe no configurado');
+      console.error(
+        '[freight.createPaymentIntent] Stripe no configurado. ' +
+          `STRIPE_SECRET_KEY env var: ${
+            process.env.STRIPE_SECRET_KEY ? 'presente' : 'AUSENTE'
+          }. ` +
+          'Verifica en el dashboard de Render que la variable esté seteada en el service ' +
+          'y que se haya hecho un redeploy después de agregarla.'
+      );
       return res.status(500).json({ error: 'stripe_missing' });
     }
     const isdk = getIntegrationSdk();

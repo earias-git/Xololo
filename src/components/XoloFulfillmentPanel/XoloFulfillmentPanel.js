@@ -508,20 +508,11 @@ const XoloFulfillmentPanel = ({ stateData, transaction, transactionRole, onRefre
 
   // ── Vista del BUYER ──────────────────────────────────────────
   if (isCustomer) {
-    // Freight — casos especiales antes del awaiting_code
+    // Freight — casos especiales antes del awaiting_code.
+    // Orden lógico: cotizando → cotizado (autoriza y paga) →
+    // pagado/preparando → listo → en camino → código.
     if (mode === 'freight') {
-      if (stage === 'preparing' || quotePending) {
-        return (
-          <div className={css.root}>
-            <h3 className={css.title}>Vendedor preparando el envío</h3>
-            <div className={css.stageInfo}>
-              El vendedor está preparando tu pedido. Después te enviará una cotización del envío
-              para que la autorices.
-            </div>
-          </div>
-        );
-      }
-      if (stage === 'quoting') {
+      if (stage === 'quoting' || quotePending) {
         return (
           <div className={css.root}>
             <h3 className={css.title}>Cotizando envío</h3>
@@ -546,12 +537,26 @@ const XoloFulfillmentPanel = ({ stateData, transaction, transactionRole, onRefre
           </div>
         );
       }
-      if (stage === 'authorized') {
+      // Post-autorización: buyer pagó, seller está preparando.
+      // 'preparing' aparece cuando el seller aún no marcó ready.
+      if (stage === 'preparing') {
         return (
           <div className={css.root}>
-            <h3 className={css.title}>Envío autorizado</h3>
+            <h3 className={css.title}>Vendedor preparando tu pedido</h3>
             <div className={css.stageInfo}>
-              Pagaste el envío. El vendedor está por despachar tu pedido.
+              Pagaste el envío. El vendedor está preparando tu pedido. Recibirás un aviso cuando
+              esté listo para su envío.
+            </div>
+          </div>
+        );
+      }
+      if (stage === 'ready') {
+        return (
+          <div className={css.root}>
+            <h3 className={css.title}>Pedido listo</h3>
+            <div className={css.stageInfo}>
+              Tu pedido está listo. El vendedor lo despachará y te contactará para coordinar la
+              entrega.
             </div>
           </div>
         );
@@ -640,13 +645,61 @@ const XoloFulfillmentPanel = ({ stateData, transaction, transactionRole, onRefre
     if (mode === 'carrier') return null;
 
     if (mode === 'pickup' || mode === 'localDelivery' || mode === 'freight') {
+      // Freight tiene su propio orden: cotizar → esperar autorización →
+      // preparar → marcar listo → despachar → código. El seller nunca
+      // debe preparar antes de que el buyer autorice el pago del envío.
+      if (mode === 'freight' && stage === 'quoting') {
+        return (
+          <div className={css.root}>
+            <h3 className={css.title}>Cotiza el envío</h3>
+            <p className={css.subtitle}>
+              El comprador ya pagó el producto. Antes de preparar el pedido, envíale la cotización
+              del envío por flete. Se le cobrará este monto por Stripe y podrás empezar a preparar
+              cuando lo autorice.
+            </p>
+            <FreightQuoteForm transactionId={transactionId} onQuoted={onRefresh} />
+          </div>
+        );
+      }
+      if (mode === 'freight' && stage === 'quoted') {
+        return (
+          <div className={css.root}>
+            <h3 className={css.title}>Cotización enviada — Esperando autorización</h3>
+            <div className={css.freightQuoted}>
+              <p className={css.freightQuotedAmount}>
+                {money(flags.quotedAmount, flags.quotedCurrency || 'MXN')}
+              </p>
+              <p className={css.freightQuotedDesc}>{flags.quoteDescription}</p>
+              {flags.quoteCarrierName ? (
+                <p className={css.freightQuotedDesc}>Paquetería: {flags.quoteCarrierName}</p>
+              ) : null}
+            </div>
+            <p className={css.subtitle}>
+              El comprador debe autorizar y pagar el envío antes de que puedas preparar el pedido.
+              Puedes editar la cotización mientras no autorice.
+            </p>
+            <FreightQuoteForm
+              transactionId={transactionId}
+              initialAmount={flags.quotedAmount}
+              initialDescription={flags.quoteDescription}
+              initialCarrier={flags.quoteCarrierName}
+              onQuoted={onRefresh}
+            />
+          </div>
+        );
+      }
+
+      // Pickup y localDelivery arrancan directo en preparing (sin cotizar).
+      // Freight en preparing sólo ocurre DESPUÉS de que el buyer autorizó
+      // el pago — la máquina de estados de computeStage lo garantiza.
       if (stage === 'preparing') {
         return (
           <div className={css.root}>
             <h3 className={css.title}>Prepara el pedido</h3>
             <p className={css.subtitle}>
-              Cuando tengas el producto listo, marca esta orden para que el comprador vea el
-              siguiente paso.
+              {mode === 'freight'
+                ? 'El comprador ya pagó el envío. Prepara el producto y márcalo listo para despacharlo.'
+                : 'Cuando tengas el producto listo, marca esta orden para que el comprador vea el siguiente paso.'}
             </p>
             <MarkReadyButton transactionId={transactionId} onDone={onRefresh} />
           </div>
@@ -668,45 +721,14 @@ const XoloFulfillmentPanel = ({ stateData, transaction, transactionRole, onRefre
           </div>
         );
       }
-      if (mode === 'freight' && stage === 'quoting') {
+      if (mode === 'freight' && stage === 'ready') {
         return (
           <div className={css.root}>
-            <h3 className={css.title}>Cotiza el envío</h3>
-            <FreightQuoteForm transactionId={transactionId} onQuoted={onRefresh} />
-          </div>
-        );
-      }
-      if (mode === 'freight' && stage === 'quoted') {
-        return (
-          <div className={css.root}>
-            <h3 className={css.title}>Cotización enviada — Esperando autorización</h3>
-            <div className={css.freightQuoted}>
-              <p className={css.freightQuotedAmount}>
-                {money(flags.quotedAmount, flags.quotedCurrency || 'MXN')}
-              </p>
-              <p className={css.freightQuotedDesc}>{flags.quoteDescription}</p>
-              {flags.quoteCarrierName ? (
-                <p className={css.freightQuotedDesc}>Paquetería: {flags.quoteCarrierName}</p>
-              ) : null}
-            </div>
+            <h3 className={css.title}>Producto listo — Marcar despachado</h3>
             <p className={css.subtitle}>
-              El comprador debe autorizar y pagar el envío antes de que puedas despacharlo. Puedes
-              editar la cotización mientras no autorice.
+              Cuando el chofer/paquetería recoja el paquete, marca como despachado. Al entregar,
+              pide al comprador su código de 6 dígitos.
             </p>
-            <FreightQuoteForm
-              transactionId={transactionId}
-              initialAmount={flags.quotedAmount}
-              initialDescription={flags.quoteDescription}
-              initialCarrier={flags.quoteCarrierName}
-              onQuoted={onRefresh}
-            />
-          </div>
-        );
-      }
-      if (mode === 'freight' && stage === 'authorized') {
-        return (
-          <div className={css.root}>
-            <h3 className={css.title}>Pago recibido — Despacha el pedido</h3>
             <MarkDispatchedButton
               transactionId={transactionId}
               label="Marcar como despachado"

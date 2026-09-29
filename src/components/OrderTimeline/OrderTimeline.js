@@ -34,7 +34,7 @@ const STATE_DEFS = {
     icon: '📦',
   },
   ready: {
-    label: 'Listo',
+    label: 'Listo para envío',
     detail: 'El vendedor marcó tu pedido como listo.',
     icon: '📮',
   },
@@ -50,7 +50,7 @@ const STATE_DEFS = {
   },
   authorized: {
     label: 'Envío pagado',
-    detail: 'Autorizaste el envío. El vendedor está por despachar.',
+    detail: 'Pagaste el envío. El vendedor prepara tu pedido.',
     icon: '💰',
   },
   label_generated: {
@@ -105,12 +105,16 @@ const STATES_BY_MODE = {
     'delivered',
     'review_open',
   ],
+  // Freight: primero cotizar → buyer autoriza → seller prepara →
+  // marca listo → despacha → entrega. Preparar viene DESPUÉS del pago
+  // del envío para que el seller no invierta tiempo en algo que el
+  // buyer podría rechazar en la cotización.
   freight: [
     'paid',
-    'preparing',
     'quoting',
     'quoted',
     'authorized',
+    'ready',
     'dispatched',
     'delivered',
     'review_open',

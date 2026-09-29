@@ -38,10 +38,13 @@ const computeStage = (mode, flags, deliveryVerified) => {
       if (!flags.dispatchedAt) return 'label_ready';
       return 'dispatched';
     case 'freight':
-      if (!flags.readyAt) return 'preparing';
+      // Orden lógico: primero cotizar (sin preparar nada — el buyer
+      // puede rechazar). Después de que el buyer autorice el pago, el
+      // seller empieza a preparar el pedido.
       if (!flags.quotedAt) return 'quoting';
       if (!flags.buyerAuthorizedAt) return 'quoted';
-      if (!flags.dispatchedAt) return 'authorized';
+      if (!flags.readyAt) return 'preparing';
+      if (!flags.dispatchedAt) return 'ready';
       return 'awaiting_code';
     default:
       return 'unknown';
