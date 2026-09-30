@@ -23,9 +23,10 @@
 //   vía, o error transitorio) log + 200; el verifiedAt es lo que garantiza
 //   trazabilidad y el estado real de Sharetribe se puede reconciliar.
 //
-// Compat: `POST /api/verify-pickup-code` sigue apuntando aquí. Y tx
-// viejas que guardaron el shape como `pickupCode` se leen igual (ver
-// readDeliveryCode).
+// Retrocompat de data: tx creadas antes del rename tienen el shape
+// como `pickupCode` en vez de `deliveryCode`; readDeliveryCode() lee
+// ambos (ver abajo). El alias del endpoint /api/verify-pickup-code
+// se retiró tras confirmar que ningún cliente lo consumía.
 
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');

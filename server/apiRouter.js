@@ -117,8 +117,6 @@ router.post('/xololo-shipping-quote/authorize', bodyParser.json(), xololoShippin
 // localDelivery y freight. Solo el provider puede llamarlo. 3 intentos
 // fallidos bloquean el código y disparan alerta a Xololo.
 router.post('/verify-delivery-code', bodyParser.json(), verifyDeliveryCode);
-// Alias legacy — mantener 1 release para no romper clientes viejos.
-router.post('/verify-pickup-code', bodyParser.json(), verifyDeliveryCode);
 
 // XOLOLO: sub-flags de flujo (readyAt / dispatchedAt). No transicionan
 // la tx en Sharetribe; sólo escriben metadata para pintar el timeline
