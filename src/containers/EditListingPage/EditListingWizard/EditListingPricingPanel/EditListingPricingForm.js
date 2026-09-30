@@ -142,22 +142,6 @@ export const EditListingPricingForm = props => (
         <Form onSubmit={handleSubmit} className={classes}>
           <ErrorMessages fetchErrors={fetchErrors} />
 
-          {/* XOLOLO DEBUG: banner rojo TEMPORAL para confirmar que el
-              archivo actualizado sí se está sirviendo. Si aparece,
-              el JS bundle está fresco; si no, es cache CDN. */}
-          <div
-            style={{
-              background: '#ff0000',
-              color: '#fff',
-              padding: '8px 12px',
-              margin: '8px 0',
-              fontWeight: 700,
-              borderRadius: 4,
-            }}
-          >
-            XOLOLO DEBUG: componente actualizado — commit 5913dfd o posterior
-          </div>
-
           {isUsingPriceVariants ? (
             <BookingPriceVariants
               formId={formId}

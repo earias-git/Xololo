@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { computeFreightBreakdown } from '../../util/freightFees';
 
@@ -47,23 +47,20 @@ const resolveSubunits = raw => {
 };
 
 const XoloPayoutPreview = ({ amountSubunits, price, currency: currencyProp, heading }) => {
+  // XOLOLO: client-only render. El componente depende de values de
+  // FinalForm que pueden diferir entre el server render y el cliente
+  // (Money instances, initial values, etc.). Cuando difieren, React
+  // detecta hydration mismatch, marca "recoverable-error" y descarta
+  // TODO el árbol de este componente — resultado: se ejecuta pero
+  // no aparece en el DOM. Con este mounted-gate el server SIEMPRE
+  // renderiza null, y el cliente lo agrega tras hidratación limpia.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
   // Prefer `price` (Money instance) si viene, fallback a amountSubunits.
   const raw = price != null ? price : amountSubunits;
   const amount = resolveSubunits(raw);
-  // Log defensivo mientras estabilizamos — quitar tras confirmar shape.
-  if (typeof window !== 'undefined' && (price != null || amountSubunits != null)) {
-    // eslint-disable-next-line no-console
-    console.log('[XoloPayoutPreview]', {
-      price,
-      priceType: typeof price,
-      priceCtor: price?.constructor?.name,
-      amountSubunits,
-      resolvedAmount: amount,
-    });
-  }
-  // Placeholder cuando aún no hay monto — así el seller ve que la
-  // sección existe y sabe que aparecerá el desglose al escribir el
-  // precio.
   if (!Number.isFinite(amount) || amount <= 0) {
     return (
       <div className={css.root}>
