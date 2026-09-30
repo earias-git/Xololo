@@ -16,6 +16,7 @@ import {
   FieldTextInput,
   FieldCheckbox,
 } from '../../../../components';
+import XoloPayoutPreview from '../../../../components/XoloPayoutPreview/XoloPayoutPreview';
 
 // Import modules from this directory
 import css from './EditListingDeliveryForm.module.css';
@@ -157,6 +158,12 @@ export const EditListingDeliveryForm = props => (
                   placeholder="$0.00"
                   currencyConfig={currencyConfig}
                   validate={required('El costo es requerido.')}
+                />
+                {/* XOLOLO: preview del payout del envío local. */}
+                <XoloPayoutPreview
+                  amountSubunits={xoloMethods.localDelivery?.price?.amount}
+                  currency={xoloMethods.localDelivery?.price?.currency || marketplaceCurrency}
+                  heading="Del cobro del envío recibirás"
                 />
                 <FieldTextInput
                   id={`${formId}.xoloLocalZone`}

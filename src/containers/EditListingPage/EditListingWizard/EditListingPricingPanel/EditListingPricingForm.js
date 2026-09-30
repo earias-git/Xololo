@@ -13,6 +13,7 @@ import { FIXED, isBookingProcess } from '../../../../transactions/transaction';
 
 // Import shared components
 import { Button, Form, FieldCurrencyInput } from '../../../../components';
+import XoloPayoutPreview from '../../../../components/XoloPayoutPreview/XoloPayoutPreview';
 
 import BookingPriceVariants from './BookingPriceVariants';
 import StartTimeInterval from './StartTimeInverval';
@@ -154,21 +155,31 @@ export const EditListingPricingForm = props => (
               listingMinimumPriceSubUnits={listingMinimumPriceSubUnits}
             />
           ) : (
-            <FieldCurrencyInput
-              id={`${formId}price`}
-              name="price"
-              className={css.input}
-              autoFocus={autoFocus}
-              label={intl.formatMessage(
-                { id: 'EditListingPricingForm.pricePerProduct' },
-                { unitType }
-              )}
-              placeholder={intl.formatMessage({
-                id: 'EditListingPricingForm.priceInputPlaceholder',
-              })}
-              currencyConfig={appSettings.getCurrencyFormatting(marketplaceCurrency)}
-              validate={priceValidators}
-            />
+            <>
+              <FieldCurrencyInput
+                id={`${formId}price`}
+                name="price"
+                className={css.input}
+                autoFocus={autoFocus}
+                label={intl.formatMessage(
+                  { id: 'EditListingPricingForm.pricePerProduct' },
+                  { unitType }
+                )}
+                placeholder={intl.formatMessage({
+                  id: 'EditListingPricingForm.priceInputPlaceholder',
+                })}
+                currencyConfig={appSettings.getCurrencyFormatting(marketplaceCurrency)}
+                validate={priceValidators}
+              />
+              {/* XOLOLO: preview vivo de lo que recibe el seller al
+                  descontar Motor de Cobro + Serv. Administrativos
+                  Xololo. Evita sorpresas al momento del payout. */}
+              <XoloPayoutPreview
+                amountSubunits={formValues?.price?.amount}
+                currency={formValues?.price?.currency || marketplaceCurrency}
+                heading="Cuánto recibirás por esta venta"
+              />
+            </>
           )}
 
           {isFixedLengthBooking ? (
