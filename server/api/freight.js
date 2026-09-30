@@ -256,13 +256,14 @@ const createPaymentIntent = async (req, res) => {
       ? { customer: stripeCustomerId, setup_future_usage: 'off_session' }
       : {};
 
-    // Desglose de fees: buyer paga base + motor cobro + IVA + xololo
-    // admin + IVA. El seller recibe la base; Xololo absorbe la
+    // Desglose de fees: el buyer paga exactamente el flete cotizado.
+    // Los fees (motor cobro + xololo admin + IVAs) se DESCUENTAN al
+    // seller: seller recibe (flete − fees). Xololo absorbe la
     // diferencia del fee real de Stripe (calculado sobre el total).
     const breakdown = computeFreightBreakdown(currentFreight.quotedAmount);
 
     const pi = await stripe.paymentIntents.create({
-      amount: breakdown.totalSubunits,
+      amount: breakdown.fleteSubunits,
       currency: (currentFreight.quotedCurrency || 'MXN').toLowerCase(),
       automatic_payment_methods: { enabled: true },
       description: `Envío por flete · Xololo tx ${transactionId}`,
@@ -273,8 +274,8 @@ const createPaymentIntent = async (req, res) => {
         xololoTxId: transactionId,
         xololoBuyerId: currentUserId,
         xololoFleteSubunits: String(breakdown.fleteSubunits),
-        xololoMotorSubunits: String(breakdown.motorCobroSubunits + breakdown.ivaMotorSubunits),
-        xololoXololoSubunits: String(breakdown.xololoAdminSubunits + breakdown.ivaXololoAdminSubunits),
+        xololoTotalFeesSubunits: String(breakdown.totalFeesSubunits),
+        xololoSellerReceivesSubunits: String(breakdown.sellerReceivesSubunits),
       },
     });
 

@@ -209,6 +209,11 @@
   white-space: nowrap;
 }
 
+.feeMuted {
+  color: var(--colorGrey600);
+  font-size: 12px;
+}
+
 .feeTotal {
   margin-top: 6px;
   padding-top: 8px;

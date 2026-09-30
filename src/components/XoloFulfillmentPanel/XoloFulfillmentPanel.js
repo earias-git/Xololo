@@ -475,12 +475,12 @@ const FreightAuthorizePayment = ({
     );
   }
 
-  // Desglose calculado local (mismo cálculo que el server hace en
-  // /api/freight/create-payment-intent). Lo mostramos ANTES del pago
-  // para que el buyer sepa el total real que pagará.
+  // Desglose calculado local (mismo cálculo que el server). El buyer
+  // paga exactamente el flete cotizado; los fees (motor + xololo)
+  // se DESCUENTAN al seller de esa cotización.
   const currency = quotedCurrency || 'MXN';
   const breakdown = computeFreightBreakdown(quotedAmount);
-  const totalMoney = money(breakdown.totalSubunits, currency);
+  const fleteMoney = money(breakdown.fleteSubunits, currency);
 
   return (
     <>
@@ -493,29 +493,34 @@ const FreightAuthorizePayment = ({
       <div className={css.feeBreakdown}>
         <div className={css.feeRow}>
           <span>Envío por flete</span>
-          <span>{money(breakdown.fleteSubunits, currency)}</span>
+          <span>{fleteMoney}</span>
         </div>
-        <div className={css.feeRow}>
+        <div className={`${css.feeRow} ${css.feeMuted}`}>
           <span>Motor de cobro ({breakdown.labels.motorCobro})</span>
           <span>
-            {money(breakdown.motorCobroSubunits + breakdown.ivaMotorSubunits, currency)}
+            −{money(breakdown.motorCobroSubunits + breakdown.ivaMotorSubunits, currency)}
           </span>
         </div>
-        <div className={css.feeRow}>
+        <div className={`${css.feeRow} ${css.feeMuted}`}>
           <span>Servicios administrativos Xololo ({breakdown.labels.xololoAdmin})</span>
           <span>
+            −
             {money(breakdown.xololoAdminSubunits + breakdown.ivaXololoAdminSubunits, currency)}
           </span>
         </div>
+        <div className={`${css.feeRow} ${css.feeMuted}`}>
+          <span>El vendedor recibe</span>
+          <span>{money(breakdown.sellerReceivesSubunits, currency)}</span>
+        </div>
         <div className={`${css.feeRow} ${css.feeTotal}`}>
-          <span>Total a pagar</span>
-          <span>{totalMoney}</span>
+          <span>Tú pagas</span>
+          <span>{fleteMoney}</span>
         </div>
       </div>
       {!ready ? (
         <>
           <ActionButton
-            label={`Autorizar y pagar ${totalMoney}`}
+            label={`Autorizar y pagar ${fleteMoney}`}
             onClick={beginAuthorization}
             inProgress={inProgress}
           />
