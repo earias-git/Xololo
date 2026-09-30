@@ -8,26 +8,45 @@ const PCT_IVA = 0.16;
 
 const round = n => Math.round(n);
 
-const computeFreightBreakdown = fleteSubunits => {
+// Mirror server-side de computeRetenciones/computeFreightBreakdown.
+// TODO Facturama: pasar sellerTaxProfile leído de user.metadata cuando
+// se conecte la integración.
+const computeRetenciones = (fleteSubunits, sellerTaxProfile = null) => {
+  return { retIsrSubunits: 0, retIvaSubunits: 0, retIsrPct: 0, retIvaPct: 0 };
+};
+
+const computeFreightBreakdown = (fleteSubunits, sellerTaxProfile = null) => {
   const flete = Number(fleteSubunits) || 0;
   const motorCobro = round(flete * PCT_MOTOR);
   const ivaMotor = round(motorCobro * PCT_IVA);
   const xololoAdmin = FIXED_XOLOLO_SUBUNITS;
   const ivaXololoAdmin = round(xololoAdmin * PCT_IVA);
+  const { retIsrSubunits, retIvaSubunits, retIsrPct, retIvaPct } = computeRetenciones(
+    flete,
+    sellerTaxProfile
+  );
   const totalFees = motorCobro + ivaMotor + xololoAdmin + ivaXololoAdmin;
-  const sellerReceives = flete - totalFees;
+  const totalRetenciones = retIsrSubunits + retIvaSubunits;
+  const sellerReceives = flete - totalFees - totalRetenciones;
   return {
-    fleteSubunits: flete,             // Buyer paga esto (= cotización del seller)
+    fleteSubunits: flete,
     motorCobroSubunits: motorCobro,
     ivaMotorSubunits: ivaMotor,
     xololoAdminSubunits: xololoAdmin,
     ivaXololoAdminSubunits: ivaXololoAdmin,
+    retIsrSubunits,
+    retIvaSubunits,
+    retIsrPct,
+    retIvaPct,
     totalFeesSubunits: totalFees,
+    totalRetencionesSubunits: totalRetenciones,
     sellerReceivesSubunits: sellerReceives,
-    totalSubunits: flete, // Alias legacy; el buyer paga flete exacto.
+    totalSubunits: flete,
     labels: {
       motorCobro: `${(PCT_MOTOR * 100).toFixed(1)}% + IVA`,
       xololoAdmin: `$${(FIXED_XOLOLO_SUBUNITS / 100).toFixed(2)} + IVA`,
+      retIsr: retIsrPct > 0 ? `${(retIsrPct * 100).toFixed(1)}%` : null,
+      retIva: retIvaPct > 0 ? `${(retIvaPct * 100).toFixed(0)}% del IVA` : null,
     },
   };
 };

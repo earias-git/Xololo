@@ -360,6 +360,35 @@ const FreightQuoteForm = ({ transactionId, initialAmount, initialDescription, in
             disabled={inProgress}
           />
         </div>
+        {/* Preview de cuánto recibe el seller — reactivo al monto que
+            teclea. Evita sorpresas cuando le llegue el payout. */}
+        {(() => {
+          const parsed = Number(amountMxn);
+          if (!Number.isFinite(parsed) || parsed <= 0) return null;
+          const bd = computeFreightBreakdown(Math.round(parsed * 100));
+          return (
+            <div className={css.feeBreakdown}>
+              <div className={`${css.feeRow} ${css.feeMuted}`}>
+                <span>Cotización (buyer paga)</span>
+                <span>{money(bd.fleteSubunits, 'MXN')}</span>
+              </div>
+              <div className={`${css.feeRow} ${css.feeMuted}`}>
+                <span>Motor de Cobro ({bd.labels.motorCobro})</span>
+                <span>−{money(bd.motorCobroSubunits + bd.ivaMotorSubunits, 'MXN')}</span>
+              </div>
+              <div className={`${css.feeRow} ${css.feeMuted}`}>
+                <span>Serv. Administrativos Xololo ({bd.labels.xololoAdmin})</span>
+                <span>
+                  −{money(bd.xololoAdminSubunits + bd.ivaXololoAdminSubunits, 'MXN')}
+                </span>
+              </div>
+              <div className={`${css.feeRow} ${css.feeTotal}`}>
+                <span>Recibirás</span>
+                <span>{money(bd.sellerReceivesSubunits, 'MXN')}</span>
+              </div>
+            </div>
+          );
+        })()}
       </div>
       <ActionButton label="Enviar cotización al comprador" onClick={submit} inProgress={inProgress} />
       {error ? <div className={css.error}>{error}</div> : null}
@@ -496,13 +525,13 @@ const FreightAuthorizePayment = ({
           <span>{fleteMoney}</span>
         </div>
         <div className={`${css.feeRow} ${css.feeMuted}`}>
-          <span>Motor de cobro ({breakdown.labels.motorCobro})</span>
+          <span>Motor de Cobro ({breakdown.labels.motorCobro})</span>
           <span>
             −{money(breakdown.motorCobroSubunits + breakdown.ivaMotorSubunits, currency)}
           </span>
         </div>
         <div className={`${css.feeRow} ${css.feeMuted}`}>
-          <span>Servicios administrativos Xololo ({breakdown.labels.xololoAdmin})</span>
+          <span>Serv. Administrativos Xololo ({breakdown.labels.xololoAdmin})</span>
           <span>
             −
             {money(breakdown.xololoAdminSubunits + breakdown.ivaXololoAdminSubunits, currency)}
