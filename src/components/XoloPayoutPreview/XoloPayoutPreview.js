@@ -31,9 +31,28 @@ const money = (subunits, currency = 'MXN') => {
   return `${CURRENCY_LABEL[currency] || '$'}${amount} ${currency}`;
 };
 
-const XoloPayoutPreview = ({ amountSubunits, currency = 'MXN', heading }) => {
-  const amount = Number(amountSubunits);
+// Acepta tres formas de amount para robustez frente a distintos
+// callsites: (1) subunits en integer, (2) Money instance con .amount,
+// (3) string numérico. FieldCurrencyInput a veces expone el value
+// como Money post-blur y como string durante la edición inicial.
+const resolveSubunits = raw => {
+  if (raw == null) return null;
+  if (typeof raw === 'number') return raw;
+  if (typeof raw === 'string') {
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+  if (typeof raw === 'object' && 'amount' in raw) return Number(raw.amount);
+  return null;
+};
+
+const XoloPayoutPreview = ({ amountSubunits, price, currency: currencyProp, heading }) => {
+  // Prefer `price` (Money instance) si viene, fallback a amountSubunits.
+  const raw = price != null ? price : amountSubunits;
+  const amount = resolveSubunits(raw);
   if (!Number.isFinite(amount) || amount <= 0) return null;
+  const currency =
+    (typeof price === 'object' && price?.currency) || currencyProp || 'MXN';
   const bd = computeFreightBreakdown(Math.round(amount));
   return (
     <div className={css.root}>

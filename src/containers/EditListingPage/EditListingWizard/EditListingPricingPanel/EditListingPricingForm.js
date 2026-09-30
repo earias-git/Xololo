@@ -173,10 +173,12 @@ export const EditListingPricingForm = props => (
               />
               {/* XOLOLO: preview vivo de lo que recibe el seller al
                   descontar Motor de Cobro + Serv. Administrativos
-                  Xololo. Evita sorpresas al momento del payout. */}
+                  Xololo. Evita sorpresas al momento del payout.
+                  Pasamos `price` completo (Money instance) — el
+                  componente sabe extraer subunits + currency. */}
               <XoloPayoutPreview
-                amountSubunits={formValues?.price?.amount}
-                currency={formValues?.price?.currency || marketplaceCurrency}
+                price={formValues?.price}
+                currency={marketplaceCurrency}
                 heading="Cuánto recibirás por esta venta"
               />
             </>

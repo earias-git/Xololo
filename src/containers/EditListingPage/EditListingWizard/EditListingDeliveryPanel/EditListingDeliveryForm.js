@@ -161,8 +161,8 @@ export const EditListingDeliveryForm = props => (
                 />
                 {/* XOLOLO: preview del payout del envío local. */}
                 <XoloPayoutPreview
-                  amountSubunits={xoloMethods.localDelivery?.price?.amount}
-                  currency={xoloMethods.localDelivery?.price?.currency || marketplaceCurrency}
+                  price={xoloMethods.localDelivery?.price}
+                  currency={marketplaceCurrency}
                   heading="Del cobro del envío recibirás"
                 />
                 <FieldTextInput
