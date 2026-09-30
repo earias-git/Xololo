@@ -1,0 +1,53 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--colorGrey200);
+  border-radius: 6px;
+  background: var(--colorWhite);
+  color: var(--colorGrey900);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  font-family: inherit;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--colorGrey50);
+  border-color: var(--colorGrey300);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnEmoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.btnLabel {
+  line-height: 1;
+}
+
+.feedback {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: var(--colorSuccess);
+  font-weight: 600;
+}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { apiBaseUrl } from '../../util/api';
 import { IconSpinner } from '../../components';
+import PromoShareButtons from '../../components/PromoShareButtons/PromoShareButtons';
 
 import { formatSubunitsAsMxn } from './dashboardUtils';
 
@@ -35,11 +36,9 @@ const fetchListings = async () => {
   return data;
 };
 
-const PromoActionsPlaceholder = () => (
-  <div className={css.promoActions}>
-    <span className={css.promoActionsMuted}>
-      📣 Compartir · 🔗 Link · 📱 QR · 🏷️ Poster · 📊 Stats
-    </span>
+const PromoActionsPending = () => (
+  <div className={css.promoActionsPending}>
+    <span className={css.promoActionsMuted}>📱 QR · 🏷️ Poster PDF · 📊 Stats detallado</span>
     <span className={css.promoActionsSoon}>Próximamente</span>
   </div>
 );
@@ -65,7 +64,10 @@ const ListingCard = ({ listing }) => {
           ) : null}
         </div>
       </div>
-      <PromoActionsPlaceholder />
+      {/* Sub-commit 2: share intents. */}
+      <PromoShareButtons listing={listing} />
+      {/* Aún faltan sub-commits 3 (QR) y 4 (poster PDF). */}
+      <PromoActionsPending />
     </article>
   );
 };
