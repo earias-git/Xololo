@@ -142,6 +142,22 @@ export const EditListingPricingForm = props => (
         <Form onSubmit={handleSubmit} className={classes}>
           <ErrorMessages fetchErrors={fetchErrors} />
 
+          {/* XOLOLO DEBUG: banner rojo TEMPORAL para confirmar que el
+              archivo actualizado sí se está sirviendo. Si aparece,
+              el JS bundle está fresco; si no, es cache CDN. */}
+          <div
+            style={{
+              background: '#ff0000',
+              color: '#fff',
+              padding: '8px 12px',
+              margin: '8px 0',
+              fontWeight: 700,
+              borderRadius: 4,
+            }}
+          >
+            XOLOLO DEBUG: componente actualizado — commit 5913dfd o posterior
+          </div>
+
           {isUsingPriceVariants ? (
             <BookingPriceVariants
               formId={formId}
@@ -155,34 +171,33 @@ export const EditListingPricingForm = props => (
               listingMinimumPriceSubUnits={listingMinimumPriceSubUnits}
             />
           ) : (
-            <>
-              <FieldCurrencyInput
-                id={`${formId}price`}
-                name="price"
-                className={css.input}
-                autoFocus={autoFocus}
-                label={intl.formatMessage(
-                  { id: 'EditListingPricingForm.pricePerProduct' },
-                  { unitType }
-                )}
-                placeholder={intl.formatMessage({
-                  id: 'EditListingPricingForm.priceInputPlaceholder',
-                })}
-                currencyConfig={appSettings.getCurrencyFormatting(marketplaceCurrency)}
-                validate={priceValidators}
-              />
-              {/* XOLOLO: preview vivo de lo que recibe el seller al
-                  descontar Motor de Cobro + Serv. Administrativos
-                  Xololo. Evita sorpresas al momento del payout.
-                  Pasamos `price` completo (Money instance) — el
-                  componente sabe extraer subunits + currency. */}
-              <XoloPayoutPreview
-                price={formValues?.price}
-                currency={marketplaceCurrency}
-                heading="Cuánto recibirás por esta venta"
-              />
-            </>
+            <FieldCurrencyInput
+              id={`${formId}price`}
+              name="price"
+              className={css.input}
+              autoFocus={autoFocus}
+              label={intl.formatMessage(
+                { id: 'EditListingPricingForm.pricePerProduct' },
+                { unitType }
+              )}
+              placeholder={intl.formatMessage({
+                id: 'EditListingPricingForm.priceInputPlaceholder',
+              })}
+              currencyConfig={appSettings.getCurrencyFormatting(marketplaceCurrency)}
+              validate={priceValidators}
+            />
           )}
+
+          {/* XOLOLO: preview vivo de lo que recibe el seller. FUERA
+              del condicional isUsingPriceVariants para que aplique
+              tanto a booking (que tiene price en priceVariants) como
+              a productos normales. Pasamos price completo — el
+              componente sabe extraer subunits + currency. */}
+          <XoloPayoutPreview
+            price={formValues?.price}
+            currency={marketplaceCurrency}
+            heading="Cuánto recibirás por esta venta"
+          />
 
           {isFixedLengthBooking ? (
             <StartTimeInterval
