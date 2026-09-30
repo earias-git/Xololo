@@ -44,6 +44,7 @@
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { getStripeBilling } = require('../api-util/stripeBilling');
+const { computeFreightBreakdown } = require('../api-util/freightFees');
 
 const MAX_DESCRIPTION_LEN = 500;
 const MAX_CARRIER_LEN = 100;
@@ -254,11 +255,15 @@ const createPaymentIntent = async (req, res) => {
     const customerParams = stripeCustomerId
       ? { customer: stripeCustomerId, setup_future_usage: 'off_session' }
       : {};
+
+    // Desglose de fees: buyer paga base + motor cobro + IVA + xololo
+    // admin + IVA. El seller recibe la base; Xololo absorbe la
+    // diferencia del fee real de Stripe (calculado sobre el total).
+    const breakdown = computeFreightBreakdown(currentFreight.quotedAmount);
+
     const pi = await stripe.paymentIntents.create({
-      amount: currentFreight.quotedAmount,
+      amount: breakdown.totalSubunits,
       currency: (currentFreight.quotedCurrency || 'MXN').toLowerCase(),
-      // automatic_payment_methods habilita cards, OXXO, SPEI (los que
-      // estén activos en el dashboard). El front decide qué mostrar.
       automatic_payment_methods: { enabled: true },
       description: `Envío por flete · Xololo tx ${transactionId}`,
       receipt_email: currentUserEmail || undefined,
@@ -267,16 +272,18 @@ const createPaymentIntent = async (req, res) => {
         xololoType: 'freight_charge',
         xololoTxId: transactionId,
         xololoBuyerId: currentUserId,
+        xololoFleteSubunits: String(breakdown.fleteSubunits),
+        xololoMotorSubunits: String(breakdown.motorCobroSubunits + breakdown.ivaMotorSubunits),
+        xololoXololoSubunits: String(breakdown.xololoAdminSubunits + breakdown.ivaXololoAdminSubunits),
       },
     });
 
-    // Persistimos el PI id en la tx para que (a) el webhook pueda
-    // desambiguar cuando llega payment_intent.succeeded y (b) evitemos
-    // crear PIs duplicados en clicks repetidos (ver arriba).
+    // Persistimos el PI id + desglose en la tx.
     const xoloFreight = {
       ...currentFreight,
       freightPaymentIntentId: pi.id,
       freightPaymentIntentCreatedAt: new Date().toISOString(),
+      freightBreakdown: breakdown,
     };
     await isdk.transactions.updateMetadata({
       id: transactionId,
@@ -288,6 +295,7 @@ const createPaymentIntent = async (req, res) => {
       paymentIntentId: pi.id,
       amount: pi.amount,
       currency: pi.currency,
+      breakdown,
       reused: false,
     });
   } catch (e) {

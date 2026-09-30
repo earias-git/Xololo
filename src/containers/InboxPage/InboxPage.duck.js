@@ -84,6 +84,12 @@ const loadDataPayloadCreator = ({ params, search }, { dispatch, rejectWithValue,
       'payinTotal',
       'payoutTotal',
       'lineItems',
+      // XOLOLO Envíos v2: necesario para computar el status label
+      // específico por modo/sub-etapa en getXoloInboxStatusLabel().
+      // Sin protectedData el helper no puede leer xololoShipping.mode
+      // y siempre cae al label default "Esperando la entrega".
+      'protectedData',
+      'metadata',
     ],
     'fields.listing': ['title', 'availabilityPlan', 'publicData.listingType'],
     'fields.user': ['profile.displayName', 'profile.abbreviatedName', 'deleted', 'banned'],

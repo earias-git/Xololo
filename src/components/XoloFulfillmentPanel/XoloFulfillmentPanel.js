@@ -8,6 +8,7 @@ import {
   freightCreatePaymentIntent,
 } from '../../util/api';
 import { publishableKey as stripePublishableKey } from '../../config/configStripe';
+import { computeFreightBreakdown } from '../../util/freightFees';
 
 import css from './XoloFulfillmentPanel.module.css';
 
@@ -474,19 +475,47 @@ const FreightAuthorizePayment = ({
     );
   }
 
+  // Desglose calculado local (mismo cálculo que el server hace en
+  // /api/freight/create-payment-intent). Lo mostramos ANTES del pago
+  // para que el buyer sepa el total real que pagará.
+  const currency = quotedCurrency || 'MXN';
+  const breakdown = computeFreightBreakdown(quotedAmount);
+  const totalMoney = money(breakdown.totalSubunits, currency);
+
   return (
     <>
       <div className={css.freightQuoted}>
-        <p className={css.freightQuotedAmount}>{money(quotedAmount, quotedCurrency || 'MXN')}</p>
         <p className={css.freightQuotedDesc}>{quoteDescription}</p>
         {quoteCarrierName ? (
           <p className={css.freightQuotedDesc}>Paquetería: {quoteCarrierName}</p>
         ) : null}
       </div>
+      <div className={css.feeBreakdown}>
+        <div className={css.feeRow}>
+          <span>Envío por flete</span>
+          <span>{money(breakdown.fleteSubunits, currency)}</span>
+        </div>
+        <div className={css.feeRow}>
+          <span>Motor de cobro ({breakdown.labels.motorCobro})</span>
+          <span>
+            {money(breakdown.motorCobroSubunits + breakdown.ivaMotorSubunits, currency)}
+          </span>
+        </div>
+        <div className={css.feeRow}>
+          <span>Servicios administrativos Xololo ({breakdown.labels.xololoAdmin})</span>
+          <span>
+            {money(breakdown.xololoAdminSubunits + breakdown.ivaXololoAdminSubunits, currency)}
+          </span>
+        </div>
+        <div className={`${css.feeRow} ${css.feeTotal}`}>
+          <span>Total a pagar</span>
+          <span>{totalMoney}</span>
+        </div>
+      </div>
       {!ready ? (
         <>
           <ActionButton
-            label={`Autorizar y pagar ${money(quotedAmount, quotedCurrency || 'MXN')}`}
+            label={`Autorizar y pagar ${totalMoney}`}
             onClick={beginAuthorization}
             inProgress={inProgress}
           />

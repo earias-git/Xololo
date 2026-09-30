@@ -182,6 +182,42 @@
   line-height: 1.4;
 }
 
+.feeBreakdown {
+  margin: 12px 0 16px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  background: var(--colorWhite);
+  font-size: 13px;
+}
+
+.feeRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 0;
+  color: var(--colorGrey700);
+  gap: 12px;
+}
+
+.feeRow > span:first-child {
+  flex: 1;
+}
+
+.feeRow > span:last-child {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.feeTotal {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--colorGrey100);
+  font-weight: 700;
+  color: var(--colorGrey900);
+  font-size: 15px;
+}
+
 /* Small info-only stage cards */
 .stageInfo {
   padding: 14px;

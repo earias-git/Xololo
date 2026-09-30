@@ -150,6 +150,12 @@ const TRANSITION_MAP = {
   'transition/confirm-payment': 'paid',
   'transition/request-payment-after-inquiry': 'paid',
   'transition/mark-delivered': 'delivered',
+  // XOLOLO: cuando el buyer responde la encuesta (mark-received /
+  // mark-received-from-purchased) o expira el timer (auto-mark-received),
+  // el timeline debe avanzar a "Encuesta abierta" (etapa final visible).
+  'transition/mark-received': 'review_open',
+  'transition/mark-received-from-purchased': 'review_open',
+  'transition/auto-mark-received': 'review_open',
   'transition/complete': 'review_open',
   'transition/review-1-by-customer': 'review_open',
   'transition/expire-review-period': 'review_open',
@@ -159,7 +165,16 @@ const TRANSITION_MAP = {
 // distintas fuentes. Un estado se considera "alcanzado" cuando tiene un
 // timestamp; los mismos flags avanzan varios modos porque cada flow
 // filtra después con STATES_BY_MODE.
-const buildReachedMap = ({ transitions, trackingEvents, guide, flow, freight, codeVerified }) => {
+const buildReachedMap = ({
+  transitions,
+  trackingEvents,
+  guide,
+  flow,
+  freight,
+  codeVerified,
+  buyerReview,
+  dispute,
+}) => {
   const reached = {};
 
   (transitions || []).forEach(t => {
@@ -215,6 +230,16 @@ const buildReachedMap = ({ transitions, trackingEvents, guide, flow, freight, co
     reached.delivered = { reachedAt: codeVerified.verifiedAt, source: 'delivery_code' };
   }
 
+  // XOLOLO: si el buyer ya respondió la encuesta post-entrega (positiva
+  // o disputa), el paso 'review_open' está reached — indispensable si
+  // la transición mark-received falla silenciosamente en Sharetribe.
+  if (buyerReview?.submittedAt && !reached.review_open) {
+    reached.review_open = { reachedAt: buyerReview.submittedAt, source: 'survey' };
+  }
+  if (dispute?.openedAt && !reached.review_open) {
+    reached.review_open = { reachedAt: dispute.openedAt, source: 'dispute' };
+  }
+
   return reached;
 };
 
@@ -256,6 +281,8 @@ const OrderTimeline = ({ transaction, className }) => {
   const flow = meta.xoloFlow || null;
   const freight = meta.xoloFreight || null;
   const codeVerified = meta.xololoDeliveryCodeVerified || meta.xololoPickupCodeVerified || null;
+  const buyerReview = meta.xololoBuyerReview || null;
+  const dispute = meta.xololoDispute || null;
 
   const stateKeys = STATES_BY_MODE[mode] || STATES_BY_MODE.none;
   const states = stateKeys.map(key => ({ key, ...STATE_DEFS[key] }));
@@ -267,6 +294,8 @@ const OrderTimeline = ({ transaction, className }) => {
     flow,
     freight,
     codeVerified,
+    buyerReview,
+    dispute,
   });
   const activeIdx = currentStateIndex(stateKeys, reached);
   const activeState = states[activeIdx] || null;
