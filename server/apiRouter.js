@@ -25,6 +25,7 @@ const verifyDeliveryCode = require('./api/verify-delivery-code');
 const txFlow = require('./api/tx-flow');
 const freight = require('./api/freight');
 const geoIp = require('./api/geo-ip');
+const sellerPromoListings = require('./api/seller-promo-listings');
 const generateShippingGuide = require('./api/generate-shipping-guide');
 const uploadSosPhoto = require('./api/upload-sos-photo');
 const uploadLegalDoc = require('./api/upload-legal-doc');
@@ -135,6 +136,10 @@ router.post('/freight/create-payment-intent', bodyParser.json(), freight.createP
 // según el estado detectado del buyer. NO es filtro duro (el gate
 // real vive en el checkout con CP). Fallback graceful si ipapi falla.
 router.get('/geo-ip', geoIp);
+
+// XOLOLO Promote: lista de listings del seller para el Dashboard >
+// Promote. Devuelve id, título, imagen, precio, viewCount por listing.
+router.get('/seller-promo-listings', sellerPromoListings);
 
 // XOLOLO: generar la guía Skydropx para una transacción "paid". Solo
 // el provider (seller) puede llamarlo, y sólo si:

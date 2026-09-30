@@ -1,0 +1,140 @@
+import React, { useEffect, useState } from 'react';
+
+import { apiBaseUrl } from '../../util/api';
+import { IconSpinner } from '../../components';
+
+import { formatSubunitsAsMxn } from './dashboardUtils';
+
+import css from './DashboardPage.module.css';
+
+// XOLOLO Promote v1 (sub-commit 1 de 5).
+//
+// Vista donde el seller ve todos sus listings y por cada uno tiene
+// acceso a las acciones de promoción (compartir en redes, QR, poster
+// PDF, etc.). Este sub-commit sólo trae la base:
+//   - fetch de listings del seller (/api/seller-promo-listings)
+//   - grid con card por listing (imagen + título + precio + views)
+//   - placeholder de las 5 acciones (rellenados en sub-commits 2-4)
+//
+// Los sub-commits que siguen agregan por listing:
+//   2 · Share intents (FB, IG, X, WhatsApp, TikTok)
+//   3 · QR generator + descarga PNG
+//   4 · Templates de poster + editor + descarga PDF
+//   5 · Feed CSV Meta Commerce (link a la URL del feed público)
+
+const fetchListings = async () => {
+  const res = await fetch(`${apiBaseUrl()}/api/seller-promo-listings`, {
+    credentials: 'include',
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || 'fetch_failed');
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+};
+
+const PromoActionsPlaceholder = () => (
+  <div className={css.promoActions}>
+    <span className={css.promoActionsMuted}>
+      📣 Compartir · 🔗 Link · 📱 QR · 🏷️ Poster · 📊 Stats
+    </span>
+    <span className={css.promoActionsSoon}>Próximamente</span>
+  </div>
+);
+
+const ListingCard = ({ listing }) => {
+  return (
+    <article className={css.promoCard}>
+      <div className={css.promoCardHeader}>
+        {listing.imageUrl ? (
+          <img src={listing.imageUrl} alt="" className={css.promoCardImage} />
+        ) : (
+          <span className={css.promoCardImageEmpty} aria-hidden>
+            📦
+          </span>
+        )}
+        <div className={css.promoCardMain}>
+          <h3 className={css.promoCardTitle}>{listing.title}</h3>
+          <p className={css.promoCardPrice}>
+            {formatSubunitsAsMxn(listing.priceSubunits)}
+          </p>
+          {listing.viewCount > 0 ? (
+            <p className={css.promoCardMeta}>{listing.viewCount} vistas</p>
+          ) : null}
+        </div>
+      </div>
+      <PromoActionsPlaceholder />
+    </article>
+  );
+};
+
+const DashboardPromoteView = () => {
+  const [state, setState] = useState({ status: 'loading', data: null, error: null });
+
+  useEffect(() => {
+    let aborted = false;
+    fetchListings().then(
+      data => {
+        if (aborted) return;
+        setState({ status: 'ok', data, error: null });
+      },
+      err => {
+        if (aborted) return;
+        setState({ status: 'error', data: null, error: err?.message || 'fetch_failed' });
+      }
+    );
+    return () => {
+      aborted = true;
+    };
+  }, []);
+
+  const listings = state.data?.listings || [];
+
+  return (
+    <>
+      <header className={css.header}>
+        <div>
+          <h2 className={css.pageTitle}>Xololo Promote</h2>
+          <p className={css.pageSubtitle}>
+            Comparte tus productos en redes sociales, genera códigos QR y descarga carteles para
+            imprimir. Toda la promoción de tus productos en un solo lugar.
+          </p>
+        </div>
+      </header>
+
+      {state.status === 'loading' ? (
+        <div className={css.loading}>
+          <IconSpinner />
+          <p>Trayendo tus productos…</p>
+        </div>
+      ) : null}
+
+      {state.status === 'error' ? (
+        <div className={css.errorBox}>
+          <strong>No pudimos cargar tus productos.</strong> ({state.error})
+        </div>
+      ) : null}
+
+      {state.status === 'ok' && listings.length === 0 ? (
+        <div className={css.emptyBox}>
+          <p>
+            Aún no tienes productos publicados. Cuando publiques uno, aparecerá aquí con opciones
+            para promocionarlo.
+          </p>
+        </div>
+      ) : null}
+
+      {state.status === 'ok' && listings.length > 0 ? (
+        <div className={css.promoGrid}>
+          {listings.map(l => (
+            <ListingCard key={l.id} listing={l} />
+          ))}
+        </div>
+      ) : null}
+    </>
+  );
+};
+
+export default DashboardPromoteView;

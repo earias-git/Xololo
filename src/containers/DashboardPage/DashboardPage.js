@@ -16,6 +16,7 @@ import FooterContainer from '../FooterContainer/FooterContainer';
 import DashboardSalesView from './DashboardSalesView';
 import DashboardProductsView from './DashboardProductsView';
 import DashboardReportsView from './DashboardReportsView';
+import DashboardPromoteView from './DashboardPromoteView';
 
 import css from './DashboardPage.module.css';
 
@@ -30,6 +31,7 @@ import css from './DashboardPage.module.css';
 const SECTIONS = [
   { key: 'ventas', label: 'Ventas' },
   { key: 'productos', label: 'Productos' },
+  { key: 'promote', label: 'Xololo Promote' },
   { key: 'reportes', label: 'Reportes' },
 ];
 
@@ -89,6 +91,8 @@ const DashboardPage = () => {
         <div className={css.root}>
           {activeSection === 'productos' ? (
             <DashboardProductsView />
+          ) : activeSection === 'promote' ? (
+            <DashboardPromoteView />
           ) : activeSection === 'reportes' ? (
             <DashboardReportsView />
           ) : (
