@@ -82,6 +82,7 @@ import {
   fetchMoreMessages,
   fetchTimeSlots,
   fetchTransactionLineItems,
+  fetchTransaction,
   uploadFile,
   clearUploadedFiles,
   selectFileUploads,
@@ -818,6 +819,17 @@ export const TransactionPageComponent = props => {
   });
 
   const actionButtonContainer = isMobile ? 'mobile' : 'desktop';
+
+  // XOLOLO Envíos v2: refetch de la tx tras acciones del
+  // XoloFulfillmentPanel (mark-ready, mark-dispatched, quote, authorize,
+  // verify code). Reemplaza window.location.reload() por refetch
+  // selectivo — sin pantalla en blanco, sin perder scroll.
+  const onRefetchTransaction = () => {
+    if (transaction?.id) {
+      dispatch(fetchTransaction(transaction.id, transactionRole, config));
+    }
+  };
+
   // TransactionPanel is presentational component
   // that currently handles showing everything inside layout's main view area.
   const panel = isDataAvailable ? (
@@ -826,6 +838,7 @@ export const TransactionPageComponent = props => {
       currentUser={currentUser}
       transactionId={transaction?.id}
       transaction={transaction}
+      onRefetchTransaction={onRefetchTransaction}
       listing={listing}
       customer={customer}
       provider={provider}

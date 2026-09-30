@@ -105,6 +105,7 @@ export class TransactionPanelComponent extends Component {
       currentUser,
       transactionRole,
       transaction,
+      onRefetchTransaction,
       listing,
       customer,
       provider,
@@ -266,13 +267,13 @@ export class TransactionPanelComponent extends Component {
                 />
                 {/* XOLOLO Envíos v2: panel de fulfillment ramificado por
                    modo+etapa+rol. Se auto-oculta si mode='none' o
-                   processState != 'purchased'. onRefresh recarga la
-                   página para leer el nuevo state (evita re-fetch selectivo). */}
+                   processState != 'purchased'. onRefresh hace refetch
+                   selectivo de la tx (sin recargar la página completa). */}
                 <XoloFulfillmentPanel
                   stateData={stateData}
                   transaction={transaction}
                   transactionRole={transactionRole}
-                  onRefresh={() => window.location.reload()}
+                  onRefresh={onRefetchTransaction}
                 />
               </div>
             ) : null}
