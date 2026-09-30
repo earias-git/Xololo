@@ -47,26 +47,13 @@ const resolveSubunits = raw => {
 };
 
 const XoloPayoutPreview = ({ amountSubunits, price, currency: currencyProp, heading }) => {
-  // DEBUG: sabemos si el componente se ejecuta en cliente.
-  if (typeof window !== 'undefined') {
-    // eslint-disable-next-line no-console
-    console.log('[XoloPayoutPreview render]', {
-      isServer: typeof window === 'undefined',
-      price,
-      heading,
-    });
-  }
+  // XOLOLO: client-only render (mounted-gate) para evitar mismatches
+  // de hydration cuando values de FinalForm difieren entre server y
+  // client (Money instances, initial values, etc.). El server siempre
+  // renderiza null; el cliente lo agrega tras hidratación.
   const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log('[XoloPayoutPreview useEffect] setting mounted=true');
-    setMounted(true);
-  }, []);
-  if (!mounted) {
-    // eslint-disable-next-line no-console
-    if (typeof window !== 'undefined') console.log('[XoloPayoutPreview] not mounted yet, returning null');
-    return null;
-  }
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
 
   // Prefer `price` (Money instance) si viene, fallback a amountSubunits.
   const raw = price != null ? price : amountSubunits;

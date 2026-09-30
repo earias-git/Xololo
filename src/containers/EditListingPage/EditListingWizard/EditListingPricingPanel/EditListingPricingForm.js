@@ -172,27 +172,8 @@ export const EditListingPricingForm = props => (
             />
           )}
 
-          {/* XOLOLO DEBUG: banner verde estático — si no aparece, el
-              JSX de este file no está siendo servido. */}
-          <div
-            style={{
-              background: '#00aa00',
-              color: '#fff',
-              padding: '10px',
-              margin: '10px 0',
-              fontWeight: 700,
-              borderRadius: 4,
-              border: '2px solid #005500',
-            }}
-          >
-            XOLOLO DEBUG STATIC · commit deploy check
-          </div>
-
-          {/* XOLOLO: preview vivo de lo que recibe el seller. FUERA
-              del condicional isUsingPriceVariants para que aplique
-              tanto a booking (que tiene price en priceVariants) como
-              a productos normales. Pasamos price completo — el
-              componente sabe extraer subunits + currency. */}
+          {/* XOLOLO: preview del payout del seller. Client-only,
+              se auto-oculta hasta que hay precio. */}
           <XoloPayoutPreview
             price={formValues?.price}
             currency={marketplaceCurrency}

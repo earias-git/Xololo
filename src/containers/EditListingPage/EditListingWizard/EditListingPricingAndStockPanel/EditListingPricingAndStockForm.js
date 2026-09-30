@@ -20,6 +20,7 @@ import {
   FieldCheckboxGroup,
   FieldTextInput,
 } from '../../../../components';
+import XoloPayoutPreview from '../../../../components/XoloPayoutPreview/XoloPayoutPreview';
 
 // Import modules from this directory
 import css from './EditListingPricingAndStockForm.module.css';
@@ -194,6 +195,14 @@ export const EditListingPricingAndStockForm = props => (
             })}
             currencyConfig={appSettings.getCurrencyFormatting(marketplaceCurrency)}
             validate={priceValidators}
+          />
+
+          {/* XOLOLO: preview del payout del seller. Client-only,
+              se auto-oculta hasta que hay precio. */}
+          <XoloPayoutPreview
+            price={values?.price}
+            currency={marketplaceCurrency}
+            heading="Cuánto recibirás por esta venta"
           />
 
           <UpdateStockToInfinityCheckboxMaybe
