@@ -10,8 +10,16 @@
 //   BUYER PAGA        = flete (exacto, sin cargos adicionales)
 //   SELLER RECIBE     = flete − motorCobro − ivaMotor − xololoAdmin − ivaXololoAdmin
 //
-// Xololo cubre la diferencia del fee real de Stripe (que se calcula
-// sobre el total capturado). Aceptable para v1.
+// Decisión de negocio (2026-09-30 con earias): freight NO lleva
+// comisión propia de Xololo — sólo se cubren costos operativos
+// (Motor de Cobro = fee Stripe, Serv. Administrativos = costos fijos
+// de plataforma). El seller recibe el ~92% del flete cotizado. Este
+// modelo se mantiene mientras freight sea una minoría de tx; si crece
+// el volumen se reevalúa.
+//
+// Xololo absorbe la pequeña diferencia entre el 3.6% que mostramos
+// (sobre la base) y el fee real de Stripe (sobre el total capturado).
+// Aceptable para v1.
 //
 // Todos los montos en subunits (centavos MXN).
 

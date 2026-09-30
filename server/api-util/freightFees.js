@@ -1,6 +1,10 @@
 // XOLOLO Envíos v2 · Freight: mirror server-side de src/util/freightFees.js.
 // Duplicado a propósito porque el server es CommonJS y el cliente ESM.
 // Si cambias uno, cambia el otro.
+//
+// Decisión de negocio (2026-09-30 con earias): freight NO lleva
+// comisión propia de Xololo — sólo Motor de Cobro (Stripe) + Serv.
+// Administrativos fijo. Ver comentario extendido en el cliente.
 
 const PCT_MOTOR = 0.036;
 const FIXED_XOLOLO_SUBUNITS = 1400; // $14.00 MXN fijo
