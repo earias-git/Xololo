@@ -24,6 +24,7 @@ const xololoShippingQuote = require('./api/xololo-shipping-quote');
 const verifyDeliveryCode = require('./api/verify-delivery-code');
 const txFlow = require('./api/tx-flow');
 const freight = require('./api/freight');
+const geoIp = require('./api/geo-ip');
 const generateShippingGuide = require('./api/generate-shipping-guide');
 const uploadSosPhoto = require('./api/upload-sos-photo');
 const uploadLegalDoc = require('./api/upload-legal-doc');
@@ -131,6 +132,11 @@ router.post('/tx/mark-dispatched', bodyParser.json(), txFlow.markDispatched);
 // Stripe billing (/api/webhooks/stripe-billing). Ver server/api/freight.js.
 router.post('/freight/quote', bodyParser.json(), freight.quote);
 router.post('/freight/create-payment-intent', bodyParser.json(), freight.createPaymentIntent);
+
+// XOLOLO: geo-IP hint para pre-filtrar/advertir opciones de shipping
+// según el estado detectado del buyer. NO es filtro duro (el gate
+// real vive en el checkout con CP). Fallback graceful si ipapi falla.
+router.get('/geo-ip', geoIp);
 
 // XOLOLO: generar la guía Skydropx para una transacción "paid". Solo
 // el provider (seller) puede llamarlo, y sólo si:

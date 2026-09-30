@@ -79,3 +79,14 @@
   color: var(--colorGrey500);
   line-height: 1.4;
 }
+
+.optionWarning {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: #fff4d6;
+  border: 1px solid #f0c674;
+  color: #7a5b16;
+  font-size: 12px;
+  line-height: 1.35;
+}

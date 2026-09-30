@@ -4,6 +4,8 @@ import classNames from 'classnames';
 
 import { formatMoney } from '../../../util/currency';
 import { types as sdkTypes } from '../../../util/sdkLoader';
+import { useGeoLocation } from '../../../util/useGeoLocation';
+import { normalizeMxState } from '../../../util/mxStates';
 
 import css from './XololoShippingMethodField.module.css';
 
@@ -86,8 +88,27 @@ const buildOptions = (methods, intl, currency) => {
   return opts;
 };
 
+// XOLOLO: computa el warning de cobertura para localDelivery basado en
+// geo-IP del buyer. Retorna:
+//   null si no aplica (no hay geo, no hay coverageStates definidos, o
+//        el buyer sí está en zona)
+//   string con mensaje descriptivo si el geo detectado NO está en zona.
+// NO bloquea la opción — el filtro DURO vive en el checkout con CP.
+const computeCoverageWarning = (methods, geo) => {
+  const cfg = methods?.localDelivery;
+  if (!cfg?.enabled) return null;
+  const covStates = Array.isArray(cfg.coverageStates) ? cfg.coverageStates : [];
+  if (covStates.length === 0) return null; // legacy: sin restricción
+  if (!geo?.state) return null; // sin geo, no advertimos
+  const normalized = normalizeMxState(geo.state) || geo.state;
+  if (covStates.includes(normalized)) return null; // en zona
+  return `Detectamos que estás en ${normalized}; el vendedor entrega en ${covStates.join(', ')}. Verifica tu dirección en el checkout.`;
+};
+
 const XololoShippingMethodField = ({ methods, intl, currency, formId, formApi, value }) => {
   const options = buildOptions(methods, intl, currency);
+  const { data: geo } = useGeoLocation();
+  const coverageWarning = computeCoverageWarning(methods, geo);
 
   if (options.length === 0) return null;
 
@@ -96,6 +117,7 @@ const XololoShippingMethodField = ({ methods, intl, currency, formId, formApi, v
       <h4 className={css.title}>¿Cómo quieres recibir tu pedido?</h4>
       {options.map(opt => {
         const checked = value === opt.key;
+        const warning = opt.key === 'localDelivery' ? coverageWarning : null;
         return (
           <label
             key={opt.key}
@@ -121,6 +143,7 @@ const XololoShippingMethodField = ({ methods, intl, currency, formId, formApi, v
                 <span className={css.optionPrice}>{opt.priceLabel}</span>
               </div>
               <div className={css.optionNote}>{opt.note}</div>
+              {warning ? <div className={css.optionWarning}>⚠️ {warning}</div> : null}
             </div>
           </label>
         );
