@@ -47,16 +47,26 @@ const resolveSubunits = raw => {
 };
 
 const XoloPayoutPreview = ({ amountSubunits, price, currency: currencyProp, heading }) => {
-  // XOLOLO: client-only render. El componente depende de values de
-  // FinalForm que pueden diferir entre el server render y el cliente
-  // (Money instances, initial values, etc.). Cuando difieren, React
-  // detecta hydration mismatch, marca "recoverable-error" y descarta
-  // TODO el árbol de este componente — resultado: se ejecuta pero
-  // no aparece en el DOM. Con este mounted-gate el server SIEMPRE
-  // renderiza null, y el cliente lo agrega tras hidratación limpia.
+  // DEBUG: sabemos si el componente se ejecuta en cliente.
+  if (typeof window !== 'undefined') {
+    // eslint-disable-next-line no-console
+    console.log('[XoloPayoutPreview render]', {
+      isServer: typeof window === 'undefined',
+      price,
+      heading,
+    });
+  }
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[XoloPayoutPreview useEffect] setting mounted=true');
+    setMounted(true);
+  }, []);
+  if (!mounted) {
+    // eslint-disable-next-line no-console
+    if (typeof window !== 'undefined') console.log('[XoloPayoutPreview] not mounted yet, returning null');
+    return null;
+  }
 
   // Prefer `price` (Money instance) si viene, fallback a amountSubunits.
   const raw = price != null ? price : amountSubunits;
