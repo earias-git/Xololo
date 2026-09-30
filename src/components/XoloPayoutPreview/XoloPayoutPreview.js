@@ -50,7 +50,30 @@ const XoloPayoutPreview = ({ amountSubunits, price, currency: currencyProp, head
   // Prefer `price` (Money instance) si viene, fallback a amountSubunits.
   const raw = price != null ? price : amountSubunits;
   const amount = resolveSubunits(raw);
-  if (!Number.isFinite(amount) || amount <= 0) return null;
+  // Log defensivo mientras estabilizamos — quitar tras confirmar shape.
+  if (typeof window !== 'undefined' && (price != null || amountSubunits != null)) {
+    // eslint-disable-next-line no-console
+    console.log('[XoloPayoutPreview]', {
+      price,
+      priceType: typeof price,
+      priceCtor: price?.constructor?.name,
+      amountSubunits,
+      resolvedAmount: amount,
+    });
+  }
+  // Placeholder cuando aún no hay monto — así el seller ve que la
+  // sección existe y sabe que aparecerá el desglose al escribir el
+  // precio.
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return (
+      <div className={css.root}>
+        {heading ? <p className={css.heading}>{heading}</p> : null}
+        <div className={`${css.row} ${css.muted}`}>
+          <span>Ingresa un precio para ver el desglose de fees y cuánto recibirás.</span>
+        </div>
+      </div>
+    );
+  }
   const currency =
     (typeof price === 'object' && price?.currency) || currencyProp || 'MXN';
   const bd = computeFreightBreakdown(Math.round(amount));
