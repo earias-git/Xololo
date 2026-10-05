@@ -4,6 +4,7 @@ import { apiBaseUrl } from '../../util/api';
 import { IconSpinner } from '../../components';
 import PromoShareButtons from '../../components/PromoShareButtons/PromoShareButtons';
 import ListingQRCode from '../../components/ListingQRCode/ListingQRCode';
+import ListingPoster from '../../components/ListingPoster/ListingPoster';
 
 import { formatSubunitsAsMxn } from './dashboardUtils';
 
@@ -17,9 +18,9 @@ import css from './DashboardPage.module.css';
 //   1 · Fetch de listings + grid por card
 //   2 · Share intents (FB, IG, X, WhatsApp, TikTok, copiar link)
 //   3 · QR + descarga PNG
+//   4 · Poster editor (3 templates + color + CTA) + descarga PDF/PNG
 //
-// Pendientes:
-//   4 · Templates de poster + editor + descarga PDF
+// Pendiente:
 //   5 · Feed CSV Meta Commerce (link a la URL del feed público)
 
 const fetchListings = async () => {
@@ -37,7 +38,7 @@ const fetchListings = async () => {
 
 const PromoActionsPending = () => (
   <div className={css.promoActionsPending}>
-    <span className={css.promoActionsMuted}>🏷️ Poster PDF · 📊 Stats detallado</span>
+    <span className={css.promoActionsMuted}>📊 Stats detallado por fuente</span>
     <span className={css.promoActionsSoon}>Próximamente</span>
   </div>
 );
@@ -67,7 +68,9 @@ const ListingCard = ({ listing }) => {
       <PromoShareButtons listing={listing} />
       {/* Sub-commit 3: QR + descarga PNG. */}
       <ListingQRCode listing={listing} />
-      {/* Aún falta sub-commit 4 (poster PDF). */}
+      {/* Sub-commit 4: Poster editor + PDF. */}
+      <ListingPoster listing={listing} />
+      {/* Aún falta sub-commit 5 (feed CSV Meta Commerce). */}
       <PromoActionsPending />
     </article>
   );
