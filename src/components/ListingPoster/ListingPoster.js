@@ -2,24 +2,28 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 
 import {
-  POSTER_TEMPLATES,
-  POSTER_COLOR_SWATCHES,
-  POSTER_W,
-  POSTER_H,
-} from './posterTemplates';
+  DESIGN_TEMPLATES,
+  DESIGN_COLOR_SWATCHES,
+} from './templateDesigns';
 import css from './ListingPoster.module.css';
 
-// XOLOLO Promote v1 — Sub-commit 4: Poster PDF.
+// XOLOLO Promote · Diseños para Imprimir (sub-commit 1 de 3).
 //
-// Mini editor de poster para imprimir/compartir:
-//   - 3 templates (Fresco, Elegante, Promo) con slots pre-definidos
-//   - Edita color primario y texto del CTA
-//   - QR del listing embebido en el poster (utm_source=poster)
-//   - Descarga PNG + PDF carta (jspdf)
+// Editor que permite al seller elegir entre 3 formatos físicos:
+//   - Póster carta (21.6 × 28 cm) para pegar en muro/vitrina
+//   - Etiqueta horizontal 10 × 7 cm para empaques o productos
+//   - Etiqueta vertical 7 × 10 cm para cajas o estanterías
 //
-// Por defecto el editor viene colapsado (botón "Diseñar poster PDF")
-// para no abrumar al seller con 3 editores en pantalla al mismo tiempo
-// cuando tiene varios listings.
+// Motor: SVG inline (no canvas 2D). Esto deja la puerta abierta para
+// los sub-commits 2 (colores + logo + B/N) y 3 (20 tipografías con
+// lazy-load) sin reescritura adicional.
+//
+// Export:
+//   - PNG: serializa SVG → <img> → canvas de alta resolución → toBlob
+//   - PDF: mismo PNG embebido en jsPDF con page size físico por template
+//
+// Para evitar "tainted canvas" por CORS, imagen del producto y QR se
+// resuelven a `data:` URL antes de embeberse en el SVG.
 
 const MXN = subunits => {
   const n = Number(subunits) || 0;
@@ -41,54 +45,92 @@ const buildListingUrl = listing => {
   return `${origin}/l/${slug}/${listing.id}?${params.toString()}`;
 };
 
-const slugifyFilename = s => {
-  return (
-    String(s || 'xololo-poster')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)+/g, '')
-      .slice(0, 60) || 'xololo-poster'
-  );
+const slugifyFilename = s =>
+  String(s || 'xololo-design')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+    .slice(0, 60) || 'xololo-design';
+
+// Fetch de la URL y conversión a data: URL. Garantiza que el SVG
+// serializado no referencie recursos externos (clave para canvas sin
+// taint). Devuelve null si falla — el template usa placeholder.
+const fetchAsDataUrl = async url => {
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onloadend = () => resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(blob);
+    });
+  } catch (_e) {
+    return null;
+  }
 };
 
-// Carga una imagen y resuelve a HTMLImageElement (crossOrigin para
-// permitir usarla en canvas y luego exportar sin "tainted canvas").
-const loadImage = src =>
-  new Promise(resolve => {
-    if (!src) return resolve(null);
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = src;
-  });
+// Serializa el <svg> actual, lo renderiza a <img> y vuelca en canvas
+// con el tamaño físico (exportPx del template). Devuelve dataURL PNG.
+const renderSvgToPngDataUrl = async (svgEl, [widthPx, heightPx]) => {
+  // Clonar y asegurar xmlns correcto (algunos browsers lo omiten al
+  // serializar nodos React).
+  const clone = svgEl.cloneNode(true);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  const serializer = new XMLSerializer();
+  const svgString = serializer.serializeToString(clone);
+  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = url;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = widthPx;
+    canvas.height = heightPx;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, widthPx, heightPx);
+    ctx.drawImage(img, 0, 0, widthPx, heightPx);
+    return canvas.toDataURL('image/png');
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+};
 
-const PosterEditor = ({ listing, onClose }) => {
-  const canvasRef = useRef(null);
-  const [templateKey, setTemplateKey] = useState(POSTER_TEMPLATES[0].key);
-  const [color, setColor] = useState(POSTER_COLOR_SWATCHES[0]);
+const DesignEditor = ({ listing, onClose }) => {
+  const svgRef = useRef(null);
+  const [templateKey, setTemplateKey] = useState(DESIGN_TEMPLATES[0].key);
+  const [color, setColor] = useState(DESIGN_COLOR_SWATCHES[0]);
   const [cta, setCta] = useState('Escanéame y cómpralo en Xololo');
-  const [productImg, setProductImg] = useState(null);
-  const [qrImg, setQrImg] = useState(null);
+  const [productImgHref, setProductImgHref] = useState(null);
+  const [qrHref, setQrHref] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState(null);
 
   const url = useMemo(() => buildListingUrl(listing), [listing]);
+  const template = DESIGN_TEMPLATES.find(t => t.key === templateKey) || DESIGN_TEMPLATES[0];
 
-  // Precarga imagen del producto (una vez).
+  // Precarga imagen del producto como data: URL (una vez por listing).
   useEffect(() => {
     let cancelled = false;
-    loadImage(listing.imageUrl).then(img => {
-      if (!cancelled) setProductImg(img);
+    if (!listing.imageUrl) return;
+    fetchAsDataUrl(listing.imageUrl).then(dataUrl => {
+      if (!cancelled) setProductImgHref(dataUrl);
     });
     return () => {
       cancelled = true;
     };
   }, [listing.imageUrl]);
 
-  // Precarga QR como <img> (dataURL interno).
+  // Genera el QR como data: URL.
   useEffect(() => {
     let cancelled = false;
     if (!url) return;
@@ -97,94 +139,62 @@ const PosterEditor = ({ listing, onClose }) => {
       margin: 1,
       width: 400,
       color: { dark: '#000000', light: '#ffffff' },
-    }).then(
-      dataUrl => {
-        if (cancelled) return;
-        const img = new Image();
-        img.onload = () => {
-          if (!cancelled) setQrImg(img);
-        };
-        img.src = dataUrl;
-      },
-      () => {}
-    );
+    }).then(dataUrl => {
+      if (!cancelled) setQrHref(dataUrl);
+    });
     return () => {
       cancelled = true;
     };
   }, [url]);
 
-  // Redibuja el poster cuando cambia cualquier input.
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    canvas.width = POSTER_W;
-    canvas.height = POSTER_H;
-    const ctx = canvas.getContext('2d');
-    const tpl = POSTER_TEMPLATES.find(t => t.key === templateKey) || POSTER_TEMPLATES[0];
-    try {
-      tpl.draw(ctx, {
-        title: listing.title || '',
-        price: MXN(listing.priceSubunits),
-        cta: cta || '',
-        color,
-        productImg,
-        qrImg,
-      });
-      setError(null);
-    } catch (e) {
-      setError(e?.message || 'render_error');
-    }
-  }, [templateKey, color, cta, productImg, qrImg, listing]);
+  const designProps = {
+    title: listing.title || '',
+    price: MXN(listing.priceSubunits),
+    cta: cta || '',
+    color,
+    productImgHref,
+    qrHref,
+  };
 
-  const handleDownloadPng = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const Design = template.render;
+
+  const handleDownloadPng = async () => {
+    const svgEl = svgRef.current;
+    if (!svgEl) return;
+    setExporting(true);
     try {
-      const dataUrl = canvas.toDataURL('image/png');
+      const dataUrl = await renderSvgToPngDataUrl(svgEl, template.exportPx);
       const a = document.createElement('a');
       a.href = dataUrl;
-      a.download = `${slugifyFilename(listing.title)}-poster.png`;
+      a.download = `${slugifyFilename(listing.title)}-${template.key}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      setError(null);
     } catch (e) {
       setError(e?.message || 'png_error');
+    } finally {
+      setExporting(false);
     }
   };
 
   const handleDownloadPdf = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const svgEl = svgRef.current;
+    if (!svgEl) return;
     setExporting(true);
     try {
-      // Dynamic import: jspdf toca `window`/`document` al inicializar,
-      // así que lo cargamos sólo en el click (nunca durante SSR).
       const { default: jsPDF } = await import('jspdf');
-      const dataUrl = canvas.toDataURL('image/png');
-      // Letter: 8.5"×11" = 215.9 × 279.4 mm. Dejamos 10mm de margen.
+      const pngDataUrl = await renderSvgToPngDataUrl(svgEl, template.exportPx);
+      const { widthMm, heightMm, orientation, format } = template.pdf;
       const pdf = new jsPDF({
         unit: 'mm',
-        format: 'letter',
-        orientation: 'portrait',
+        format,
+        orientation,
         compress: true,
       });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      const availW = pageW - margin * 2;
-      const availH = pageH - margin * 2;
-      // El canvas es 850x1100 (ratio 0.773). Ajustamos a availH.
-      const canvasRatio = POSTER_W / POSTER_H;
-      let drawH = availH;
-      let drawW = drawH * canvasRatio;
-      if (drawW > availW) {
-        drawW = availW;
-        drawH = drawW / canvasRatio;
-      }
-      const x = (pageW - drawW) / 2;
-      const y = (pageH - drawH) / 2;
-      pdf.addImage(dataUrl, 'PNG', x, y, drawW, drawH, undefined, 'FAST');
-      pdf.save(`${slugifyFilename(listing.title)}-poster.pdf`);
+      pdf.addImage(pngDataUrl, 'PNG', 0, 0, widthMm, heightMm, undefined, 'FAST');
+      pdf.save(`${slugifyFilename(listing.title)}-${template.key}.pdf`);
+      setError(null);
     } catch (e) {
       setError(e?.message || 'pdf_error');
     } finally {
@@ -195,19 +205,30 @@ const PosterEditor = ({ listing, onClose }) => {
   return (
     <div className={css.editor}>
       <div className={css.previewWrap}>
-        <canvas ref={canvasRef} className={css.previewCanvas} />
+        <div className={css.previewFrame}>
+          <svg
+            ref={svgRef}
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox={`0 0 ${template.viewBox[0]} ${template.viewBox[1]}`}
+            className={css.previewSvg}
+          >
+            <Design {...designProps} />
+          </svg>
+        </div>
+        <p className={css.previewLabel}>{template.hint}</p>
       </div>
 
       <div className={css.controls}>
         <div className={css.field}>
-          <span className={css.label}>Plantilla</span>
+          <span className={css.label}>Formato</span>
           <div className={css.templateRow}>
-            {POSTER_TEMPLATES.map(t => (
+            {DESIGN_TEMPLATES.map(t => (
               <button
                 key={t.key}
                 type="button"
                 className={`${css.chip} ${t.key === templateKey ? css.chipActive : ''}`}
                 onClick={() => setTemplateKey(t.key)}
+                title={t.hint}
               >
                 {t.label}
               </button>
@@ -218,7 +239,7 @@ const PosterEditor = ({ listing, onClose }) => {
         <div className={css.field}>
           <span className={css.label}>Color</span>
           <div className={css.colorRow}>
-            {POSTER_COLOR_SWATCHES.map(c => (
+            {DESIGN_COLOR_SWATCHES.map(c => (
               <button
                 key={c}
                 type="button"
@@ -256,7 +277,12 @@ const PosterEditor = ({ listing, onClose }) => {
             <span aria-hidden>📄</span>
             <span>{exporting ? 'Generando…' : 'Descargar PDF'}</span>
           </button>
-          <button type="button" className={css.btnSecondary} onClick={handleDownloadPng}>
+          <button
+            type="button"
+            className={css.btnSecondary}
+            onClick={handleDownloadPng}
+            disabled={exporting}
+          >
             <span aria-hidden>🖼️</span>
             <span>Descargar PNG</span>
           </button>
@@ -276,14 +302,14 @@ const ListingPoster = ({ listing }) => {
   return (
     <div className={css.root}>
       <div className={css.header}>
-        <h4 className={css.heading}>🏷️ Poster para imprimir</h4>
+        <h4 className={css.heading}>🏷️ Diseños para Imprimir</h4>
         {!open ? (
           <button type="button" className={css.openBtn} onClick={() => setOpen(true)}>
-            Diseñar poster
+            Diseñar
           </button>
         ) : null}
       </div>
-      {open ? <PosterEditor listing={listing} onClose={() => setOpen(false)} /> : null}
+      {open ? <DesignEditor listing={listing} onClose={() => setOpen(false)} /> : null}
     </div>
   );
 };
