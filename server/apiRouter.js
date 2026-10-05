@@ -26,6 +26,8 @@ const txFlow = require('./api/tx-flow');
 const freight = require('./api/freight');
 const geoIp = require('./api/geo-ip');
 const sellerPromoListings = require('./api/seller-promo-listings');
+const metaFeed = require('./api/meta-feed');
+const metaFeedInfo = require('./api/meta-feed-info');
 const generateShippingGuide = require('./api/generate-shipping-guide');
 const uploadSosPhoto = require('./api/upload-sos-photo');
 const uploadLegalDoc = require('./api/upload-legal-doc');
@@ -140,6 +142,13 @@ router.get('/geo-ip', geoIp);
 // XOLOLO Promote: lista de listings del seller para el Dashboard >
 // Promote. Devuelve id, título, imagen, precio, viewCount por listing.
 router.get('/seller-promo-listings', sellerPromoListings);
+
+// XOLOLO Promote · Feed CSV público para Meta Commerce Manager +
+// endpoint autenticado que devuelve la URL del feed al seller.
+// `:sellerId.csv` conserva el sufijo .csv dentro del parámetro;
+// `meta-feed.js` lo despoja antes de validar el UUID.
+router.get('/meta-feed/:sellerId.csv', metaFeed);
+router.get('/meta-feed-info', metaFeedInfo);
 
 // XOLOLO: generar la guía Skydropx para una transacción "paid". Solo
 // el provider (seller) puede llamarlo, y sólo si:

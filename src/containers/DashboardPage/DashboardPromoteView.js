@@ -5,6 +5,7 @@ import { IconSpinner } from '../../components';
 import PromoShareButtons from '../../components/PromoShareButtons/PromoShareButtons';
 import ListingQRCode from '../../components/ListingQRCode/ListingQRCode';
 import ListingPoster from '../../components/ListingPoster/ListingPoster';
+import MetaCommerceFeed from '../../components/MetaCommerceFeed/MetaCommerceFeed';
 
 import { formatSubunitsAsMxn } from './dashboardUtils';
 
@@ -19,9 +20,11 @@ import css from './DashboardPage.module.css';
 //   2 · Share intents (FB, IG, X, WhatsApp, TikTok, copiar link)
 //   3 · QR + descarga PNG
 //   4 · Poster editor (3 templates + color + CTA) + descarga PDF/PNG
+//   5 · Feed CSV Meta Commerce (URL pública del feed por seller)
 //
-// Pendiente:
-//   5 · Feed CSV Meta Commerce (link a la URL del feed público)
+// Siguiente iteración (fuera de v1): stats detallado por fuente de
+// vista, aprovechando `listing.metadata.listingViewedBySource` que
+// el pipeline existente ya persiste.
 
 const fetchListings = async () => {
   const res = await fetch(`${apiBaseUrl()}/api/seller-promo-listings`, {
@@ -35,13 +38,6 @@ const fetchListings = async () => {
   }
   return data;
 };
-
-const PromoActionsPending = () => (
-  <div className={css.promoActionsPending}>
-    <span className={css.promoActionsMuted}>📊 Stats detallado por fuente</span>
-    <span className={css.promoActionsSoon}>Próximamente</span>
-  </div>
-);
 
 const ListingCard = ({ listing }) => {
   return (
@@ -70,8 +66,6 @@ const ListingCard = ({ listing }) => {
       <ListingQRCode listing={listing} />
       {/* Sub-commit 4: Poster editor + PDF. */}
       <ListingPoster listing={listing} />
-      {/* Aún falta sub-commit 5 (feed CSV Meta Commerce). */}
-      <PromoActionsPending />
     </article>
   );
 };
@@ -131,6 +125,10 @@ const DashboardPromoteView = () => {
           </p>
         </div>
       ) : null}
+
+      {/* Sub-commit 5: feed Meta Commerce. Mostrado también mientras
+          cargan los listings — su propio endpoint es independiente. */}
+      {state.status !== 'error' ? <MetaCommerceFeed /> : null}
 
       {state.status === 'ok' && listings.length > 0 ? (
         <div className={css.promoGrid}>
