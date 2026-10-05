@@ -103,26 +103,44 @@ const ImageOrPlaceholder = ({ href, x, y, w, h, rx = 16, placeholder = '📦' })
 };
 
 // Marca del seller con cascada:
-//   1) logoHref (data:URL del logo del seller)  → <image>
+//   1) logoHref (data:URL del logo del seller)  → <image> en badge blanco
 //   2) sellerName                               → <text> con el nombre
 //   3) null + null                              → no renderiza nada
 //
 // Nunca mete texto placeholder tipo "XOLOLO" por default — si el seller
 // no tiene marca configurada, el diseño queda limpio.
+//
+// Fondo del logo: SIEMPRE blanco con padding (rectángulo "badge").
+// Esto evita que un logo con fondo transparente o colores claros se
+// pierda contra la banda de color del template.
+const LOGO_PADDING = 8;
+const LOGO_BADGE_RADIUS = 8;
+
 const BrandMark = ({ logoHref, sellerName, x, y, size, color, align = 'left' }) => {
   if (logoHref) {
     const w = size;
     const h = size;
     const ax = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    // Badge blanco de fondo con padding — contraste garantizado.
     return (
-      <image
-        href={logoHref}
-        x={ax}
-        y={y}
-        width={w}
-        height={h}
-        preserveAspectRatio="xMidYMid meet"
-      />
+      <g>
+        <rect
+          x={ax - LOGO_PADDING}
+          y={y - LOGO_PADDING}
+          width={w + LOGO_PADDING * 2}
+          height={h + LOGO_PADDING * 2}
+          fill="#ffffff"
+          rx={LOGO_BADGE_RADIUS}
+        />
+        <image
+          href={logoHref}
+          x={ax}
+          y={y}
+          width={w}
+          height={h}
+          preserveAspectRatio="xMidYMid meet"
+        />
+      </g>
     );
   }
   if (sellerName) {
@@ -189,7 +207,14 @@ const PosterDesign = props => {
   } = props;
   const titleFontPx = px(40, sizeTitle);
   const priceFontPx = px(92, sizePrice);
-  const titleLines = wrapTspans(title, titleFontPx, 650, 2);
+  const titleLines = wrapTspans(title, titleFontPx, 760, 2);
+  const hasBrand = !!(logoHref || sellerName);
+  // Banda del header crece cuando hay marca (logo arriba + título abajo).
+  const headerH = hasBrand ? 260 : 180;
+  // Y donde arranca el título dentro de la banda.
+  const titleY = hasBrand ? 150 : 70;
+  // Y donde arranca la imagen (debajo de la banda + 20px padding).
+  const imgY = headerH + 20;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -202,36 +227,40 @@ const PosterDesign = props => {
         <rect x={0} y={0} width={850} height={1100} fill="#ffffff" />
 
         {/* Banda superior con color primario */}
-        <rect x={0} y={0} width={850} height={180} fill={colorPrimary} />
+        <rect x={0} y={0} width={850} height={headerH} fill={colorPrimary} />
 
-        {/* Logo o nombre de la tienda; null si el seller no tiene nada */}
-        <BrandMark
-          logoHref={logoHref}
-          sellerName={sellerName}
-          x={60}
-          y={45}
-          size={70}
-          color="#ffffff"
-        />
+        {/* Logo arriba izquierda (badge blanco), si no hay marca el
+            título ocupa toda la banda a altura más alta. */}
+        {hasBrand ? (
+          <BrandMark
+            logoHref={logoHref}
+            sellerName={sellerName}
+            x={50}
+            y={30}
+            size={60}
+            color="#ffffff"
+          />
+        ) : null}
 
-        {/* Título sobre la banda, con offset si hay logo/nombre o pegado
-            a la izquierda si no hay marca */}
-        <text
-          x={logoHref || sellerName ? 160 : 60}
-          y={70}
-          fontSize={titleFontPx}
-          fontWeight={fontWeight}
-          fill="#ffffff"
-        >
+        {/* Título ocupa el ancho completo de la banda (sin colisión
+            horizontal con la marca). */}
+        <text x={50} y={titleY} fontSize={titleFontPx} fontWeight={fontWeight} fill="#ffffff">
           {titleLines.map((l, i) => (
-            <tspan key={i} x={logoHref || sellerName ? 160 : 60} dy={i === 0 ? 0 : titleFontPx * 1.15}>
+            <tspan key={i} x={50} dy={i === 0 ? 0 : titleFontPx * 1.15}>
               {l}
             </tspan>
           ))}
         </text>
 
-        {/* Imagen producto */}
-        <ImageOrPlaceholder href={productImgHref} x={100} y={240} w={650} h={500} rx={24} />
+        {/* Imagen producto (y arranca pegada al final de la banda) */}
+        <ImageOrPlaceholder
+          href={productImgHref}
+          x={100}
+          y={imgY}
+          w={650}
+          h={740 - imgY}
+          rx={24}
+        />
 
         {/* Precio en color secundario */}
         <text

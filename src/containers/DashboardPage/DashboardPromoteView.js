@@ -39,7 +39,7 @@ const fetchListings = async () => {
   return data;
 };
 
-const ListingCard = ({ listing, sellerLogoUrl, sellerName }) => {
+const ListingCard = ({ listing, sellerLogoDataUrl, sellerName }) => {
   return (
     <article className={css.promoCard}>
       <div className={css.promoCardHeader}>
@@ -65,7 +65,11 @@ const ListingCard = ({ listing, sellerLogoUrl, sellerName }) => {
       {/* Sub-commit 3: QR + descarga PNG. */}
       <ListingQRCode listing={listing} />
       {/* Sub-commit 4: Diseños para Imprimir — ahora con logo del seller. */}
-      <ListingPoster listing={listing} sellerLogoUrl={sellerLogoUrl} sellerName={sellerName} />
+      <ListingPoster
+        listing={listing}
+        sellerLogoDataUrl={sellerLogoDataUrl}
+        sellerName={sellerName}
+      />
     </article>
   );
 };
@@ -91,7 +95,7 @@ const DashboardPromoteView = () => {
   }, []);
 
   const listings = state.data?.listings || [];
-  const sellerLogoUrl = state.data?.sellerLogoUrl || null;
+  const sellerLogoDataUrl = state.data?.sellerLogoDataUrl || null;
   const sellerName = state.data?.sellerName || null;
 
   return (
@@ -138,7 +142,7 @@ const DashboardPromoteView = () => {
             <ListingCard
               key={l.id}
               listing={l}
-              sellerLogoUrl={sellerLogoUrl}
+              sellerLogoDataUrl={sellerLogoDataUrl}
               sellerName={sellerName}
             />
           ))}

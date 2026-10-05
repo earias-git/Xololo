@@ -6,23 +6,50 @@
 //   GET /api/seller-promo-listings
 //   200 → { listings: [{ id, title, slug, imageUrl, priceSubunits,
 //                        priceCurrency, state, viewCount }],
-//          sellerLogoUrl: string | null,
+//          sellerLogoDataUrl: string | null,
 //          sellerName: string | null }
 //   401 → { error: 'unauthorized' }
 //   500 → { error: 'internal' }
 //
-// sellerLogoUrl: logo del seller para los diseños para imprimir.
-//   Prioridad: publicData.logoUrl > profileImage avatar > null.
+// sellerLogoDataUrl: data: URL del logo del seller, ya fetcheado
+//   server-side para evitar CORS del R2. Prioridad: publicData.logoUrl
+//   > profileImage avatar > null. Cacheado en memoria 10 min por URL.
 // sellerName: nombre de la tienda. Prioridad: publicData.storeName >
-//   profile.displayName > "firstName lastName" > null. Se usa como
-//   "marca escrita" cuando no hay logo utilizable. Nunca falla la
-//   respuesta: si ambos son null, el BrandMark queda vacío.
+//   profile.displayName > "firstName lastName" > null. Fallback escrito
+//   cuando no hay logo. Nunca falla la respuesta: si ambos son null,
+//   el BrandMark queda vacío (sin placeholder "XOLOLO").
 //
 // viewCount = tx.metadata.listingViewedTotal si existe (pipeline de
 // tracking F3 Sprint 2), 0 si no. Los stats por source se leerán
 // después con endpoints ya existentes de analytics.
 
 const { getSdk } = require('../api-util/sdk');
+const { createTTLCache } = require('../api-util/cache');
+
+// Cache in-memory 10 min para no re-fetchear el logo en cada hit del
+// dashboard. Key: la URL del logo (así invalida solo cuando el seller
+// sube uno nuevo). Valor: data URL base64 completo.
+const logoCache = createTTLCache(600);
+
+const fetchAsDataUrl = async url => {
+  if (!url) return null;
+  const cached = logoCache[url]?.data;
+  if (cached) return cached;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    // Limitar tamaño: 2 MB max al dibujar un logo en una etiqueta no
+    // tiene sentido pasar de ahí. Si viene más grande, descartamos.
+    if (buf.length > 2 * 1024 * 1024) return null;
+    const type = res.headers.get('content-type') || 'image/png';
+    const dataUrl = `data:${type};base64,${buf.toString('base64')}`;
+    logoCache[url] = dataUrl;
+    return dataUrl;
+  } catch (_e) {
+    return null;
+  }
+};
 
 const firstImageUrl = listing => {
   const imgRels = listing.relationships?.images?.data || [];
@@ -40,13 +67,16 @@ module.exports = async (req, res) => {
   try {
     const sdk = getSdk(req, res);
 
-    // XOLOLO Promote sub-commit 2+: logo del seller y nombre de tienda
-    // para los diseños para imprimir.
-    //   sellerLogoUrl: publicData.logoUrl (lo configura en ManageStore)
-    //                  → profileImage avatar como fallback → null.
-    //   sellerName: profile.publicData.storeName o displayName — se usa
-    //               como "marca escrita" cuando no hay logo utilizable.
-    let sellerLogoUrl = null;
+    // XOLOLO Promote: logo del seller + nombre de tienda para los
+    // diseños para imprimir.
+    //   sellerLogoDataUrl: fetcheamos server-side y mandamos ya como
+    //     data: URL. El cliente no puede fetchear el logo del R2
+    //     directamente por CORS (R2 por default no manda headers CORS).
+    //     Prioridad: publicData.logoUrl → profileImage avatar → null.
+    //   sellerName: profile.publicData.storeName > displayName >
+    //     "firstName lastName" > null. Fallback escrito cuando no hay
+    //     logo utilizable.
+    let sellerLogoDataUrl = null;
     let sellerName = null;
     try {
       const me = await sdk.currentUser.show({
@@ -55,17 +85,20 @@ module.exports = async (req, res) => {
       });
       const u = me?.data?.data;
       const profile = u?.attributes?.profile || {};
-      sellerLogoUrl = profile?.publicData?.logoUrl || null;
-      if (!sellerLogoUrl) {
+      let rawLogoUrl = profile?.publicData?.logoUrl || null;
+      if (!rawLogoUrl) {
         const imgRel = u?.relationships?.profileImage?.data;
         const includedUser = me?.data?.included || [];
         const avatar = imgRel
           ? includedUser.find(r => r.type === 'image' && r.id?.uuid === imgRel.id?.uuid)
           : null;
-        sellerLogoUrl =
+        rawLogoUrl =
           avatar?.attributes?.variants?.['square-small2x']?.url ||
           avatar?.attributes?.variants?.['square-small']?.url ||
           null;
+      }
+      if (rawLogoUrl) {
+        sellerLogoDataUrl = await fetchAsDataUrl(rawLogoUrl);
       }
       sellerName =
         profile?.publicData?.storeName ||
@@ -128,7 +161,7 @@ module.exports = async (req, res) => {
     });
     // Sólo mostrar published (no draft, no closed).
     const published = listings.filter(l => l.state === 'published');
-    return res.json({ listings: published, sellerLogoUrl, sellerName });
+    return res.json({ listings: published, sellerLogoDataUrl, sellerName });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('seller-promo-listings unexpected:', e?.message);

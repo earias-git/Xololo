@@ -128,7 +128,7 @@ const renderSvgToPngDataUrl = async (svgEl, [widthPx, heightPx], embeddedFontCss
   }
 };
 
-const DesignEditor = ({ listing, sellerLogoUrl, sellerName, onClose }) => {
+const DesignEditor = ({ listing, sellerLogoDataUrl, sellerName, onClose }) => {
   const svgRef = useRef(null);
   const [templateKey, setTemplateKey] = useState(DESIGN_TEMPLATES[0].key);
   const [colorPrimary, setColorPrimary] = useState(DESIGN_COLOR_SWATCHES[0]);
@@ -137,9 +137,12 @@ const DesignEditor = ({ listing, sellerLogoUrl, sellerName, onClose }) => {
   const [cta, setCta] = useState('Escanéame y cómpralo en Xololo');
   const [productImgHref, setProductImgHref] = useState(null);
   const [qrHref, setQrHref] = useState(null);
-  const [logoHref, setLogoHref] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState(null);
+  // Logo del seller: viene YA como data: URL desde el servidor (ver
+  // seller-promo-listings.js), así evitamos CORS del R2. Lo usamos
+  // directo en el <image> del SVG — no requiere fetch adicional.
+  const logoHref = sellerLogoDataUrl || null;
 
   // Tipografía (sub-commit 3)
   const [fontFamily, setFontFamily] = useState(CURATED_FONTS[0].family);
@@ -172,18 +175,6 @@ const DesignEditor = ({ listing, sellerLogoUrl, sellerName, onClose }) => {
       cancelled = true;
     };
   }, [listing.imageUrl]);
-
-  // Precarga logo del seller como data: URL (si existe).
-  useEffect(() => {
-    let cancelled = false;
-    if (!sellerLogoUrl) return;
-    fetchAsDataUrl(sellerLogoUrl).then(dataUrl => {
-      if (!cancelled) setLogoHref(dataUrl);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [sellerLogoUrl]);
 
   // Genera el QR como data: URL.
   useEffect(() => {
@@ -485,7 +476,7 @@ const DesignEditor = ({ listing, sellerLogoUrl, sellerName, onClose }) => {
   );
 };
 
-const ListingPoster = ({ listing, sellerLogoUrl, sellerName }) => {
+const ListingPoster = ({ listing, sellerLogoDataUrl, sellerName }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className={css.root}>
@@ -500,7 +491,7 @@ const ListingPoster = ({ listing, sellerLogoUrl, sellerName }) => {
       {open ? (
         <DesignEditor
           listing={listing}
-          sellerLogoUrl={sellerLogoUrl}
+          sellerLogoDataUrl={sellerLogoDataUrl}
           sellerName={sellerName}
           onClose={() => setOpen(false)}
         />
