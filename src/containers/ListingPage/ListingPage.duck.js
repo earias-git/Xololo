@@ -93,6 +93,16 @@ const showListingPayloadCreator = ({ listingId, config, isOwn = false }, thunkAP
     ...createImageVariantConfig(`${variantPrefix}-2x`, 800, aspectRatio),
     ...createImageVariantConfig(`${variantPrefix}-4x`, 1600, aspectRatio),
     ...createImageVariantConfig(`${variantPrefix}-6x`, 2400, aspectRatio),
+
+    // XOLOLO: variantes para preview rico en redes sociales. Sin
+    // estas configs, Sharetribe NO genera los crops y las variantes
+    // `facebook` / `twitter` llegan vacías al cliente, por lo que el
+    // Open Graph cae al fallback genérico de marca (lo reportó el
+    // seller: compartí a FB y el post no mostró foto/título/descr).
+    // Facebook recomienda 1200×630 (ratio 0.525) para og:image y
+    // Twitter 600×314 (ratio ~0.523) para summary_large_image.
+    ...createImageVariantConfig('facebook', 1200, 630 / 1200),
+    ...createImageVariantConfig('twitter', 600, 314 / 600),
   };
 
   const show = isOwn ? sdk.ownListings.show(params) : sdk.listings.show(params);
