@@ -222,6 +222,38 @@
   accent-color: var(--marketplaceColor);
 }
 
+.posRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.posBtn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--colorGrey200);
+  border-radius: 6px;
+  background: var(--colorWhite);
+  color: var(--colorGrey900);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.posBtn:hover {
+  background: var(--colorGrey50);
+}
+
+.posBtnActive {
+  background: var(--colorGrey900);
+  color: var(--colorWhite);
+  border-color: var(--colorGrey900);
+}
+
 .actions {
   display: flex;
   gap: 6px;

@@ -18,7 +18,45 @@ import React from 'react';
 // Props que recibe cada draw:
 //   { title, price, cta, colorPrimary, colorSecondary, blackWhite,
 //     productImgHref, qrHref, logoHref, sellerName,
-//     fontFamily, fontWeight, sizeTitle, sizePrice }
+//     fontFamily, fontWeight, sizeTitle, sizePrice,
+//     logoPosition, logoSize }
+//
+// logoPosition: 'tl' | 'tc' | 'tr' | 'bl' | 'br' (presets, 5 esquinas).
+// logoSize: alto/ancho del logo en units del viewBox (40–160 default).
+
+// Posiciones donde el logo cae sobre fondo BLANCO (fuera de bandas de
+// color primario) para evitar colisión con el color de fondo. Cada
+// template define sus propios anchors porque depende de dónde están
+// los otros elementos.
+const POSTER_LOGO_ANCHORS = {
+  tl: { x: 50, y: 200, align: 'left' },
+  tc: { x: 425, y: 200, align: 'center' },
+  tr: { x: 800, y: 200, align: 'right' },
+  bl: { x: 50, y: 1000, align: 'left' },
+  br: { x: 800, y: 1000, align: 'right' },
+};
+const LABEL_H_LOGO_ANCHORS = {
+  tl: { x: 480, y: 50, align: 'left' },
+  tc: { x: 735, y: 50, align: 'center' },
+  tr: { x: 970, y: 50, align: 'right' },
+  bl: { x: 480, y: 580, align: 'left' },
+  br: { x: 970, y: 580, align: 'right' },
+};
+const LABEL_V_LOGO_ANCHORS = {
+  tl: { x: 50, y: 580, align: 'left' },
+  tc: { x: 350, y: 580, align: 'center' },
+  tr: { x: 650, y: 580, align: 'right' },
+  bl: { x: 50, y: 860, align: 'left' },
+  br: { x: 650, y: 860, align: 'right' },
+};
+
+export const LOGO_POSITIONS = [
+  { key: 'tl', label: '↖', hint: 'Arriba izquierda' },
+  { key: 'tc', label: '↑', hint: 'Arriba centrado' },
+  { key: 'tr', label: '↗', hint: 'Arriba derecha' },
+  { key: 'bl', label: '↙', hint: 'Abajo izquierda' },
+  { key: 'br', label: '↘', hint: 'Abajo derecha' },
+];
 //
 // fontFamily: nombre tal cual lo expone Google Fonts (ej. 'Montserrat').
 // fontWeight: numeric (300 Light, 400 Normal, 700 Bold).
@@ -113,8 +151,8 @@ const ImageOrPlaceholder = ({ href, x, y, w, h, rx = 16, placeholder = '📦' })
 // Fondo del logo: SIEMPRE blanco con padding (rectángulo "badge").
 // Esto evita que un logo con fondo transparente o colores claros se
 // pierda contra la banda de color del template.
-const LOGO_PADDING = 8;
-const LOGO_BADGE_RADIUS = 8;
+const LOGO_PADDING = 16;
+const LOGO_BADGE_RADIUS = 10;
 
 const BrandMark = ({ logoHref, sellerName, x, y, size, color, align = 'left' }) => {
   if (logoHref) {
@@ -204,17 +242,15 @@ const PosterDesign = props => {
     fontWeight = 700,
     sizeTitle = 1,
     sizePrice = 1,
+    logoPosition = 'bl',
+    logoSize = 70,
   } = props;
   const titleFontPx = px(40, sizeTitle);
   const priceFontPx = px(92, sizePrice);
   const titleLines = wrapTspans(title, titleFontPx, 760, 2);
-  const hasBrand = !!(logoHref || sellerName);
-  // Banda del header crece cuando hay marca (logo arriba + título abajo).
-  const headerH = hasBrand ? 260 : 180;
-  // Y donde arranca el título dentro de la banda.
-  const titleY = hasBrand ? 150 : 70;
-  // Y donde arranca la imagen (debajo de la banda + 20px padding).
-  const imgY = headerH + 20;
+  const anchor = POSTER_LOGO_ANCHORS[logoPosition] || POSTER_LOGO_ANCHORS.bl;
+  // El logo del seller usa color oscuro para la cascada de texto fallback
+  // porque siempre va sobre fondo blanco.
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -226,25 +262,9 @@ const PosterDesign = props => {
       <g filter={blackWhite ? 'url(#xolo-bw)' : undefined}>
         <rect x={0} y={0} width={850} height={1100} fill="#ffffff" />
 
-        {/* Banda superior con color primario */}
-        <rect x={0} y={0} width={850} height={headerH} fill={colorPrimary} />
-
-        {/* Logo arriba izquierda (badge blanco), si no hay marca el
-            título ocupa toda la banda a altura más alta. */}
-        {hasBrand ? (
-          <BrandMark
-            logoHref={logoHref}
-            sellerName={sellerName}
-            x={50}
-            y={30}
-            size={60}
-            color="#ffffff"
-          />
-        ) : null}
-
-        {/* Título ocupa el ancho completo de la banda (sin colisión
-            horizontal con la marca). */}
-        <text x={50} y={titleY} fontSize={titleFontPx} fontWeight={fontWeight} fill="#ffffff">
+        {/* Banda superior sólo con el título (sin marca encima) */}
+        <rect x={0} y={0} width={850} height={180} fill={colorPrimary} />
+        <text x={50} y={70} fontSize={titleFontPx} fontWeight={fontWeight} fill="#ffffff">
           {titleLines.map((l, i) => (
             <tspan key={i} x={50} dy={i === 0 ? 0 : titleFontPx * 1.15}>
               {l}
@@ -252,15 +272,8 @@ const PosterDesign = props => {
           ))}
         </text>
 
-        {/* Imagen producto (y arranca pegada al final de la banda) */}
-        <ImageOrPlaceholder
-          href={productImgHref}
-          x={100}
-          y={imgY}
-          w={650}
-          h={740 - imgY}
-          rx={24}
-        />
+        {/* Imagen producto */}
+        <ImageOrPlaceholder href={productImgHref} x={100} y={240} w={650} h={500} rx={24} />
 
         {/* Precio en color secundario */}
         <text
@@ -293,6 +306,17 @@ const PosterDesign = props => {
             <image href={qrHref} x={610} y={860} width={180} height={180} />
           </g>
         ) : null}
+
+        {/* Logo del seller en la posición elegida (siempre sobre blanco) */}
+        <BrandMark
+          logoHref={logoHref}
+          sellerName={sellerName}
+          x={anchor.x}
+          y={anchor.y}
+          size={logoSize}
+          color="#333333"
+          align={anchor.align}
+        />
       </g>
     </svg>
   );
@@ -316,10 +340,13 @@ const LabelHorizontalDesign = props => {
     fontWeight = 700,
     sizeTitle = 1,
     sizePrice = 1,
+    logoPosition = 'bl',
+    logoSize = 56,
   } = props;
   const titleFontPx = px(34, sizeTitle);
   const priceFontPx = px(78, sizePrice);
   const titleLines = wrapTspans(title, titleFontPx, 480, 2);
+  const anchor = LABEL_H_LOGO_ANCHORS[logoPosition] || LABEL_H_LOGO_ANCHORS.bl;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -345,14 +372,15 @@ const LabelHorizontalDesign = props => {
         {/* Imagen producto izquierda */}
         <ImageOrPlaceholder href={productImgHref} x={30} y={30} w={420} h={540} rx={16} />
 
-        {/* Logo o nombre del seller abajo izquierda */}
+        {/* Logo del seller en la posición elegida (sobre blanco siempre) */}
         <BrandMark
           logoHref={logoHref}
           sellerName={sellerName}
-          x={30}
-          y={600}
-          size={56}
-          color={colorPrimary}
+          x={anchor.x}
+          y={anchor.y}
+          size={logoSize}
+          color="#333333"
+          align={anchor.align}
         />
 
         {/* Título */}
@@ -408,10 +436,13 @@ const LabelVerticalDesign = props => {
     fontWeight = 700,
     sizeTitle = 1,
     sizePrice = 1,
+    logoPosition = 'bl',
+    logoSize = 60,
   } = props;
   const titleFontPx = px(36, sizeTitle);
   const priceFontPx = px(82, sizePrice);
   const titleLines = wrapTspans(title, titleFontPx, 580, 2);
+  const anchor = LABEL_V_LOGO_ANCHORS[logoPosition] || LABEL_V_LOGO_ANCHORS.bl;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -423,17 +454,9 @@ const LabelVerticalDesign = props => {
       <g filter={blackWhite ? 'url(#xolo-bw)' : undefined}>
         <rect x={0} y={0} width={700} height={1000} fill="#ffffff" />
 
-        {/* Banda superior color primario */}
+        {/* Banda superior color primario — ya no mete el logo adentro,
+            el logo va sobre la zona blanca en la posición elegida */}
         <rect x={0} y={0} width={700} height={80} fill={colorPrimary} />
-        <BrandMark
-          logoHref={logoHref}
-          sellerName={sellerName}
-          x={350}
-          y={14}
-          size={52}
-          color="#ffffff"
-          align="center"
-        />
 
         {/* Imagen producto arriba */}
         <ImageOrPlaceholder href={productImgHref} x={50} y={110} w={600} h={450} rx={16} />
@@ -483,6 +506,17 @@ const LabelVerticalDesign = props => {
         <text x={670} y={960} fontSize={14} textAnchor="end" fill="#888888">
           Escanea el QR
         </text>
+
+        {/* Logo del seller en la posición elegida (sobre blanco siempre) */}
+        <BrandMark
+          logoHref={logoHref}
+          sellerName={sellerName}
+          x={anchor.x}
+          y={anchor.y}
+          size={logoSize}
+          color="#333333"
+          align={anchor.align}
+        />
       </g>
     </svg>
   );

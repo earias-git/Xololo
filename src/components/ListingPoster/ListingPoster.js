@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import {
   DESIGN_TEMPLATES,
   DESIGN_COLOR_SWATCHES,
+  LOGO_POSITIONS,
 } from './templateDesigns';
 import {
   CURATED_FONTS,
@@ -150,6 +151,10 @@ const DesignEditor = ({ listing, sellerLogoDataUrl, sellerName, onClose }) => {
   const [sizeTitle, setSizeTitle] = useState(1);
   const [sizePrice, setSizePrice] = useState(1);
 
+  // Logo del seller: ubicación + tamaño (editables).
+  const [logoPosition, setLogoPosition] = useState('bl');
+  const [logoSize, setLogoSize] = useState(70);
+
   // Carga la familia en pantalla cuando cambie (preview). Pedimos los
   // 3 weights estándar; el hook deja los <link> inyectados en el head.
   useGoogleFontOnPage(fontFamily, [300, 400, 700]);
@@ -208,6 +213,8 @@ const DesignEditor = ({ listing, sellerLogoDataUrl, sellerName, onClose }) => {
     fontWeight,
     sizeTitle,
     sizePrice,
+    logoPosition,
+    logoSize,
   };
 
   const Design = template.render;
@@ -351,6 +358,45 @@ const DesignEditor = ({ listing, sellerLogoDataUrl, sellerName, onClose }) => {
             </span>
           </label>
         </div>
+
+        {logoHref || sellerName ? (
+          <>
+            <div className={css.field}>
+              <span className={css.label}>Posición del logo</span>
+              <div className={css.posRow}>
+                {LOGO_POSITIONS.map(p => (
+                  <button
+                    key={p.key}
+                    type="button"
+                    className={`${css.posBtn} ${p.key === logoPosition ? css.posBtnActive : ''}`}
+                    onClick={() => setLogoPosition(p.key)}
+                    title={p.hint}
+                    aria-label={p.hint}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={css.field}>
+              <label className={css.sliderLabel} htmlFor={`logo-size-${listing.id}`}>
+                <span className={css.label}>Tamaño del logo</span>
+                <span className={css.sliderValue}>{logoSize}px</span>
+              </label>
+              <input
+                id={`logo-size-${listing.id}`}
+                type="range"
+                min="40"
+                max="140"
+                step="5"
+                value={logoSize}
+                onChange={e => setLogoSize(Number(e.target.value))}
+                className={css.slider}
+              />
+            </div>
+          </>
+        ) : null}
 
         <div className={css.field}>
           <label className={css.label} htmlFor={`font-${listing.id}`}>
