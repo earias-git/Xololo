@@ -240,9 +240,13 @@ if (!dev) {
   const hasUsername = typeof USERNAME === 'string' && USERNAME.length > 0;
   const hasPassword = typeof PASSWORD === 'string' && PASSWORD.length > 0;
 
-  // If BASIC_AUTH_USERNAME and BASIC_AUTH_PASSWORD have been set - let's use them
+  // If BASIC_AUTH_USERNAME and BASIC_AUTH_PASSWORD have been set - let's use them.
+  // XOLOLO: `basicAuthWithSocialBypass` deja pasar sin credenciales a los
+  // bots de preview de FB/WhatsApp/Twitter/LinkedIn/Slack/etc. Sin este
+  // bypass, los bots reciben 401 y nunca pueden leer los og:* tags, por
+  // lo que el preview card queda vacío al compartir un listing.
   if (hasUsername && hasPassword) {
-    app.use(auth.basicAuth(USERNAME, PASSWORD));
+    app.use(auth.basicAuthWithSocialBypass(USERNAME, PASSWORD));
   }
 }
 
