@@ -28,26 +28,31 @@ import React from 'react';
 // color primario) para evitar colisión con el color de fondo. Cada
 // template define sus propios anchors porque depende de dónde están
 // los otros elementos.
+// vAlign='top' → `y` es el borde superior; 'bottom' → `y` es el inferior.
+// Elegimos coords de modo que el badge NO salga del viewBox incluso
+// cuando el seller sube el tamaño al máximo (140).
+// Para el póster, los b* evitan la zona del QR (x≈602-800, y=852-1048):
+//   bl queda a la izquierda del QR, encima del precio.
 const POSTER_LOGO_ANCHORS = {
-  tl: { x: 50, y: 200, align: 'left' },
-  tc: { x: 425, y: 200, align: 'center' },
-  tr: { x: 800, y: 200, align: 'right' },
-  bl: { x: 50, y: 1000, align: 'left' },
-  br: { x: 800, y: 1000, align: 'right' },
+  tl: { x: 110, y: 260, align: 'left', vAlign: 'top' },
+  tc: { x: 425, y: 260, align: 'center', vAlign: 'top' },
+  tr: { x: 740, y: 260, align: 'right', vAlign: 'top' },
+  bl: { x: 50, y: 1060, align: 'left', vAlign: 'bottom' },
+  br: { x: 800, y: 1060, align: 'right', vAlign: 'bottom' },
 };
 const LABEL_H_LOGO_ANCHORS = {
-  tl: { x: 480, y: 50, align: 'left' },
-  tc: { x: 735, y: 50, align: 'center' },
-  tr: { x: 970, y: 50, align: 'right' },
-  bl: { x: 480, y: 580, align: 'left' },
-  br: { x: 970, y: 580, align: 'right' },
+  tl: { x: 480, y: 50, align: 'left', vAlign: 'top' },
+  tc: { x: 735, y: 50, align: 'center', vAlign: 'top' },
+  tr: { x: 970, y: 50, align: 'right', vAlign: 'top' },
+  bl: { x: 480, y: 670, align: 'left', vAlign: 'bottom' },
+  br: { x: 970, y: 670, align: 'right', vAlign: 'bottom' },
 };
 const LABEL_V_LOGO_ANCHORS = {
-  tl: { x: 50, y: 580, align: 'left' },
-  tc: { x: 350, y: 580, align: 'center' },
-  tr: { x: 650, y: 580, align: 'right' },
-  bl: { x: 50, y: 860, align: 'left' },
-  br: { x: 650, y: 860, align: 'right' },
+  tl: { x: 50, y: 630, align: 'left', vAlign: 'top' },
+  tc: { x: 350, y: 630, align: 'center', vAlign: 'top' },
+  tr: { x: 650, y: 630, align: 'right', vAlign: 'top' },
+  bl: { x: 50, y: 970, align: 'left', vAlign: 'bottom' },
+  br: { x: 650, y: 970, align: 'right', vAlign: 'bottom' },
 };
 
 export const LOGO_POSITIONS = [
@@ -154,17 +159,29 @@ const ImageOrPlaceholder = ({ href, x, y, w, h, rx = 16, placeholder = '📦' })
 const LOGO_PADDING = 16;
 const LOGO_BADGE_RADIUS = 10;
 
-const BrandMark = ({ logoHref, sellerName, x, y, size, color, align = 'left' }) => {
+const BrandMark = ({
+  logoHref,
+  sellerName,
+  x,
+  y,
+  size,
+  color,
+  align = 'left',
+  vAlign = 'top',
+}) => {
   if (logoHref) {
     const w = size;
     const h = size;
     const ax = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
-    // Badge blanco de fondo con padding — contraste garantizado.
+    // vAlign='bottom' → `y` es el borde INFERIOR del badge; calculamos
+    // el top restando. Esto evita que el logo se salga del canvas al
+    // crecer con el slider de tamaño.
+    const ay = vAlign === 'bottom' ? y - h : y;
     return (
       <g>
         <rect
           x={ax - LOGO_PADDING}
-          y={y - LOGO_PADDING}
+          y={ay - LOGO_PADDING}
           width={w + LOGO_PADDING * 2}
           height={h + LOGO_PADDING * 2}
           fill="#ffffff"
@@ -173,7 +190,7 @@ const BrandMark = ({ logoHref, sellerName, x, y, size, color, align = 'left' }) 
         <image
           href={logoHref}
           x={ax}
-          y={y}
+          y={ay}
           width={w}
           height={h}
           preserveAspectRatio="xMidYMid meet"
@@ -185,10 +202,12 @@ const BrandMark = ({ logoHref, sellerName, x, y, size, color, align = 'left' }) 
     const anchor = align === 'center' ? 'middle' : align === 'right' ? 'end' : 'start';
     const name = String(sellerName).trim();
     const fontPx = size * 0.55;
+    // vAlign='bottom' → ancla al baseline cerca de `y`.
+    const textY = vAlign === 'bottom' ? y : y + size * 0.72;
     return (
       <text
         x={x}
-        y={y + size * 0.72}
+        y={textY}
         fontSize={fontPx}
         fontWeight={800}
         fill={color}
@@ -287,16 +306,21 @@ const PosterDesign = props => {
           {price}
         </text>
 
-        {/* CTA */}
+        {/* CTA alineado a la izquierda del QR para evitar colisión.
+            El QR ocupa x≈602-800; dejamos al CTA el espacio x=50-580. */}
         <text
-          x={425}
-          y={900}
+          x={315}
+          y={920}
           fontSize={26}
           fontWeight={fontWeight}
           textAnchor="middle"
           fill="#555555"
         >
-          {cta}
+          {wrapTspans(cta, 26, 530, 2).map((l, i) => (
+            <tspan key={i} x={315} dy={i === 0 ? 0 : 30}>
+              {l}
+            </tspan>
+          ))}
         </text>
 
         {/* QR abajo derecha */}
@@ -316,6 +340,7 @@ const PosterDesign = props => {
           size={logoSize}
           color="#333333"
           align={anchor.align}
+          vAlign={anchor.vAlign}
         />
       </g>
     </svg>
@@ -381,6 +406,7 @@ const LabelHorizontalDesign = props => {
           size={logoSize}
           color="#333333"
           align={anchor.align}
+          vAlign={anchor.vAlign}
         />
 
         {/* Título */}
@@ -516,6 +542,7 @@ const LabelVerticalDesign = props => {
           size={logoSize}
           color="#333333"
           align={anchor.align}
+          vAlign={anchor.vAlign}
         />
       </g>
     </svg>
