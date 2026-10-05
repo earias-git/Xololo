@@ -3,23 +3,22 @@ import React, { useEffect, useState } from 'react';
 import { apiBaseUrl } from '../../util/api';
 import { IconSpinner } from '../../components';
 import PromoShareButtons from '../../components/PromoShareButtons/PromoShareButtons';
+import ListingQRCode from '../../components/ListingQRCode/ListingQRCode';
 
 import { formatSubunitsAsMxn } from './dashboardUtils';
 
 import css from './DashboardPage.module.css';
 
-// XOLOLO Promote v1 (sub-commit 1 de 5).
+// XOLOLO Promote v1.
 //
 // Vista donde el seller ve todos sus listings y por cada uno tiene
 // acceso a las acciones de promoción (compartir en redes, QR, poster
-// PDF, etc.). Este sub-commit sólo trae la base:
-//   - fetch de listings del seller (/api/seller-promo-listings)
-//   - grid con card por listing (imagen + título + precio + views)
-//   - placeholder de las 5 acciones (rellenados en sub-commits 2-4)
+// PDF, etc.). Hoy incluye (sub-commits ya aplicados):
+//   1 · Fetch de listings + grid por card
+//   2 · Share intents (FB, IG, X, WhatsApp, TikTok, copiar link)
+//   3 · QR + descarga PNG
 //
-// Los sub-commits que siguen agregan por listing:
-//   2 · Share intents (FB, IG, X, WhatsApp, TikTok)
-//   3 · QR generator + descarga PNG
+// Pendientes:
 //   4 · Templates de poster + editor + descarga PDF
 //   5 · Feed CSV Meta Commerce (link a la URL del feed público)
 
@@ -38,7 +37,7 @@ const fetchListings = async () => {
 
 const PromoActionsPending = () => (
   <div className={css.promoActionsPending}>
-    <span className={css.promoActionsMuted}>📱 QR · 🏷️ Poster PDF · 📊 Stats detallado</span>
+    <span className={css.promoActionsMuted}>🏷️ Poster PDF · 📊 Stats detallado</span>
     <span className={css.promoActionsSoon}>Próximamente</span>
   </div>
 );
@@ -66,7 +65,9 @@ const ListingCard = ({ listing }) => {
       </div>
       {/* Sub-commit 2: share intents. */}
       <PromoShareButtons listing={listing} />
-      {/* Aún faltan sub-commits 3 (QR) y 4 (poster PDF). */}
+      {/* Sub-commit 3: QR + descarga PNG. */}
+      <ListingQRCode listing={listing} />
+      {/* Aún falta sub-commit 4 (poster PDF). */}
       <PromoActionsPending />
     </article>
   );

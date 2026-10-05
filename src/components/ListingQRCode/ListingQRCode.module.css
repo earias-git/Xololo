@@ -1,0 +1,80 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.qrBox {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--colorWhite);
+  border: 1px solid var(--colorGrey200);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.qrBox img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.qrEmpty {
+  color: var(--colorGrey400);
+  font-size: 10px;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--colorGrey200);
+  border-radius: 6px;
+  background: var(--colorWhite);
+  color: var(--colorGrey900);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--colorGrey50);
+  border-color: var(--colorGrey300);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--colorGrey500);
+}
+
+.error {
+  margin: 0;
+  font-size: 11px;
+  color: var(--colorFail);
+}
