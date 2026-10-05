@@ -5,6 +5,14 @@ import {
   DESIGN_TEMPLATES,
   DESIGN_COLOR_SWATCHES,
 } from './templateDesigns';
+import {
+  CURATED_FONTS,
+  FONT_CATEGORIES,
+  WEIGHT_OPTIONS,
+  familyIsAvailable,
+  useGoogleFontOnPage,
+  buildEmbeddedFontCss,
+} from './designFonts';
 import css from './ListingPoster.module.css';
 
 // XOLOLO Promote · Diseños para Imprimir (sub-commit 1 de 3).
@@ -76,11 +84,26 @@ const fetchAsDataUrl = async url => {
 
 // Serializa el <svg> actual, lo renderiza a <img> y vuelca en canvas
 // con el tamaño físico (exportPx del template). Devuelve dataURL PNG.
-const renderSvgToPngDataUrl = async (svgEl, [widthPx, heightPx]) => {
-  // Clonar y asegurar xmlns correcto (algunos browsers lo omiten al
-  // serializar nodos React).
+// embeddedFontCss: contenido de un <style> con @font-face a inyectar
+// en el <defs> del SVG antes de serializar. Es la ÚNICA manera de que
+// el <img> use una tipografía custom (no hereda del documento host).
+const renderSvgToPngDataUrl = async (svgEl, [widthPx, heightPx], embeddedFontCss) => {
   const clone = svgEl.cloneNode(true);
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+  if (embeddedFontCss) {
+    // Inserta <style> dentro del primer <defs> (o lo crea).
+    let defs = clone.querySelector('defs');
+    if (!defs) {
+      defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      clone.insertBefore(defs, clone.firstChild);
+    }
+    const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    style.setAttribute('type', 'text/css');
+    style.textContent = embeddedFontCss;
+    defs.appendChild(style);
+  }
+
   const serializer = new XMLSerializer();
   const svgString = serializer.serializeToString(clone);
   const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
@@ -117,6 +140,23 @@ const DesignEditor = ({ listing, sellerLogoUrl, onClose }) => {
   const [logoHref, setLogoHref] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState(null);
+
+  // Tipografía (sub-commit 3)
+  const [fontFamily, setFontFamily] = useState(CURATED_FONTS[0].family);
+  const [fontWeight, setFontWeight] = useState(700);
+  const [sizeTitle, setSizeTitle] = useState(1);
+  const [sizePrice, setSizePrice] = useState(1);
+
+  // Carga la familia en pantalla cuando cambie (preview). Pedimos los
+  // 3 weights estándar; el hook deja los <link> inyectados en el head.
+  useGoogleFontOnPage(fontFamily, [300, 400, 700]);
+
+  // Si al cambiar de familia el weight actual no existe, baja a 400.
+  useEffect(() => {
+    if (!familyIsAvailable(fontFamily, fontWeight)) {
+      setFontWeight(400);
+    }
+  }, [fontFamily, fontWeight]);
 
   const url = useMemo(() => buildListingUrl(listing), [listing]);
   const template = DESIGN_TEMPLATES.find(t => t.key === templateKey) || DESIGN_TEMPLATES[0];
@@ -172,16 +212,35 @@ const DesignEditor = ({ listing, sellerLogoUrl, onClose }) => {
     productImgHref,
     qrHref,
     logoHref,
+    fontFamily,
+    fontWeight,
+    sizeTitle,
+    sizePrice,
   };
 
   const Design = template.render;
+
+  // Antes de exportar embebemos la fuente dentro del SVG. Si falla
+  // (sin red, etc), caemos a la fuente sistema — el export sigue
+  // funcionando pero la tipografía no será la custom.
+  const resolveEmbeddedFontCss = async () => {
+    try {
+      // Pedimos sólo el weight actualmente seleccionado. Si no hay
+      // familia o la combinación no existe, buildEmbeddedFontCss cae
+      // al 400.
+      return await buildEmbeddedFontCss(fontFamily, [fontWeight]);
+    } catch (_e) {
+      return null;
+    }
+  };
 
   const handleDownloadPng = async () => {
     const svgEl = svgRef.current;
     if (!svgEl) return;
     setExporting(true);
     try {
-      const dataUrl = await renderSvgToPngDataUrl(svgEl, template.exportPx);
+      const fontCss = await resolveEmbeddedFontCss();
+      const dataUrl = await renderSvgToPngDataUrl(svgEl, template.exportPx, fontCss);
       const a = document.createElement('a');
       a.href = dataUrl;
       a.download = `${slugifyFilename(listing.title)}-${template.key}.png`;
@@ -202,7 +261,8 @@ const DesignEditor = ({ listing, sellerLogoUrl, onClose }) => {
     setExporting(true);
     try {
       const { default: jsPDF } = await import('jspdf');
-      const pngDataUrl = await renderSvgToPngDataUrl(svgEl, template.exportPx);
+      const fontCss = await resolveEmbeddedFontCss();
+      const pngDataUrl = await renderSvgToPngDataUrl(svgEl, template.exportPx, fontCss);
       const { widthMm, heightMm, orientation, format } = template.pdf;
       const pdf = new jsPDF({
         unit: 'mm',
@@ -298,6 +358,85 @@ const DesignEditor = ({ listing, sellerLogoUrl, onClose }) => {
               Convierte el diseño a escala de grises (útil para imprimir en B/N).
             </span>
           </label>
+        </div>
+
+        <div className={css.field}>
+          <label className={css.label} htmlFor={`font-${listing.id}`}>
+            Tipografía
+          </label>
+          <select
+            id={`font-${listing.id}`}
+            className={css.select}
+            value={fontFamily}
+            onChange={e => setFontFamily(e.target.value)}
+            style={{ fontFamily: `'${fontFamily}', sans-serif` }}
+          >
+            {FONT_CATEGORIES.map(cat => (
+              <optgroup key={cat.key} label={cat.label}>
+                {CURATED_FONTS.filter(f => f.category === cat.key).map(f => (
+                  <option key={f.family} value={f.family} style={{ fontFamily: `'${f.family}', sans-serif` }}>
+                    {f.family}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+
+        <div className={css.field}>
+          <span className={css.label}>Grosor</span>
+          <div className={css.weightRow}>
+            {WEIGHT_OPTIONS.map(w => {
+              const available = familyIsAvailable(fontFamily, w.value);
+              return (
+                <button
+                  key={w.value}
+                  type="button"
+                  disabled={!available}
+                  className={`${css.chip} ${w.value === fontWeight ? css.chipActive : ''}`}
+                  onClick={() => setFontWeight(w.value)}
+                  title={available ? w.label : `${w.label} no disponible en ${fontFamily}`}
+                  style={{ fontWeight: w.value, fontFamily: `'${fontFamily}', sans-serif` }}
+                >
+                  {w.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className={css.field}>
+          <label className={css.sliderLabel} htmlFor={`size-title-${listing.id}`}>
+            <span className={css.label}>Tamaño del título</span>
+            <span className={css.sliderValue}>{Math.round(sizeTitle * 100)}%</span>
+          </label>
+          <input
+            id={`size-title-${listing.id}`}
+            type="range"
+            min="0.7"
+            max="1.4"
+            step="0.05"
+            value={sizeTitle}
+            onChange={e => setSizeTitle(Number(e.target.value))}
+            className={css.slider}
+          />
+        </div>
+
+        <div className={css.field}>
+          <label className={css.sliderLabel} htmlFor={`size-price-${listing.id}`}>
+            <span className={css.label}>Tamaño del precio</span>
+            <span className={css.sliderValue}>{Math.round(sizePrice * 100)}%</span>
+          </label>
+          <input
+            id={`size-price-${listing.id}`}
+            type="range"
+            min="0.7"
+            max="1.4"
+            step="0.05"
+            value={sizePrice}
+            onChange={e => setSizePrice(Number(e.target.value))}
+            className={css.slider}
+          />
         </div>
 
         <div className={css.field}>

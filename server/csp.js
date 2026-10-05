@@ -64,6 +64,10 @@ const defaultDirectives = {
     '*.plausible.io',
 
     'fonts.googleapis.com',
+    // XOLOLO: necesario para que el editor "Diseños para Imprimir"
+    // pueda `fetch()` los .woff2 de Google Fonts y embeberlos como
+    // data: URL dentro del SVG exportado (sub-commit 3).
+    'fonts.gstatic.com',
 
     'sentry.io',
     '*.sentry.io',

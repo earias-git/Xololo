@@ -17,7 +17,13 @@ import React from 'react';
 //
 // Props que recibe cada draw:
 //   { title, price, cta, colorPrimary, colorSecondary, blackWhite,
-//     productImgHref, qrHref, logoHref }
+//     productImgHref, qrHref, logoHref,
+//     fontFamily, fontWeight, sizeTitle, sizePrice }
+//
+// fontFamily: nombre tal cual lo expone Google Fonts (ej. 'Montserrat').
+// fontWeight: numeric (300 Light, 400 Normal, 700 Bold).
+// sizeTitle / sizePrice: escalas 0.7–1.4 que multiplican los fontSize
+// base de cada template.
 //
 // productImgHref / qrHref / logoHref son data: URLs (resueltas por el
 // host) para que la serialización del SVG no dependa de recursos
@@ -142,6 +148,16 @@ const BlackWhiteFilterDefs = () => (
   </defs>
 );
 
+// Fallback stack cuando no hay familia definida (p.ej. hasta que carga
+// Google Fonts). También se aplica después de la familia elegida como
+// red de seguridad para unicode-ranges no cubiertos por la WOFF2.
+const FALLBACK_STACK = "system-ui, -apple-system, 'Segoe UI', sans-serif";
+
+const fontStack = family =>
+  family ? `'${family}', ${FALLBACK_STACK}` : FALLBACK_STACK;
+
+const px = (base, scale = 1) => Math.round(base * (scale || 1));
+
 // --- Template 1: Poster carta vertical ---
 // viewBox 850×1100 (ratio 0.773 = carta ratio).
 const PosterDesign = props => {
@@ -155,14 +171,20 @@ const PosterDesign = props => {
     productImgHref,
     qrHref,
     logoHref,
+    fontFamily,
+    fontWeight = 700,
+    sizeTitle = 1,
+    sizePrice = 1,
   } = props;
-  const titleLines = wrapTspans(title, 46, 650, 2);
+  const titleFontPx = px(40, sizeTitle);
+  const priceFontPx = px(92, sizePrice);
+  const titleLines = wrapTspans(title, titleFontPx, 650, 2);
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 850 1100"
       preserveAspectRatio="xMidYMid meet"
-      fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
+      fontFamily={fontStack(fontFamily)}
     >
       <BlackWhiteFilterDefs />
       <g filter={blackWhite ? 'url(#xolo-bw)' : undefined}>
@@ -175,9 +197,9 @@ const PosterDesign = props => {
         <BrandMark logoHref={logoHref} x={60} y={45} size={70} color="#ffffff" />
 
         {/* Título sobre la banda, a la derecha del logo */}
-        <text x={160} y={70} fontSize={40} fontWeight={700} fill="#ffffff">
+        <text x={160} y={70} fontSize={titleFontPx} fontWeight={fontWeight} fill="#ffffff">
           {titleLines.map((l, i) => (
-            <tspan key={i} x={160} dy={i === 0 ? 0 : 46}>
+            <tspan key={i} x={160} dy={i === 0 ? 0 : titleFontPx * 1.15}>
               {l}
             </tspan>
           ))}
@@ -190,8 +212,8 @@ const PosterDesign = props => {
         <text
           x={425}
           y={820}
-          fontSize={92}
-          fontWeight={800}
+          fontSize={priceFontPx}
+          fontWeight={fontWeight === 300 ? 400 : fontWeight}
           textAnchor="middle"
           fill={colorSecondary}
         >
@@ -199,7 +221,14 @@ const PosterDesign = props => {
         </text>
 
         {/* CTA */}
-        <text x={425} y={900} fontSize={26} textAnchor="middle" fill="#555555">
+        <text
+          x={425}
+          y={900}
+          fontSize={26}
+          fontWeight={fontWeight}
+          textAnchor="middle"
+          fill="#555555"
+        >
           {cta}
         </text>
 
@@ -228,14 +257,20 @@ const LabelHorizontalDesign = props => {
     productImgHref,
     qrHref,
     logoHref,
+    fontFamily,
+    fontWeight = 700,
+    sizeTitle = 1,
+    sizePrice = 1,
   } = props;
-  const titleLines = wrapTspans(title, 34, 480, 2);
+  const titleFontPx = px(34, sizeTitle);
+  const priceFontPx = px(78, sizePrice);
+  const titleLines = wrapTspans(title, titleFontPx, 480, 2);
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 1000 700"
       preserveAspectRatio="xMidYMid meet"
-      fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
+      fontFamily={fontStack(fontFamily)}
     >
       <BlackWhiteFilterDefs />
       <g filter={blackWhite ? 'url(#xolo-bw)' : undefined}>
@@ -259,9 +294,9 @@ const LabelHorizontalDesign = props => {
         <BrandMark logoHref={logoHref} x={30} y={600} size={56} color={colorPrimary} />
 
         {/* Título */}
-        <text x={490} y={100} fontSize={34} fontWeight={700} fill="#111111">
+        <text x={490} y={100} fontSize={titleFontPx} fontWeight={fontWeight} fill="#111111">
           {titleLines.map((l, i) => (
-            <tspan key={i} x={490} dy={i === 0 ? 0 : 40}>
+            <tspan key={i} x={490} dy={i === 0 ? 0 : titleFontPx * 1.17}>
               {l}
             </tspan>
           ))}
@@ -271,12 +306,18 @@ const LabelHorizontalDesign = props => {
         <line x1={490} y1={200} x2={700} y2={200} stroke={colorSecondary} strokeWidth={4} />
 
         {/* Precio en color secundario */}
-        <text x={490} y={310} fontSize={78} fontWeight={800} fill={colorSecondary}>
+        <text
+          x={490}
+          y={310}
+          fontSize={priceFontPx}
+          fontWeight={fontWeight === 300 ? 400 : fontWeight}
+          fill={colorSecondary}
+        >
           {price}
         </text>
 
         {/* CTA */}
-        <text x={490} y={380} fontSize={20} fill="#444444">
+        <text x={490} y={380} fontSize={20} fontWeight={fontWeight} fill="#444444">
           {cta}
         </text>
 
@@ -300,14 +341,20 @@ const LabelVerticalDesign = props => {
     productImgHref,
     qrHref,
     logoHref,
+    fontFamily,
+    fontWeight = 700,
+    sizeTitle = 1,
+    sizePrice = 1,
   } = props;
-  const titleLines = wrapTspans(title, 36, 580, 2);
+  const titleFontPx = px(36, sizeTitle);
+  const priceFontPx = px(82, sizePrice);
+  const titleLines = wrapTspans(title, titleFontPx, 580, 2);
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 700 1000"
       preserveAspectRatio="xMidYMid meet"
-      fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
+      fontFamily={fontStack(fontFamily)}
     >
       <BlackWhiteFilterDefs />
       <g filter={blackWhite ? 'url(#xolo-bw)' : undefined}>
@@ -328,9 +375,16 @@ const LabelVerticalDesign = props => {
         <ImageOrPlaceholder href={productImgHref} x={50} y={110} w={600} h={450} rx={16} />
 
         {/* Título */}
-        <text x={350} y={620} fontSize={36} fontWeight={700} textAnchor="middle" fill="#111111">
+        <text
+          x={350}
+          y={620}
+          fontSize={titleFontPx}
+          fontWeight={fontWeight}
+          textAnchor="middle"
+          fill="#111111"
+        >
           {titleLines.map((l, i) => (
-            <tspan key={i} x={350} dy={i === 0 ? 0 : 42}>
+            <tspan key={i} x={350} dy={i === 0 ? 0 : titleFontPx * 1.17}>
               {l}
             </tspan>
           ))}
@@ -340,8 +394,8 @@ const LabelVerticalDesign = props => {
         <text
           x={350}
           y={790}
-          fontSize={82}
-          fontWeight={800}
+          fontSize={priceFontPx}
+          fontWeight={fontWeight === 300 ? 400 : fontWeight}
           textAnchor="middle"
           fill={colorSecondary}
         >
@@ -352,7 +406,14 @@ const LabelVerticalDesign = props => {
         {qrHref ? <image href={qrHref} x={60} y={830} width={140} height={140} /> : null}
 
         {/* CTA abajo derecha */}
-        <text x={670} y={910} fontSize={20} textAnchor="end" fill="#444444">
+        <text
+          x={670}
+          y={910}
+          fontSize={20}
+          fontWeight={fontWeight}
+          textAnchor="end"
+          fill="#444444"
+        >
           {cta}
         </text>
         <text x={670} y={960} fontSize={14} textAnchor="end" fill="#888888">
