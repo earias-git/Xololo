@@ -17,7 +17,7 @@ import React from 'react';
 //
 // Props que recibe cada draw:
 //   { title, price, cta, colorPrimary, colorSecondary, blackWhite,
-//     productImgHref, qrHref, logoHref,
+//     productImgHref, qrHref, logoHref, sellerName,
 //     fontFamily, fontWeight, sizeTitle, sizePrice }
 //
 // fontFamily: nombre tal cual lo expone Google Fonts (ej. 'Montserrat').
@@ -102,9 +102,14 @@ const ImageOrPlaceholder = ({ href, x, y, w, h, rx = 16, placeholder = '📦' })
   );
 };
 
-// Marca del seller: logo (data:URL) si existe, texto "XOLOLO" si no.
-// Alineado por default a la izquierda — el template controla x/y.
-const BrandMark = ({ logoHref, x, y, size, color, align = 'left' }) => {
+// Marca del seller con cascada:
+//   1) logoHref (data:URL del logo del seller)  → <image>
+//   2) sellerName                               → <text> con el nombre
+//   3) null + null                              → no renderiza nada
+//
+// Nunca mete texto placeholder tipo "XOLOLO" por default — si el seller
+// no tiene marca configurada, el diseño queda limpio.
+const BrandMark = ({ logoHref, sellerName, x, y, size, color, align = 'left' }) => {
   if (logoHref) {
     const w = size;
     const h = size;
@@ -120,19 +125,24 @@ const BrandMark = ({ logoHref, x, y, size, color, align = 'left' }) => {
       />
     );
   }
-  const anchor = align === 'center' ? 'middle' : align === 'right' ? 'end' : 'start';
-  return (
-    <text
-      x={x}
-      y={y + size * 0.75}
-      fontSize={size * 0.65}
-      fontWeight={800}
-      fill={color}
-      textAnchor={anchor}
-    >
-      XOLOLO
-    </text>
-  );
+  if (sellerName) {
+    const anchor = align === 'center' ? 'middle' : align === 'right' ? 'end' : 'start';
+    const name = String(sellerName).trim();
+    const fontPx = size * 0.55;
+    return (
+      <text
+        x={x}
+        y={y + size * 0.72}
+        fontSize={fontPx}
+        fontWeight={800}
+        fill={color}
+        textAnchor={anchor}
+      >
+        {name.length > 24 ? name.slice(0, 23) + '…' : name}
+      </text>
+    );
+  }
+  return null;
 };
 
 // Filtro B/N aplicable al root <g> del diseño. Matrix grayscale
@@ -171,6 +181,7 @@ const PosterDesign = props => {
     productImgHref,
     qrHref,
     logoHref,
+    sellerName,
     fontFamily,
     fontWeight = 700,
     sizeTitle = 1,
@@ -193,13 +204,27 @@ const PosterDesign = props => {
         {/* Banda superior con color primario */}
         <rect x={0} y={0} width={850} height={180} fill={colorPrimary} />
 
-        {/* Logo o marca */}
-        <BrandMark logoHref={logoHref} x={60} y={45} size={70} color="#ffffff" />
+        {/* Logo o nombre de la tienda; null si el seller no tiene nada */}
+        <BrandMark
+          logoHref={logoHref}
+          sellerName={sellerName}
+          x={60}
+          y={45}
+          size={70}
+          color="#ffffff"
+        />
 
-        {/* Título sobre la banda, a la derecha del logo */}
-        <text x={160} y={70} fontSize={titleFontPx} fontWeight={fontWeight} fill="#ffffff">
+        {/* Título sobre la banda, con offset si hay logo/nombre o pegado
+            a la izquierda si no hay marca */}
+        <text
+          x={logoHref || sellerName ? 160 : 60}
+          y={70}
+          fontSize={titleFontPx}
+          fontWeight={fontWeight}
+          fill="#ffffff"
+        >
           {titleLines.map((l, i) => (
-            <tspan key={i} x={160} dy={i === 0 ? 0 : titleFontPx * 1.15}>
+            <tspan key={i} x={logoHref || sellerName ? 160 : 60} dy={i === 0 ? 0 : titleFontPx * 1.15}>
               {l}
             </tspan>
           ))}
@@ -257,6 +282,7 @@ const LabelHorizontalDesign = props => {
     productImgHref,
     qrHref,
     logoHref,
+    sellerName,
     fontFamily,
     fontWeight = 700,
     sizeTitle = 1,
@@ -290,8 +316,15 @@ const LabelHorizontalDesign = props => {
         {/* Imagen producto izquierda */}
         <ImageOrPlaceholder href={productImgHref} x={30} y={30} w={420} h={540} rx={16} />
 
-        {/* Logo del seller abajo izquierda */}
-        <BrandMark logoHref={logoHref} x={30} y={600} size={56} color={colorPrimary} />
+        {/* Logo o nombre del seller abajo izquierda */}
+        <BrandMark
+          logoHref={logoHref}
+          sellerName={sellerName}
+          x={30}
+          y={600}
+          size={56}
+          color={colorPrimary}
+        />
 
         {/* Título */}
         <text x={490} y={100} fontSize={titleFontPx} fontWeight={fontWeight} fill="#111111">
@@ -341,6 +374,7 @@ const LabelVerticalDesign = props => {
     productImgHref,
     qrHref,
     logoHref,
+    sellerName,
     fontFamily,
     fontWeight = 700,
     sizeTitle = 1,
@@ -364,6 +398,7 @@ const LabelVerticalDesign = props => {
         <rect x={0} y={0} width={700} height={80} fill={colorPrimary} />
         <BrandMark
           logoHref={logoHref}
+          sellerName={sellerName}
           x={350}
           y={14}
           size={52}

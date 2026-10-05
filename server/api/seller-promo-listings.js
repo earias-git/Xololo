@@ -6,14 +6,17 @@
 //   GET /api/seller-promo-listings
 //   200 → { listings: [{ id, title, slug, imageUrl, priceSubunits,
 //                        priceCurrency, state, viewCount }],
-//          sellerLogoUrl: string | null }
+//          sellerLogoUrl: string | null,
+//          sellerName: string | null }
 //   401 → { error: 'unauthorized' }
 //   500 → { error: 'internal' }
 //
-// sellerLogoUrl: logo del seller para los diseños para imprimir
-// (sub-commit 2). Prioridad: publicData.logoUrl > profileImage avatar
-// > null. Nunca falla la respuesta: si no hay logo, el editor usa el
-// fallback de marca "XOLOLO".
+// sellerLogoUrl: logo del seller para los diseños para imprimir.
+//   Prioridad: publicData.logoUrl > profileImage avatar > null.
+// sellerName: nombre de la tienda. Prioridad: publicData.storeName >
+//   profile.displayName > "firstName lastName" > null. Se usa como
+//   "marca escrita" cuando no hay logo utilizable. Nunca falla la
+//   respuesta: si ambos son null, el BrandMark queda vacío.
 //
 // viewCount = tx.metadata.listingViewedTotal si existe (pipeline de
 // tracking F3 Sprint 2), 0 si no. Los stats por source se leerán
@@ -37,17 +40,22 @@ module.exports = async (req, res) => {
   try {
     const sdk = getSdk(req, res);
 
-    // XOLOLO Promote sub-commit 2: logo del seller para los diseños
-    // para imprimir. publicData.logoUrl lo configura el seller en
-    // ManageStore; fallback a su profileImage (variant square-small2x).
+    // XOLOLO Promote sub-commit 2+: logo del seller y nombre de tienda
+    // para los diseños para imprimir.
+    //   sellerLogoUrl: publicData.logoUrl (lo configura en ManageStore)
+    //                  → profileImage avatar como fallback → null.
+    //   sellerName: profile.publicData.storeName o displayName — se usa
+    //               como "marca escrita" cuando no hay logo utilizable.
     let sellerLogoUrl = null;
+    let sellerName = null;
     try {
       const me = await sdk.currentUser.show({
         include: ['profileImage'],
         'fields.image': ['variants.square-small2x', 'variants.square-small'],
       });
       const u = me?.data?.data;
-      sellerLogoUrl = u?.attributes?.profile?.publicData?.logoUrl || null;
+      const profile = u?.attributes?.profile || {};
+      sellerLogoUrl = profile?.publicData?.logoUrl || null;
       if (!sellerLogoUrl) {
         const imgRel = u?.relationships?.profileImage?.data;
         const includedUser = me?.data?.included || [];
@@ -59,9 +67,14 @@ module.exports = async (req, res) => {
           avatar?.attributes?.variants?.['square-small']?.url ||
           null;
       }
+      sellerName =
+        profile?.publicData?.storeName ||
+        profile?.displayName ||
+        [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim() ||
+        null;
     } catch (_e) {
-      // No bloqueante: si falla, los diseños caen al fallback de marca
-      // "XOLOLO" por default.
+      // No bloqueante: si falla, el BrandMark queda vacío (no se
+      // muestra ningún texto placeholder tipo "XOLOLO").
     }
 
     let response;
@@ -115,7 +128,7 @@ module.exports = async (req, res) => {
     });
     // Sólo mostrar published (no draft, no closed).
     const published = listings.filter(l => l.state === 'published');
-    return res.json({ listings: published, sellerLogoUrl });
+    return res.json({ listings: published, sellerLogoUrl, sellerName });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('seller-promo-listings unexpected:', e?.message);

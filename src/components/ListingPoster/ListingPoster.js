@@ -128,7 +128,7 @@ const renderSvgToPngDataUrl = async (svgEl, [widthPx, heightPx], embeddedFontCss
   }
 };
 
-const DesignEditor = ({ listing, sellerLogoUrl, onClose }) => {
+const DesignEditor = ({ listing, sellerLogoUrl, sellerName, onClose }) => {
   const svgRef = useRef(null);
   const [templateKey, setTemplateKey] = useState(DESIGN_TEMPLATES[0].key);
   const [colorPrimary, setColorPrimary] = useState(DESIGN_COLOR_SWATCHES[0]);
@@ -212,6 +212,7 @@ const DesignEditor = ({ listing, sellerLogoUrl, onClose }) => {
     productImgHref,
     qrHref,
     logoHref,
+    sellerName: sellerName || null,
     fontFamily,
     fontWeight,
     sizeTitle,
@@ -484,7 +485,7 @@ const DesignEditor = ({ listing, sellerLogoUrl, onClose }) => {
   );
 };
 
-const ListingPoster = ({ listing, sellerLogoUrl }) => {
+const ListingPoster = ({ listing, sellerLogoUrl, sellerName }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className={css.root}>
@@ -500,6 +501,7 @@ const ListingPoster = ({ listing, sellerLogoUrl }) => {
         <DesignEditor
           listing={listing}
           sellerLogoUrl={sellerLogoUrl}
+          sellerName={sellerName}
           onClose={() => setOpen(false)}
         />
       ) : null}
