@@ -39,7 +39,7 @@ const fetchListings = async () => {
   return data;
 };
 
-const ListingCard = ({ listing }) => {
+const ListingCard = ({ listing, sellerLogoUrl }) => {
   return (
     <article className={css.promoCard}>
       <div className={css.promoCardHeader}>
@@ -64,8 +64,8 @@ const ListingCard = ({ listing }) => {
       <PromoShareButtons listing={listing} />
       {/* Sub-commit 3: QR + descarga PNG. */}
       <ListingQRCode listing={listing} />
-      {/* Sub-commit 4: Poster editor + PDF. */}
-      <ListingPoster listing={listing} />
+      {/* Sub-commit 4: Diseños para Imprimir — ahora con logo del seller. */}
+      <ListingPoster listing={listing} sellerLogoUrl={sellerLogoUrl} />
     </article>
   );
 };
@@ -91,6 +91,7 @@ const DashboardPromoteView = () => {
   }, []);
 
   const listings = state.data?.listings || [];
+  const sellerLogoUrl = state.data?.sellerLogoUrl || null;
 
   return (
     <>
@@ -133,7 +134,7 @@ const DashboardPromoteView = () => {
       {state.status === 'ok' && listings.length > 0 ? (
         <div className={css.promoGrid}>
           {listings.map(l => (
-            <ListingCard key={l.id} listing={l} />
+            <ListingCard key={l.id} listing={l} sellerLogoUrl={sellerLogoUrl} />
           ))}
         </div>
       ) : null}

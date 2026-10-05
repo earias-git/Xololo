@@ -5,9 +5,15 @@
 // Contrato:
 //   GET /api/seller-promo-listings
 //   200 → { listings: [{ id, title, slug, imageUrl, priceSubunits,
-//                        priceCurrency, state, viewCount }] }
+//                        priceCurrency, state, viewCount }],
+//          sellerLogoUrl: string | null }
 //   401 → { error: 'unauthorized' }
 //   500 → { error: 'internal' }
+//
+// sellerLogoUrl: logo del seller para los diseños para imprimir
+// (sub-commit 2). Prioridad: publicData.logoUrl > profileImage avatar
+// > null. Nunca falla la respuesta: si no hay logo, el editor usa el
+// fallback de marca "XOLOLO".
 //
 // viewCount = tx.metadata.listingViewedTotal si existe (pipeline de
 // tracking F3 Sprint 2), 0 si no. Los stats por source se leerán
@@ -30,6 +36,34 @@ const firstImageUrl = listing => {
 module.exports = async (req, res) => {
   try {
     const sdk = getSdk(req, res);
+
+    // XOLOLO Promote sub-commit 2: logo del seller para los diseños
+    // para imprimir. publicData.logoUrl lo configura el seller en
+    // ManageStore; fallback a su profileImage (variant square-small2x).
+    let sellerLogoUrl = null;
+    try {
+      const me = await sdk.currentUser.show({
+        include: ['profileImage'],
+        'fields.image': ['variants.square-small2x', 'variants.square-small'],
+      });
+      const u = me?.data?.data;
+      sellerLogoUrl = u?.attributes?.profile?.publicData?.logoUrl || null;
+      if (!sellerLogoUrl) {
+        const imgRel = u?.relationships?.profileImage?.data;
+        const includedUser = me?.data?.included || [];
+        const avatar = imgRel
+          ? includedUser.find(r => r.type === 'image' && r.id?.uuid === imgRel.id?.uuid)
+          : null;
+        sellerLogoUrl =
+          avatar?.attributes?.variants?.['square-small2x']?.url ||
+          avatar?.attributes?.variants?.['square-small']?.url ||
+          null;
+      }
+    } catch (_e) {
+      // No bloqueante: si falla, los diseños caen al fallback de marca
+      // "XOLOLO" por default.
+    }
+
     let response;
     try {
       response = await sdk.ownListings.query({
@@ -81,7 +115,7 @@ module.exports = async (req, res) => {
     });
     // Sólo mostrar published (no draft, no closed).
     const published = listings.filter(l => l.state === 'published');
-    return res.json({ listings: published });
+    return res.json({ listings: published, sellerLogoUrl });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('seller-promo-listings unexpected:', e?.message);

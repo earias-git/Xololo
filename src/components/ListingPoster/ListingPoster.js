@@ -105,13 +105,16 @@ const renderSvgToPngDataUrl = async (svgEl, [widthPx, heightPx]) => {
   }
 };
 
-const DesignEditor = ({ listing, onClose }) => {
+const DesignEditor = ({ listing, sellerLogoUrl, onClose }) => {
   const svgRef = useRef(null);
   const [templateKey, setTemplateKey] = useState(DESIGN_TEMPLATES[0].key);
-  const [color, setColor] = useState(DESIGN_COLOR_SWATCHES[0]);
+  const [colorPrimary, setColorPrimary] = useState(DESIGN_COLOR_SWATCHES[0]);
+  const [colorSecondary, setColorSecondary] = useState(DESIGN_COLOR_SWATCHES[5]); // negro
+  const [blackWhite, setBlackWhite] = useState(false);
   const [cta, setCta] = useState('Escanéame y cómpralo en Xololo');
   const [productImgHref, setProductImgHref] = useState(null);
   const [qrHref, setQrHref] = useState(null);
+  const [logoHref, setLogoHref] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -129,6 +132,18 @@ const DesignEditor = ({ listing, onClose }) => {
       cancelled = true;
     };
   }, [listing.imageUrl]);
+
+  // Precarga logo del seller como data: URL (si existe).
+  useEffect(() => {
+    let cancelled = false;
+    if (!sellerLogoUrl) return;
+    fetchAsDataUrl(sellerLogoUrl).then(dataUrl => {
+      if (!cancelled) setLogoHref(dataUrl);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sellerLogoUrl]);
 
   // Genera el QR como data: URL.
   useEffect(() => {
@@ -151,9 +166,12 @@ const DesignEditor = ({ listing, onClose }) => {
     title: listing.title || '',
     price: MXN(listing.priceSubunits),
     cta: cta || '',
-    color,
+    colorPrimary,
+    colorSecondary,
+    blackWhite,
     productImgHref,
     qrHref,
+    logoHref,
   };
 
   const Design = template.render;
@@ -237,19 +255,49 @@ const DesignEditor = ({ listing, onClose }) => {
         </div>
 
         <div className={css.field}>
-          <span className={css.label}>Color</span>
+          <span className={css.label}>Color primario</span>
           <div className={css.colorRow}>
             {DESIGN_COLOR_SWATCHES.map(c => (
               <button
                 key={c}
                 type="button"
-                aria-label={`Color ${c}`}
-                className={`${css.swatch} ${c === color ? css.swatchActive : ''}`}
+                aria-label={`Color primario ${c}`}
+                className={`${css.swatch} ${c === colorPrimary ? css.swatchActive : ''}`}
                 style={{ background: c }}
-                onClick={() => setColor(c)}
+                onClick={() => setColorPrimary(c)}
               />
             ))}
           </div>
+        </div>
+
+        <div className={css.field}>
+          <span className={css.label}>Color secundario</span>
+          <div className={css.colorRow}>
+            {DESIGN_COLOR_SWATCHES.map(c => (
+              <button
+                key={c}
+                type="button"
+                aria-label={`Color secundario ${c}`}
+                className={`${css.swatch} ${c === colorSecondary ? css.swatchActive : ''}`}
+                style={{ background: c }}
+                onClick={() => setColorSecondary(c)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className={css.field}>
+          <label className={css.toggleRow}>
+            <input
+              type="checkbox"
+              checked={blackWhite}
+              onChange={e => setBlackWhite(e.target.checked)}
+            />
+            <span className={css.toggleText}>Blanco y negro</span>
+            <span className={css.toggleHint}>
+              Convierte el diseño a escala de grises (útil para imprimir en B/N).
+            </span>
+          </label>
         </div>
 
         <div className={css.field}>
@@ -297,7 +345,7 @@ const DesignEditor = ({ listing, onClose }) => {
   );
 };
 
-const ListingPoster = ({ listing }) => {
+const ListingPoster = ({ listing, sellerLogoUrl }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className={css.root}>
@@ -309,7 +357,13 @@ const ListingPoster = ({ listing }) => {
           </button>
         ) : null}
       </div>
-      {open ? <DesignEditor listing={listing} onClose={() => setOpen(false)} /> : null}
+      {open ? (
+        <DesignEditor
+          listing={listing}
+          sellerLogoUrl={sellerLogoUrl}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
     </div>
   );
 };

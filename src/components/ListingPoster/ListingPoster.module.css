@@ -155,6 +155,33 @@
   box-sizing: border-box;
 }
 
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggleRow input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.toggleText {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+}
+
+.toggleHint {
+  font-size: 11px;
+  color: var(--colorGrey600);
+  flex-basis: 100%;
+}
+
 .actions {
   display: flex;
   gap: 6px;
