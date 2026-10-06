@@ -4,7 +4,7 @@ import QRCode from 'qrcode';
 import {
   DESIGN_TEMPLATES,
   DESIGN_COLOR_SWATCHES,
-  LOGO_POSITIONS,
+  LOGO_ALIGNMENTS,
 } from './templateDesigns';
 import {
   CURATED_FONTS,
@@ -151,8 +151,10 @@ const DesignEditor = ({ listing, sellerLogoDataUrl, sellerName, onClose }) => {
   const [sizeTitle, setSizeTitle] = useState(1);
   const [sizePrice, setSizePrice] = useState(1);
 
-  // Logo del seller: ubicación + tamaño (editables).
-  const [logoPosition, setLogoPosition] = useState('bl');
+  // Logo del seller: alineación en el header + tamaño (editables).
+  // Zona del logo reservada en el header de cada template, sobre un
+  // badge blanco. El seller decide alineación horizontal y tamaño.
+  const [logoAlign, setLogoAlign] = useState('left');
   const [logoSize, setLogoSize] = useState(70);
 
   // Carga la familia en pantalla cuando cambie (preview). Pedimos los
@@ -213,7 +215,7 @@ const DesignEditor = ({ listing, sellerLogoDataUrl, sellerName, onClose }) => {
     fontWeight,
     sizeTitle,
     sizePrice,
-    logoPosition,
+    logoAlign,
     logoSize,
   };
 
@@ -362,18 +364,18 @@ const DesignEditor = ({ listing, sellerLogoDataUrl, sellerName, onClose }) => {
         {logoHref || sellerName ? (
           <>
             <div className={css.field}>
-              <span className={css.label}>Posición del logo</span>
+              <span className={css.label}>Alineación del logo</span>
               <div className={css.posRow}>
-                {LOGO_POSITIONS.map(p => (
+                {LOGO_ALIGNMENTS.map(a => (
                   <button
-                    key={p.key}
+                    key={a.key}
                     type="button"
-                    className={`${css.posBtn} ${p.key === logoPosition ? css.posBtnActive : ''}`}
-                    onClick={() => setLogoPosition(p.key)}
-                    title={p.hint}
-                    aria-label={p.hint}
+                    className={`${css.posBtn} ${a.key === logoAlign ? css.posBtnActive : ''}`}
+                    onClick={() => setLogoAlign(a.key)}
+                    title={a.hint}
+                    aria-label={a.hint}
                   >
-                    {p.label}
+                    {a.label}
                   </button>
                 ))}
               </div>
@@ -388,7 +390,7 @@ const DesignEditor = ({ listing, sellerLogoDataUrl, sellerName, onClose }) => {
                 id={`logo-size-${listing.id}`}
                 type="range"
                 min="40"
-                max="140"
+                max="120"
                 step="5"
                 value={logoSize}
                 onChange={e => setLogoSize(Number(e.target.value))}

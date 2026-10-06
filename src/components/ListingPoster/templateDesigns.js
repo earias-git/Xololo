@@ -1,13 +1,16 @@
 import React from 'react';
 
-// XOLOLO Promote · Diseños para Imprimir — sub-commit 2.
+// XOLOLO Promote · Diseños para Imprimir — rediseño limpio.
 //
-// Cada template devuelve un <svg> JSX con slots pre-definidos.
-// Motor: SVG inline (no canvas 2D). Ventajas vs canvas:
-//   - Tipografías nativas (sub-commit 3 pondrá Google Fonts aquí)
-//   - Zoom infinito sin pixelado
-//   - Cada slot es DOM editable (futuro click-to-edit)
-//   - Export a PDF/PNG via serialize + drawImage → canvas limpio
+// Cambio arquitectural vs iteración anterior: el logo del seller YA
+// NO se posiciona libremente en 5 esquinas (los experimentos
+// mostraron colisiones garantizadas contra título/imagen/precio/QR).
+// Ahora cada template tiene UNA zona reservada dedicada al logo
+// (siempre en el header), y el seller controla únicamente:
+//   - su ALINEACIÓN horizontal dentro de esa zona (izq / centro / der)
+//   - su TAMAÑO (slider)
+// El header crece dinámicamente para acomodar el logo + título sin
+// pisar el resto del diseño.
 //
 // Dimensiones físicas (para el PDF, el motor convierte el viewBox al
 // tamaño real en mm):
@@ -19,68 +22,32 @@ import React from 'react';
 //   { title, price, cta, colorPrimary, colorSecondary, blackWhite,
 //     productImgHref, qrHref, logoHref, sellerName,
 //     fontFamily, fontWeight, sizeTitle, sizePrice,
-//     logoPosition, logoSize }
+//     logoAlign, logoSize }
 //
-// logoPosition: 'tl' | 'tc' | 'tr' | 'bl' | 'br' (presets, 5 esquinas).
-// logoSize: alto/ancho del logo en units del viewBox (40–160 default).
+// logoAlign: 'left' | 'center' | 'right'.
+// logoSize: alto/ancho del logo en units del viewBox (40-120 default).
 
-// Posiciones donde el logo cae sobre fondo BLANCO (fuera de bandas de
-// color primario) para evitar colisión con el color de fondo. Cada
-// template define sus propios anchors porque depende de dónde están
-// los otros elementos.
-// vAlign='top' → `y` es el borde superior; 'bottom' → `y` es el inferior.
-// Elegimos coords de modo que el badge NO salga del viewBox incluso
-// cuando el seller sube el tamaño al máximo (140).
-// Para el póster, los b* evitan la zona del QR (x≈602-800, y=852-1048):
-//   bl queda a la izquierda del QR, encima del precio.
-const POSTER_LOGO_ANCHORS = {
-  tl: { x: 110, y: 260, align: 'left', vAlign: 'top' },
-  tc: { x: 425, y: 260, align: 'center', vAlign: 'top' },
-  tr: { x: 740, y: 260, align: 'right', vAlign: 'top' },
-  bl: { x: 50, y: 1060, align: 'left', vAlign: 'bottom' },
-  br: { x: 800, y: 1060, align: 'right', vAlign: 'bottom' },
-};
-const LABEL_H_LOGO_ANCHORS = {
-  tl: { x: 480, y: 50, align: 'left', vAlign: 'top' },
-  tc: { x: 735, y: 50, align: 'center', vAlign: 'top' },
-  tr: { x: 970, y: 50, align: 'right', vAlign: 'top' },
-  bl: { x: 480, y: 670, align: 'left', vAlign: 'bottom' },
-  br: { x: 970, y: 670, align: 'right', vAlign: 'bottom' },
-};
-const LABEL_V_LOGO_ANCHORS = {
-  tl: { x: 50, y: 630, align: 'left', vAlign: 'top' },
-  tc: { x: 350, y: 630, align: 'center', vAlign: 'top' },
-  tr: { x: 650, y: 630, align: 'right', vAlign: 'top' },
-  bl: { x: 50, y: 970, align: 'left', vAlign: 'bottom' },
-  br: { x: 650, y: 970, align: 'right', vAlign: 'bottom' },
-};
+// --- Constantes ---
+const LOGO_PADDING = 14;
+const LOGO_BADGE_RADIUS = 10;
 
-export const LOGO_POSITIONS = [
-  { key: 'tl', label: '↖', hint: 'Arriba izquierda' },
-  { key: 'tc', label: '↑', hint: 'Arriba centrado' },
-  { key: 'tr', label: '↗', hint: 'Arriba derecha' },
-  { key: 'bl', label: '↙', hint: 'Abajo izquierda' },
-  { key: 'br', label: '↘', hint: 'Abajo derecha' },
+export const LOGO_ALIGNMENTS = [
+  { key: 'left', label: '←', hint: 'Izquierda' },
+  { key: 'center', label: '↔', hint: 'Centrado' },
+  { key: 'right', label: '→', hint: 'Derecha' },
 ];
-//
-// fontFamily: nombre tal cual lo expone Google Fonts (ej. 'Montserrat').
-// fontWeight: numeric (300 Light, 400 Normal, 700 Bold).
-// sizeTitle / sizePrice: escalas 0.7–1.4 que multiplican los fontSize
-// base de cada template.
-//
-// productImgHref / qrHref / logoHref son data: URLs (resueltas por el
-// host) para que la serialización del SVG no dependa de recursos
-// externos y el export a canvas no sufra "tainted canvas" por CORS.
-//
-// blackWhite: cuando true, el root <g> aplica un <filter> con
-// feColorMatrix (grayscale ITU-R BT.601 .299/.587/.114). Esto SOBREVIVE
-// a la serialización + render en <img> + draw a canvas, mientras que
-// `filter: grayscale(1)` CSS NO sobrevive.
+
+export const DESIGN_COLOR_SWATCHES = [
+  '#ff6b35', // naranja
+  '#2d7a46', // verde
+  '#1e40af', // azul
+  '#be185d', // magenta
+  '#f59e0b', // ámbar
+  '#111111', // negro
+];
 
 // --- Helpers ---
 
-// Trunca texto en N líneas usando <tspan>. Approx porque SVG no mide
-// texto sin DOM; usamos chars-per-line razonables por tamaño de fuente.
 const wrapTspans = (text, fontPx, maxWidthPx, maxLines) => {
   const avgCharWidth = fontPx * 0.55;
   const maxChars = Math.max(6, Math.floor(maxWidthPx / avgCharWidth));
@@ -145,83 +112,87 @@ const ImageOrPlaceholder = ({ href, x, y, w, h, rx = 16, placeholder = '📦' })
   );
 };
 
-// Marca del seller con cascada:
-//   1) logoHref (data:URL del logo del seller)  → <image> en badge blanco
-//   2) sellerName                               → <text> con el nombre
-//   3) null + null                              → no renderiza nada
-//
-// Nunca mete texto placeholder tipo "XOLOLO" por default — si el seller
-// no tiene marca configurada, el diseño queda limpio.
-//
-// Fondo del logo: SIEMPRE blanco con padding (rectángulo "badge").
-// Esto evita que un logo con fondo transparente o colores claros se
-// pierda contra la banda de color del template.
-const LOGO_PADDING = 16;
-const LOGO_BADGE_RADIUS = 10;
-
+// BrandMark con cascada:
+//   1) logoHref → <image> embebido en un badge blanco (padding).
+//   2) sellerName → <text>.
+//   3) null + null → no renderiza nada.
+// anchorX, anchorY definen la esquina SUPERIOR-IZQUIERDA del área
+// disponible para el logo. align decide dónde se coloca dentro.
+// zoneWidth es el ancho de la zona reservada.
 const BrandMark = ({
   logoHref,
   sellerName,
-  x,
-  y,
+  anchorX,
+  anchorY,
+  zoneWidth,
   size,
-  color,
   align = 'left',
-  vAlign = 'top',
+  textColor,
 }) => {
+  // Posicionamiento horizontal del logo (ya con padding del badge).
+  const effectiveWidth = size;
+  let imgX;
+  if (align === 'center') imgX = anchorX + (zoneWidth - effectiveWidth) / 2;
+  else if (align === 'right') imgX = anchorX + zoneWidth - effectiveWidth;
+  else imgX = anchorX;
+
   if (logoHref) {
-    const w = size;
-    const h = size;
-    const ax = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
-    // vAlign='bottom' → `y` es el borde INFERIOR del badge; calculamos
-    // el top restando. Esto evita que el logo se salga del canvas al
-    // crecer con el slider de tamaño.
-    const ay = vAlign === 'bottom' ? y - h : y;
     return (
       <g>
         <rect
-          x={ax - LOGO_PADDING}
-          y={ay - LOGO_PADDING}
-          width={w + LOGO_PADDING * 2}
-          height={h + LOGO_PADDING * 2}
+          x={imgX - LOGO_PADDING}
+          y={anchorY - LOGO_PADDING}
+          width={effectiveWidth + LOGO_PADDING * 2}
+          height={size + LOGO_PADDING * 2}
           fill="#ffffff"
           rx={LOGO_BADGE_RADIUS}
         />
         <image
           href={logoHref}
-          x={ax}
-          y={ay}
-          width={w}
-          height={h}
+          x={imgX}
+          y={anchorY}
+          width={effectiveWidth}
+          height={size}
           preserveAspectRatio="xMidYMid meet"
         />
       </g>
     );
   }
   if (sellerName) {
-    const anchor = align === 'center' ? 'middle' : align === 'right' ? 'end' : 'start';
     const name = String(sellerName).trim();
+    const truncated = name.length > 24 ? name.slice(0, 23) + '…' : name;
     const fontPx = size * 0.55;
-    // vAlign='bottom' → ancla al baseline cerca de `y`.
-    const textY = vAlign === 'bottom' ? y : y + size * 0.72;
+    // Para texto usamos el centro vertical del área del logo.
+    const textY = anchorY + size * 0.72;
+    let textX;
+    let textAnchor;
+    if (align === 'center') {
+      textX = anchorX + zoneWidth / 2;
+      textAnchor = 'middle';
+    } else if (align === 'right') {
+      textX = anchorX + zoneWidth;
+      textAnchor = 'end';
+    } else {
+      textX = anchorX;
+      textAnchor = 'start';
+    }
     return (
       <text
-        x={x}
+        x={textX}
         y={textY}
         fontSize={fontPx}
         fontWeight={800}
-        fill={color}
-        textAnchor={anchor}
+        fill={textColor}
+        textAnchor={textAnchor}
       >
-        {name.length > 24 ? name.slice(0, 23) + '…' : name}
+        {truncated}
       </text>
     );
   }
   return null;
 };
 
-// Filtro B/N aplicable al root <g> del diseño. Matrix grayscale
-// estándar ITU-R BT.601: R' = G' = B' = 0.299R + 0.587G + 0.114B.
+// Filtro B/N aplicable al root <g>. Matrix grayscale ITU-R BT.601.
 const BlackWhiteFilterDefs = () => (
   <defs>
     <filter id="xolo-bw" colorInterpolationFilters="sRGB">
@@ -233,18 +204,16 @@ const BlackWhiteFilterDefs = () => (
   </defs>
 );
 
-// Fallback stack cuando no hay familia definida (p.ej. hasta que carga
-// Google Fonts). También se aplica después de la familia elegida como
-// red de seguridad para unicode-ranges no cubiertos por la WOFF2.
 const FALLBACK_STACK = "system-ui, -apple-system, 'Segoe UI', sans-serif";
-
-const fontStack = family =>
-  family ? `'${family}', ${FALLBACK_STACK}` : FALLBACK_STACK;
-
+const fontStack = family => (family ? `'${family}', ${FALLBACK_STACK}` : FALLBACK_STACK);
 const px = (base, scale = 1) => Math.round(base * (scale || 1));
 
-// --- Template 1: Poster carta vertical ---
-// viewBox 850×1100 (ratio 0.773 = carta ratio).
+// ============================================================
+// Template 1: Póster carta vertical — viewBox 850×1100
+// ============================================================
+// Header dinámico: logo arriba (sobre badge blanco dentro de la banda
+// de color primario) + título debajo. Si no hay logo, el header queda
+// con sólo el título (altura 180 como antes).
 const PosterDesign = props => {
   const {
     title,
@@ -261,15 +230,42 @@ const PosterDesign = props => {
     fontWeight = 700,
     sizeTitle = 1,
     sizePrice = 1,
-    logoPosition = 'bl',
+    logoAlign = 'left',
     logoSize = 70,
   } = props;
+
   const titleFontPx = px(40, sizeTitle);
   const priceFontPx = px(92, sizePrice);
   const titleLines = wrapTspans(title, titleFontPx, 760, 2);
-  const anchor = POSTER_LOGO_ANCHORS[logoPosition] || POSTER_LOGO_ANCHORS.bl;
-  // El logo del seller usa color oscuro para la cascada de texto fallback
-  // porque siempre va sobre fondo blanco.
+  const titleHeight = titleLines.length * titleFontPx * 1.15;
+  const hasBrand = !!(logoHref || sellerName);
+
+  // Alturas del header
+  const HEADER_PAD_TOP = 30;
+  const HEADER_PAD_BOTTOM = 30;
+  const LOGO_TITLE_GAP = 18;
+  const logoAreaH = hasBrand ? logoSize + LOGO_PADDING * 2 : 0;
+  const minHeaderH = 180;
+  const computedHeaderH =
+    HEADER_PAD_TOP +
+    logoAreaH +
+    (hasBrand ? LOGO_TITLE_GAP : 0) +
+    titleHeight +
+    HEADER_PAD_BOTTOM;
+  const headerH = Math.max(minHeaderH, computedHeaderH);
+
+  // Posicionamiento
+  const logoAnchorX = 50;
+  const logoZoneW = 750; // 850 - 2*50
+  const logoAnchorY = HEADER_PAD_TOP + LOGO_PADDING;
+  const titleBaselineY =
+    HEADER_PAD_TOP + logoAreaH + (hasBrand ? LOGO_TITLE_GAP : 0) + titleFontPx;
+
+  // Imagen debajo del header. Altura dinámica para que el footer quede fijo.
+  const imgY = headerH + 20;
+  const imgEnd = 740; // termina en y=740 como antes
+  const imgH = Math.max(300, imgEnd - imgY);
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -281,9 +277,25 @@ const PosterDesign = props => {
       <g filter={blackWhite ? 'url(#xolo-bw)' : undefined}>
         <rect x={0} y={0} width={850} height={1100} fill="#ffffff" />
 
-        {/* Banda superior sólo con el título (sin marca encima) */}
-        <rect x={0} y={0} width={850} height={180} fill={colorPrimary} />
-        <text x={50} y={70} fontSize={titleFontPx} fontWeight={fontWeight} fill="#ffffff">
+        {/* Banda del header — color primario */}
+        <rect x={0} y={0} width={850} height={headerH} fill={colorPrimary} />
+
+        {/* Logo (si existe) dentro del header, badge blanco */}
+        {hasBrand ? (
+          <BrandMark
+            logoHref={logoHref}
+            sellerName={sellerName}
+            anchorX={logoAnchorX}
+            anchorY={logoAnchorY}
+            zoneWidth={logoZoneW}
+            size={logoSize}
+            align={logoAlign}
+            textColor="#ffffff"
+          />
+        ) : null}
+
+        {/* Título (todo el ancho de la banda, align a la izquierda) */}
+        <text x={50} y={titleBaselineY} fontSize={titleFontPx} fontWeight={fontWeight} fill="#ffffff">
           {titleLines.map((l, i) => (
             <tspan key={i} x={50} dy={i === 0 ? 0 : titleFontPx * 1.15}>
               {l}
@@ -292,9 +304,9 @@ const PosterDesign = props => {
         </text>
 
         {/* Imagen producto */}
-        <ImageOrPlaceholder href={productImgHref} x={100} y={240} w={650} h={500} rx={24} />
+        <ImageOrPlaceholder href={productImgHref} x={100} y={imgY} w={650} h={imgH} rx={24} />
 
-        {/* Precio en color secundario */}
+        {/* Precio */}
         <text
           x={425}
           y={820}
@@ -306,8 +318,7 @@ const PosterDesign = props => {
           {price}
         </text>
 
-        {/* CTA alineado a la izquierda del QR para evitar colisión.
-            El QR ocupa x≈602-800; dejamos al CTA el espacio x=50-580. */}
+        {/* CTA — centrado en el área izquierda al QR (x≈602-800) */}
         <text
           x={315}
           y={920}
@@ -330,25 +341,16 @@ const PosterDesign = props => {
             <image href={qrHref} x={610} y={860} width={180} height={180} />
           </g>
         ) : null}
-
-        {/* Logo del seller en la posición elegida (siempre sobre blanco) */}
-        <BrandMark
-          logoHref={logoHref}
-          sellerName={sellerName}
-          x={anchor.x}
-          y={anchor.y}
-          size={logoSize}
-          color="#333333"
-          align={anchor.align}
-          vAlign={anchor.vAlign}
-        />
       </g>
     </svg>
   );
 };
 
-// --- Template 2: Etiqueta horizontal 10×7cm ---
-// viewBox 1000×700. Imagen izquierda, info derecha.
+// ============================================================
+// Template 2: Etiqueta horizontal 10×7cm — viewBox 1000×700
+// ============================================================
+// Dos columnas: imagen izquierda, info derecha. El logo (si existe)
+// ocupa una banda arriba de la columna derecha. Siempre sobre blanco.
 const LabelHorizontalDesign = props => {
   const {
     title,
@@ -365,13 +367,22 @@ const LabelHorizontalDesign = props => {
     fontWeight = 700,
     sizeTitle = 1,
     sizePrice = 1,
-    logoPosition = 'bl',
-    logoSize = 56,
+    logoAlign = 'left',
+    logoSize = 60,
   } = props;
+
   const titleFontPx = px(34, sizeTitle);
   const priceFontPx = px(78, sizePrice);
   const titleLines = wrapTspans(title, titleFontPx, 480, 2);
-  const anchor = LABEL_H_LOGO_ANCHORS[logoPosition] || LABEL_H_LOGO_ANCHORS.bl;
+  const hasBrand = !!(logoHref || sellerName);
+
+  // Zona info (columna derecha): x=490 a x=970 (ancho 480).
+  const INFO_X = 490;
+  const INFO_W = 480;
+  const INFO_PAD_TOP = 30;
+  const logoAreaH = hasBrand ? logoSize + LOGO_PADDING * 2 : 0;
+  const titleY = INFO_PAD_TOP + logoAreaH + (hasBrand ? 20 : 0) + titleFontPx;
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -383,7 +394,7 @@ const LabelHorizontalDesign = props => {
       <g filter={blackWhite ? 'url(#xolo-bw)' : undefined}>
         <rect x={0} y={0} width={1000} height={700} fill="#ffffff" />
 
-        {/* Marco de color primario */}
+        {/* Marco color primario */}
         <rect
           x={0}
           y={0}
@@ -395,36 +406,45 @@ const LabelHorizontalDesign = props => {
         />
 
         {/* Imagen producto izquierda */}
-        <ImageOrPlaceholder href={productImgHref} x={30} y={30} w={420} h={540} rx={16} />
+        <ImageOrPlaceholder href={productImgHref} x={30} y={30} w={420} h={640} rx={16} />
 
-        {/* Logo del seller en la posición elegida (sobre blanco siempre) */}
-        <BrandMark
-          logoHref={logoHref}
-          sellerName={sellerName}
-          x={anchor.x}
-          y={anchor.y}
-          size={logoSize}
-          color="#333333"
-          align={anchor.align}
-          vAlign={anchor.vAlign}
-        />
+        {/* Logo (si existe) arriba de la columna derecha, sobre blanco */}
+        {hasBrand ? (
+          <BrandMark
+            logoHref={logoHref}
+            sellerName={sellerName}
+            anchorX={INFO_X}
+            anchorY={INFO_PAD_TOP + LOGO_PADDING}
+            zoneWidth={INFO_W}
+            size={logoSize}
+            align={logoAlign}
+            textColor={colorPrimary}
+          />
+        ) : null}
 
         {/* Título */}
-        <text x={490} y={100} fontSize={titleFontPx} fontWeight={fontWeight} fill="#111111">
+        <text x={INFO_X} y={titleY} fontSize={titleFontPx} fontWeight={fontWeight} fill="#111111">
           {titleLines.map((l, i) => (
-            <tspan key={i} x={490} dy={i === 0 ? 0 : titleFontPx * 1.17}>
+            <tspan key={i} x={INFO_X} dy={i === 0 ? 0 : titleFontPx * 1.17}>
               {l}
             </tspan>
           ))}
         </text>
 
-        {/* Línea decorativa color secundario */}
-        <line x1={490} y1={200} x2={700} y2={200} stroke={colorSecondary} strokeWidth={4} />
+        {/* Línea decorativa (color secundario) */}
+        <line
+          x1={INFO_X}
+          y1={titleY + 70}
+          x2={INFO_X + 210}
+          y2={titleY + 70}
+          stroke={colorSecondary}
+          strokeWidth={4}
+        />
 
-        {/* Precio en color secundario */}
+        {/* Precio */}
         <text
-          x={490}
-          y={310}
+          x={INFO_X}
+          y={titleY + 170}
           fontSize={priceFontPx}
           fontWeight={fontWeight === 300 ? 400 : fontWeight}
           fill={colorSecondary}
@@ -433,19 +453,23 @@ const LabelHorizontalDesign = props => {
         </text>
 
         {/* CTA */}
-        <text x={490} y={380} fontSize={20} fontWeight={fontWeight} fill="#444444">
+        <text x={INFO_X} y={titleY + 240} fontSize={20} fontWeight={fontWeight} fill="#444444">
           {cta}
         </text>
 
         {/* QR abajo derecha */}
-        {qrHref ? <image href={qrHref} x={760} y={430} width={210} height={210} /> : null}
+        {qrHref ? <image href={qrHref} x={760} y={450} width={210} height={210} /> : null}
       </g>
     </svg>
   );
 };
 
-// --- Template 3: Etiqueta vertical 7×10cm ---
-// viewBox 700×1000. Imagen arriba todo-ancho, info abajo.
+// ============================================================
+// Template 3: Etiqueta vertical 7×10cm — viewBox 700×1000
+// ============================================================
+// Banda superior de color primario donde vive el logo (si existe).
+// La banda crece dinámicamente para alojar el logo. Debajo: imagen,
+// título, precio, CTA, QR.
 const LabelVerticalDesign = props => {
   const {
     title,
@@ -462,13 +486,31 @@ const LabelVerticalDesign = props => {
     fontWeight = 700,
     sizeTitle = 1,
     sizePrice = 1,
-    logoPosition = 'bl',
+    logoAlign = 'left',
     logoSize = 60,
   } = props;
+
   const titleFontPx = px(36, sizeTitle);
   const priceFontPx = px(82, sizePrice);
   const titleLines = wrapTspans(title, titleFontPx, 580, 2);
-  const anchor = LABEL_V_LOGO_ANCHORS[logoPosition] || LABEL_V_LOGO_ANCHORS.bl;
+  const hasBrand = !!(logoHref || sellerName);
+
+  // Banda del header: 80 por default; crece con el logo.
+  const minBand = 80;
+  const bandH = hasBrand
+    ? Math.max(minBand, logoSize + LOGO_PADDING * 2 + 30)
+    : minBand;
+
+  const LOGO_ZONE_X = 30;
+  const LOGO_ZONE_W = 640; // 700 - 2*30
+  const logoAnchorY = (bandH - logoSize) / 2;
+
+  // Layout vertical del resto: imagen → título → precio → QR.
+  const imgY = bandH + 20;
+  const imgH = 440;
+  const titleY = imgY + imgH + 60;
+  const priceY = titleY + titleLines.length * titleFontPx * 1.17 + 50;
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -480,17 +522,30 @@ const LabelVerticalDesign = props => {
       <g filter={blackWhite ? 'url(#xolo-bw)' : undefined}>
         <rect x={0} y={0} width={700} height={1000} fill="#ffffff" />
 
-        {/* Banda superior color primario — ya no mete el logo adentro,
-            el logo va sobre la zona blanca en la posición elegida */}
-        <rect x={0} y={0} width={700} height={80} fill={colorPrimary} />
+        {/* Banda del header */}
+        <rect x={0} y={0} width={700} height={bandH} fill={colorPrimary} />
 
-        {/* Imagen producto arriba */}
-        <ImageOrPlaceholder href={productImgHref} x={50} y={110} w={600} h={450} rx={16} />
+        {/* Logo dentro de la banda — badge blanco */}
+        {hasBrand ? (
+          <BrandMark
+            logoHref={logoHref}
+            sellerName={sellerName}
+            anchorX={LOGO_ZONE_X}
+            anchorY={logoAnchorY}
+            zoneWidth={LOGO_ZONE_W}
+            size={logoSize}
+            align={logoAlign}
+            textColor="#ffffff"
+          />
+        ) : null}
+
+        {/* Imagen producto */}
+        <ImageOrPlaceholder href={productImgHref} x={50} y={imgY} w={600} h={imgH} rx={16} />
 
         {/* Título */}
         <text
           x={350}
-          y={620}
+          y={titleY}
           fontSize={titleFontPx}
           fontWeight={fontWeight}
           textAnchor="middle"
@@ -503,10 +558,10 @@ const LabelVerticalDesign = props => {
           ))}
         </text>
 
-        {/* Precio color secundario */}
+        {/* Precio */}
         <text
           x={350}
-          y={790}
+          y={priceY}
           fontSize={priceFontPx}
           fontWeight={fontWeight === 300 ? 400 : fontWeight}
           textAnchor="middle"
@@ -515,10 +570,8 @@ const LabelVerticalDesign = props => {
           {price}
         </text>
 
-        {/* QR abajo izquierda */}
+        {/* QR abajo izquierda + CTA abajo derecha */}
         {qrHref ? <image href={qrHref} x={60} y={830} width={140} height={140} /> : null}
-
-        {/* CTA abajo derecha */}
         <text
           x={670}
           y={910}
@@ -532,25 +585,12 @@ const LabelVerticalDesign = props => {
         <text x={670} y={960} fontSize={14} textAnchor="end" fill="#888888">
           Escanea el QR
         </text>
-
-        {/* Logo del seller en la posición elegida (sobre blanco siempre) */}
-        <BrandMark
-          logoHref={logoHref}
-          sellerName={sellerName}
-          x={anchor.x}
-          y={anchor.y}
-          size={logoSize}
-          color="#333333"
-          align={anchor.align}
-          vAlign={anchor.vAlign}
-        />
       </g>
     </svg>
   );
 };
 
 // --- Registro de templates ---
-// pdf: tamaño físico final del documento al imprimir (jsPDF usa mm).
 export const DESIGN_TEMPLATES = [
   {
     key: 'poster',
@@ -579,16 +619,4 @@ export const DESIGN_TEMPLATES = [
     pdf: { widthMm: 70, heightMm: 100, orientation: 'portrait', format: [70, 100] },
     exportPx: [827, 1181],
   },
-];
-
-// Paleta curada: primero el swatch para color primario, abajo el
-// color secundario. Mantenemos un pool común — el seller elige dos
-// cualesquiera de aquí.
-export const DESIGN_COLOR_SWATCHES = [
-  '#ff6b35', // naranja
-  '#2d7a46', // verde
-  '#1e40af', // azul
-  '#be185d', // magenta
-  '#f59e0b', // ámbar
-  '#111111', // negro
 ];
