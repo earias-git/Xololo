@@ -6,7 +6,11 @@
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 1;
+  /* z-index igual al topbar normal — antes era 1, el sideNav del
+     LayoutSideNavigation tiene z-index 9 (calc(--zIndexTopbar - 1))
+     y se superponía al logo del topbar en mobile. */
+  z-index: var(--zIndexTopbar);
+  background-color: var(--colorWhite);
 
   @media (--viewportLarge) {
     display: none;
@@ -22,28 +26,54 @@
   padding: 0 24px;
   margin: 24px 0 0;
   font-size: 22px;
+  /* En mobile ocultamos el gran "Dashboard" porque el topbar fijo
+     ocupa toda la parte alta y las tabs ya identifican la sección. */
+  display: none;
+
+  @media (--viewportLarge) {
+    display: block;
+  }
 }
 
 .tabs {
-  padding: 12px 24px 24px;
+  padding: 12px 16px;
   display: flex;
-  gap: 4px;
-  flex-direction: column;
-  align-items: flex-start;
+  gap: 8px;
+  /* Mobile: tabs horizontales con scroll lateral si no caben. */
+  flex-direction: row;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+
+  @media (--viewportLarge) {
+    padding: 12px 24px 24px;
+    flex-direction: column;
+    align-items: flex-start;
+    overflow-x: visible;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
 }
 
 .tab {
   padding: 8px 12px;
   margin: 0;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .root {
   padding: 16px;
   max-width: 1100px;
   margin: 0 auto;
+  /* Impide que descendientes con content largo (URLs, cards grandes)
+     provoquen scroll horizontal de la página en mobile. */
+  min-width: 0;
+  overflow-x: hidden;
 
   @media (--viewportMedium) {
     padding: 24px 32px 48px;
+    overflow-x: visible;
   }
 }
 
@@ -650,9 +680,15 @@
 
 .promoGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  /* Mobile: 1 columna que se adapta al viewport (sin forzar 320px
+     mínimos que desbordaban en pantallas de 360px con padding). */
+  grid-template-columns: 1fr;
   gap: 16px;
   margin-top: 16px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
 }
 
 .promoCard {

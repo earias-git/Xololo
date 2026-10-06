@@ -7,6 +7,10 @@
   border-radius: 10px;
   background: var(--colorWhite);
   margin-bottom: 20px;
+  /* Impide que la URL o cards internas provoquen scroll de la card. */
+  min-width: 0;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .header {
