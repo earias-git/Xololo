@@ -1,0 +1,48 @@
+.root {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff4e5;
+  border: 1px solid #f0b840;
+  border-left: 4px solid #d98900;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.icon {
+  font-size: 20px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  margin: 0;
+  font-size: 13px;
+  color: #6b4800;
+  line-height: 1.4;
+}
+
+.title strong {
+  font-weight: 700;
+  color: #4a3200;
+}
+
+.cta {
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 700;
+  color: #8c5a00;
+  text-decoration: none;
+}
+
+.cta:hover {
+  text-decoration: underline;
+}

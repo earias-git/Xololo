@@ -57,6 +57,11 @@ export const LEGAL_DOCS_STEP = {
   key: 'legalDocs',
   label: 'Documentos legales',
   routeName: 'LegalDocsPage',
+  // XOLOLO 2026-10-06: NO bloquea publicar primer anuncio — el seller
+  // puede subir sus listings y recibir compras sin tener los docs
+  // completos. Pero SÍ se requieren para liberar el primer payout
+  // (gate futuro, ver roadmap #18b en TaskList).
+  blocksPublish: false,
 };
 
 export const isLegalDocsStepDone = legalDocsStatus => {
@@ -121,5 +126,22 @@ export const useOnboardingStatus = (currentUser, enabled = true) => {
   const pct = Math.round((doneCount / total) * 100);
   const allDone = doneCount === total;
 
-  return { hasUser: true, loading, failed, results, doneCount, total, pct, allDone };
+  // XOLOLO: subconjunto "bloqueantes para publicar" — pasos con
+  // blocksPublish===false NO cuentan para el gate de publicación
+  // (ej. legalDocs). RequireSellerOnboarding usa `allDoneForPublish`
+  // en vez de `allDone` para decidir si redirigir a Mi cuenta.
+  const blockingResults = results.filter(r => r.blocksPublish !== false);
+  const allDoneForPublish = blockingResults.every(r => r.done);
+
+  return {
+    hasUser: true,
+    loading,
+    failed,
+    results,
+    doneCount,
+    total,
+    pct,
+    allDone,
+    allDoneForPublish,
+  };
 };

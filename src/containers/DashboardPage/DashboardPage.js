@@ -8,6 +8,7 @@ import {
   H2,
   LayoutSideNavigation,
   Page,
+  PayoutDocsWarning,
   TabNav,
 } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
@@ -89,6 +90,7 @@ const DashboardPage = () => {
         footer={<FooterContainer />}
       >
         <div className={css.root}>
+          <PayoutDocsWarning />
           {activeSection === 'productos' ? (
             <DashboardProductsView />
           ) : activeSection === 'promote' ? (

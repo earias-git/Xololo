@@ -60,7 +60,7 @@ const RequireSellerOnboarding = ({ children }) => {
   const { checked, hasListings, failed: hasListingsFailed } = useHasPublishedListings(hasUser);
   const stillCheckingListings = hasUser && !checked;
 
-  const { loading, failed: checklistFailed, allDone } = useOnboardingStatus(
+  const { loading, failed: checklistFailed, allDoneForPublish } = useOnboardingStatus(
     currentUser,
     hasUser && checked && !hasListingsFailed && !hasListings
   );
@@ -78,7 +78,11 @@ const RequireSellerOnboarding = ({ children }) => {
     );
   }
 
-  if (!allDone) {
+  // XOLOLO: `allDoneForPublish` excluye pasos con blocksPublish===false
+  // (ej. legalDocs) — ver useOnboardingStatus. Un seller nuevo puede
+  // publicar sin tener los docs legales listos; se le pedirán luego
+  // para liberar su primer payout.
+  if (!allDoneForPublish) {
     return <NamedRedirect name="ProfileSettingsPage" />;
   }
 

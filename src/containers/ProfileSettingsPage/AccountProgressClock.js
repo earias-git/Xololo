@@ -41,7 +41,18 @@ const AccountProgressClock = ({ currentUser, className, rootClassName }) => {
               <span className={css.icon} aria-hidden>
                 {r.done ? '✓' : '○'}
               </span>
-              <span className={css.label}>{r.label}</span>
+              <span className={css.label}>
+                {r.label}
+                {/* XOLOLO: legalDocs no bloquea publicar pero SÍ el
+                    primer payout; el seller debe entender por qué le
+                    conviene completarlo cuanto antes. */}
+                {!r.done && r.key === 'legalDocs' ? (
+                  <span className={css.hint}>
+                    {' '}
+                    — necesario para cobrar tu primer payout
+                  </span>
+                ) : null}
+              </span>
               {!r.done ? (
                 <NamedLink name={r.routeName} className={css.link}>
                   Completar →
