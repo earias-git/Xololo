@@ -574,12 +574,19 @@ export const CheckoutPageWithPayment = props => {
   // El orden debe empatar con el orden de los `line-item/item` en la
   // transacción — el server los emite en el mismo orden en que llegan
   // aquí (primary primero, luego additionalCartItems).
-  const primaryTitleForBreakdown = pageData?.listing?.attributes?.title || null;
+  // Sólo pasamos itemTitles cuando hay items adicionales — con un
+  // único item, LineItemBasePriceMaybe cambiaría a "título + unitPrice
+  // × qty" por recibir `title`, lo cual duplica info del header y
+  // rompe tests que esperan la etiqueta estándar "Precio por artículo"
+  // (OrderBreakdown.baseUnitQuantity).
   const additionalCartItemsForBreakdown = pageData?.orderData?.additionalCartItems || [];
-  const itemTitles = [
-    primaryTitleForBreakdown,
-    ...additionalCartItemsForBreakdown.map(x => x?.title || null),
-  ];
+  const itemTitles =
+    additionalCartItemsForBreakdown.length > 0
+      ? [
+          pageData?.listing?.attributes?.title || null,
+          ...additionalCartItemsForBreakdown.map(x => x?.title || null),
+        ]
+      : null;
 
   // XOLOLO Cart.C2-foto: items adicionales para mostrar en la sidebar
   // del checkout (miniaturas + título + cantidad). El title y el image

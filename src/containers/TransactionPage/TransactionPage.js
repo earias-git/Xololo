@@ -751,20 +751,19 @@ export const TransactionPageComponent = props => {
 
   const txBookingMaybe = booking?.id ? { booking, timeZone } : {};
 
-  // XOLOLO Cart.5 / Bug 3: pasar itemTitles al breakdown para que
-  // multi-cart muestre el nombre de cada item adicional (no sólo
-  // "Precio por artículo"). El primary title viene del listing;
-  // los adicionales viven en protectedData.xololoCart.items[] (los
-  // snapshoteó initiate-privileged al armar la orden). Sin esto,
-  // el provider veía "$180.00 Precio por artículo" sin saber qué
-  // producto le pidieron.
-  const primaryTitleForBreakdown = listing?.attributes?.title || null;
+  // XOLOLO Cart.5 / Bug 3: pasar itemTitles al breakdown SÓLO cuando
+  // el carrito tiene items adicionales. Si solo hay 1 item, dejamos
+  // el breakdown en su layout original ("Precio por artículo") para
+  // no romper el label estándar — LineItemBasePriceMaybe cambia a
+  // "título + unitPrice × qty" en cuanto recibe `title`, lo cual es
+  // útil para multi-cart pero visualmente redundante y rompe tests
+  // cuando el carrito tiene un solo listing.
   const xololoCartItems =
     transaction?.attributes?.protectedData?.xololoCart?.items || [];
-  const itemTitlesForBreakdown = [
-    primaryTitleForBreakdown,
-    ...xololoCartItems.map(i => i?.title || null),
-  ];
+  const itemTitlesForBreakdown =
+    xololoCartItems.length > 0
+      ? [listing?.attributes?.title || null, ...xololoCartItems.map(i => i?.title || null)]
+      : null;
 
   const orderBreakdownMaybe = hasLineItems
     ? {
