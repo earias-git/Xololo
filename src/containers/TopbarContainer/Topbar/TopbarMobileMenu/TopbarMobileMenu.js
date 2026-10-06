@@ -162,6 +162,18 @@ const TopbarMobileMenu = props => {
     </li>
   ) : null;
 
+  // XOLOLO: Dashboard existía solo en desktop. En mobile el seller
+  // también lo necesita — es donde vive Ventas, Productos, Promote,
+  // Reportes. Gated por el mismo flag que ManageListings para
+  // mostrarse únicamente a sellers con permiso de publicar.
+  const dashboardLinkMaybe = showCreateListingsLink ? (
+    <li className={classNames(css.navigationLink, currentPageClass('DashboardPage'))}>
+      <NamedLink name="DashboardPage">
+        <FormattedMessage id="TopbarDesktop.dashboardLink" defaultMessage="Dashboard" />
+      </NamedLink>
+    </li>
+  ) : null;
+
   return (
     <div className={css.root}>
       <AvatarLarge className={css.avatar} user={currentUser} />
@@ -180,6 +192,7 @@ const TopbarMobileMenu = props => {
               {notificationCountBadge}
             </NamedLink>
           </li>
+          {dashboardLinkMaybe}
           {manageListingsLinkMaybe}
           {/* XOLOLO: "Configuración de perfil" se fusionó dentro de "Mi
               cuenta" (primer tab) — ver docs/SUBSCRIPTIONS_V1.md §1.3. */}
