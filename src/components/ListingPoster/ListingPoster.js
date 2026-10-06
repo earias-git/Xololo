@@ -5,6 +5,9 @@ import {
   DESIGN_TEMPLATES,
   DESIGN_COLOR_SWATCHES,
   LOGO_ALIGNMENTS,
+  LOGO_SIZE_MIN,
+  LOGO_SIZE_MAX,
+  LOGO_SIZE_DEFAULT,
 } from './templateDesigns';
 import {
   CURATED_FONTS,
@@ -151,11 +154,12 @@ const DesignEditor = ({ listing, sellerLogoDataUrl, sellerName, onClose }) => {
   const [sizeTitle, setSizeTitle] = useState(1);
   const [sizePrice, setSizePrice] = useState(1);
 
-  // Logo del seller: alineación en el header + tamaño (editables).
-  // Zona del logo reservada en el header de cada template, sobre un
-  // badge blanco. El seller decide alineación horizontal y tamaño.
+  // Logo del seller: alineación en la zona reservada + tamaño.
+  // El logo vive ARRIBA del canvas sobre fondo blanco (no sobre la
+  // banda de color primario). Seller controla alineación (←↔→) y
+  // tamaño (slider LOGO_SIZE_MIN–LOGO_SIZE_MAX).
   const [logoAlign, setLogoAlign] = useState('left');
-  const [logoSize, setLogoSize] = useState(70);
+  const [logoSize, setLogoSize] = useState(LOGO_SIZE_DEFAULT);
 
   // Carga la familia en pantalla cuando cambie (preview). Pedimos los
   // 3 weights estándar; el hook deja los <link> inyectados en el head.
@@ -389,8 +393,8 @@ const DesignEditor = ({ listing, sellerLogoDataUrl, sellerName, onClose }) => {
               <input
                 id={`logo-size-${listing.id}`}
                 type="range"
-                min="40"
-                max="120"
+                min={LOGO_SIZE_MIN}
+                max={LOGO_SIZE_MAX}
                 step="5"
                 value={logoSize}
                 onChange={e => setLogoSize(Number(e.target.value))}

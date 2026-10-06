@@ -1,35 +1,19 @@
 import React from 'react';
 
-// XOLOLO Promote · Diseños para Imprimir — rediseño limpio.
+// XOLOLO Promote · Diseños para Imprimir — rediseño limpio v2.
 //
-// Cambio arquitectural vs iteración anterior: el logo del seller YA
-// NO se posiciona libremente en 5 esquinas (los experimentos
-// mostraron colisiones garantizadas contra título/imagen/precio/QR).
-// Ahora cada template tiene UNA zona reservada dedicada al logo
-// (siempre en el header), y el seller controla únicamente:
-//   - su ALINEACIÓN horizontal dentro de esa zona (izq / centro / der)
-//   - su TAMAÑO (slider)
-// El header crece dinámicamente para acomodar el logo + título sin
-// pisar el resto del diseño.
-//
-// Dimensiones físicas (para el PDF, el motor convierte el viewBox al
-// tamaño real en mm):
-//   poster      — carta vertical 215.9 × 279.4 mm
-//   labelH      — etiqueta horizontal 100 × 70 mm
-//   labelV      — etiqueta vertical 70 × 100 mm
-//
-// Props que recibe cada draw:
-//   { title, price, cta, colorPrimary, colorSecondary, blackWhite,
-//     productImgHref, qrHref, logoHref, sellerName,
-//     fontFamily, fontWeight, sizeTitle, sizePrice,
-//     logoAlign, logoSize }
-//
-// logoAlign: 'left' | 'center' | 'right'.
-// logoSize: alto/ancho del logo en units del viewBox (40-120 default).
+// Decisiones acordadas con el seller tras varias iteraciones:
+//   - El logo SIEMPRE va sobre fondo BLANCO (nunca dentro de la banda
+//     de color primario). Vive en una zona reservada ARRIBA del todo
+//     del canvas, en la zona blanca pura.
+//   - La banda de color primario queda SÓLO detrás del título (más
+//     chica, suficiente para enmarcar el texto y nada más).
+//   - El seller controla alineación horizontal del logo (izq/centro/
+//     der) y tamaño (slider 90-160).
+//   - Auto-shrink del precio: si al escalar con el slider de "tamaño
+//     del precio" desborda horizontalmente, se encoge para caber.
 
 // --- Constantes ---
-const LOGO_PADDING = 14;
-const LOGO_BADGE_RADIUS = 10;
 
 export const LOGO_ALIGNMENTS = [
   { key: 'left', label: '←', hint: 'Izquierda' },
@@ -45,6 +29,13 @@ export const DESIGN_COLOR_SWATCHES = [
   '#f59e0b', // ámbar
   '#111111', // negro
 ];
+
+// Rango permitido para el slider de tamaño del logo (en units del
+// viewBox). Mínimo 90 porque abajo se ve demasiado chico; máximo 160
+// porque arriba de ahí no cabe en los formatos más pequeños.
+export const LOGO_SIZE_MIN = 90;
+export const LOGO_SIZE_MAX = 160;
+export const LOGO_SIZE_DEFAULT = 110;
 
 // --- Helpers ---
 
@@ -71,6 +62,16 @@ const wrapTspans = (text, fontPx, maxWidthPx, maxLines) => {
       last.length > maxChars - 1 ? last.slice(0, maxChars - 1) + '…' : last + '…';
   }
   return used;
+};
+
+// Dado un texto, un tamaño de fuente deseado y un ancho máximo, baja
+// el tamaño proporcionalmente para que el texto quepa (nunca más
+// grande que el deseado). Usado para que el precio no se salga del
+// canvas al escalar al 140%.
+const shrinkToFit = (text, desiredFontPx, maxWidth) => {
+  const natural = String(text || '').length * desiredFontPx * 0.55;
+  if (natural <= maxWidth) return desiredFontPx;
+  return Math.max(12, Math.floor((desiredFontPx * maxWidth) / natural));
 };
 
 const ImageOrPlaceholder = ({ href, x, y, w, h, rx = 16, placeholder = '📦' }) => {
@@ -112,13 +113,9 @@ const ImageOrPlaceholder = ({ href, x, y, w, h, rx = 16, placeholder = '📦' })
   );
 };
 
-// BrandMark con cascada:
-//   1) logoHref → <image> embebido en un badge blanco (padding).
-//   2) sellerName → <text>.
-//   3) null + null → no renderiza nada.
-// anchorX, anchorY definen la esquina SUPERIOR-IZQUIERDA del área
-// disponible para el logo. align decide dónde se coloca dentro.
-// zoneWidth es el ancho de la zona reservada.
+// BrandMark SIN badge blanco — vive directo sobre el canvas blanco.
+// anchorX, anchorY = esquina superior-izquierda de la zona reservada.
+// align = alineación horizontal del logo dentro de la zona.
 const BrandMark = ({
   logoHref,
   sellerName,
@@ -127,43 +124,29 @@ const BrandMark = ({
   zoneWidth,
   size,
   align = 'left',
-  textColor,
+  textColor = '#222222',
 }) => {
-  // Posicionamiento horizontal del logo (ya con padding del badge).
-  const effectiveWidth = size;
   let imgX;
-  if (align === 'center') imgX = anchorX + (zoneWidth - effectiveWidth) / 2;
-  else if (align === 'right') imgX = anchorX + zoneWidth - effectiveWidth;
+  if (align === 'center') imgX = anchorX + (zoneWidth - size) / 2;
+  else if (align === 'right') imgX = anchorX + zoneWidth - size;
   else imgX = anchorX;
 
   if (logoHref) {
     return (
-      <g>
-        <rect
-          x={imgX - LOGO_PADDING}
-          y={anchorY - LOGO_PADDING}
-          width={effectiveWidth + LOGO_PADDING * 2}
-          height={size + LOGO_PADDING * 2}
-          fill="#ffffff"
-          rx={LOGO_BADGE_RADIUS}
-        />
-        <image
-          href={logoHref}
-          x={imgX}
-          y={anchorY}
-          width={effectiveWidth}
-          height={size}
-          preserveAspectRatio="xMidYMid meet"
-        />
-      </g>
+      <image
+        href={logoHref}
+        x={imgX}
+        y={anchorY}
+        width={size}
+        height={size}
+        preserveAspectRatio="xMidYMid meet"
+      />
     );
   }
   if (sellerName) {
     const name = String(sellerName).trim();
     const truncated = name.length > 24 ? name.slice(0, 23) + '…' : name;
     const fontPx = size * 0.55;
-    // Para texto usamos el centro vertical del área del logo.
-    const textY = anchorY + size * 0.72;
     let textX;
     let textAnchor;
     if (align === 'center') {
@@ -179,7 +162,7 @@ const BrandMark = ({
     return (
       <text
         x={textX}
-        y={textY}
+        y={anchorY + size * 0.72}
         fontSize={fontPx}
         fontWeight={800}
         fill={textColor}
@@ -211,9 +194,8 @@ const px = (base, scale = 1) => Math.round(base * (scale || 1));
 // ============================================================
 // Template 1: Póster carta vertical — viewBox 850×1100
 // ============================================================
-// Header dinámico: logo arriba (sobre badge blanco dentro de la banda
-// de color primario) + título debajo. Si no hay logo, el header queda
-// con sólo el título (altura 180 como antes).
+// Vertical: [zona blanca con logo] → [banda color con título] → imagen
+// → precio → CTA → QR.
 const PosterDesign = props => {
   const {
     title,
@@ -231,40 +213,30 @@ const PosterDesign = props => {
     sizeTitle = 1,
     sizePrice = 1,
     logoAlign = 'left',
-    logoSize = 70,
+    logoSize = LOGO_SIZE_DEFAULT,
   } = props;
 
+  const hasBrand = !!(logoHref || sellerName);
   const titleFontPx = px(40, sizeTitle);
-  const priceFontPx = px(92, sizePrice);
+  const priceFontPxDesired = px(92, sizePrice);
   const titleLines = wrapTspans(title, titleFontPx, 760, 2);
   const titleHeight = titleLines.length * titleFontPx * 1.15;
-  const hasBrand = !!(logoHref || sellerName);
 
-  // Alturas del header
-  const HEADER_PAD_TOP = 30;
-  const HEADER_PAD_BOTTOM = 30;
-  const LOGO_TITLE_GAP = 18;
-  const logoAreaH = hasBrand ? logoSize + LOGO_PADDING * 2 : 0;
-  const minHeaderH = 180;
-  const computedHeaderH =
-    HEADER_PAD_TOP +
-    logoAreaH +
-    (hasBrand ? LOGO_TITLE_GAP : 0) +
-    titleHeight +
-    HEADER_PAD_BOTTOM;
-  const headerH = Math.max(minHeaderH, computedHeaderH);
+  // Zonas
+  const LOGO_PAD = 25;
+  const logoZoneH = hasBrand ? LOGO_PAD + logoSize + LOGO_PAD : 0;
+  const BAND_PAD = 25;
+  const bandY = logoZoneH;
+  const bandH = BAND_PAD + titleHeight + BAND_PAD;
 
-  // Posicionamiento
-  const logoAnchorX = 50;
-  const logoZoneW = 750; // 850 - 2*50
-  const logoAnchorY = HEADER_PAD_TOP + LOGO_PADDING;
-  const titleBaselineY =
-    HEADER_PAD_TOP + logoAreaH + (hasBrand ? LOGO_TITLE_GAP : 0) + titleFontPx;
-
-  // Imagen debajo del header. Altura dinámica para que el footer quede fijo.
-  const imgY = headerH + 20;
-  const imgEnd = 740; // termina en y=740 como antes
+  // Imagen debajo del header; altura compensa para que el footer quede fijo.
+  const imgY = bandY + bandH + 20;
+  const imgEnd = 740;
   const imgH = Math.max(300, imgEnd - imgY);
+
+  // Auto-shrink del precio para que no desborde el canvas horizontal.
+  // Margen de seguridad: dejamos 45px de margen a cada lado = 760 max.
+  const priceFontPx = shrinkToFit(price, priceFontPxDesired, 760);
 
   return (
     <svg
@@ -277,25 +249,29 @@ const PosterDesign = props => {
       <g filter={blackWhite ? 'url(#xolo-bw)' : undefined}>
         <rect x={0} y={0} width={850} height={1100} fill="#ffffff" />
 
-        {/* Banda del header — color primario */}
-        <rect x={0} y={0} width={850} height={headerH} fill={colorPrimary} />
-
-        {/* Logo (si existe) dentro del header, badge blanco */}
+        {/* Logo en zona blanca arriba (si hay marca) */}
         {hasBrand ? (
           <BrandMark
             logoHref={logoHref}
             sellerName={sellerName}
-            anchorX={logoAnchorX}
-            anchorY={logoAnchorY}
-            zoneWidth={logoZoneW}
+            anchorX={50}
+            anchorY={LOGO_PAD}
+            zoneWidth={750}
             size={logoSize}
             align={logoAlign}
-            textColor="#ffffff"
+            textColor="#222222"
           />
         ) : null}
 
-        {/* Título (todo el ancho de la banda, align a la izquierda) */}
-        <text x={50} y={titleBaselineY} fontSize={titleFontPx} fontWeight={fontWeight} fill="#ffffff">
+        {/* Banda de color primario SÓLO detrás del título */}
+        <rect x={0} y={bandY} width={850} height={bandH} fill={colorPrimary} />
+        <text
+          x={50}
+          y={bandY + BAND_PAD + titleFontPx}
+          fontSize={titleFontPx}
+          fontWeight={fontWeight}
+          fill="#ffffff"
+        >
           {titleLines.map((l, i) => (
             <tspan key={i} x={50} dy={i === 0 ? 0 : titleFontPx * 1.15}>
               {l}
@@ -306,7 +282,7 @@ const PosterDesign = props => {
         {/* Imagen producto */}
         <ImageOrPlaceholder href={productImgHref} x={100} y={imgY} w={650} h={imgH} rx={24} />
 
-        {/* Precio */}
+        {/* Precio con auto-shrink */}
         <text
           x={425}
           y={820}
@@ -318,7 +294,7 @@ const PosterDesign = props => {
           {price}
         </text>
 
-        {/* CTA — centrado en el área izquierda al QR (x≈602-800) */}
+        {/* CTA centrado en el área izquierda al QR (QR en x=602-800) */}
         <text
           x={315}
           y={920}
@@ -349,8 +325,7 @@ const PosterDesign = props => {
 // ============================================================
 // Template 2: Etiqueta horizontal 10×7cm — viewBox 1000×700
 // ============================================================
-// Dos columnas: imagen izquierda, info derecha. El logo (si existe)
-// ocupa una banda arriba de la columna derecha. Siempre sobre blanco.
+// Dos columnas. Logo arriba de la columna derecha, sobre fondo blanco.
 const LabelHorizontalDesign = props => {
   const {
     title,
@@ -368,20 +343,25 @@ const LabelHorizontalDesign = props => {
     sizeTitle = 1,
     sizePrice = 1,
     logoAlign = 'left',
-    logoSize = 60,
+    logoSize = LOGO_SIZE_DEFAULT,
   } = props;
 
-  const titleFontPx = px(34, sizeTitle);
-  const priceFontPx = px(78, sizePrice);
-  const titleLines = wrapTspans(title, titleFontPx, 480, 2);
   const hasBrand = !!(logoHref || sellerName);
+  const titleFontPx = px(34, sizeTitle);
+  const priceFontPxDesired = px(78, sizePrice);
+  const titleLines = wrapTspans(title, titleFontPx, 480, 2);
 
-  // Zona info (columna derecha): x=490 a x=970 (ancho 480).
+  // Columna derecha: x=490 a x=970 (ancho 480).
   const INFO_X = 490;
   const INFO_W = 480;
-  const INFO_PAD_TOP = 30;
-  const logoAreaH = hasBrand ? logoSize + LOGO_PADDING * 2 : 0;
-  const titleY = INFO_PAD_TOP + logoAreaH + (hasBrand ? 20 : 0) + titleFontPx;
+  const PAD = 20;
+  const logoY = PAD;
+  const logoZoneH = hasBrand ? logoSize + PAD : 0;
+  const titleY = logoY + logoZoneH + titleFontPx;
+  const titleTotalH = titleLines.length * titleFontPx * 1.17;
+  const priceY = titleY + titleTotalH + 30 + priceFontPxDesired;
+  // Precio auto-shrink dentro del ancho de la columna.
+  const priceFontPx = shrinkToFit(price, priceFontPxDesired, INFO_W);
 
   return (
     <svg
@@ -408,13 +388,13 @@ const LabelHorizontalDesign = props => {
         {/* Imagen producto izquierda */}
         <ImageOrPlaceholder href={productImgHref} x={30} y={30} w={420} h={640} rx={16} />
 
-        {/* Logo (si existe) arriba de la columna derecha, sobre blanco */}
+        {/* Logo arriba de la columna derecha, sobre blanco */}
         {hasBrand ? (
           <BrandMark
             logoHref={logoHref}
             sellerName={sellerName}
             anchorX={INFO_X}
-            anchorY={INFO_PAD_TOP + LOGO_PADDING}
+            anchorY={logoY}
             zoneWidth={INFO_W}
             size={logoSize}
             align={logoAlign}
@@ -431,20 +411,10 @@ const LabelHorizontalDesign = props => {
           ))}
         </text>
 
-        {/* Línea decorativa (color secundario) */}
-        <line
-          x1={INFO_X}
-          y1={titleY + 70}
-          x2={INFO_X + 210}
-          y2={titleY + 70}
-          stroke={colorSecondary}
-          strokeWidth={4}
-        />
-
-        {/* Precio */}
+        {/* Precio con auto-shrink */}
         <text
           x={INFO_X}
-          y={titleY + 170}
+          y={priceY}
           fontSize={priceFontPx}
           fontWeight={fontWeight === 300 ? 400 : fontWeight}
           fill={colorSecondary}
@@ -453,7 +423,7 @@ const LabelHorizontalDesign = props => {
         </text>
 
         {/* CTA */}
-        <text x={INFO_X} y={titleY + 240} fontSize={20} fontWeight={fontWeight} fill="#444444">
+        <text x={INFO_X} y={priceY + 50} fontSize={20} fontWeight={fontWeight} fill="#444444">
           {cta}
         </text>
 
@@ -467,9 +437,8 @@ const LabelHorizontalDesign = props => {
 // ============================================================
 // Template 3: Etiqueta vertical 7×10cm — viewBox 700×1000
 // ============================================================
-// Banda superior de color primario donde vive el logo (si existe).
-// La banda crece dinámicamente para alojar el logo. Debajo: imagen,
-// título, precio, CTA, QR.
+// Vertical: [zona blanca con logo] → [banda color con título] →
+// imagen → precio → QR + CTA.
 const LabelVerticalDesign = props => {
   const {
     title,
@@ -487,29 +456,29 @@ const LabelVerticalDesign = props => {
     sizeTitle = 1,
     sizePrice = 1,
     logoAlign = 'left',
-    logoSize = 60,
+    logoSize = LOGO_SIZE_DEFAULT,
   } = props;
 
-  const titleFontPx = px(36, sizeTitle);
-  const priceFontPx = px(82, sizePrice);
-  const titleLines = wrapTspans(title, titleFontPx, 580, 2);
   const hasBrand = !!(logoHref || sellerName);
+  const titleFontPx = px(32, sizeTitle);
+  const priceFontPxDesired = px(68, sizePrice);
+  const titleLines = wrapTspans(title, titleFontPx, 580, 2);
+  const titleTotalH = titleLines.length * titleFontPx * 1.17;
 
-  // Banda del header: 80 por default; crece con el logo.
-  const minBand = 80;
-  const bandH = hasBrand
-    ? Math.max(minBand, logoSize + LOGO_PADDING * 2 + 30)
-    : minBand;
+  // Zonas
+  const LOGO_PAD = 20;
+  const logoZoneH = hasBrand ? LOGO_PAD + logoSize + LOGO_PAD : 0;
+  const BAND_PAD = 20;
+  const bandY = logoZoneH;
+  const bandH = BAND_PAD + titleTotalH + BAND_PAD;
 
-  const LOGO_ZONE_X = 30;
-  const LOGO_ZONE_W = 640; // 700 - 2*30
-  const logoAnchorY = (bandH - logoSize) / 2;
+  // Imagen compensa.
+  const imgY = bandY + bandH + 20;
+  const imgEnd = 780;
+  const imgH = Math.max(260, imgEnd - imgY);
 
-  // Layout vertical del resto: imagen → título → precio → QR.
-  const imgY = bandH + 20;
-  const imgH = 440;
-  const titleY = imgY + imgH + 60;
-  const priceY = titleY + titleLines.length * titleFontPx * 1.17 + 50;
+  // Precio auto-shrink dentro del canvas (margen 30 cada lado).
+  const priceFontPx = shrinkToFit(price, priceFontPxDesired, 640);
 
   return (
     <svg
@@ -522,34 +491,29 @@ const LabelVerticalDesign = props => {
       <g filter={blackWhite ? 'url(#xolo-bw)' : undefined}>
         <rect x={0} y={0} width={700} height={1000} fill="#ffffff" />
 
-        {/* Banda del header */}
-        <rect x={0} y={0} width={700} height={bandH} fill={colorPrimary} />
-
-        {/* Logo dentro de la banda — badge blanco */}
+        {/* Logo arriba sobre blanco */}
         {hasBrand ? (
           <BrandMark
             logoHref={logoHref}
             sellerName={sellerName}
-            anchorX={LOGO_ZONE_X}
-            anchorY={logoAnchorY}
-            zoneWidth={LOGO_ZONE_W}
+            anchorX={30}
+            anchorY={LOGO_PAD}
+            zoneWidth={640}
             size={logoSize}
             align={logoAlign}
-            textColor="#ffffff"
+            textColor="#222222"
           />
         ) : null}
 
-        {/* Imagen producto */}
-        <ImageOrPlaceholder href={productImgHref} x={50} y={imgY} w={600} h={imgH} rx={16} />
-
-        {/* Título */}
+        {/* Banda color SÓLO detrás del título */}
+        <rect x={0} y={bandY} width={700} height={bandH} fill={colorPrimary} />
         <text
           x={350}
-          y={titleY}
+          y={bandY + BAND_PAD + titleFontPx}
           fontSize={titleFontPx}
           fontWeight={fontWeight}
           textAnchor="middle"
-          fill="#111111"
+          fill="#ffffff"
         >
           {titleLines.map((l, i) => (
             <tspan key={i} x={350} dy={i === 0 ? 0 : titleFontPx * 1.17}>
@@ -558,10 +522,13 @@ const LabelVerticalDesign = props => {
           ))}
         </text>
 
-        {/* Precio */}
+        {/* Imagen producto */}
+        <ImageOrPlaceholder href={productImgHref} x={50} y={imgY} w={600} h={imgH} rx={16} />
+
+        {/* Precio centrado abajo */}
         <text
           x={350}
-          y={priceY}
+          y={870}
           fontSize={priceFontPx}
           fontWeight={fontWeight === 300 ? 400 : fontWeight}
           textAnchor="middle"
@@ -571,18 +538,18 @@ const LabelVerticalDesign = props => {
         </text>
 
         {/* QR abajo izquierda + CTA abajo derecha */}
-        {qrHref ? <image href={qrHref} x={60} y={830} width={140} height={140} /> : null}
+        {qrHref ? <image href={qrHref} x={40} y={880} width={120} height={120} /> : null}
         <text
           x={670}
-          y={910}
-          fontSize={20}
+          y={920}
+          fontSize={18}
           fontWeight={fontWeight}
           textAnchor="end"
           fill="#444444"
         >
           {cta}
         </text>
-        <text x={670} y={960} fontSize={14} textAnchor="end" fill="#888888">
+        <text x={670} y={960} fontSize={13} textAnchor="end" fill="#888888">
           Escanea el QR
         </text>
       </g>
