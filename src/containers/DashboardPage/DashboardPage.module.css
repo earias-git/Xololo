@@ -2,15 +2,14 @@
 
 .mobileTopbar {
   display: flex;
-  position: fixed;
-  top: 0;
-  left: 0;
   width: 100%;
-  /* z-index igual al topbar normal — antes era 1, el sideNav del
-     LayoutSideNavigation tiene z-index 9 (calc(--zIndexTopbar - 1))
-     y se superponía al logo del topbar en mobile. */
-  z-index: var(--zIndexTopbar);
   background-color: var(--colorWhite);
+  /* IMPORTANTE: no usar position:fixed aquí. El wrapper del Topbar
+     en LayoutSideNavigation ya es `position: sticky` (ver
+     LayoutSideNavigation.module.css .topbar) — con eso basta para
+     mantener el topbar visible al scroll SIN sacarlo del flujo. Si
+     ponemos fixed aquí, el topbar se sale del flujo y el sideNav
+     con las tabs del Dashboard queda escondido detrás. */
 
   @media (--viewportLarge) {
     display: none;
