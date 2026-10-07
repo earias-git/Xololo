@@ -27,9 +27,17 @@ const {
   performLogin,
   performLogout,
   requireOperator,
+  signSession,
+  setSessionCookie,
 } = require('../api-util/operatorAuth');
 const { ROLES } = require('../api-util/operatorRoles');
 const { updateOperator } = require('../api-util/operatorDirectory');
+const {
+  generateEnrollment,
+  verifyToken,
+  generateRecoveryCodes,
+  consumeRecoveryCode,
+} = require('../api-util/operatorMfa');
 
 const PASSWORD_MIN_LEN = 12;
 
@@ -138,11 +146,172 @@ const me = async (req, res) => {
   });
 };
 
+// ============================================================
+// MFA endpoints (Fase 1C.4)
+// ============================================================
+
+/**
+ * POST /api/admin/auth/mfa/enroll (requiere sesión activa, MFA no
+ * requerida porque es justo la que se está enrollando).
+ *
+ * Devuelve secret + QR data URL + recovery codes PLANO (una sola
+ * vez — el frontend los muestra y el operator los imprime/guarda).
+ * NO activa mfaEnabled todavía — eso pasa en verify-enroll.
+ */
+const mfaEnroll = async (req, res) => {
+  try {
+    const op = req.operator;
+    const { secret, otpauthUrl, qrDataUrl } = await generateEnrollment(op);
+    const { plain, hashes } = await generateRecoveryCodes();
+
+    // Guardamos el secret y los hashes de recovery codes, PERO
+    // mfaEnabled sigue false. Hasta que el operator verifique el
+    // primer código en /mfa/verify-enroll no se activa.
+    await updateOperator(op.id, {
+      mfaSecret: secret,
+      mfaRecoveryCodes: hashes,
+      mfaEnabled: false,
+    });
+
+    return res.json({
+      secret,
+      otpauthUrl,
+      qrDataUrl,
+      recoveryCodes: plain,
+      note:
+        'Escanea el QR con tu app Authenticator y confirma el primer código en /mfa/verify-enroll. Guarda los recovery codes en un lugar seguro — no se mostrarán de nuevo.',
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[admin-auth.mfaEnroll]', e?.message);
+    return res.status(500).json({ error: 'internal' });
+  }
+};
+
+/**
+ * POST /api/admin/auth/mfa/verify-enroll (requiere sesión activa).
+ * Body: { token: "123456" }
+ *
+ * Confirma el primer código TOTP y activa mfaEnabled=true. También
+ * re-emite el JWT con mfaVerified=true (el operator ya autenticó
+ * el 2do factor en este momento).
+ */
+const mfaVerifyEnroll = async (req, res) => {
+  try {
+    const op = req.operator;
+    const { token } = req.body || {};
+    if (!op.mfaSecret) {
+      return res.status(409).json({ error: 'mfa_not_enrolled_yet' });
+    }
+    if (op.mfaEnabled) {
+      return res.status(409).json({ error: 'mfa_already_enabled' });
+    }
+    if (!verifyToken(token, op.mfaSecret)) {
+      return res.status(401).json({ error: 'invalid_token' });
+    }
+    const updated = await updateOperator(op.id, { mfaEnabled: true });
+    // Re-firmar JWT con mfaVerified=true (ya está autenticado el 2do factor).
+    const newToken = signSession(updated);
+    setSessionCookie(res, newToken);
+    return res.json({ ok: true, mfaEnabled: true });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[admin-auth.mfaVerifyEnroll]', e?.message);
+    return res.status(500).json({ error: 'internal' });
+  }
+};
+
+/**
+ * POST /api/admin/auth/mfa/verify (requiere sesión activa SIN MFA
+ * verificada todavía — post-login si el operator tiene mfaEnabled).
+ * Body: { token: "123456" } o { recoveryCode: "XXXX-XXXX" }
+ *
+ * Si válido, re-emite JWT con mfaVerified=true.
+ */
+const mfaVerify = async (req, res) => {
+  try {
+    const op = req.operator;
+    const { token, recoveryCode } = req.body || {};
+    if (!op.mfaEnabled || !op.mfaSecret) {
+      return res.status(409).json({ error: 'mfa_not_enabled' });
+    }
+
+    let ok = false;
+    let updateFields = {};
+
+    if (recoveryCode) {
+      const result = await consumeRecoveryCode(recoveryCode, op.mfaRecoveryCodes || []);
+      if (result.ok) {
+        ok = true;
+        updateFields.mfaRecoveryCodes = result.updatedCodes;
+      }
+    } else if (token) {
+      ok = verifyToken(token, op.mfaSecret);
+    }
+
+    if (!ok) {
+      return res.status(401).json({ error: 'invalid_token' });
+    }
+
+    if (Object.keys(updateFields).length > 0) {
+      await updateOperator(op.id, updateFields);
+    }
+
+    // Re-firmar JWT con mfaVerified=true.
+    const refreshedOp = { ...op, ...updateFields };
+    const newToken = signSession({ ...refreshedOp, mfaEnabled: true });
+    // Fuerza mfaVerified=true aunque el helper lo ate a !mfaEnabled.
+    // Lo hacemos manual para este endpoint.
+    const jwt = require('jsonwebtoken');
+    const payload = jwt.verify(newToken, process.env.XOLOLO_ADMIN_JWT_SECRET);
+    const finalToken = jwt.sign(
+      { ...payload, mfaVerified: true },
+      process.env.XOLOLO_ADMIN_JWT_SECRET,
+      { expiresIn: payload.exp - Math.floor(Date.now() / 1000) }
+    );
+    setSessionCookie(res, finalToken);
+
+    return res.json({ ok: true, usedRecoveryCode: !!recoveryCode });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[admin-auth.mfaVerify]', e?.message);
+    return res.status(500).json({ error: 'internal' });
+  }
+};
+
+/**
+ * POST /api/admin/auth/mfa/disable (requiere sesión MFA verificada).
+ * Permite al operator desactivar MFA (solo si no es super_admin —
+ * el super admin NO puede desactivar MFA, es forzado).
+ */
+const mfaDisable = async (req, res) => {
+  try {
+    const op = req.operator;
+    if (op.role === ROLES.SUPER_ADMIN) {
+      return res.status(403).json({ error: 'super_admin_cannot_disable_mfa' });
+    }
+    await updateOperator(op.id, {
+      mfaEnabled: false,
+      mfaSecret: null,
+      mfaRecoveryCodes: null,
+    });
+    return res.json({ ok: true });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[admin-auth.mfaDisable]', e?.message);
+    return res.status(500).json({ error: 'internal' });
+  }
+};
+
 module.exports = {
   bootstrap,
   login,
   logout,
   me,
+  mfaEnroll,
+  mfaVerifyEnroll,
+  mfaVerify,
+  mfaDisable,
   // Export el middleware que admin-auth usa para proteger /me
   requireOperator,
 };

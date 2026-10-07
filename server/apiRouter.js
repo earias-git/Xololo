@@ -184,6 +184,29 @@ router.post('/admin/auth/bootstrap', bodyParser.json(), adminAuth.bootstrap);
 router.post('/admin/auth/login', bodyParser.json(), adminAuth.login);
 router.post('/admin/auth/logout', adminAuth.logout);
 router.get('/admin/auth/me', adminAuth.requireOperator({ requireMfa: false }), adminAuth.me);
+// MFA (Fase 1C.4):
+router.post(
+  '/admin/auth/mfa/enroll',
+  adminAuth.requireOperator({ requireMfa: false }),
+  adminAuth.mfaEnroll
+);
+router.post(
+  '/admin/auth/mfa/verify-enroll',
+  bodyParser.json(),
+  adminAuth.requireOperator({ requireMfa: false }),
+  adminAuth.mfaVerifyEnroll
+);
+router.post(
+  '/admin/auth/mfa/verify',
+  bodyParser.json(),
+  adminAuth.requireOperator({ requireMfa: false }),
+  adminAuth.mfaVerify
+);
+router.post(
+  '/admin/auth/mfa/disable',
+  adminAuth.requireOperator(),
+  adminAuth.mfaDisable
+);
 
 // XOLOLO Track C: Stripe Billing — suscripción de sellers.
 // Crea el Checkout Session (plan + onboarding fee en un solo pago).

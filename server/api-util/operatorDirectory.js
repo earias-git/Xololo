@@ -201,7 +201,7 @@ const updateOperator = async (id, patch) => {
   // Lista blanca de campos actualizables.
   const allowed = [
     'name', 'role', 'passwordHash', 'mfaSecret', 'mfaEnabled',
-    'permissionsOverrides', 'lastLoginAt',
+    'mfaRecoveryCodes', 'permissionsOverrides', 'lastLoginAt',
   ];
   const updated = { ...existing };
   for (const field of allowed) {
