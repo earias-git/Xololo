@@ -19,6 +19,7 @@ const CMSPage = loadable(() => import(/* webpackChunkName: "CMSPage" */ '../cont
 const ContactDetailsPage = loadable(() => import(/* webpackChunkName: "ContactDetailsPage" */ '../containers/ContactDetailsPage/ContactDetailsPage'));
 const DashboardPage = loadable(() => import(/* webpackChunkName: "DashboardPage" */ '../containers/DashboardPage/DashboardPage'));
 const AdminPage = loadable(() => import(/* webpackChunkName: "AdminPage" */ '../containers/AdminPage/AdminPage'));
+const OpsConsolePage = loadable(() => import(/* webpackChunkName: "OpsConsolePage" */ '../containers/OpsConsolePage/OpsConsolePage'));
 const EditListingPage = loadable(() => import(/* webpackChunkName: "EditListingPage" */ '../containers/EditListingPage/EditListingPage'));
 const EmailVerificationPage = loadable(() => import(/* webpackChunkName: "EmailVerificationPage" */ '../containers/EmailVerificationPage/EmailVerificationPage'));
 const InboxPage = loadable(() => import(/* webpackChunkName: "InboxPage" */ '../containers/InboxPage/InboxPage'));
@@ -323,6 +324,18 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       auth: true,
       authPage: 'LoginPage',
       component: AdminPage,
+    },
+    {
+      // XOLOLO Fase 1C.5: panel /ops para operadores Xololo (RBAC +
+      // MFA propio con dominio corporativo xololo.mx). SEPARADO del
+      // /admin legacy que usa auth del user marketplace. Gate real
+      // vive 100% server-side (operatorAuth middleware); el cliente
+      // sólo renderiza y hace fetch — si la cookie operator no es
+      // válida, el /api/admin/auth/me devuelve 401 y la UI muestra
+      // el LoginForm.
+      path: '/ops',
+      name: 'OpsConsolePage',
+      component: OpsConsolePage,
     },
     {
       // XOLOLO Cart.4: página del carrito del seller identificado por
