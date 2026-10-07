@@ -33,6 +33,7 @@ const uploadSosPhoto = require('./api/upload-sos-photo');
 const uploadLegalDoc = require('./api/upload-legal-doc');
 const sellerLegalDocs = require('./api/seller-legal-docs');
 const adminLegalDocs = require('./api/admin-legal-docs');
+const adminAuth = require('./api/admin-auth');
 const createSubscriptionCheckout = require('./api/create-subscription-checkout');
 const sellerSubscription = require('./api/seller-subscription');
 const sellerHasListings = require('./api/seller-has-listings');
@@ -172,6 +173,17 @@ router.post('/seller-legal-docs', bodyParser.json(), sellerLegalDocs);
 // Admin: cola de revisión + aprobar/rechazar un documento.
 router.get('/admin/legal-docs', adminLegalDocs.list);
 router.post('/admin/legal-docs/review', bodyParser.json(), adminLegalDocs.review);
+
+// XOLOLO Fase 1C.3 — Autenticación de operadores Xololo (RBAC + MFA
+// futuro). Ver docs/ARQUITECTURA_PENALIDADES.md §6. Rutas:
+//   POST /api/admin/auth/bootstrap  (1 sola vez, con token secreto)
+//   POST /api/admin/auth/login
+//   POST /api/admin/auth/logout
+//   GET  /api/admin/auth/me         (requiere sesión activa)
+router.post('/admin/auth/bootstrap', bodyParser.json(), adminAuth.bootstrap);
+router.post('/admin/auth/login', bodyParser.json(), adminAuth.login);
+router.post('/admin/auth/logout', adminAuth.logout);
+router.get('/admin/auth/me', adminAuth.requireOperator({ requireMfa: false }), adminAuth.me);
 
 // XOLOLO Track C: Stripe Billing — suscripción de sellers.
 // Crea el Checkout Session (plan + onboarding fee en un solo pago).
