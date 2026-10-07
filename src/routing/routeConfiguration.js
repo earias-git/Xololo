@@ -338,6 +338,16 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: OpsConsolePage,
     },
     {
+      path: '/ops/mfa-enroll',
+      name: 'OpsMfaEnrollPage',
+      component: OpsConsolePage,
+    },
+    {
+      path: '/ops/operators',
+      name: 'OpsOperatorsPage',
+      component: OpsConsolePage,
+    },
+    {
       // XOLOLO Cart.4: página del carrito del seller identificado por
       // sellerId. Los items viven en localStorage (cart.duck) — la
       // page los lee del store y permite editar cantidades, remover

@@ -34,6 +34,7 @@ const uploadLegalDoc = require('./api/upload-legal-doc');
 const sellerLegalDocs = require('./api/seller-legal-docs');
 const adminLegalDocs = require('./api/admin-legal-docs');
 const adminAuth = require('./api/admin-auth');
+const adminOperators = require('./api/admin-operators');
 const createSubscriptionCheckout = require('./api/create-subscription-checkout');
 const sellerSubscription = require('./api/seller-subscription');
 const sellerHasListings = require('./api/seller-has-listings');
@@ -207,6 +208,16 @@ router.post(
   adminAuth.requireOperator(),
   adminAuth.mfaDisable
 );
+
+// XOLOLO Fase 1C.5b — CRUD de operators (solo super_admin).
+const { ROLES: OP_ROLES } = require('./api-util/operatorRoles');
+const requireSuperAdmin = adminAuth.requireOperator({ roles: [OP_ROLES.SUPER_ADMIN] });
+router.get('/admin/operators', requireSuperAdmin, adminOperators.list);
+router.post('/admin/operators', requireSuperAdmin, bodyParser.json(), adminOperators.create);
+router.patch('/admin/operators/:id', requireSuperAdmin, bodyParser.json(), adminOperators.update);
+router.post('/admin/operators/:id/suspend', requireSuperAdmin, bodyParser.json(), adminOperators.suspend);
+router.post('/admin/operators/:id/reinstate', requireSuperAdmin, adminOperators.reinstate);
+router.post('/admin/operators/:id/set-password', requireSuperAdmin, bodyParser.json(), adminOperators.setPassword);
 
 // XOLOLO Track C: Stripe Billing — suscripción de sellers.
 // Crea el Checkout Session (plan + onboarding fee en un solo pago).

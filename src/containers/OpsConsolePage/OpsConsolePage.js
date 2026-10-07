@@ -1,9 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocation, useHistory } from 'react-router-dom';
 
 import { apiBaseUrl } from '../../util/api';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { Page } from '../../components';
+
+import MfaEnrollView from './MfaEnrollView';
+import OperatorsView from './OperatorsView';
 
 import css from './OpsConsolePage.module.css';
 
@@ -246,18 +250,17 @@ const ROLE_LABELS = {
 };
 
 const MODULE_CARDS = [
-  { key: 'penalties', label: 'Cola de penalidades', emoji: '⚖️', hint: 'Aprueba/rechaza penalidades propuestas por el sistema' },
-  { key: 'disputes', label: 'Disputes', emoji: '🤝', hint: 'Mediación de disputes entre buyer y seller' },
-  { key: 'appeals', label: 'Apelaciones', emoji: '📩', hint: 'Apelaciones de sellers a penalidades aplicadas' },
-  { key: 'logistics', label: 'Logística', emoji: '📦', hint: 'Guías, fletes, entregas' },
-  { key: 'accounting', label: 'Contabilidad', emoji: '🧾', hint: 'Facturama, Stripe balance, CxC/CxP' },
-  { key: 'users', label: 'Usuarios', emoji: '👤', hint: 'Historial de sellers y buyers' },
-  { key: 'operators', label: 'Operadores', emoji: '🔐', hint: 'CRUD de operadores (super admin)' },
-  { key: 'audit_log', label: 'Audit log', emoji: '📋', hint: 'Registro de todas las acciones' },
+  { key: 'penalties', label: 'Cola de penalidades', emoji: '⚖️', hint: 'Aprueba/rechaza penalidades propuestas por el sistema', route: null },
+  { key: 'disputes', label: 'Disputes', emoji: '🤝', hint: 'Mediación de disputes entre buyer y seller', route: null },
+  { key: 'appeals', label: 'Apelaciones', emoji: '📩', hint: 'Apelaciones de sellers a penalidades aplicadas', route: null },
+  { key: 'logistics', label: 'Logística', emoji: '📦', hint: 'Guías, fletes, entregas', route: null },
+  { key: 'accounting', label: 'Contabilidad', emoji: '🧾', hint: 'Facturama, Stripe balance, CxC/CxP', route: null },
+  { key: 'users', label: 'Usuarios', emoji: '👤', hint: 'Historial de sellers y buyers', route: null },
+  { key: 'operators', label: 'Operadores', emoji: '🔐', hint: 'CRUD de operadores (super admin)', route: '/ops/operators', roles: ['super_admin'] },
+  { key: 'audit_log', label: 'Audit log', emoji: '📋', hint: 'Registro de todas las acciones', route: null },
 ];
 
-const Dashboard = ({ operator, onLogout }) => {
-  // TODO: filtrar MODULE_CARDS por permisos del operator (sub-commit 1C.5b).
+const Dashboard = ({ operator, onLogout, onNavigate }) => {
   return (
     <div className={css.dashboard}>
       <header className={css.topBar}>
@@ -276,23 +279,40 @@ const Dashboard = ({ operator, onLogout }) => {
       {!operator.mfaEnabled ? (
         <div className={css.warningBanner}>
           <strong>⚠️ MFA aún no activada.</strong> Es obligatoria para operar.{' '}
-          <a href="/ops/mfa-enroll" className={css.inlineLink}>
+          <button
+            type="button"
+            className={css.inlineLink}
+            onClick={() => onNavigate('/ops/mfa-enroll')}
+          >
             Activarla ahora →
-          </a>
+          </button>
         </div>
       ) : null}
 
       <div className={css.modulesGrid}>
-        {MODULE_CARDS.map(m => (
-          <div key={m.key} className={css.moduleCard}>
-            <span className={css.moduleEmoji} aria-hidden>
-              {m.emoji}
-            </span>
-            <h3 className={css.moduleName}>{m.label}</h3>
-            <p className={css.moduleHint}>{m.hint}</p>
-            <span className={css.soonBadge}>Próximamente</span>
-          </div>
-        ))}
+        {MODULE_CARDS.filter(m => !m.roles || m.roles.includes(operator.role)).map(m => {
+          const clickable = m.route;
+          return (
+            <div
+              key={m.key}
+              className={`${css.moduleCard} ${clickable ? css.moduleCardClickable : ''}`}
+              onClick={clickable ? () => onNavigate(m.route) : undefined}
+              role={clickable ? 'button' : undefined}
+              tabIndex={clickable ? 0 : undefined}
+            >
+              <span className={css.moduleEmoji} aria-hidden>
+                {m.emoji}
+              </span>
+              <h3 className={css.moduleName}>{m.label}</h3>
+              <p className={css.moduleHint}>{m.hint}</p>
+              {clickable ? (
+                <span className={css.openBadge}>Abrir →</span>
+              ) : (
+                <span className={css.soonBadge}>Próximamente</span>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <footer className={css.footer}>
@@ -311,6 +331,11 @@ const Dashboard = ({ operator, onLogout }) => {
 const OpsConsolePage = () => {
   const scrollingDisabled = useSelector(isScrollingDisabled);
   const session = useOperatorSession();
+  const location = useLocation();
+  const history = useHistory();
+
+  const navigate = path => history.push(path);
+  const backToDashboard = () => history.push('/ops');
 
   let content;
 
@@ -323,13 +348,44 @@ const OpsConsolePage = () => {
   } else if (!session.operator) {
     content = <LoginForm onSuccess={() => session.refresh()} />;
   } else if (session.operator.mfaEnabled && session.operator.mfaVerified === false) {
-    // Nota: `mfaVerified` viene del JWT. Si mfaEnabled=true y no está
-    // verificado todavía, mostramos el gate 2FA.
+    // mfaVerified viene del JWT. Si mfaEnabled=true y no verificado
+    // todavía, mostramos el gate 2FA — independiente del path pedido.
     content = (
       <MfaVerifyForm onSuccess={() => session.refresh()} onCancel={session.logout} />
     );
+  } else if (location.pathname === '/ops/mfa-enroll') {
+    content = (
+      <MfaEnrollView
+        onDone={async () => {
+          await session.refresh();
+          backToDashboard();
+        }}
+        onCancel={backToDashboard}
+      />
+    );
+  } else if (location.pathname === '/ops/operators') {
+    // Gate: solo super_admin.
+    if (session.operator.role !== 'super_admin') {
+      content = (
+        <div className={css.card}>
+          <h1 className={css.title}>Acceso denegado</h1>
+          <p className={css.subtitle}>Esta sección es exclusiva del super admin.</p>
+          <button type="button" className={css.primaryBtn} onClick={backToDashboard}>
+            Volver
+          </button>
+        </div>
+      );
+    } else {
+      content = <OperatorsView currentOperator={session.operator} onBack={backToDashboard} />;
+    }
   } else {
-    content = <Dashboard operator={session.operator} onLogout={session.logout} />;
+    content = (
+      <Dashboard
+        operator={session.operator}
+        onLogout={session.logout}
+        onNavigate={navigate}
+      />
+    );
   }
 
   return (
