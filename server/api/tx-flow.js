@@ -156,6 +156,34 @@ const markDispatched = async (req, res) => {
       id: transactionId,
       metadata: { xoloFlow },
     });
+
+    // XOLOLO Fase 1B: si es freight con capture_method=manual, el PI
+    // está en estado requires_capture esperando que marquemos despacho
+    // para cobrar realmente. Lo capturamos aquí. Para tx viejas con
+    // auto-captura, el PI ya está en succeeded y el capture es un
+    // no-op idempotente.
+    if (xShipping.mode === 'freight') {
+      try {
+        const { captureFreightPi } = require('./freight');
+        const result = await captureFreightPi(transactionId);
+        if (!result.ok && result.error !== 'pi_not_capturable') {
+          // eslint-disable-next-line no-console
+          console.error(
+            `[tx-flow.markDispatched] captura PI freight tx=${transactionId}:`,
+            result.error
+          );
+          // No bloqueamos el markDispatched — la bandera ya quedó
+          // guardada. Operator puede revisar el PI manualmente si falló.
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(
+          `[tx-flow.markDispatched] captureFreightPi threw tx=${transactionId}:`,
+          e.message
+        );
+      }
+    }
+
     return res.json({ ok: true, at: nowIso });
   } catch (e) {
     // eslint-disable-next-line no-console

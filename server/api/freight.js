@@ -46,6 +46,19 @@ const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { getStripeBilling } = require('../api-util/stripeBilling');
 const { computeFreightBreakdown } = require('../api-util/freightFees');
 
+// XOLOLO Fase 1B (hoja Arquitectura técnica §9) — rollout gradual
+// del cambio capture_method=automatic → manual. Feature flag en env
+// FREIGHT_MANUAL_CAPTURE=1. Cuando está activo:
+//   - PIs nuevos se crean con capture_method=manual (autorizan pero
+//     NO cobran hasta que el seller marque dispatched).
+//   - Dentro de la ventana de Stripe (5d Visa / 7d MC/Amex) se puede
+//     CANCELAR sin fee → desbloquea los $0 fee de triggers #3 y #4
+//     de la Política A (hoja Google Sheets).
+//   - Fuera de la ventana, cancel = refund normal con fee cobrado.
+// PIs ya creados ANTES de activar el flag siguen con auto-captura;
+// sus webhooks siguen funcionando (succeeded marca ambas banderas).
+const isManualCaptureEnabled = () => process.env.FREIGHT_MANUAL_CAPTURE === '1';
+
 const MAX_DESCRIPTION_LEN = 500;
 const MAX_CARRIER_LEN = 100;
 
@@ -262,10 +275,19 @@ const createPaymentIntent = async (req, res) => {
     // diferencia del fee real de Stripe (calculado sobre el total).
     const breakdown = computeFreightBreakdown(currentFreight.quotedAmount);
 
+    // Fase 1B: capture_method=manual retiene fondos sin cobrar hasta
+    // que el seller marque dispatched. Dentro de la ventana Stripe
+    // (5-7 días según red), cancelar = $0 fee. Fuera de la ventana,
+    // Stripe captura automáticamente antes del expiry (card decline =
+    // igual que automatic). El flag permite rollout gradual.
+    const manualCapture = isManualCaptureEnabled();
+    const captureParams = manualCapture ? { capture_method: 'manual' } : {};
+
     const pi = await stripe.paymentIntents.create({
       amount: breakdown.fleteSubunits,
       currency: (currentFreight.quotedCurrency || 'MXN').toLowerCase(),
       automatic_payment_methods: { enabled: true },
+      ...captureParams,
       description: `Envío por flete · Xololo tx ${transactionId}`,
       receipt_email: currentUserEmail || undefined,
       ...customerParams,
@@ -273,6 +295,7 @@ const createPaymentIntent = async (req, res) => {
         xololoType: 'freight_charge',
         xololoTxId: transactionId,
         xololoBuyerId: currentUserId,
+        xololoCaptureMethod: manualCapture ? 'manual' : 'automatic',
         xololoFleteSubunits: String(breakdown.fleteSubunits),
         xololoTotalFeesSubunits: String(breakdown.totalFeesSubunits),
         xololoSellerReceivesSubunits: String(breakdown.sellerReceivesSubunits),
@@ -306,4 +329,77 @@ const createPaymentIntent = async (req, res) => {
   }
 };
 
-module.exports = { quote, createPaymentIntent };
+// XOLOLO Fase 1B — captura/cancelación del PaymentIntent del flete.
+// Llamadas desde otros endpoints (tx-flow.markDispatched, scheduler
+// auto-cancel, operator admin). NO exponen HTTP endpoint directo —
+// se consumen como funciones internas con el txId.
+//
+// Idempotencia: Stripe rechaza capture/cancel sobre un PI en estado
+// final (succeeded/canceled). Capturamos esos errores y los
+// convertimos en `{ ok: true, already: '<state>' }` para que el
+// caller no tenga que preocuparse.
+
+const captureFreightPi = async transactionId => {
+  const isdk = getIntegrationSdk();
+  if (!isdk) return { ok: false, error: 'integration_sdk_missing' };
+  const stripe = getStripeBilling();
+  if (!stripe) return { ok: false, error: 'stripe_not_configured' };
+
+  const txResp = await isdk.transactions.show({ id: transactionId });
+  const freight = txResp.data.data.attributes.metadata?.xoloFreight || {};
+  const piId = freight.freightPaymentIntentId;
+  if (!piId) return { ok: false, error: 'no_payment_intent' };
+
+  try {
+    const pi = await stripe.paymentIntents.capture(piId);
+    return { ok: true, status: pi.status, amountCaptured: pi.amount_received };
+  } catch (e) {
+    const msg = e?.raw?.message || e?.message || '';
+    if (/already been captured|has already succeeded/i.test(msg)) {
+      return { ok: true, already: 'captured' };
+    }
+    if (/canceled|cannot capture/i.test(msg)) {
+      return { ok: false, error: 'pi_not_capturable', message: msg };
+    }
+    // eslint-disable-next-line no-console
+    console.error('[freight.captureFreightPi]', transactionId, msg);
+    return { ok: false, error: 'stripe_error', message: msg };
+  }
+};
+
+const cancelFreightPi = async (transactionId, reason) => {
+  const isdk = getIntegrationSdk();
+  if (!isdk) return { ok: false, error: 'integration_sdk_missing' };
+  const stripe = getStripeBilling();
+  if (!stripe) return { ok: false, error: 'stripe_not_configured' };
+
+  const txResp = await isdk.transactions.show({ id: transactionId });
+  const freight = txResp.data.data.attributes.metadata?.xoloFreight || {};
+  const piId = freight.freightPaymentIntentId;
+  if (!piId) return { ok: true, already: 'no_pi' };
+
+  try {
+    // Stripe cancel reasons válidas: duplicate | fraudulent |
+    // requested_by_customer | abandoned. Default a 'abandoned' si no se pasa.
+    const validReasons = ['duplicate', 'fraudulent', 'requested_by_customer', 'abandoned'];
+    const cancellationReason = validReasons.includes(reason) ? reason : 'abandoned';
+    const pi = await stripe.paymentIntents.cancel(piId, {
+      cancellation_reason: cancellationReason,
+    });
+    return { ok: true, status: pi.status };
+  } catch (e) {
+    const msg = e?.raw?.message || e?.message || '';
+    if (/already been canceled/i.test(msg)) {
+      return { ok: true, already: 'canceled' };
+    }
+    if (/cannot be canceled|has already succeeded/i.test(msg)) {
+      // Ya se capturó — hay que refund, no cancel. El caller decide.
+      return { ok: false, error: 'pi_already_captured', message: msg };
+    }
+    // eslint-disable-next-line no-console
+    console.error('[freight.cancelFreightPi]', transactionId, msg);
+    return { ok: false, error: 'stripe_error', message: msg };
+  }
+};
+
+module.exports = { quote, createPaymentIntent, captureFreightPi, cancelFreightPi };

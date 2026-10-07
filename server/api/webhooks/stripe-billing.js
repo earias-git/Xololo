@@ -9,9 +9,13 @@
 //   - customer.subscription.updated → sync de status/currentPeriodEnd/cancelAtPeriodEnd
 //   - customer.subscription.deleted → cierre final (Stripe la borra sola
 //     cuando cancel_at_period_end se cumple, o por unpaid) → avisa al seller
+//   - payment_intent.amount_capturable_updated → XOLOLO Fase 1B: cuando
+//     xololoType='freight_charge' y capture_method='manual', marca sólo
+//     buyerAuthorizedAt (el PI está autorizado pero NO cobrado aún).
+//     Habilita al seller a mark-dispatched; en ese momento se captura.
 //   - payment_intent.succeeded     → cuando xololoType='freight_charge',
-//     marca buyerAuthorizedAt+freightPaidAt en la tx correspondiente
-//     (habilita al seller a mark-dispatched). Ver server/api/freight.js.
+//     marca freightPaidAt (y buyerAuthorizedAt si no estaba, flow auto).
+//     Ver server/api/freight.js.
 //
 // Esto es el mecanismo ROBUSTO para mantener xololoSubscription al día
 // (renovaciones, fallos de pago, cancelaciones) — server/api/seller-subscription.js
@@ -183,11 +187,12 @@ module.exports = async (req, res) => {
       }
       const updated = await syncSubscriptionMetadata({ isdk, sellerId, subscription });
       await notifySeller(isdk, sellerId, 'seller.subscription_canceled', updated);
-    } else if (event.type === 'payment_intent.succeeded') {
-      // XOLOLO Envíos v2 · freight: el buyer autorizó y pagó el envío
-      // cotizado. Marcamos buyerAuthorizedAt+freightPaidAt en la tx.
-      // Otros PIs (suscripciones, etc.) pasan sin xololoType — los
-      // ignoramos silenciosamente.
+    } else if (event.type === 'payment_intent.amount_capturable_updated') {
+      // XOLOLO Fase 1B · freight con capture_method=manual: buyer
+      // acaba de AUTORIZAR el PI pero aún NO se capturó (dinero
+      // retenido en su tarjeta, no cobrado). Marcamos buyerAuthorizedAt
+      // pero NO freightPaidAt — ese se marca cuando corra la captura
+      // (al mark-dispatched del seller) y llegue el succeeded webhook.
       const pi = event.data.object;
       if (pi.metadata?.xololoType !== 'freight_charge') {
         return res
@@ -204,7 +209,6 @@ module.exports = async (req, res) => {
       try {
         const txResp = await isdk.transactions.show({ id: txId });
         const current = txResp.data.data.attributes.metadata?.xoloFreight || {};
-        // Idempotencia: si ya se procesó (webhook duplicado), no re-escribir.
         if (current.buyerAuthorizedAt) {
           return res.status(200).json({
             ok: true,
@@ -216,6 +220,55 @@ module.exports = async (req, res) => {
         const xoloFreight = {
           ...current,
           buyerAuthorizedAt: nowIso,
+          // Deliberadamente NO marcamos freightPaidAt aquí — vendrá
+          // en payment_intent.succeeded cuando se capture.
+          freightPaymentIntentId: pi.id,
+          freightAuthorizedAmount: pi.amount_capturable || pi.amount,
+          freightAuthorizedCurrency: (pi.currency || 'mxn').toUpperCase(),
+        };
+        await isdk.transactions.updateMetadata({
+          id: txId,
+          metadata: { xoloFreight },
+        });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(`[webhook stripe-billing] freight auth para ${txId}:`, e.message);
+        return res.status(500).json({ error: 'internal' });
+      }
+    } else if (event.type === 'payment_intent.succeeded') {
+      // XOLOLO Envíos v2 · freight: el PI ya fue capturado (en el
+      // flow nuevo, por tx-flow.markDispatched → captureFreightPi).
+      // En el flow viejo auto-captura, llega directo al confirm del
+      // buyer sin pasar por amount_capturable_updated.
+      // Marcamos freightPaidAt siempre. buyerAuthorizedAt se marca
+      // sólo si no estaba (retro compat con flow auto).
+      const pi = event.data.object;
+      if (pi.metadata?.xololoType !== 'freight_charge') {
+        return res
+          .status(200)
+          .json({ ok: true, processed: false, reason: 'not_freight_pi', type: event.type });
+      }
+      const txId = pi.metadata?.xololoTxId;
+      if (!txId) {
+        return res
+          .status(200)
+          .json({ ok: true, processed: false, reason: 'no_tx_metadata', type: event.type });
+      }
+      const nowIso = new Date().toISOString();
+      try {
+        const txResp = await isdk.transactions.show({ id: txId });
+        const current = txResp.data.data.attributes.metadata?.xoloFreight || {};
+        if (current.freightPaidAt) {
+          return res.status(200).json({
+            ok: true,
+            processed: false,
+            reason: 'already_paid',
+            type: event.type,
+          });
+        }
+        const xoloFreight = {
+          ...current,
+          buyerAuthorizedAt: current.buyerAuthorizedAt || nowIso,
           freightPaidAt: nowIso,
           freightPaymentIntentId: pi.id,
           freightPaidAmount: pi.amount_received || pi.amount,
