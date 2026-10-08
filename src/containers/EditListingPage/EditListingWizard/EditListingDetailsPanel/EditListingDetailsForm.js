@@ -21,6 +21,7 @@ import {
   Button,
   FieldSelect,
   FieldTextInput,
+  AiSuggestionsBox,
   Heading,
   CustomExtendedDataField,
 } from '../../../../components';
@@ -308,7 +309,7 @@ const getListingTypeConfig = (config, listingType) => {
  * @param {Function} props.onSubmit - The submit function
  * @returns {JSX.Element}
  */
-const EditListingDetailsForm = props => (
+const EditListingDetailsForm = ({ listingId, ...props }) => (
   <FinalForm
     {...props}
     mutators={{ ...arrayMutators }}
@@ -451,6 +452,16 @@ const EditListingDetailsForm = props => (
                   id: 'EditListingDetailsForm.descriptionRequired',
                 })
               )}
+            />
+          )}
+
+          {showDescription && isCompatibleCurrency && (
+            <AiSuggestionsBox
+              listingId={listingId}
+              currentTitle={values.title}
+              currentDescription={values.description}
+              onApplyTitle={newTitle => formApi.change('title', newTitle)}
+              onApplyDescription={newDesc => formApi.change('description', newDesc)}
             />
           )}
 

@@ -385,6 +385,7 @@ const EditListingDetailsPanel = props => {
           className={css.form}
           initialValues={initialValues}
           saveActionMsg={submitButtonText}
+          listingId={listing?.id?.uuid}
           onSubmit={values => {
             const {
               title,
