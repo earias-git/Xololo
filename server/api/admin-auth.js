@@ -210,9 +210,20 @@ const mfaVerifyEnroll = async (req, res) => {
       return res.status(401).json({ error: 'invalid_token' });
     }
     const updated = await updateOperator(op.id, { mfaEnabled: true });
-    // Re-firmar JWT con mfaVerified=true (ya está autenticado el 2do factor).
-    const newToken = signSession(updated);
-    setSessionCookie(res, newToken);
+    // Re-firmar JWT con mfaVerified=true. signSession ata mfaVerified a
+    // !mfaEnabled, y acabamos de poner mfaEnabled=true → sin este override
+    // la sesión quedaría con mfaVerified=false y los endpoints protegidos
+    // responderían mfa_required inmediatamente después del enroll.
+    // (El endpoint mfaVerify hace el mismo workaround.)
+    const baseToken = signSession(updated);
+    const jwt = require('jsonwebtoken');
+    const payload = jwt.verify(baseToken, process.env.XOLOLO_ADMIN_JWT_SECRET);
+    const finalToken = jwt.sign(
+      { ...payload, mfaVerified: true },
+      process.env.XOLOLO_ADMIN_JWT_SECRET,
+      { expiresIn: payload.exp - Math.floor(Date.now() / 1000) }
+    );
+    setSessionCookie(res, finalToken);
     return res.json({ ok: true, mfaEnabled: true });
   } catch (e) {
     // eslint-disable-next-line no-console
