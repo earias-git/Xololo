@@ -6,11 +6,13 @@ import { FormattedMessage } from '../../../../util/reactIntl';
 import { LISTING_STATE_DRAFT } from '../../../../util/types';
 
 // Import shared components
-import { H3, ListingLink } from '../../../../components';
+import { H3, ListingLink, NamedLink } from '../../../../components';
 
 // Import modules from this directory
 import EditListingPhotosForm from './EditListingPhotosForm';
 import css from './EditListingPhotosPanel.module.css';
+
+const DETAILS_TAB = 'details';
 
 const getInitialValues = params => {
   const { images = [] } = params;
@@ -114,6 +116,41 @@ const EditListingPhotosPanel = props => {
         updateInProgress={updateInProgress}
         listingImageConfig={listingImageConfig}
       />
+
+      {/* XOLOLO Fase 2 — CTA al terminar de subir fotos para que la IA
+          sugiera título/descripción basados en lo que las cámaras ven.
+          Visible sólo si el listing ya tiene al menos una imagen
+          commiteada (relaciones) y se identifica por su listingId. */}
+      {listing?.id && (listing?.images?.length > 0 ||
+        listing?.relationships?.images?.data?.length > 0) ? (
+        <aside className={css.aiCta}>
+          <div className={css.aiCtaLeft}>
+            <span className={css.aiCtaSparkle} aria-hidden="true">✨</span>
+            <div>
+              <h4 className={css.aiCtaTitle}>¿Quieres mejorar tu texto con IA?</h4>
+              <p className={css.aiCtaDesc}>
+                Nuestra IA ya puede analizar tus fotos y sugerirte un título y
+                descripción más atractivos. Toma ~20 segundos.
+              </p>
+            </div>
+          </div>
+          <NamedLink
+            name="EditListingPage"
+            params={{
+              id: listing.id.uuid,
+              slug: listing.attributes.title
+                ? listing.attributes.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+                : 'draft',
+              type: isPublished ? 'edit' : 'draft',
+              tab: DETAILS_TAB,
+            }}
+            to={{ search: '?autoSuggest=1' }}
+            className={css.aiCtaBtn}
+          >
+            Mejorar en Detalles →
+          </NamedLink>
+        </aside>
+      ) : null}
     </main>
   );
 };

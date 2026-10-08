@@ -221,3 +221,41 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.analyzingBox {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 6px;
+  margin-top: 14px;
+}
+
+.analyzingTitle {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--colorBlack);
+}
+
+.analyzingSub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--colorGrey600, #666);
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--colorGrey100);
+  border-top-color: var(--marketplaceColor);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
