@@ -7,6 +7,7 @@
 //   200 → { stores: [{ id, name, slug, coverUrl, primaryColor, description }] }
 
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { isSellerUserType } = require('../api-util/userTypes');
 
 // Caché para no golpear Integration API en cada landing. Se invalida en
 // cada reinicio; con TTL de 5 minutos evitamos rate limits.
@@ -39,7 +40,10 @@ module.exports = async (req, res) => {
       candidates.push(
         ...users.filter(u => {
           const pd = u.attributes.profile.publicData || {};
-          return pd.slug && pd.userType === 'provider';
+          // Acepta variantes legacy del userType (p.ej. "Proveedor" en
+          // español) además del canónico 'provider'. El Sub-commit 2 incluye
+          // un script de backfill que normaliza los valores en Sharetribe.
+          return pd.slug && isSellerUserType(pd.userType);
         })
       );
       const totalPages = response.data.meta?.totalPages || 1;
