@@ -41,6 +41,18 @@ const {
 
 const PASSWORD_MIN_LEN = 12;
 
+// Re-emite un JWT ya firmado por signSession() cambiando sólo el claim
+// mfaVerified a true. jsonwebtoken rechaza expiresIn cuando el payload
+// trae un 'exp' propio (error: 'Bad "options.expiresIn" option the
+// payload already has an "exp" property'), así que conservamos iat/exp
+// originales en vez de recalcularlos.
+const reissueTokenWithMfaVerified = baseToken => {
+  const jwt = require('jsonwebtoken');
+  const secret = process.env.XOLOLO_ADMIN_JWT_SECRET;
+  const payload = jwt.verify(baseToken, secret);
+  return jwt.sign({ ...payload, mfaVerified: true }, secret);
+};
+
 const bootstrap = async (req, res) => {
   try {
     const { token, email, name, password } = req.body || {};
@@ -215,19 +227,9 @@ const mfaVerifyEnroll = async (req, res) => {
     }
     const updated = await updateOperator(op.id, { mfaEnabled: true });
     // Re-firmar JWT con mfaVerified=true. signSession ata mfaVerified a
-    // !mfaEnabled, y acabamos de poner mfaEnabled=true → sin este override
-    // la sesión quedaría con mfaVerified=false y los endpoints protegidos
-    // responderían mfa_required inmediatamente después del enroll.
-    // (El endpoint mfaVerify hace el mismo workaround.)
-    const baseToken = signSession(updated);
-    const jwt = require('jsonwebtoken');
-    const payload = jwt.verify(baseToken, process.env.XOLOLO_ADMIN_JWT_SECRET);
-    const finalToken = jwt.sign(
-      { ...payload, mfaVerified: true },
-      process.env.XOLOLO_ADMIN_JWT_SECRET,
-      { expiresIn: payload.exp - Math.floor(Date.now() / 1000) }
-    );
-    setSessionCookie(res, finalToken);
+    // !mfaEnabled; forzamos el claim manual porque el 2do factor ya está
+    // autenticado en este request.
+    setSessionCookie(res, reissueTokenWithMfaVerified(signSession(updated)));
     return res.json({ ok: true, mfaEnabled: true });
   } catch (e) {
     // eslint-disable-next-line no-console
@@ -274,17 +276,8 @@ const mfaVerify = async (req, res) => {
 
     // Re-firmar JWT con mfaVerified=true.
     const refreshedOp = { ...op, ...updateFields };
-    const newToken = signSession({ ...refreshedOp, mfaEnabled: true });
-    // Fuerza mfaVerified=true aunque el helper lo ate a !mfaEnabled.
-    // Lo hacemos manual para este endpoint.
-    const jwt = require('jsonwebtoken');
-    const payload = jwt.verify(newToken, process.env.XOLOLO_ADMIN_JWT_SECRET);
-    const finalToken = jwt.sign(
-      { ...payload, mfaVerified: true },
-      process.env.XOLOLO_ADMIN_JWT_SECRET,
-      { expiresIn: payload.exp - Math.floor(Date.now() / 1000) }
-    );
-    setSessionCookie(res, finalToken);
+    const baseToken = signSession({ ...refreshedOp, mfaEnabled: true });
+    setSessionCookie(res, reissueTokenWithMfaVerified(baseToken));
 
     return res.json({ ok: true, usedRecoveryCode: !!recoveryCode });
   } catch (e) {
