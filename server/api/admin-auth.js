@@ -133,6 +133,9 @@ const logout = async (req, res) => {
 // middleware. Para el frontend saber qué roles tiene y qué mostrar.
 const me = async (req, res) => {
   const op = req.operator;
+  // mfaVerified viene del JWT (sesión), no del directory. El frontend
+  // lo necesita para decidir si redirigir al gate /ops/mfa-verify.
+  const mfaVerified = !!req.sessionPayload?.mfaVerified;
   return res.json({
     operator: {
       id: op.id,
@@ -140,6 +143,7 @@ const me = async (req, res) => {
       name: op.name,
       role: op.role,
       mfaEnabled: op.mfaEnabled,
+      mfaVerified,
       permissionsOverrides: op.permissionsOverrides || [],
       lastLoginAt: op.lastLoginAt,
     },

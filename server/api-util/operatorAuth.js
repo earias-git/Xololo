@@ -163,6 +163,9 @@ const requireOperator = (opts = {}) => async (req, res, next) => {
   }
 
   req.operator = operator;
+  // Expone el payload JWT a los handlers (en especial mfaVerified, que
+  // no vive en el directory R2 — es un claim de la sesión actual).
+  req.sessionPayload = payload;
   next();
 };
 
