@@ -1,0 +1,87 @@
+.wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px 16px;
+}
+
+@media (min-width: 1024px) {
+  .wrapper {
+    padding: 24px 32px;
+  }
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 20px;
+  background: linear-gradient(120deg, #1e3a8a 0%, #4338ca 50%, #7c3aed 100%);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(67, 56, 202, 0.25);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(67, 56, 202, 0.35);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sparkle {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+  animation: sparkle 2.5s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { transform: scale(1) rotate(0); }
+  50% { transform: scale(1.15) rotate(10deg); }
+}
+
+.title {
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: 17px;
+  }
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.35;
+}
+
+@media (min-width: 768px) {
+  .subtitle {
+    font-size: 13px;
+  }
+}
+
+.cta {
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
