@@ -3,6 +3,7 @@ import Cookies from 'js-cookie';
 import { isEmpty } from '../../util/common';
 import { pickUserFieldsData, addScopePrefix } from '../../util/userHelpers';
 import { pickReferralData } from '../../util/webStorageHelpers';
+import { canonicalizeUserType } from '../../util/userTypes';
 
 // Returns full userType config based on selected userType
 const getUserTypeConfig = (userType, userTypes) => {
@@ -50,11 +51,18 @@ export const getNonUserFieldParams = (values, userFieldConfigs) => {
 export const getExtendedDataMaybe = (submitValues, userType, userFields, extraData) => {
   const { publicData, privateData, protectedData } = extraData;
 
+  // XOLOLO: canonicalizamos el userType ANTES de persistirlo en publicData
+  // para evitar que labels legacy del hosted config (p.ej. "Proveedor") se
+  // guarden como string literal y rompan filtros server-side estrictos.
+  // Si canonicalizeUserType devuelve null (userType desconocido/custom),
+  // fallback al valor original para no bloquear flujos no previstos.
+  const persistedUserType = canonicalizeUserType(userType) || userType;
+
   return !isEmpty(submitValues)
     ? {
         publicData: {
           ...publicData,
-          userType,
+          userType: persistedUserType,
           ...pickUserFieldsData(submitValues, 'public', userType, userFields),
         },
         privateData: {
