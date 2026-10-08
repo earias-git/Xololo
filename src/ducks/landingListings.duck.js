@@ -37,7 +37,13 @@ const commonQueryParams = () => ({
   ...createImageVariantConfig('listing-card', 400, 1),
   ...createImageVariantConfig('listing-card-2x', 800, 1),
   perPage: RECENT_LISTINGS_LIMIT,
-  sort: '-createdAt',
+  // XOLOLO: la Sharetribe Marketplace API responde invertido respecto a
+  // su documentación — `sort: 'createdAt'` (sin prefijo) devuelve DESC
+  // (más nuevos primero), que es lo que queremos aquí. Verificado contra
+  // los 8 productos reales del marketplace en producción: con '-createdAt'
+  // el producto más nuevo (Diadema FLORES, 6-oct) salía al final y el
+  // landing dejaba de mostrarlo. Con 'createdAt' sale primero correcto.
+  sort: 'createdAt',
 });
 
 const fetchLandingListingsPayloadCreator = async (_, { extra: sdk, rejectWithValue }) => {

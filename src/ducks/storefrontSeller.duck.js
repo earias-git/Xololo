@@ -20,7 +20,10 @@ const commonListingsQuery = authorId => ({
   ...createImageVariantConfig('listing-card', 400, 1),
   ...createImageVariantConfig('listing-card-2x', 800, 1),
   perPage: RECENT_LISTINGS_LIMIT,
-  sort: '-createdAt',
+  // XOLOLO: ver nota en landingListings.duck.js — la Marketplace API
+  // responde invertido para createdAt. 'createdAt' sin prefijo devuelve
+  // los más recientes primero, que es lo que el storefront muestra.
+  sort: 'createdAt',
 });
 
 const fetchSellerPayloadCreator = async (
