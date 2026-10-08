@@ -51,6 +51,7 @@ const adminOverview = require('./api/admin-overview');
 const publicStoreStats = require('./api/public-store-stats');
 const buyerDashboard = require('./api/buyer-dashboard');
 const trackEvent = require('./api/track-event');
+const aiAnalyzeListing = require('./api/ai-analyze-listing');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -302,6 +303,10 @@ router.get('/buyer-dashboard', buyerDashboard);
 // XOLOLO F3 Sprint 2: recibe eventos de tracking del cliente.
 // Público, rate-limited por IP. Encola y responde 200 inmediato.
 router.post('/track/event', bodyParser.json(), trackEvent);
+
+// XOLOLO Fase 2 — Análisis IA de listings (image enrichment + moderación).
+// Se llama fire-and-forget desde el frontend tras publish/update.
+router.post('/ai/analyze-listing', bodyParser.json(), aiAnalyzeListing);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed
