@@ -234,3 +234,51 @@
   font-size: 13px;
   margin: 0;
 }
+
+.bannerRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bannerThumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 4px;
+  cursor: pointer;
+  min-width: 76px;
+}
+
+.bannerThumb:hover {
+  border-color: #0e1a2f;
+}
+
+.bannerThumbActive {
+  border-color: #1e40af;
+  box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.25);
+}
+
+.bannerThumb small {
+  font-size: 10px;
+  color: #4b5563;
+}
+
+.bannerPreview {
+  width: 64px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+
+.bannerSolid {
+  display: block;
+  width: 64px;
+  height: 36px;
+  border-radius: 4px;
+}

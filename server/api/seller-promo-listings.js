@@ -132,6 +132,11 @@ module.exports = async (req, res) => {
           ? `http://${slug}.localhost:3000`
           : `https://${slug}.xololo.mx`
         : null;
+      // Banners del storefront (hasta 3) — pre-fetch como data: URLs
+      // para evitar CORS igual que con el logo.
+      const bannerRawUrls = [pd.bannerUrl, pd.bannerUrl2, pd.bannerUrl3].filter(Boolean);
+      const bannerDataUrls = await Promise.all(bannerRawUrls.map(fetchAsDataUrl));
+
       seller = {
         slug,
         tagline: pd.shortDescription || pd.tagline || null,
@@ -141,6 +146,7 @@ module.exports = async (req, res) => {
         primaryCategory: pd.primaryCategory || null,
         brandPrimaryColor: pd.brandPrimaryColor || null,
         storeUrl,
+        bannerDataUrls: bannerDataUrls.filter(Boolean),
       };
     } catch (_e) {
       // No bloqueante: si falla, el BrandMark queda vacío (no se

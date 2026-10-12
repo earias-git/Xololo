@@ -41,12 +41,12 @@ export const STORE_COLOR_SWATCHES = [
 ];
 
 export const LOGO_SIZE_MIN = 80;
-export const LOGO_SIZE_MAX = 220;
-export const LOGO_SIZE_DEFAULT = 140;
+export const LOGO_SIZE_MAX = 560;
+export const LOGO_SIZE_DEFAULT = 220;
 
-export const QR_SIZE_MIN = 180;
-export const QR_SIZE_MAX = 460;
-export const QR_SIZE_DEFAULT = 320;
+export const QR_SIZE_MIN = 200;
+export const QR_SIZE_MAX = 900;
+export const QR_SIZE_DEFAULT = 500;
 
 // ----- Helpers de render -----
 
@@ -199,6 +199,7 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
   const {
     storeName,
     tagline,
+    showTagline,
     slug,
     storeUrl,
     verified,
@@ -218,35 +219,69 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
     showQr,
     qrSize,
     showSlug,
+    showCta,
     fontFamily,
     fontWeight,
     titleScale,
+    // Banner opcional como background del header (reemplaza la banda).
+    bannerHref,
+    showBanner,
   } = props;
 
   const padding = Math.max(48, widthU * 0.045);
   const bandColor = blackWhite ? '#111111' : colorPrimary;
   const textOnBand = '#ffffff';
 
-  // Zona del logo + nombre tienda (header "blanco").
+  // Logo. Clampeamos a la mitad del canvas máx para que nunca se salga.
+  const effectiveLogoSize = Math.min(logoSize, Math.min(widthU, heightU) * 0.5);
   const logoY = padding;
-  const headerBottom = logoY + logoSize + 40;
+  const headerBottom = logoY + (showLogo ? effectiveLogoSize : 0) + 40;
 
-  // Banda de color (opcional) debajo del header, atrás del nombre.
+  // Banda / banner detrás del nombre.
   const bandY = headerBottom + 20;
-  const bandH = Math.max(220, heightU * 0.14) * titleScale;
+  const bandH = Math.max(260, heightU * 0.16) * titleScale;
 
-  // Nombre de la tienda centrado en la banda.
-  const nameFontPx = Math.max(60, heightU * 0.06) * titleScale;
-  const nameLines = wrapTspans(storeName || 'Mi tienda', nameFontPx, widthU - padding * 2 - 40, 2);
+  // Nombre tienda. En el canvas horizontal el tamaño relativo es menor.
+  const nameFontBase = isHorizontal ? heightU * 0.14 : heightU * 0.07;
+  const nameFontPx = Math.max(50, nameFontBase) * titleScale;
+  const nameLines = wrapTspans(
+    storeName || 'Mi tienda',
+    nameFontPx,
+    widthU - padding * 2 - 40,
+    2
+  );
 
-  // Elementos opcionales debajo de la banda.
+  // Elementos opcionales debajo de la banda. Empujamos la Y conforme
+  // vamos usando cosas, para que nada se encime.
   let cursorY = bandY + bandH + 40;
+  if (showTagline && tagline) {
+    cursorY += Math.max(60, heightU * 0.045);
+  }
+  if (showStats && ratingAvg != null) {
+    cursorY += Math.max(90, heightU * 0.07);
+  }
+  if (showCategory && primaryCategory) {
+    cursorY += Math.max(60, heightU * 0.045);
+  }
 
-  // QR + CTA
-  const qrX = (widthU - qrSize) / 2;
-  const qrY = showQr ? Math.max(cursorY, heightU - padding - qrSize - 180) : cursorY;
+  // Clamp del QR al espacio real disponible.
   const slugFontPx = Math.max(28, heightU * 0.025);
   const ctaFontPx = Math.max(26, heightU * 0.022);
+  const bottomReserved =
+    (showSlug && slug ? slugFontPx + 20 : 0) +
+    (showCta ? ctaFontPx + 20 : 0) +
+    padding;
+  const spaceForQr = heightU - cursorY - bottomReserved;
+  const effectiveQrSize = showQr
+    ? Math.max(120, Math.min(qrSize, spaceForQr, widthU - padding * 2))
+    : 0;
+  const qrX = (widthU - effectiveQrSize) / 2;
+  const qrY = showQr ? cursorY : cursorY;
+
+  // Ancho/alto reales del banner → cubre todo el header hasta antes de
+  // la banda. Si no hay banner, usamos banda sólida.
+  const bannerY = 0;
+  const bannerH = showBanner && bannerHref ? bandY + bandH : 0;
 
   return (
     <svg
@@ -257,38 +292,46 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
       {/* Fondo blanco */}
       <rect x={0} y={0} width={widthU} height={heightU} fill="#ffffff" />
 
-      {/* Header: Logo o inicial */}
+      {/* Banner opcional (reemplaza la banda sólida) */}
+      {showBanner && bannerHref ? (
+        <>
+          <image
+            href={bannerHref}
+            x={0}
+            y={bannerY}
+            width={widthU}
+            height={bannerH}
+            preserveAspectRatio="xMidYMid slice"
+          />
+          <rect x={0} y={bannerY} width={widthU} height={bannerH} fill="rgba(0,0,0,0.35)" />
+        </>
+      ) : (
+        <rect x={0} y={bandY} width={widthU} height={bandH} fill={bandColor} />
+      )}
+
+      {/* Logo */}
       {showLogo ? (
         <LogoOrText
           href={logoHref}
           sellerName={storeName}
           align={logoAlign}
-          size={logoSize}
+          size={effectiveLogoSize}
           bandY={logoY}
           canvasW={widthU}
           padding={padding}
         />
       ) : null}
 
-      {/* Badge Verified (si aplica, dentro del header) */}
+      {/* Badge Verified */}
       {verified && showVerified ? (
         <VerifiedPill
-          x={widthU - padding - 210}
+          x={widthU - padding - 240}
           y={logoY + 10}
-          scale={Math.min(1, logoSize / 180)}
+          scale={Math.max(0.9, Math.min(1.6, effectiveLogoSize / 180))}
         />
       ) : null}
 
-      {/* Banda de color detrás del nombre */}
-      <rect
-        x={0}
-        y={bandY}
-        width={widthU}
-        height={bandH}
-        fill={bandColor}
-      />
-
-      {/* Nombre de la tienda */}
+      {/* Nombre de la tienda sobre la banda / banner */}
       <text
         x={widthU / 2}
         y={bandY + bandH / 2 + nameFontPx * 0.1 - (nameLines.length - 1) * nameFontPx * 0.5}
@@ -304,16 +347,16 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
         ))}
       </text>
 
-      {/* Tagline debajo de la banda */}
-      {tagline ? (
+      {/* Tagline (toggleable) */}
+      {showTagline && tagline ? (
         <text
           x={widthU / 2}
-          y={cursorY + 50}
+          y={bandY + bandH + Math.max(60, heightU * 0.04)}
           textAnchor="middle"
-          fontSize={Math.max(28, heightU * 0.023)}
+          fontSize={Math.max(28, heightU * 0.024)}
           fill="#4b5563"
         >
-          {tagline.length > 80 ? tagline.slice(0, 77) + '…' : tagline}
+          {tagline.length > 90 ? tagline.slice(0, 87) + '…' : tagline}
         </text>
       ) : null}
 
@@ -321,7 +364,7 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
       {showStats && ratingAvg != null ? (
         <StarsLine
           x={widthU / 2 - 180}
-          y={cursorY + 110}
+          y={bandY + bandH + Math.max(140, heightU * 0.085)}
           ratingAvg={ratingAvg}
           reviewCount={reviewCount}
           fontPx={Math.max(44, heightU * 0.034)}
@@ -332,7 +375,7 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
       {showCategory && primaryCategory ? (
         <text
           x={widthU / 2}
-          y={cursorY + (showStats ? 180 : 110)}
+          y={cursorY - Math.max(30, heightU * 0.02)}
           textAnchor="middle"
           fontSize={Math.max(22, heightU * 0.018)}
           fill="#6b7280"
@@ -342,15 +385,16 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
         </text>
       ) : null}
 
-      {/* QR + slug */}
-      {showQr ? (
-        <QrOrPlaceholder href={qrHref} x={qrX} y={qrY} size={qrSize} />
+      {/* QR grande centrado */}
+      {showQr && effectiveQrSize > 0 ? (
+        <QrOrPlaceholder href={qrHref} x={qrX} y={qrY} size={effectiveQrSize} />
       ) : null}
 
+      {/* slug / URL */}
       {showSlug && slug ? (
         <text
           x={widthU / 2}
-          y={(showQr ? qrY + qrSize : heightU - padding - 120) + 50}
+          y={heightU - padding - (showCta ? ctaFontPx + 30 : 20)}
           textAnchor="middle"
           fontSize={slugFontPx}
           fontWeight={700}
@@ -361,15 +405,17 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
       ) : null}
 
       {/* CTA */}
-      <text
-        x={widthU / 2}
-        y={heightU - padding - 40}
-        textAnchor="middle"
-        fontSize={ctaFontPx}
-        fill="#6b7280"
-      >
-        {showQr ? 'Escanéame y visita mi tienda en Xololo' : 'Visítame en Xololo'}
-      </text>
+      {showCta ? (
+        <text
+          x={widthU / 2}
+          y={heightU - padding - 20}
+          textAnchor="middle"
+          fontSize={ctaFontPx}
+          fill="#6b7280"
+        >
+          {showQr ? 'Escanéame y visita mi tienda en Xololo' : 'Visítame en Xololo'}
+        </text>
+      ) : null}
     </svg>
   );
 };

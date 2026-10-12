@@ -108,11 +108,17 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
   const [showLogo, setShowLogo] = useState(true);
   const [showQr, setShowQr] = useState(true);
   const [showSlug, setShowSlug] = useState(true);
+  const [showCta, setShowCta] = useState(true);
+  const [showTagline, setShowTagline] = useState(!!seller?.tagline);
   const [showVerified, setShowVerified] = useState(!!seller?.verified);
   const [showStats, setShowStats] = useState(
     seller?.ratingAvg != null && seller?.reviewCount > 0
   );
   const [showCategory, setShowCategory] = useState(!!seller?.primaryCategory);
+  // Banner: seller puede elegir ninguno (banda sólida de color) o uno
+  // de sus banners de storefront (bannerUrl / bannerUrl2 / bannerUrl3).
+  const banners = seller?.bannerDataUrls || [];
+  const [bannerIndex, setBannerIndex] = useState(-1); // -1 = banda sólida
 
   // Tamaños
   const [logoAlign, setLogoAlign] = useState('center');
@@ -149,9 +155,12 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
     };
   }, [storeUrl]);
 
+  const activeBannerHref = bannerIndex >= 0 ? banners[bannerIndex] || null : null;
+
   const designProps = {
     storeName: sellerName || seller?.slug || 'Mi tienda',
     tagline: seller?.tagline || '',
+    showTagline,
     slug: seller?.slug || '',
     storeUrl: seller?.storeUrl || null,
     verified: !!seller?.verified,
@@ -171,6 +180,9 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
     showQr,
     qrSize,
     showSlug,
+    showCta,
+    bannerHref: activeBannerHref,
+    showBanner: !!activeBannerHref,
     fontFamily,
     fontWeight,
     titleScale,
@@ -280,6 +292,14 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
             <ToggleChip label="Nombre" active disabled />
             <ToggleChip label="QR" active={showQr} onClick={() => setShowQr(v => !v)} />
             <ToggleChip label="URL" active={showSlug} onClick={() => setShowSlug(v => !v)} />
+            <ToggleChip label="CTA" active={showCta} onClick={() => setShowCta(v => !v)} />
+            {seller?.tagline ? (
+              <ToggleChip
+                label="Descripción"
+                active={showTagline}
+                onClick={() => setShowTagline(v => !v)}
+              />
+            ) : null}
             {seller?.verified ? (
               <ToggleChip
                 label="✓ Verified"
@@ -303,6 +323,39 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
             ) : null}
           </div>
         </div>
+
+        {banners.length > 0 ? (
+          <div className={css.toolbarGroup}>
+            <label className={css.toolbarLabel}>Fondo del encabezado</label>
+            <div className={css.bannerRow}>
+              <button
+                type="button"
+                className={`${css.bannerThumb} ${
+                  bannerIndex === -1 ? css.bannerThumbActive : ''
+                }`}
+                onClick={() => setBannerIndex(-1)}
+                title="Color sólido"
+              >
+                <span className={css.bannerSolid} style={{ background: colorPrimary }} />
+                <small>Color</small>
+              </button>
+              {banners.map((b, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`${css.bannerThumb} ${
+                    bannerIndex === i ? css.bannerThumbActive : ''
+                  }`}
+                  onClick={() => setBannerIndex(i)}
+                  title={`Banner ${i + 1}`}
+                >
+                  <img src={b} alt="" className={css.bannerPreview} />
+                  <small>Banner {i + 1}</small>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className={css.toolbarGroup}>
           <label className={css.toolbarLabel}>Color de banda</label>
