@@ -124,7 +124,7 @@ const LogoOrText = ({
         y={bandY}
         width={size}
         height={size}
-        preserveAspectRatio="xMidYMid slice"
+        preserveAspectRatio="xMidYMid meet"
       />
     );
   }
@@ -445,7 +445,7 @@ export const STORE_TEMPLATES = [
     width: 2160,
     height: 2800,
     exportPx: [2550, 3300], // 300 DPI
-    pdf: { widthMm: 215.9, heightMm: 279.4, orientation: 'portrait', format: 'letter' },
+    pdf: { widthMm: 215.9, heightMm: 279.4, orientation: 'portrait', format: [215.9, 279.4] },
     render: buildDesign({ widthU: 2160, heightU: 2800 }),
   },
   {

@@ -77,7 +77,15 @@ const renderSvgToPngDataUrl = async (svgEl, [widthPx, heightPx], embeddedFontCss
     const img = await new Promise((resolve, reject) => {
       const i = new Image();
       i.onload = () => resolve(i);
-      i.onerror = reject;
+      // onerror en Image recibe un Event, no un Error. Lo envolvemos
+      // para que el catch de arriba tenga un .message legible.
+      i.onerror = ev => {
+        const err = new Error(
+          `No se pudo rasterizar el SVG (${widthPx}×${heightPx}). Puede ser que el navegador no acepte un canvas tan grande.`
+        );
+        err.event = ev;
+        reject(err);
+      };
       i.src = url;
     });
     const canvas = document.createElement('canvas');
