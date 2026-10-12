@@ -52,6 +52,29 @@ const isComplexQuery = q => {
   return intentWords.test(q);
 };
 
+// Palabras que casi todos los catálogos de ecommerce tienen en los
+// títulos — si la query es una de estas, pocos hits son normales y no
+// vale la pena gastar Haiku. Lista intencionalmente corta y conservadora.
+const COMMON_SINGLE_WORDS = new Set([
+  'planta', 'café', 'ropa', 'servicio', 'masaje', 'pintura', 'arte',
+  'flor', 'flores', 'libro', 'juguete', 'comida', 'bebida',
+]);
+
+/**
+ * ¿La query es UNA sola palabra que no es común ni tiene match evidente?
+ * Útil para activar Haiku cuando el buyer usa un sinónimo regional
+ * (ej. "matera" por "maceta", "pollera" por "falda", "colectivo" por
+ * "autobús") y Algolia no encontró lo esperado.
+ */
+const isUnusualSingleWord = q => {
+  if (!q) return false;
+  const trimmed = q.trim().toLowerCase();
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length !== 1) return false;
+  if (words[0].length < 4) return false; // "mesa", "caja" son demasiado comunes
+  return !COMMON_SINGLE_WORDS.has(words[0]);
+};
+
 const interpretQuery = async query => {
   if (!aiReady()) return null;
   try {
@@ -127,11 +150,27 @@ module.exports = async (req, res) => {
     });
 
     let interp = null;
+    const initialHits = result.nbHits || 0;
+    const topHitHasExactMatch =
+      result.hits?.[0] &&
+      q &&
+      (result.hits[0].title || '').toLowerCase().includes(q.trim().toLowerCase());
 
-    // 2. Si Algolia no encontró nada Y la query luce compleja (lenguaje
-    // natural), gastamos tokens de Haiku para interpretar y reintentamos.
-    // Si la query es simple y vino vacía, no gastamos nada.
-    if ((result.nbHits || 0) === 0 && q && isComplexQuery(q)) {
+    // 2. Activamos Haiku si:
+    //    (a) 0 hits y la query no es vacía — caso clásico, siempre.
+    //    (b) <= 2 hits Y la query es compleja (frase con intención
+    //        natural que Algolia no supo expandir).
+    //    (c) query es palabra única "inusual" (probable regionalismo
+    //        como "matera", "pollera", "colectivo") Y ningún top-hit
+    //        contiene la palabra textual — sugiere que Algolia matcheó
+    //        por typo-tolerance (ruido) o no matcheó bien.
+    const shouldEscalate =
+      q &&
+      (initialHits === 0 ||
+        (initialHits <= 2 && isComplexQuery(q)) ||
+        (isUnusualSingleWord(q) && !topHitHasExactMatch));
+
+    if (shouldEscalate) {
       interp = await interpretQuery(q);
       if (interp?.keywords?.length) {
         const effectiveCategory =
@@ -146,16 +185,28 @@ module.exports = async (req, res) => {
             ? interp.listingTypes[0]
             : null);
 
-        // Query = keywords de Haiku concatenadas, optionalWords amplio y
-        // removeWordsIfNoResults='allOptional' en el cliente. Esto matchea
-        // listings que contengan AL MENOS una de las keywords/sinónimos.
-        result = await search({
+        const expandedResult = await search({
           query: interp.keywords.slice(0, 10).join(' '),
           rawFilters: buildFilters(effectiveCategory, effectiveListingType),
           hitsPerPage,
           page,
           optionalWords: interp.keywords.slice(0, 20),
         });
+
+        // Nos quedamos con lo expandido si viene con MÁS hits.
+        // Si el intento inicial dio 0, cualquier mejora cuenta aun si
+        // la IA se marcó "ambigua" — mostrar algo relevante vale más
+        // que una pantalla vacía. Si ya había hits, exigimos no-ambiguous
+        // para no empeorar lo que ya funcionaba.
+        const expandedHits = expandedResult.nbHits || 0;
+        const better =
+          expandedHits > initialHits &&
+          (initialHits === 0 || !interp.ambiguous);
+        if (better) {
+          result = expandedResult;
+        } else {
+          interp = null;
+        }
       }
     }
 
