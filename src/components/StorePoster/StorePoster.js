@@ -233,7 +233,9 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
       pdf.save(`xololo-tienda-${slugifyFilename(sellerName)}-${template.key}.pdf`);
       setError(null);
     } catch (e) {
-      setError(e?.message || 'pdf_error');
+      // eslint-disable-next-line no-console
+      console.error('[StorePoster] PDF export error:', e);
+      setError(`PDF: ${e?.message || e?.name || 'error desconocido'}`);
     } finally {
       setExporting(false);
     }
@@ -293,13 +295,12 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
             <ToggleChip label="QR" active={showQr} onClick={() => setShowQr(v => !v)} />
             <ToggleChip label="URL" active={showSlug} onClick={() => setShowSlug(v => !v)} />
             <ToggleChip label="CTA" active={showCta} onClick={() => setShowCta(v => !v)} />
-            {seller?.tagline ? (
-              <ToggleChip
-                label="Descripción"
-                active={showTagline}
-                onClick={() => setShowTagline(v => !v)}
-              />
-            ) : null}
+            <ToggleChip
+              label="Descripción"
+              active={showTagline && !!seller?.tagline}
+              onClick={() => setShowTagline(v => !v)}
+              disabled={!seller?.tagline}
+            />
             {seller?.verified ? (
               <ToggleChip
                 label="✓ Verified"
