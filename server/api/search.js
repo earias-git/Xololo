@@ -107,58 +107,69 @@ module.exports = async (req, res) => {
       return res.status(503).json({ error: 'search_not_configured' });
     }
 
-    // 1. ¿Interpretamos con Haiku? Sólo para queries complejas.
+    // Filtros base: siempre published, nunca bloqueados por moderación.
+    // Puede añadirse filtro explícito de UI (ej. CategoryRail del landing).
+    const buildFilters = (category, listingType) => {
+      const f = ['state:published', 'NOT moderation:block'];
+      if (category) f.push(`category:${category}`);
+      if (listingType) f.push(`listingType:${listingType}`);
+      return f;
+    };
+
+    // 1. SIEMPRE intentamos Algolia primero con la query cruda. Barato
+    // ($0) y rápido (5-50ms). La mayoría de queries directas se
+    // resuelven aquí sin tocar Haiku.
+    let result = await search({
+      query: q,
+      rawFilters: buildFilters(categoryParam || null, listingTypeParam || null),
+      hitsPerPage,
+      page,
+    });
+
     let interp = null;
-    if (q && isComplexQuery(q)) {
+
+    // 2. Si Algolia no encontró nada Y la query luce compleja (lenguaje
+    // natural), gastamos tokens de Haiku para interpretar y reintentamos.
+    // Si la query es simple y vino vacía, no gastamos nada.
+    if ((result.nbHits || 0) === 0 && q && isComplexQuery(q)) {
       interp = await interpretQuery(q);
+      if (interp?.keywords?.length) {
+        const effectiveCategory =
+          categoryParam ||
+          (interp.categories?.length === 1 && !interp.ambiguous
+            ? interp.categories[0]
+            : null);
+        const effectiveListingType =
+          listingTypeParam ||
+          (interp.listingTypes?.length === 1 &&
+          AVAILABLE_LISTING_TYPES.includes(interp.listingTypes[0])
+            ? interp.listingTypes[0]
+            : null);
+
+        // Query = keywords de Haiku concatenadas, optionalWords amplio y
+        // removeWordsIfNoResults='allOptional' en el cliente. Esto matchea
+        // listings que contengan AL MENOS una de las keywords/sinónimos.
+        result = await search({
+          query: interp.keywords.slice(0, 10).join(' '),
+          rawFilters: buildFilters(effectiveCategory, effectiveListingType),
+          hitsPerPage,
+          page,
+          optionalWords: interp.keywords.slice(0, 20),
+        });
+      }
     }
 
-    // 2. Build de params Algolia.
-    //    - Si Haiku interpretó: query = keywords concatenadas +
-    //      optionalWords y removeWordsIfNoResults=allOptional (ver client).
-    //      Esto hace que Algolia encuentre listings con AL MENOS una de
-    //      las keywords, ordenados por cuántas matchean + customRanking.
-    //    - Si NO interpretó: query cruda, typo tolerance nativa de Algolia.
-    const algoliaQuery = interp?.keywords?.length
-      ? interp.keywords.slice(0, 10).join(' ')
-      : q;
-    const optionalWords = interp?.keywords?.length
-      ? interp.keywords.slice(0, 20)
-      : undefined;
-
-    const rawFilters = ['state:published'];
-
-    // Categoría explícita de UI (ej. del CategoryRail) o inferida por IA.
     const effectiveCategory =
       categoryParam ||
       (interp?.categories?.length === 1 && !interp.ambiguous
         ? interp.categories[0]
         : null);
-    if (effectiveCategory) {
-      rawFilters.push(`category:${effectiveCategory}`);
-    }
-
-    // ListingType explícito o inferido.
     const effectiveListingType =
       listingTypeParam ||
       (interp?.listingTypes?.length === 1 &&
-      interp.listingTypes[0] !== 'product' + 'service' + 'service-day'
+      AVAILABLE_LISTING_TYPES.includes(interp.listingTypes[0])
         ? interp.listingTypes[0]
         : null);
-    if (effectiveListingType) {
-      rawFilters.push(`listingType:${effectiveListingType}`);
-    }
-
-    // Nunca mostramos listings bloqueados por moderación.
-    rawFilters.push('NOT moderation:block');
-
-    const result = await search({
-      query: algoliaQuery,
-      rawFilters,
-      hitsPerPage,
-      page,
-      optionalWords,
-    });
 
     return res.status(200).json({
       ok: true,
