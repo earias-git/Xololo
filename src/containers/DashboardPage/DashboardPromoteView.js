@@ -6,6 +6,7 @@ import PromoShareButtons from '../../components/PromoShareButtons/PromoShareButt
 import ListingQRCode from '../../components/ListingQRCode/ListingQRCode';
 import ListingPoster from '../../components/ListingPoster/ListingPoster';
 import MetaCommerceFeed from '../../components/MetaCommerceFeed/MetaCommerceFeed';
+import StorePoster from '../../components/StorePoster/StorePoster';
 
 import { formatSubunitsAsMxn } from './dashboardUtils';
 
@@ -97,6 +98,7 @@ const DashboardPromoteView = () => {
   const listings = state.data?.listings || [];
   const sellerLogoDataUrl = state.data?.sellerLogoDataUrl || null;
   const sellerName = state.data?.sellerName || null;
+  const seller = state.data?.seller || null;
 
   return (
     <>
@@ -130,6 +132,17 @@ const DashboardPromoteView = () => {
             para promocionarlo.
           </p>
         </div>
+      ) : null}
+
+      {/* XOLOLO Promote · Diseños de la TIENDA. Primero porque es el
+          activo transversal del seller (lo que lleva al storefront
+          completo). Visible aun si todavía no publica productos. */}
+      {state.status === 'ok' && seller?.slug ? (
+        <StorePoster
+          seller={seller}
+          sellerLogoDataUrl={sellerLogoDataUrl}
+          sellerName={sellerName}
+        />
       ) : null}
 
       {/* Sub-commit 5: feed Meta Commerce. Mostrado también mientras

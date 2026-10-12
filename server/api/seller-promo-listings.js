@@ -78,6 +78,19 @@ module.exports = async (req, res) => {
     //     logo utilizable.
     let sellerLogoDataUrl = null;
     let sellerName = null;
+    // XOLOLO Promote · StorePoster (nueva sección): devolvemos todos
+    // los datos del seller que el editor del póster de la tienda
+    // necesita (slug, tagline, verified, rating, categoría, color).
+    let seller = {
+      slug: null,
+      tagline: null,
+      verified: false,
+      ratingAvg: null,
+      reviewCount: 0,
+      primaryCategory: null,
+      brandPrimaryColor: null,
+      storeUrl: null,
+    };
     try {
       const me = await sdk.currentUser.show({
         include: ['profileImage'],
@@ -85,7 +98,9 @@ module.exports = async (req, res) => {
       });
       const u = me?.data?.data;
       const profile = u?.attributes?.profile || {};
-      let rawLogoUrl = profile?.publicData?.logoUrl || null;
+      const pd = profile?.publicData || {};
+      const md = profile?.metadata || {};
+      let rawLogoUrl = pd.logoUrl || null;
       if (!rawLogoUrl) {
         const imgRel = u?.relationships?.profileImage?.data;
         const includedUser = me?.data?.included || [];
@@ -101,10 +116,32 @@ module.exports = async (req, res) => {
         sellerLogoDataUrl = await fetchAsDataUrl(rawLogoUrl);
       }
       sellerName =
-        profile?.publicData?.storeName ||
+        pd.storeName ||
         profile?.displayName ||
         [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim() ||
         null;
+
+      // Datos extendidos para el StorePoster.
+      const slug = pd.slug || null;
+      const rootUrl = (
+        process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx'
+      ).replace(/\/$/, '');
+      const isDevRoot = /localhost|127\.0\.0\.1/.test(rootUrl);
+      const storeUrl = slug
+        ? isDevRoot
+          ? `http://${slug}.localhost:3000`
+          : `https://${slug}.xololo.mx`
+        : null;
+      seller = {
+        slug,
+        tagline: pd.shortDescription || pd.tagline || null,
+        verified: !!(md.xololoVerified || pd.xololoVerified),
+        ratingAvg: typeof md.ratingAvg === 'number' ? md.ratingAvg : null,
+        reviewCount: typeof md.reviewCount === 'number' ? md.reviewCount : 0,
+        primaryCategory: pd.primaryCategory || null,
+        brandPrimaryColor: pd.brandPrimaryColor || null,
+        storeUrl,
+      };
     } catch (_e) {
       // No bloqueante: si falla, el BrandMark queda vacío (no se
       // muestra ningún texto placeholder tipo "XOLOLO").
@@ -161,7 +198,7 @@ module.exports = async (req, res) => {
     });
     // Sólo mostrar published (no draft, no closed).
     const published = listings.filter(l => l.state === 'published');
-    return res.json({ listings: published, sellerLogoDataUrl, sellerName });
+    return res.json({ listings: published, sellerLogoDataUrl, sellerName, seller });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('seller-promo-listings unexpected:', e?.message);
