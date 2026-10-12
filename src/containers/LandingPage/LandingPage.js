@@ -29,7 +29,6 @@ import StorefrontPage from '../StorefrontPage/StorefrontPage';
 // PageBuilder para todo.
 import HeroCarousel from '../../components/HeroCarousel/HeroCarousel';
 import TrustBar from '../../components/TrustBar/TrustBar';
-import SmartSearchCta from '../../components/SmartSearchCta/SmartSearchCta';
 import CategoryRail from '../../components/CategoryRail/CategoryRail';
 import PromoCards from '../../components/PromoCards/PromoCards';
 import FeaturedListings from '../../components/FeaturedListings/FeaturedListings';
@@ -116,7 +115,6 @@ export const LandingPageComponent = props => {
         <>
           <HeroCarousel slides={heroSlides} />
           <TrustBar items={trustItems} />
-          <SmartSearchCta />
         </>
       }
       afterSections={

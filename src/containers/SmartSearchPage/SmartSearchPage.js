@@ -54,7 +54,7 @@ const SmartSearchPage = () => {
     abortRef.current = controller;
     setState({ loading: true, error: null, results: null });
     try {
-      const url = `${apiBaseUrl()}/api/smart-search?q=${encodeURIComponent(trimmed)}&perPage=18`;
+      const url = `${apiBaseUrl()}/api/search?q=${encodeURIComponent(trimmed)}&hitsPerPage=18`;
       const res = await fetch(url, { signal: controller.signal });
       const data = await res.json();
       if (!res.ok) {
@@ -168,8 +168,18 @@ const SmartSearchPage = () => {
           {results ? (
             <>
               <div className={css.intentBox}>
-                <h3 className={css.intentTitle}>Entendí que buscas:</h3>
-                <p className={css.intentText}>{results.intent}</p>
+                <h3 className={css.intentTitle}>
+                  {results.usedAi ? 'Entendí que buscas:' : 'Resultados'}
+                </h3>
+                {results.intent ? (
+                  <p className={css.intentText}>{results.intent}</p>
+                ) : (
+                  <p className={css.intentText}>
+                    Encontramos <strong>{results.total}</strong>{' '}
+                    {results.total === 1 ? 'resultado' : 'resultados'} en{' '}
+                    {results.processingTimeMS} ms.
+                  </p>
+                )}
                 {results.interpretation?.keywords?.length ? (
                   <p className={css.chips}>
                     {results.interpretation.keywords.slice(0, 10).map(k => (
@@ -177,12 +187,6 @@ const SmartSearchPage = () => {
                         {k}
                       </span>
                     ))}
-                  </p>
-                ) : null}
-                {results.fallbackUsed ? (
-                  <p className={css.fallbackNote}>
-                    (La IA no pudo interpretar la búsqueda; usamos búsqueda
-                    clásica.)
                   </p>
                 ) : null}
               </div>

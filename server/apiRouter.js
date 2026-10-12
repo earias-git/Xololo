@@ -54,6 +54,7 @@ const trackEvent = require('./api/track-event');
 const aiAnalyzeListing = require('./api/ai-analyze-listing');
 const aiSuggestListingText = require('./api/ai-suggest-listing-text');
 const smartSearch = require('./api/smart-search');
+const searchHandler = require('./api/search');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -310,7 +311,8 @@ router.post('/track/event', bodyParser.json(), trackEvent);
 // Se llama fire-and-forget desde el frontend tras publish/update.
 router.post('/ai/analyze-listing', bodyParser.json(), aiAnalyzeListing);
 router.post('/ai/suggest-listing-text', bodyParser.json(), aiSuggestListingText);
-router.get('/smart-search', smartSearch);
+router.get('/smart-search', smartSearch); // deprecated — mantener temporal
+router.get('/search', searchHandler);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

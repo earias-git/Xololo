@@ -162,6 +162,15 @@ const TopbarComponent = props => {
   const handleSubmit = values => {
     const { currentSearchParams, history, location, config, routeConfiguration } = props;
 
+    // XOLOLO Fase 2 — F2-12: search por keywords ahora va al SmartSearchPage
+    // (/buscar-ia) que usa Algolia + Haiku para interpretar. El search por
+    // ubicación/mapa sigue en el SearchPage del template.
+    const keywordsValue = values?.keywords?.trim();
+    if (keywordsValue) {
+      history.push(`/buscar-ia?q=${encodeURIComponent(keywordsValue)}`);
+      return;
+    }
+
     const topbarSearchParams = () => {
       if (isMainSearchTypeKeywords(config)) {
         return { keywords: values?.keywords };

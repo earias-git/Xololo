@@ -46,6 +46,12 @@
 const { chatJson, vision, isConfigured } = require('./aiClient');
 const { IMAGE_ANALYSIS_V1 } = require('./aiPrompts');
 const { getIntegrationSdk } = require('./integrationSdk');
+const {
+  isConfigured: algoliaConfigured,
+  saveDocument: algoliaSaveDocument,
+  deleteDocument: algoliaDeleteDocument,
+} = require('./algoliaClient');
+const { listingToAlgoliaDoc } = require('./listingIndexer');
 
 const PROMPT = IMAGE_ANALYSIS_V1;
 
@@ -339,6 +345,32 @@ const analyzeListing = async ({ listingId, force = false } = {}) => {
     }
   } else if (aggregated.moderation.status === 'warn') {
     moderationAction = 'flagged';
+  }
+
+  // 8. Re-indexar en Algolia con los nuevos tags IA. Si Algolia no está
+  // configurado, el listing simplemente no aparece en /api/search; no
+  // bloquea el flujo. Si moderation=block, el listing fue cerrado →
+  // también lo borramos del índice para que no aparezca en resultados.
+  if (algoliaConfigured()) {
+    try {
+      if (aggregated.moderation.status === 'block' && moderationAction === 'closed') {
+        await algoliaDeleteDocument(listingId);
+      } else {
+        // Re-fetch con autor para que el doc Algolia lleve authorName.
+        const freshResp = await sdk.listings.show({
+          id: listingId,
+          include: ['author', 'images'],
+          'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],
+        });
+        const fresh = freshResp.data.data;
+        const freshIncluded = freshResp.data.included || [];
+        const doc = listingToAlgoliaDoc(fresh, freshIncluded);
+        await algoliaSaveDocument(doc);
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[listingAiAnalysis] algolia sync failed:', err?.message);
+    }
   }
 
   return {

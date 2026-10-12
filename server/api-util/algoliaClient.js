@@ -89,6 +89,7 @@ const search = async ({
   page = 0,
   facets,
   attributesToRetrieve,
+  optionalWords,
 } = {}) => {
   const client = getClient();
   if (!client) throw new Error('algolia_not_configured');
@@ -96,6 +97,15 @@ const search = async ({
   if (rawFilters.length) searchParams.filters = rawFilters.join(' AND ');
   if (facets) searchParams.facets = facets;
   if (attributesToRetrieve) searchParams.attributesToRetrieve = attributesToRetrieve;
+  // optionalWords: Algolia aumenta el score cuando matchea alguna, pero
+  // NO exige que todas estén presentes (comportamiento OR suave).
+  if (Array.isArray(optionalWords) && optionalWords.length) {
+    searchParams.optionalWords = optionalWords;
+    // Si Algolia no matchea todas las palabras de la query, prueba
+    // quitándolas progresivamente hasta encontrar matches. Combinado con
+    // optionalWords, da un comportamiento tipo "cualquiera matchea".
+    searchParams.removeWordsIfNoResults = 'allOptional';
+  }
   const result = await client.searchSingleIndex({
     indexName: getIndexName(),
     searchParams,
