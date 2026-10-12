@@ -26,6 +26,7 @@ const { getTrustedSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { chatJson, isConfigured } = require('../api-util/aiClient');
 const { LISTING_TEXT_SUGGEST_V1 } = require('../api-util/aiPrompts');
+const { recordAiCall } = require('../api-util/aiMetrics');
 
 const PROMPT = LISTING_TEXT_SUGGEST_V1;
 
@@ -96,6 +97,7 @@ module.exports = async (req, res) => {
       // 3 títulos + 3 descripciones + bloque SEO con keywords suele dar
       // ~2500-3500 tokens de output. 4000 deja margen cómodo.
       maxTokens: 4000,
+      recordMetric: usage => recordAiCall({ purpose: 'textSuggest', usage }),
     });
 
     return res.status(200).json({

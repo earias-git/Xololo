@@ -181,6 +181,14 @@ const extractText = response => {
  */
 const chat = async opts => {
   const resp = await callClaude(opts);
+  // Si el caller pasó recordMetric, lo invocamos con el usage del response.
+  // Lo hacemos aquí (no en callClaude) para que sólo cuente llamadas que
+  // efectivamente devolvieron texto parseable.
+  try {
+    if (typeof opts?.recordMetric === 'function') {
+      opts.recordMetric(resp?.usage);
+    }
+  } catch (_) {}
   return extractText(resp);
 };
 

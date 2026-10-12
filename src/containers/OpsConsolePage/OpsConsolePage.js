@@ -260,6 +260,119 @@ const MODULE_CARDS = [
   { key: 'audit_log', label: 'Audit log', emoji: '📋', hint: 'Registro de todas las acciones', route: null },
 ];
 
+const AiMetricsPanel = () => {
+  const [state, setState] = useState({ loading: true, data: null, error: null });
+  const [range, setRange] = useState(30);
+
+  useEffect(() => {
+    let cancelled = false;
+    setState({ loading: true, data: null, error: null });
+    fetch(`${apiBaseUrl()}/api/admin/ai-metrics?days=${range}`, {
+      credentials: 'include',
+    })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (cancelled) return;
+        if (!ok) setState({ loading: false, data: null, error: data?.error || 'error' });
+        else setState({ loading: false, data, error: null });
+      })
+      .catch(err => {
+        if (!cancelled) setState({ loading: false, data: null, error: err.message });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [range]);
+
+  const d = state.data;
+
+  return (
+    <section className={css.aiMetricsPanel}>
+      <div className={css.aiMetricsHeader}>
+        <div>
+          <h2 className={css.aiMetricsTitle}>✨ Consumo IA (Claude Haiku)</h2>
+          <p className={css.aiMetricsSubtitle}>
+            Costo estimado de las llamadas a IA en los últimos {range} días.
+          </p>
+        </div>
+        <select
+          className={css.aiMetricsRange}
+          value={range}
+          onChange={e => setRange(Number(e.target.value))}
+        >
+          <option value={7}>Últimos 7 días</option>
+          <option value={30}>Últimos 30 días</option>
+          <option value={90}>Últimos 90 días</option>
+        </select>
+      </div>
+
+      {state.loading ? <p className={css.aiMetricsLoading}>Cargando…</p> : null}
+      {state.error ? <p className={css.error}>Error: {state.error}</p> : null}
+
+      {d ? (
+        <>
+          <div className={css.aiMetricsGrid}>
+            <div className={css.aiMetricCard}>
+              <span className={css.aiMetricLabel}>Costo total período</span>
+              <span className={css.aiMetricValueBig}>
+                ${d.totals.estimatedCostUsd.toFixed(2)} USD
+              </span>
+              <small className={css.aiMetricHint}>
+                ~${d.averages.dailyCost.toFixed(3)} / día
+              </small>
+            </div>
+            <div className={css.aiMetricCard}>
+              <span className={css.aiMetricLabel}>Llamadas totales</span>
+              <span className={css.aiMetricValueBig}>
+                {d.totals.totalCalls.toLocaleString('es-MX')}
+              </span>
+              <small className={css.aiMetricHint}>
+                ~{d.averages.dailyCalls} / día
+              </small>
+            </div>
+            <div className={css.aiMetricCard}>
+              <span className={css.aiMetricLabel}>Search (query → IA)</span>
+              <span className={css.aiMetricValueBig}>
+                {(d.totals.calls.search || 0).toLocaleString('es-MX')}
+              </span>
+              <small className={css.aiMetricHint}>
+                in {(d.totals.tokens.search?.in || 0).toLocaleString('es-MX')} /
+                out {(d.totals.tokens.search?.out || 0).toLocaleString('es-MX')}
+              </small>
+            </div>
+            <div className={css.aiMetricCard}>
+              <span className={css.aiMetricLabel}>Análisis de imagen</span>
+              <span className={css.aiMetricValueBig}>
+                {(d.totals.calls.imageAnalysis || 0).toLocaleString('es-MX')}
+              </span>
+              <small className={css.aiMetricHint}>
+                in {(d.totals.tokens.imageAnalysis?.in || 0).toLocaleString('es-MX')} /
+                out {(d.totals.tokens.imageAnalysis?.out || 0).toLocaleString('es-MX')}
+              </small>
+            </div>
+            <div className={css.aiMetricCard}>
+              <span className={css.aiMetricLabel}>Sugerencias de texto</span>
+              <span className={css.aiMetricValueBig}>
+                {(d.totals.calls.textSuggest || 0).toLocaleString('es-MX')}
+              </span>
+              <small className={css.aiMetricHint}>
+                in {(d.totals.tokens.textSuggest?.in || 0).toLocaleString('es-MX')} /
+                out {(d.totals.tokens.textSuggest?.out || 0).toLocaleString('es-MX')}
+              </small>
+            </div>
+          </div>
+
+          <p className={css.aiMetricsFootnote}>
+            Precios de referencia: Claude Haiku 5.5 · input $
+            {d.pricingReference.inputUsdPer1M}/1M tokens · output $
+            {d.pricingReference.outputUsdPer1M}/1M tokens.
+          </p>
+        </>
+      ) : null}
+    </section>
+  );
+};
+
 const Dashboard = ({ operator, onLogout, onNavigate }) => {
   return (
     <div className={css.dashboard}>
@@ -275,6 +388,8 @@ const Dashboard = ({ operator, onLogout, onNavigate }) => {
           Cerrar sesión
         </button>
       </header>
+
+      <AiMetricsPanel />
 
       {!operator.mfaEnabled ? (
         <div className={css.warningBanner}>

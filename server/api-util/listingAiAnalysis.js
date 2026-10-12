@@ -46,6 +46,7 @@
 const { chatJson, vision, isConfigured } = require('./aiClient');
 const { IMAGE_ANALYSIS_V1 } = require('./aiPrompts');
 const { getIntegrationSdk } = require('./integrationSdk');
+const { recordAiCall } = require('./aiMetrics');
 const {
   isConfigured: algoliaConfigured,
   saveDocument: algoliaSaveDocument,
@@ -78,6 +79,7 @@ const analyzeImage = async ({ imageUrl, listingTitle, listingType, category }) =
     expectShape: PROMPT.expectShape,
     purpose: 'image-analysis',
     maxTokens: 1500,
+    recordMetric: usage => recordAiCall({ purpose: 'imageAnalysis', usage }),
   });
   // Normaliza campos opcionales ausentes del output del modelo.
   return {

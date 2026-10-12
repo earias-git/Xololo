@@ -55,6 +55,7 @@ const aiAnalyzeListing = require('./api/ai-analyze-listing');
 const aiSuggestListingText = require('./api/ai-suggest-listing-text');
 const smartSearch = require('./api/smart-search');
 const searchHandler = require('./api/search');
+const adminAiMetrics = require('./api/admin-ai-metrics');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -222,6 +223,9 @@ router.patch('/admin/operators/:id', requireSuperAdmin, bodyParser.json(), admin
 router.post('/admin/operators/:id/suspend', requireSuperAdmin, bodyParser.json(), adminOperators.suspend);
 router.post('/admin/operators/:id/reinstate', requireSuperAdmin, adminOperators.reinstate);
 router.post('/admin/operators/:id/set-password', requireSuperAdmin, bodyParser.json(), adminOperators.setPassword);
+
+// XOLOLO Fase 2 — métricas de uso IA. Protegido con sesión de operator.
+router.get('/admin/ai-metrics', adminAuth.requireOperator(), adminAiMetrics);
 
 // XOLOLO Track C: Stripe Billing — suscripción de sellers.
 // Crea el Checkout Session (plan + onboarding fee en un solo pago).

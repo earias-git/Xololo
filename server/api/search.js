@@ -26,6 +26,7 @@
 const { search, isConfigured: algoliaReady } = require('../api-util/algoliaClient');
 const { chatJson, isConfigured: aiReady } = require('../api-util/aiClient');
 const { SEARCH_QUERY_UNDERSTAND_V1 } = require('../api-util/aiPrompts');
+const { recordAiCall } = require('../api-util/aiMetrics');
 
 const AVAILABLE_CATEGORIES = [
   'artesanias', 'hogar', 'moda', 'belleza', 'alimentos',
@@ -93,6 +94,7 @@ const interpretQuery = async query => {
       expectShape: PROMPT.expectShape,
       purpose: 'search-interpret',
       maxTokens: 1500,
+      recordMetric: usage => recordAiCall({ purpose: 'search', usage }),
     });
   } catch (err) {
     // eslint-disable-next-line no-console

@@ -622,3 +622,90 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+/* XOLOLO Fase 2 — Panel de consumo IA en el dashboard /ops */
+.aiMetricsPanel {
+  background: #ffffff;
+  border: 1px solid #e3e8f0;
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+}
+
+.aiMetricsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.aiMetricsTitle {
+  margin: 0 0 2px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0e1a2f;
+}
+
+.aiMetricsSubtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #647593;
+}
+
+.aiMetricsRange {
+  background: #f6f8fc;
+  border: 1px solid #e3e8f0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #0e1a2f;
+}
+
+.aiMetricsLoading {
+  color: #647593;
+  font-size: 13px;
+}
+
+.aiMetricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.aiMetricCard {
+  background: #f6f8fc;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.aiMetricLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #647593;
+  font-weight: 600;
+}
+
+.aiMetricValueBig {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0e1a2f;
+}
+
+.aiMetricHint {
+  font-size: 11px;
+  color: #647593;
+}
+
+.aiMetricsFootnote {
+  margin: 0;
+  font-size: 11px;
+  color: #8694af;
+  font-style: italic;
+}
