@@ -55,6 +55,37 @@ const buildStoreUrl = seller => {
   return `${window.location.origin}?utm_source=poster&utm_medium=xolo-promo&utm_campaign=store`;
 };
 
+// Reduce una data: URL a un tamaño máximo (maxDim) para que el SVG
+// serializado no explote. Logos del seller en R2 vienen a veces como
+// PNG de 1-2 MB; embebidos tal cual en el SVG tiran onerror en el
+// Image() por el tamaño total del data: URL. Reducirlos a 512px
+// baja el peso de ~1.5 MB a ~80 KB sin pérdida visible en el poster.
+const shrinkImageDataUrl = async (dataUrl, maxDim) => {
+  if (!dataUrl) return null;
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = dataUrl;
+    });
+    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    // JPEG con quality 0.85 para fotos grandes (banners); PNG si parece
+    // tener transparencia (logos).
+    const isPng = dataUrl.startsWith('data:image/png');
+    return canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', 0.85);
+  } catch (_e) {
+    return dataUrl; // mejor dejar el original que fallar silenciosamente
+  }
+};
+
 // Reemplaza cualquier <image href="URL externa"> por una placeholder
 // transparente — así nunca el browser intenta cargar recursos externos
 // cuando rasterice el SVG (eso rompe el canvas por CSP o CORS).
@@ -137,6 +168,10 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState(null);
   const [qrHref, setQrHref] = useState(null);
+  // Logo y banners vienen pesados de R2 (PNG original tamaño completo).
+  // Los pre-comprimimos a 512px para que el SVG serializado no explote.
+  const [shrunkLogoHref, setShrunkLogoHref] = useState(null);
+  const [shrunkBanners, setShrunkBanners] = useState([]);
 
   // Toggles de elementos
   const [showLogo, setShowLogo] = useState(true);
@@ -153,6 +188,28 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
   // de sus banners de storefront (bannerUrl / bannerUrl2 / bannerUrl3).
   const banners = seller?.bannerDataUrls || [];
   const [bannerIndex, setBannerIndex] = useState(-1); // -1 = banda sólida
+
+  // Pre-comprime logo (max 512px) y banners (max 1200px, horizontales)
+  // una vez al montar. Evita el bug del SVG > 2 MB que tira onerror.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (sellerLogoDataUrl) {
+        const shrunk = await shrinkImageDataUrl(sellerLogoDataUrl, 512);
+        if (!cancelled) setShrunkLogoHref(shrunk);
+      }
+      if (banners.length > 0) {
+        const shrunk = await Promise.all(
+          banners.map(b => shrinkImageDataUrl(b, 1200))
+        );
+        if (!cancelled) setShrunkBanners(shrunk);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sellerLogoDataUrl, banners.length]);
 
   // Tamaños
   const [logoAlign, setLogoAlign] = useState('center');
@@ -189,7 +246,11 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
     };
   }, [storeUrl]);
 
-  const activeBannerHref = bannerIndex >= 0 ? banners[bannerIndex] || null : null;
+  // Usamos la versión comprimida si ya está lista; si no, cae al
+  // original de R2 (previewer puede verse pero el export puede fallar).
+  const effectiveLogoHref = shrunkLogoHref || sellerLogoDataUrl || null;
+  const activeBannerHref =
+    bannerIndex >= 0 ? shrunkBanners[bannerIndex] || banners[bannerIndex] || null : null;
 
   const designProps = {
     storeName: sellerName || seller?.slug || 'Mi tienda',
@@ -206,7 +267,7 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
     showCategory,
     colorPrimary,
     blackWhite,
-    logoHref: sellerLogoDataUrl || null,
+    logoHref: effectiveLogoHref,
     showLogo,
     logoAlign,
     logoSize,
