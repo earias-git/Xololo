@@ -101,8 +101,16 @@ const stripExternalImages = (svgRoot, log) => {
   });
 };
 
-const renderSvgToPngDataUrl = async (svgEl, [widthPx, heightPx], embeddedFontCss) => {
+const renderSvgToPngDataUrl = async (refEl, [widthPx, heightPx], embeddedFontCss) => {
   const log = [];
+  // refEl puede ser el <div> wrapper del preview o el <svg> directo.
+  // Si es un wrapper, extraemos el <svg> real adentro. Sin esto, el
+  // Image() recibe un <div> serializado y falla con onerror genérico.
+  const svgEl =
+    refEl && refEl.tagName && refEl.tagName.toLowerCase() === 'svg'
+      ? refEl
+      : refEl.querySelector('svg');
+  if (!svgEl) throw new Error('No encontré el <svg> dentro del contenedor');
   const clone = svgEl.cloneNode(true);
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
