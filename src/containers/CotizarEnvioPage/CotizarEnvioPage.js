@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 
 import { apiBaseUrl } from '../../util/api';
 import { useMxPostalCode } from '../../util/useMxPostalCode';
+import { publishableKey as stripePublishableKey } from '../../config/configStripe';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { Page, LayoutSingleColumn } from '../../components';
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
@@ -203,6 +204,101 @@ const PartyForm = ({ label, value, onFieldChange, emailRequired }) => {
   );
 };
 
+// XOLOLO feature #28 · F2b. Bloque inline de Stripe Elements para el
+// pago de la guía pública. Patrón window.Stripe + stripe.elements, el
+// mismo que usamos en XoloFulfillmentPanel (ver docs ahí). Scripts.js
+// garantiza que js.stripe.com/v3 ya está cargado en el <head>.
+const StripePaymentBlock = ({ clientSecret, amountMxn, onSucceeded, onCancel }) => {
+  const [status, setStatus] = useState('mounting'); // mounting | ready | processing | error | succeeded
+  const [error, setError] = useState(null);
+  const stripeRef = useRef(null);
+  const elementsRef = useRef(null);
+  const mountRef = useRef(null);
+
+  useEffect(() => {
+    if (!clientSecret) return;
+    if (!window.Stripe) {
+      setError('Stripe.js aún no cargó. Recarga la página y reintenta.');
+      setStatus('error');
+      return;
+    }
+    if (!stripePublishableKey) {
+      setError('Pagos no configurados. Contacta a soporte.');
+      setStatus('error');
+      return;
+    }
+    const stripe = window.Stripe(stripePublishableKey);
+    stripeRef.current = stripe;
+    const elements = stripe.elements({ clientSecret });
+    elementsRef.current = elements;
+    const paymentEl = elements.create('payment');
+    paymentEl.mount(mountRef.current);
+    setStatus('ready');
+    return () => {
+      try { paymentEl.unmount(); } catch (_e) {}
+    };
+  }, [clientSecret]);
+
+  const confirm = async () => {
+    if (!stripeRef.current || !elementsRef.current) return;
+    setStatus('processing');
+    setError(null);
+    try {
+      const { error: confirmError, paymentIntent } = await stripeRef.current.confirmPayment({
+        elements: elementsRef.current,
+        confirmParams: { return_url: window.location.href },
+        redirect: 'if_required',
+      });
+      if (confirmError) {
+        setError(confirmError.message || 'El pago no se pudo procesar.');
+        setStatus('error');
+        return;
+      }
+      if (paymentIntent && (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')) {
+        setStatus('succeeded');
+        onSucceeded?.(paymentIntent);
+      } else {
+        setError('Pago en estado inesperado. Revisa tu correo o intenta de nuevo.');
+        setStatus('error');
+      }
+    } catch (e) {
+      setError('Error al confirmar el pago. Intenta de nuevo.');
+      setStatus('error');
+    }
+  };
+
+  return (
+    <div className={css.stripeBlock}>
+      <h3 className={css.stripeTitle}>Método de pago</h3>
+      <p className={css.stripeHint}>
+        Cobro seguro procesado por Stripe. Monto a pagar:{' '}
+        <strong>
+          {new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN',
+          }).format(amountMxn)}
+        </strong>
+      </p>
+      <div ref={mountRef} className={css.stripeMount} />
+      {error ? <p className={css.errorInline}>{error}</p> : null}
+      <div className={css.purchaseActions}>
+        <button type="button" className={css.secondaryBtn} onClick={onCancel}
+          disabled={status === 'processing'}>
+          ← Cancelar
+        </button>
+        <button
+          type="button"
+          className={css.submitBtn}
+          onClick={confirm}
+          disabled={status !== 'ready' && status !== 'error'}
+        >
+          {status === 'processing' ? 'Procesando pago…' : 'Confirmar pago'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const CotizarEnvioPage = () => {
   const scrollingDisabled = useSelector(isScrollingDisabled);
   const [step, setStep] = useState(1);
@@ -210,7 +306,15 @@ const CotizarEnvioPage = () => {
   const [quoteState, setQuoteState] = useState({ status: 'idle', data: null, error: null });
   const [selectedRateId, setSelectedRateId] = useState(null);
   const [purchaseForm, setPurchaseForm] = useState(INITIAL_PURCHASE_FORM);
-  const [purchaseState, setPurchaseState] = useState({ status: 'idle', error: null });
+  // status: idle | loading (creando PI) | paying (mostrando Stripe
+  // Elements) | succeeded (pago OK, en espera de generación de guía) |
+  // error
+  const [purchaseState, setPurchaseState] = useState({
+    status: 'idle',
+    error: null,
+    clientSecret: null,
+    paymentIntentId: null,
+  });
 
   const setQuoteField = (name, value) => setQuoteForm(f => ({ ...f, [name]: value }));
   const setPartyField = (side, name, value) =>
@@ -292,12 +396,16 @@ const CotizarEnvioPage = () => {
   const handlePurchaseSubmit = async e => {
     e.preventDefault();
     if (!canSubmitPurchase() || purchaseState.status === 'loading') return;
-    setPurchaseState({ status: 'loading', error: null });
-    // F2a: por ahora SÓLO logueamos el payload en consola — F2b-d
-    // reemplazarán esto con Stripe + crear user + Skydropx createShipment.
+    setPurchaseState({
+      status: 'loading',
+      error: null,
+      clientSecret: null,
+      paymentIntentId: null,
+    });
     const payload = {
       quotationId: quoteState.data?.quotationId,
-      selectedRateId,
+      rateId: selectedRateId,
+      publicTotal: selectedRate?.publicTotal,
       includeInsurance: quoteForm.includeInsurance,
       parcel: {
         weight: Number(quoteForm.weight),
@@ -306,13 +414,50 @@ const CotizarEnvioPage = () => {
         height: Number(quoteForm.height),
       },
       declaredValue: quoteForm.includeInsurance ? Number(quoteForm.declaredValue) : 0,
-      ...purchaseForm,
+      from: purchaseForm.from,
+      to: purchaseForm.to,
+      pickupMode: purchaseForm.pickupMode,
+      contentDescription: purchaseForm.contentDescription,
     };
-    // eslint-disable-next-line no-console
-    console.log('[cotizar-envio] F2a dry run — payload capturado:', payload);
-    setTimeout(() => {
-      setPurchaseState({ status: 'ok', error: null });
-    }, 500);
+    try {
+      const res = await fetch(`${apiBaseUrl()}/api/public-shipping-create-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.clientSecret) {
+        setPurchaseState({
+          status: 'error',
+          error: data?.details || data?.error || 'No pudimos iniciar el pago.',
+          clientSecret: null,
+          paymentIntentId: null,
+        });
+        return;
+      }
+      setPurchaseState({
+        status: 'paying',
+        error: null,
+        clientSecret: data.clientSecret,
+        paymentIntentId: data.paymentIntentId,
+      });
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    } catch (err) {
+      setPurchaseState({
+        status: 'error',
+        error: err?.message || 'Error de red al iniciar el pago.',
+        clientSecret: null,
+        paymentIntentId: null,
+      });
+    }
+  };
+
+  const handlePaymentSucceeded = () => {
+    setPurchaseState(s => ({ ...s, status: 'succeeded' }));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const handlePaymentCancel = () => {
+    setPurchaseState({ status: 'idle', error: null, clientSecret: null, paymentIntentId: null });
   };
 
   const rates = quoteState.data?.rates || [];
@@ -584,32 +729,69 @@ const CotizarEnvioPage = () => {
         </fieldset>
 
         <div className={css.purchaseActions}>
-          <button type="button" className={css.secondaryBtn} onClick={() => setStep(1)}>
+          <button
+            type="button"
+            className={css.secondaryBtn}
+            onClick={() => setStep(1)}
+            disabled={purchaseState.status === 'loading' || purchaseState.status === 'paying'}
+          >
             ← Volver
           </button>
           <button
             type="submit"
             className={css.submitBtn}
-            disabled={!canSubmitPurchase() || purchaseState.status === 'loading'}
+            disabled={
+              !canSubmitPurchase() ||
+              purchaseState.status === 'loading' ||
+              purchaseState.status === 'paying'
+            }
           >
             {purchaseState.status === 'loading'
-              ? 'Procesando…'
-              : `Pagar ${formatMoney(selectedRate?.publicTotal)}`}
+              ? 'Preparando pago…'
+              : purchaseState.status === 'paying'
+              ? 'Pago en curso…'
+              : `Continuar al pago · ${formatMoney(selectedRate?.publicTotal)}`}
           </button>
         </div>
       </form>
 
-      {purchaseState.status === 'ok' ? (
-        <div className={css.successBox}>
-          <strong>Datos capturados correctamente.</strong>
-          <p>
-            El pago en línea y la generación de la guía se habilitan muy
-            pronto. Mientras tanto, tus datos quedaron registrados — no
-            compartiremos esta información hasta que confirmes tu compra.
-          </p>
+      {purchaseState.status === 'error' && !purchaseState.clientSecret ? (
+        <div className={css.errorBox}>
+          <strong>No pudimos iniciar el pago.</strong> {purchaseState.error}
         </div>
       ) : null}
+
+      {purchaseState.status === 'paying' && purchaseState.clientSecret ? (
+        <StripePaymentBlock
+          clientSecret={purchaseState.clientSecret}
+          amountMxn={selectedRate?.publicTotal || 0}
+          onSucceeded={handlePaymentSucceeded}
+          onCancel={handlePaymentCancel}
+        />
+      ) : null}
     </>
+  );
+
+  const renderStep3 = () => (
+    <div className={css.successRoot}>
+      <div className={css.successEmoji} aria-hidden>🎉</div>
+      <h2 className={css.successTitle}>¡Pago recibido!</h2>
+      <p className={css.successText}>
+        Gracias por tu compra. Estamos generando tu guía con la paquetería
+        seleccionada — en los próximos minutos recibirás en{' '}
+        <strong>{purchaseForm.from.email}</strong> dos correos:
+      </p>
+      <ol className={css.successList}>
+        <li>Tu guía PDF lista para imprimir.</li>
+        <li>Un enlace para activar tu cuenta Xololo y ver tus envíos.</li>
+      </ol>
+      <p className={css.successFoot}>
+        Si no los ves en 10 minutos, revisa tu carpeta de spam o
+        escríbenos a soporte@xololo.mx. Guarda este número de orden por
+        si acaso:{' '}
+        <code>{purchaseState.paymentIntentId || 'pendiente'}</code>
+      </p>
+    </div>
   );
 
   return (
@@ -622,22 +804,41 @@ const CotizarEnvioPage = () => {
       </Helmet>
       <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
         <div className={css.root}>
-          <header className={css.header}>
-            <h1 className={css.title}>
-              {step === 1 ? 'Cotiza tu envío' : 'Datos del envío'}
-            </h1>
-            <p className={css.subtitle}>
-              {step === 1
-                ? 'Compara precios entre Estafeta, FedEx, DHL, Paquetexpress y más — paga una sola guía al mejor precio. Sin registro para cotizar.'
-                : 'Completa los datos del remitente y destinatario. Al pagar, generamos tu guía y te la enviamos por email.'}
-            </p>
-            <ol className={css.steps} aria-label="Progreso">
-              <li className={step === 1 ? css.stepActive : css.stepDone}>1. Cotización</li>
-              <li className={step === 2 ? css.stepActive : ''}>2. Datos y pago</li>
-            </ol>
-          </header>
+          {purchaseState.status !== 'succeeded' ? (
+            <header className={css.header}>
+              <h1 className={css.title}>
+                {step === 1 ? 'Cotiza tu envío' : 'Datos del envío'}
+              </h1>
+              <p className={css.subtitle}>
+                {step === 1
+                  ? 'Compara precios entre Estafeta, FedEx, DHL, Paquetexpress y más — paga una sola guía al mejor precio. Sin registro para cotizar.'
+                  : 'Completa los datos del remitente y destinatario. Al pagar, generamos tu guía y te la enviamos por email.'}
+              </p>
+              <ol className={css.steps} aria-label="Progreso">
+                <li className={step === 1 ? css.stepActive : css.stepDone}>1. Cotización</li>
+                <li
+                  className={
+                    step === 2
+                      ? purchaseState.status === 'paying'
+                        ? css.stepDone
+                        : css.stepActive
+                      : ''
+                  }
+                >
+                  2. Datos
+                </li>
+                <li className={purchaseState.status === 'paying' ? css.stepActive : ''}>
+                  3. Pago
+                </li>
+              </ol>
+            </header>
+          ) : null}
 
-          {step === 1 ? renderStep1() : renderStep2()}
+          {purchaseState.status === 'succeeded'
+            ? renderStep3()
+            : step === 1
+            ? renderStep1()
+            : renderStep2()}
         </div>
       </LayoutSingleColumn>
     </Page>

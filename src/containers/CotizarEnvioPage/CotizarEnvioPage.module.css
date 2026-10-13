@@ -472,3 +472,103 @@
 .successBox p {
   margin: 6px 0 0;
 }
+
+/* Stripe inline block (F2b) */
+.stripeBlock {
+  margin-top: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stripeTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0e1a2f;
+}
+
+.stripeHint {
+  margin: 0;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.stripeMount {
+  min-height: 72px;
+}
+
+.errorInline {
+  margin: 0;
+  padding: 10px 12px;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+/* Success page (step 3) */
+.successRoot {
+  text-align: center;
+  padding: 40px 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.successEmoji {
+  font-size: 64px;
+  margin-bottom: 12px;
+}
+
+.successTitle {
+  margin: 0 0 14px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0e1a2f;
+}
+
+.successText {
+  margin: 0 auto 16px;
+  max-width: 480px;
+  font-size: 15px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.successList {
+  margin: 0 auto 20px;
+  max-width: 400px;
+  text-align: left;
+  font-size: 14px;
+  color: #0e1a2f;
+}
+
+.successList li {
+  padding: 4px 0;
+}
+
+.successFoot {
+  margin: 20px auto 0;
+  max-width: 500px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.successFoot code {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  background: #e5e7eb;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
