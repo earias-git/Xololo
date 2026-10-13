@@ -640,7 +640,7 @@ const ShareBar = ({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const message = `Visita mi tienda ${storeName || ''} en Xololo 🛍️`.trim();
+  const message = `Visita mi tienda ${storeName || ''} en Xololo`.trim();
   const shareUrl = storeUrl || (typeof window !== 'undefined' ? window.location.origin : '');
   const canNativeShare =
     typeof navigator !== 'undefined' &&
@@ -833,7 +833,7 @@ const buildStoreShareUrl = (seller, source) => {
 };
 
 const buildShareText = sellerName =>
-  `${sellerName || 'Mi tienda'} en Xololo 🛍️\n\n¡Visítame y revisa mis productos y servicios!`;
+  `${sellerName || 'Mi tienda'} en Xololo\n\n¡Visítame y revisa mis productos y servicios!`;
 
 const StorePromoShareButtons = ({ seller, sellerName }) => {
   const [copied, setCopied] = useState(null);
