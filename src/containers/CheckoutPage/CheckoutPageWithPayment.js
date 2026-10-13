@@ -709,8 +709,32 @@ export const CheckoutPageWithPayment = props => {
     orderData?.deliveryMethod === 'shipping' &&
     !hasTransactionPassedPendingPayment(existingTransaction, process);
 
-  const listingLocation = listing?.attributes?.publicData?.location;
   const showPickUpLocation = isPurchase && orderData?.deliveryMethod === 'pickup';
+
+  // XOLOLO: para pickup el buyer necesita saber a DÓNDE recoger. El
+  // publicData.location del listing suele venir vacío (no es su propósito);
+  // la dirección real vive en el profile del seller en pickupAddress →
+  // commercialAddress → legalAddress (ver ManageStoreForm). Preferimos esa
+  // cadena de fallback y la convertimos al shape {address, building} que
+  // consume LocationOrShippingDetails.
+  const buildAddressString = a => {
+    if (!a || typeof a !== 'object') return null;
+    const parts = [a.street, a.exterior, a.interior, a.colonia, a.city, a.state, a.postalCode]
+      .filter(Boolean)
+      .map(String)
+      .map(s => s.trim())
+      .filter(Boolean);
+    return parts.length ? parts.join(', ') : null;
+  };
+  const sellerPd = listing?.author?.attributes?.profile?.publicData || {};
+  const sellerPickupAddressStr =
+    buildAddressString(sellerPd.pickupAddress) ||
+    buildAddressString(sellerPd.commercialAddress) ||
+    buildAddressString(sellerPd.legalAddress) ||
+    null;
+  const listingLocation = showPickUpLocation && sellerPickupAddressStr
+    ? { address: sellerPickupAddressStr }
+    : listing?.attributes?.publicData?.location;
   const showLocation = (isBooking || isNegotiation) && listingLocation?.address;
 
   const providerDisplayName = isNegotiation

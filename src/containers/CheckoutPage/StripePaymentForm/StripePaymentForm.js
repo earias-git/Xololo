@@ -229,11 +229,18 @@ const LocationOrShippingDetails = props => {
     intl,
   } = props;
 
+  // XOLOLO: diferenciamos el fallback — si es pickup y no hay dirección
+  // damos el copy específico ("Lugar de recolección no establecido.
+  // Contacta al proveedor.") que ya está en traducciones; si es location
+  // del listing, el genérico.
+  const unknownKey = showPickUpLocation
+    ? 'StripePaymentForm.pickupLocationUnknown'
+    : 'StripePaymentForm.locationUnknown';
   const locationDetails = listingLocation?.building
     ? `${listingLocation.building}, ${listingLocation.address}`
     : listingLocation?.address
     ? listingLocation.address
-    : intl.formatMessage({ id: 'StripePaymentForm.locationUnknown' });
+    : intl.formatMessage({ id: unknownKey });
 
   return askShippingDetails ? (
     <ShippingDetails intl={intl} formApi={formApi} values={values} locale={locale} />
