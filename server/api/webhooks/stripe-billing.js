@@ -42,6 +42,7 @@ const {
 } = require('../../api-util/stripeBilling');
 const { getIntegrationSdk } = require('../../api-util/integrationSdk');
 const { sendEventNotifications } = require('../../api-util/notifications');
+const { fulfillPublicShippingGuide } = require('../../api-util/publicShippingFulfill');
 
 const WEBHOOK_SECRET = process.env.STRIPE_BILLING_WEBHOOK_SECRET;
 
@@ -243,6 +244,24 @@ module.exports = async (req, res) => {
       // Marcamos freightPaidAt siempre. buyerAuthorizedAt se marca
       // sólo si no estaba (retro compat con flow auto).
       const pi = event.data.object;
+
+      // XOLOLO feature #28 · F2c: compra pública de guía de paquetería.
+      // Rama separada del freight — genera la guía Skydropx tras el
+      // pago exitoso. Idempotente (si ya se generó, es no-op).
+      if (pi.metadata?.xololoType === 'public_shipping_guide') {
+        const result = await fulfillPublicShippingGuide(pi);
+        return res.status(200).json({
+          ok: true,
+          processed: result.ok,
+          type: event.type,
+          publicShipping: {
+            shipmentId: result.shipmentId || null,
+            trackingNumber: result.trackingNumber || null,
+            skipped: result.skipped || null,
+          },
+        });
+      }
+
       if (pi.metadata?.xololoType !== 'freight_charge') {
         return res
           .status(200)

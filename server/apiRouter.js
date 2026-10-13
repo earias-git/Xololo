@@ -22,6 +22,7 @@ const uploadStoreImage = require('./api/upload-store-image');
 const shippingQuote = require('./api/shipping-quote');
 const publicShippingQuote = require('./api/public-shipping-quote');
 const publicShippingCreatePayment = require('./api/public-shipping-create-payment');
+const publicShippingStatus = require('./api/public-shipping-status');
 const xololoShippingQuote = require('./api/xololo-shipping-quote');
 const verifyDeliveryCode = require('./api/verify-delivery-code');
 const txFlow = require('./api/tx-flow');
@@ -120,6 +121,9 @@ router.post('/shipping-quote', bodyParser.json(), shippingQuote);
 router.post('/public-shipping-quote', bodyParser.json(), publicShippingQuote);
 // XOLOLO feature #28 · F2b: Stripe Payment Intent de la compra pública.
 router.post('/public-shipping-create-payment', bodyParser.json(), publicShippingCreatePayment);
+// XOLOLO feature #28 · F2c: polling de estado post-pago para obtener
+// shipmentId + labelUrl cuando la guía Skydropx ya está lista.
+router.get('/public-shipping-status', publicShippingStatus);
 
 // XOLOLO Envíos v2 — Sub-commit C: loop de cotización del método "flete".
 // submit lo llama el SELLER para cotizar; authorize lo llama el BUYER

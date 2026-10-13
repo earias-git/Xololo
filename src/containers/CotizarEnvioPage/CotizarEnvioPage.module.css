@@ -553,6 +553,17 @@
   padding: 4px 0;
 }
 
+.successCta {
+  margin: 20px auto;
+  display: flex;
+  justify-content: center;
+}
+
+.successCta a {
+  display: inline-block;
+  text-decoration: none;
+}
+
 .successFoot {
   margin: 20px auto 0;
   max-width: 500px;

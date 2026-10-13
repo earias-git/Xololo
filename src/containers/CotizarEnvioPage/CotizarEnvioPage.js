@@ -452,13 +452,68 @@ const CotizarEnvioPage = () => {
     }
   };
 
+  const [guideStatus, setGuideStatus] = useState({
+    phase: 'idle', // 'idle' | 'polling' | 'ready' | 'timeout'
+    labelUrl: null,
+    trackingNumber: null,
+    shipmentId: null,
+  });
+
   const handlePaymentSucceeded = () => {
     setPurchaseState(s => ({ ...s, status: 'succeeded' }));
+    setGuideStatus({ phase: 'polling', labelUrl: null, trackingNumber: null, shipmentId: null });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const handlePaymentCancel = () => {
     setPurchaseState({ status: 'idle', error: null, clientSecret: null, paymentIntentId: null });
   };
+
+  // F2c: polling del status de la guía después del pago exitoso.
+  // Cada 3s consulta /api/public-shipping-status hasta que status=ready
+  // (hay labelUrl) o 90s (timeout). El fallback inline del endpoint
+  // garantiza que la primera consulta ya dispare la generación si el
+  // webhook aún no procesó.
+  useEffect(() => {
+    if (guideStatus.phase !== 'polling') return;
+    if (!purchaseState.paymentIntentId) return;
+    const piId = purchaseState.paymentIntentId;
+    const started = Date.now();
+    const MAX_MS = 90000;
+    let aborted = false;
+    let timer = null;
+
+    const poll = async () => {
+      if (aborted) return;
+      try {
+        const res = await fetch(
+          `${apiBaseUrl()}/api/public-shipping-status?pi=${encodeURIComponent(piId)}`
+        );
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data?.status === 'ready' && data.labelUrl) {
+          setGuideStatus({
+            phase: 'ready',
+            labelUrl: data.labelUrl,
+            trackingNumber: data.trackingNumber || null,
+            shipmentId: data.shipmentId || null,
+          });
+          return;
+        }
+      } catch (_e) {
+        // Silencioso: seguimos reintentando.
+      }
+      if (Date.now() - started > MAX_MS) {
+        setGuideStatus(s => ({ ...s, phase: 'timeout' }));
+        return;
+      }
+      timer = setTimeout(poll, 3000);
+    };
+    poll();
+
+    return () => {
+      aborted = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [guideStatus.phase, purchaseState.paymentIntentId]);
 
   const rates = quoteState.data?.rates || [];
   const selectedRate = rates.find(r => r.id === selectedRateId) || null;
@@ -776,19 +831,62 @@ const CotizarEnvioPage = () => {
     <div className={css.successRoot}>
       <div className={css.successEmoji} aria-hidden>🎉</div>
       <h2 className={css.successTitle}>¡Pago recibido!</h2>
-      <p className={css.successText}>
-        Gracias por tu compra. Estamos generando tu guía con la paquetería
-        seleccionada — en los próximos minutos recibirás en{' '}
-        <strong>{purchaseForm.from.email}</strong> dos correos:
-      </p>
-      <ol className={css.successList}>
-        <li>Tu guía PDF lista para imprimir.</li>
-        <li>Un enlace para activar tu cuenta Xololo y ver tus envíos.</li>
-      </ol>
+
+      {guideStatus.phase === 'ready' ? (
+        <>
+          <p className={css.successText}>
+            Tu guía ya está lista. Descárgala e imprímela — después
+            entrégala pegada al paquete en la sucursal del carrier
+            (o entrégala al mensajero si elegiste pickup a domicilio).
+          </p>
+          {guideStatus.trackingNumber ? (
+            <p className={css.successText}>
+              Número de rastreo:{' '}
+              <strong><code>{guideStatus.trackingNumber}</code></strong>
+            </p>
+          ) : null}
+          <div className={css.successCta}>
+            <a
+              className={css.submitBtn}
+              href={guideStatus.labelUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              📄 Descargar guía PDF
+            </a>
+          </div>
+        </>
+      ) : guideStatus.phase === 'timeout' ? (
+        <p className={css.successText}>
+          Tu pago se recibió correctamente, pero la generación de la guía
+          está tardando más de lo normal. La enviaremos por correo a{' '}
+          <strong>{purchaseForm.from.email}</strong> en cuanto esté lista.
+          Si no la recibes en los próximos minutos, escríbenos a
+          soporte@xololo.mx con tu número de orden.
+        </p>
+      ) : (
+        <>
+          <p className={css.successText}>
+            Estamos generando tu guía con la paquetería seleccionada —
+            esto suele tardar menos de un minuto. La verás aquí abajo en
+            cuanto esté lista, y además la mandaremos a{' '}
+            <strong>{purchaseForm.from.email}</strong>.
+          </p>
+          <div className={css.loadingEmpathic}>
+            <div className={css.loadingEmoji} aria-hidden>📬</div>
+            <div>
+              <strong>Preparando tu guía…</strong>
+              <p>
+                Skydropx y la paquetería están emitiendo tu etiqueta. En
+                un momento aparece aquí lista para descargar.
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+
       <p className={css.successFoot}>
-        Si no los ves en 10 minutos, revisa tu carpeta de spam o
-        escríbenos a soporte@xololo.mx. Guarda este número de orden por
-        si acaso:{' '}
+        Guarda este número de orden por si necesitas soporte:{' '}
         <code>{purchaseState.paymentIntentId || 'pendiente'}</code>
       </p>
     </div>
