@@ -1,59 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect } from 'react';
 import classNames from 'classnames';
 
 import { FormattedMessage, intlShape } from '../../../util/reactIntl';
 import * as validators from '../../../util/validators';
-import { apiBaseUrl } from '../../../util/api';
+import { useMxPostalCode } from '../../../util/useMxPostalCode';
 import getCountryCodes from '../../../translations/countryCodes';
 
 import { FieldSelect, FieldTextInput, Heading } from '../../../components';
 
 import css from './ShippingDetails.module.css';
 
-// XOLOLO: hook que consulta /api/postal-code cuando el buyer escribe
-// 5 dígitos válidos y devuelve {state, city, colonies}. Debounce 400ms
-// para no golpear el endpoint por cada tecla. Devuelve status:
-//  - 'idle'   : sin lookup activo (CP < 5 dígitos, o country ≠ MX)
-//  - 'loading': fetch en curso
-//  - 'ok'     : data cargada
-//  - 'error'  : CP inválido, no encontrado o backend down (mostrar
-//               inputs manuales como fallback)
-const usePostalCodeLookup = (cp, countryCode) => {
-  const [state, setState] = useState({ status: 'idle', data: null, error: null });
-  const timerRef = useRef(null);
-
-  useEffect(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setState(prev => (prev.status === 'idle' ? prev : { status: 'idle', data: null, error: null }));
-
-    // Sólo aplica a México. Si el buyer eligió otro país, el CP se
-    // llena a mano (no todos los países tienen el mismo formato ni
-    // API disponible en v1).
-    if (countryCode && countryCode !== 'MX') return;
-    if (!/^\d{5}$/.test(String(cp || '').trim())) return;
-
-    timerRef.current = setTimeout(async () => {
-      setState({ status: 'loading', data: null, error: null });
-      try {
-        const res = await fetch(`${apiBaseUrl()}/api/postal-code?cp=${cp}`);
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          setState({ status: 'error', data: null, error: data.error || 'lookup_failed' });
-          return;
-        }
-        setState({ status: 'ok', data, error: null });
-      } catch (e) {
-        setState({ status: 'error', data: null, error: 'network' });
-      }
-    }, 400);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [cp, countryCode]);
-
-  return state;
-};
+// XOLOLO: hook del CP MX extraído a src/util/useMxPostalCode.js para
+// poder reusar en CotizarEnvioPage (feature #28). Alias local mantiene
+// el nombre histórico usado abajo.
+const usePostalCodeLookup = useMxPostalCode;
 
 /**
  * A component that displays the shipping details form on the checkout page.

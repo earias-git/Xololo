@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Helmet } from 'react-helmet-async';
 
 import { apiBaseUrl } from '../../util/api';
+import { useMxPostalCode } from '../../util/useMxPostalCode';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { Page, LayoutSingleColumn } from '../../components';
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
@@ -65,6 +66,142 @@ const isCP = s => /^\d{5}$/.test(String(s || ''));
 const isPhone = s => /^\+?\d[\d\s-]{7,}$/.test(String(s || '').trim());
 const isEmail = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim());
 const hasText = s => String(s || '').trim().length > 0;
+
+// XOLOLO feature #28: subcomponente para capturar los datos de una
+// parte (remitente o destinatario). Lookup del CP automático contra
+// /api/postal-code:
+//   - Auto-rellena city/state cuando el CP tiene 5 dígitos y hay match.
+//     Respetamos lo que el user ya haya escrito (no sobrescribimos).
+//   - Convierte el input de colonia en <select> con las colonias del CP
+//     + opción "Otra colonia…" para los casos que SEPOMEX no cubra.
+const PartyForm = ({ label, value, onFieldChange, emailRequired }) => {
+  const lookup = useMxPostalCode(value.postalCode);
+  const colonies = lookup.data?.colonies || [];
+  const prevCpRef = useRef(null);
+  const [coloniaMode, setColoniaMode] = useState('auto'); // 'auto' | 'manual'
+
+  // Auto-rellena city/state cuando el CP acaba de completarse (nuevo
+  // valor distinto al anterior). No pisa valores escritos a mano por el
+  // user si el lookup trae lo mismo que ya tenían.
+  useEffect(() => {
+    if (lookup.status !== 'ok' || !lookup.data) return;
+    const cp = lookup.data.postalCode;
+    if (prevCpRef.current === cp) return;
+    prevCpRef.current = cp;
+    if (lookup.data.city && !value.city) onFieldChange('city', lookup.data.city);
+    if (lookup.data.state && !value.state) onFieldChange('state', lookup.data.state);
+    // Reset modo colonia al llegar un CP nuevo con dataset.
+    setColoniaMode('auto');
+    // Si ya hay una colonia escrita que no está en la lista nueva, pasa a manual.
+    if (value.colonia && !(lookup.data.colonies || []).includes(value.colonia)) {
+      setColoniaMode('manual');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lookup.status, lookup.data?.postalCode]);
+
+  const showColoniaDropdown = coloniaMode === 'auto' && colonies.length > 0;
+
+  return (
+    <fieldset className={css.fieldset}>
+      <legend>{label}</legend>
+      <div className={css.row}>
+        <label className={css.field}>
+          <span>Nombre completo</span>
+          <input type="text" value={value.name}
+            onChange={e => onFieldChange('name', e.target.value)} required />
+        </label>
+        <label className={css.field}>
+          <span>Teléfono (10 dígitos)</span>
+          <input type="tel" inputMode="tel" value={value.phone}
+            onChange={e => onFieldChange('phone', e.target.value)} required />
+        </label>
+        <label className={css.field}>
+          <span>Email {emailRequired ? '(para la guía)' : '(opcional)'}</span>
+          <input type="email" value={value.email}
+            onChange={e => onFieldChange('email', e.target.value)}
+            required={emailRequired} />
+        </label>
+      </div>
+      <div className={css.row}>
+        <label className={css.field}>
+          <span>Código postal</span>
+          <input type="text" inputMode="numeric" maxLength={5} value={value.postalCode}
+            onChange={e => onFieldChange('postalCode', e.target.value.replace(/\D/g, ''))}
+            required />
+          {lookup.status === 'loading' ? (
+            <small className={css.hintMuted}>Buscando datos del CP…</small>
+          ) : null}
+          {lookup.status === 'error' ? (
+            <small className={css.hintMuted}>
+              No encontramos el CP. Llena los campos manualmente.
+            </small>
+          ) : null}
+        </label>
+        <label className={css.field} style={{ gridColumn: 'span 2' }}>
+          <span>Calle</span>
+          <input type="text" value={value.street}
+            onChange={e => onFieldChange('street', e.target.value)} required />
+        </label>
+      </div>
+      <div className={css.row}>
+        <label className={css.field}>
+          <span>No. exterior</span>
+          <input type="text" value={value.exterior}
+            onChange={e => onFieldChange('exterior', e.target.value)} required />
+        </label>
+        <label className={css.field}>
+          <span>No. interior (opcional)</span>
+          <input type="text" value={value.interior}
+            onChange={e => onFieldChange('interior', e.target.value)} />
+        </label>
+        <label className={css.field} style={{ gridColumn: 'span 2' }}>
+          <span>Colonia</span>
+          {showColoniaDropdown ? (
+            <select
+              value={value.colonia}
+              onChange={e => {
+                if (e.target.value === '__other__') {
+                  setColoniaMode('manual');
+                  onFieldChange('colonia', '');
+                } else {
+                  onFieldChange('colonia', e.target.value);
+                }
+              }}
+              required
+            >
+              <option value="">Selecciona tu colonia…</option>
+              {colonies.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+              <option value="__other__">Otra colonia (escribir a mano)</option>
+            </select>
+          ) : (
+            <input type="text" value={value.colonia}
+              onChange={e => onFieldChange('colonia', e.target.value)} required />
+          )}
+        </label>
+      </div>
+      <div className={css.row}>
+        <label className={css.field}>
+          <span>Ciudad / Municipio</span>
+          <input type="text" value={value.city}
+            onChange={e => onFieldChange('city', e.target.value)} required />
+        </label>
+        <label className={css.field}>
+          <span>Estado</span>
+          <input type="text" value={value.state}
+            onChange={e => onFieldChange('state', e.target.value)} required />
+        </label>
+      </div>
+      <label className={css.field}>
+        <span>Referencias (opcional)</span>
+        <input type="text" placeholder="entre tal y cual calle, color fachada…"
+          value={value.references}
+          onChange={e => onFieldChange('references', e.target.value)} />
+      </label>
+    </fieldset>
+  );
+};
 
 const CotizarEnvioPage = () => {
   const scrollingDisabled = useSelector(isScrollingDisabled);
@@ -325,71 +462,15 @@ const CotizarEnvioPage = () => {
     </>
   );
 
-  const renderParty = (side, label, { emailRequired }) => {
-    const p = purchaseForm[side];
-    const set = (k, v) => setPartyField(side, k, v);
-    return (
-      <fieldset className={css.fieldset}>
-        <legend>{label}</legend>
-        <div className={css.row}>
-          <label className={css.field}>
-            <span>Nombre completo</span>
-            <input type="text" value={p.name} onChange={e => set('name', e.target.value)} required />
-          </label>
-          <label className={css.field}>
-            <span>Teléfono (10 dígitos)</span>
-            <input type="tel" inputMode="tel" value={p.phone}
-              onChange={e => set('phone', e.target.value)} required />
-          </label>
-          <label className={css.field}>
-            <span>Email {emailRequired ? '(para la guía)' : '(opcional)'}</span>
-            <input type="email" value={p.email}
-              onChange={e => set('email', e.target.value)}
-              required={emailRequired} />
-          </label>
-        </div>
-        <div className={css.row}>
-          <label className={css.field} style={{ gridColumn: 'span 2' }}>
-            <span>Calle</span>
-            <input type="text" value={p.street} onChange={e => set('street', e.target.value)} required />
-          </label>
-          <label className={css.field}>
-            <span>No. exterior</span>
-            <input type="text" value={p.exterior} onChange={e => set('exterior', e.target.value)} required />
-          </label>
-          <label className={css.field}>
-            <span>No. interior (opcional)</span>
-            <input type="text" value={p.interior} onChange={e => set('interior', e.target.value)} />
-          </label>
-        </div>
-        <div className={css.row}>
-          <label className={css.field}>
-            <span>Colonia</span>
-            <input type="text" value={p.colonia} onChange={e => set('colonia', e.target.value)} required />
-          </label>
-          <label className={css.field}>
-            <span>Ciudad / Municipio</span>
-            <input type="text" value={p.city} onChange={e => set('city', e.target.value)} required />
-          </label>
-          <label className={css.field}>
-            <span>Estado</span>
-            <input type="text" value={p.state} onChange={e => set('state', e.target.value)} required />
-          </label>
-          <label className={css.field}>
-            <span>Código postal</span>
-            <input type="text" inputMode="numeric" maxLength={5} value={p.postalCode}
-              onChange={e => set('postalCode', e.target.value.replace(/\D/g, ''))} required />
-          </label>
-        </div>
-        <label className={css.field}>
-          <span>Referencias (opcional)</span>
-          <input type="text" placeholder="entre tal y cual calle, color fachada…"
-            value={p.references}
-            onChange={e => set('references', e.target.value)} />
-        </label>
-      </fieldset>
-    );
-  };
+  const renderParty = (side, label, opts) => (
+    <PartyForm
+      key={side}
+      label={label}
+      value={purchaseForm[side]}
+      onFieldChange={(k, v) => setPartyField(side, k, v)}
+      emailRequired={opts.emailRequired}
+    />
+  );
 
   const renderStep2 = () => (
     <>

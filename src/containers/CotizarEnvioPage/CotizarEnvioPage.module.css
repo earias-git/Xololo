@@ -52,13 +52,28 @@
 }
 
 .field input[type='text'],
-.field input[type='number'] {
+.field input[type='number'],
+.field input[type='tel'],
+.field input[type='email'],
+.field select {
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
   font-size: 15px;
   background: #ffffff;
   color: #0e1a2f;
+}
+
+.field select {
+  cursor: pointer;
+  appearance: auto;
+}
+
+.hintMuted {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 400;
 }
 
 .field input:focus {
