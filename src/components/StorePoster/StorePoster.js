@@ -55,9 +55,31 @@ const buildStoreUrl = seller => {
   return `${window.location.origin}?utm_source=poster&utm_medium=xolo-promo&utm_campaign=store`;
 };
 
+// Reemplaza cualquier <image href="URL externa"> por una placeholder
+// transparente — así nunca el browser intenta cargar recursos externos
+// cuando rasterice el SVG (eso rompe el canvas por CSP o CORS).
+const stripExternalImages = (svgRoot, log) => {
+  const images = svgRoot.querySelectorAll('image');
+  images.forEach(img => {
+    const href = img.getAttribute('href') || img.getAttribute('xlink:href');
+    if (href && !href.startsWith('data:')) {
+      log.push(`removed external image: ${href.slice(0, 60)}…`);
+      img.setAttribute('href', '');
+      img.setAttribute('xlink:href', '');
+    }
+  });
+};
+
 const renderSvgToPngDataUrl = async (svgEl, [widthPx, heightPx], embeddedFontCss) => {
+  const log = [];
   const clone = svgEl.cloneNode(true);
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+
+  // Limpieza defensiva: NO queremos imágenes externas en el SVG — tiran
+  // onerror en el browser cuando se rasteriza por CSP.
+  stripExternalImages(clone, log);
+
   if (embeddedFontCss) {
     let defs = clone.querySelector('defs');
     if (!defs) {
@@ -69,36 +91,40 @@ const renderSvgToPngDataUrl = async (svgEl, [widthPx, heightPx], embeddedFontCss
     style.textContent = embeddedFontCss;
     defs.appendChild(style);
   }
+
   const serializer = new XMLSerializer();
   const svgString = serializer.serializeToString(clone);
-  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  try {
-    const img = await new Promise((resolve, reject) => {
-      const i = new Image();
-      i.onload = () => resolve(i);
-      // onerror en Image recibe un Event, no un Error. Lo envolvemos
-      // para que el catch de arriba tenga un .message legible.
-      i.onerror = ev => {
-        const err = new Error(
-          `No se pudo rasterizar el SVG (${widthPx}×${heightPx}). Puede ser que el navegador no acepte un canvas tan grande.`
-        );
-        err.event = ev;
-        reject(err);
-      };
-      i.src = url;
-    });
-    const canvas = document.createElement('canvas');
-    canvas.width = widthPx;
-    canvas.height = heightPx;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, widthPx, heightPx);
-    ctx.drawImage(img, 0, 0, widthPx, heightPx);
-    return canvas.toDataURL('image/png');
-  } finally {
-    URL.revokeObjectURL(url);
-  }
+
+  // En vez de blob URL (que a veces falla silenciosamente por CSP
+  // Fetch directive), usamos data: URL directa. Más confiable aunque
+  // base64 agrega 33% de tamaño.
+  const svgDataUrl =
+    'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+
+  const img = await new Promise((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = ev => {
+      // eslint-disable-next-line no-console
+      console.error('[StorePoster] Image() onerror', ev, 'svgString length:', svgString.length);
+      const err = new Error(
+        `No se pudo rasterizar el SVG (${widthPx}×${heightPx}, ${svgString.length} bytes). Revisa consola para más detalle.`
+      );
+      err.event = ev;
+      err.log = log;
+      reject(err);
+    };
+    i.src = svgDataUrl;
+  });
+
+  const canvas = document.createElement('canvas');
+  canvas.width = widthPx;
+  canvas.height = heightPx;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, widthPx, heightPx);
+  ctx.drawImage(img, 0, 0, widthPx, heightPx);
+  return canvas.toDataURL('image/png');
 };
 
 const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) => {
@@ -206,13 +232,25 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
     }
   };
 
+  // Intenta rasterizar a la resolución pedida; si falla, reintenta a la
+  // mitad. Si eso también falla, propaga el error.
+  const rasterizeWithFallback = async (svgEl, exportPx) => {
+    try {
+      return await renderSvgToPngDataUrl(svgEl, exportPx, await resolveEmbeddedFontCss());
+    } catch (e1) {
+      // eslint-disable-next-line no-console
+      console.warn('[StorePoster] primary rasterize failed, trying half:', e1.message);
+      const halfPx = [Math.floor(exportPx[0] / 2), Math.floor(exportPx[1] / 2)];
+      return await renderSvgToPngDataUrl(svgEl, halfPx, null);
+    }
+  };
+
   const handleDownloadPng = async () => {
     const svgEl = svgRef.current;
     if (!svgEl) return;
     setExporting(true);
     try {
-      const fontCss = await resolveEmbeddedFontCss();
-      const dataUrl = await renderSvgToPngDataUrl(svgEl, template.exportPx, fontCss);
+      const dataUrl = await rasterizeWithFallback(svgEl, template.exportPx);
       const a = document.createElement('a');
       a.href = dataUrl;
       a.download = `xololo-tienda-${slugifyFilename(sellerName)}-${template.key}.png`;
@@ -221,7 +259,9 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
       document.body.removeChild(a);
       setError(null);
     } catch (e) {
-      setError(e?.message || 'png_error');
+      // eslint-disable-next-line no-console
+      console.error('[StorePoster] PNG export error:', e);
+      setError(`PNG: ${e?.message || e?.name || 'error'}`);
     } finally {
       setExporting(false);
     }
@@ -233,8 +273,7 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
     setExporting(true);
     try {
       const { default: jsPDF } = await import('jspdf');
-      const fontCss = await resolveEmbeddedFontCss();
-      const pngDataUrl = await renderSvgToPngDataUrl(svgEl, template.exportPx, fontCss);
+      const pngDataUrl = await rasterizeWithFallback(svgEl, template.exportPx);
       const { widthMm, heightMm, orientation, format } = template.pdf;
       const pdf = new jsPDF({ unit: 'mm', format, orientation, compress: true });
       pdf.addImage(pngDataUrl, 'PNG', 0, 0, widthMm, heightMm, undefined, 'FAST');
