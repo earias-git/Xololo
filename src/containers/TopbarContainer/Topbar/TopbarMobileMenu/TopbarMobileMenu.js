@@ -101,6 +101,14 @@ const TopbarMobileMenu = props => {
     </NamedLink>
   ) : null;
 
+  // XOLOLO feature #28 · F4: entrada al cotizador público desde el
+  // menú móvil. Visible siempre (sellers y no-sellers por igual).
+  const cotizarEnvioMobileLink = (
+    <NamedLink className={css.navigationLink} name="CotizarEnvioPage">
+      <FormattedMessage id="TopbarMobileMenu.cotizarEnvio" />
+    </NamedLink>
+  );
+
   if (!isAuthenticated) {
     const signup = (
       <NamedLink name="SignupPage" className={css.signupLink}>
@@ -132,7 +140,10 @@ const TopbarMobileMenu = props => {
             />
           </div>
 
-          <ul className={css.customLinksWrapper}>{extraLinks}</ul>
+          <ul className={css.customLinksWrapper}>
+            <li className={css.navigationLink}>{cotizarEnvioMobileLink}</li>
+            {extraLinks}
+          </ul>
 
           <div className={css.spacer} />
         </div>
@@ -202,7 +213,10 @@ const TopbarMobileMenu = props => {
             </NamedLink>
           </li>
         </ul>
-        <ul className={css.customLinksWrapper}>{extraLinks}</ul>
+        <ul className={css.customLinksWrapper}>
+          <li className={css.navigationLink}>{cotizarEnvioMobileLink}</li>
+          {extraLinks}
+        </ul>
         <div className={css.spacer} />
       </div>
       <div className={css.footer}>{createListingsLinkMaybe}</div>

@@ -65,6 +65,20 @@ const SellOnXololoLink = () => {
   );
 };
 
+// XOLOLO feature #28 (F4): CTA al cotizador público de guías de
+// paquetería. Visible SIEMPRE (sellers y no-sellers), colocado a la
+// izquierda de "Publicar anuncio" / "Cotizar envío" del CustomLinksMenu.
+// Estilo outlined — no compite visualmente con el CTA primario morado.
+const CotizarEnvioLink = () => (
+  <NamedLink
+    id="cotizar-envio-link"
+    name="CotizarEnvioPage"
+    className={css.cotizarEnvioLink}
+  >
+    <FormattedMessage id="TopbarDesktop.cotizarEnvio" defaultMessage="Cotizar envío" />
+  </NamedLink>
+);
+
 const InboxLink = ({ notificationCount, inboxTab }) => {
   const notificationDot = notificationCount > 0 ? <div className={css.notificationDot} /> : null;
   return (
@@ -248,6 +262,11 @@ const TopbarDesktop = props => {
         linkToExternalSite={config?.topbar?.logoLink}
       />
       {searchFormMaybe}
+
+      {/* XOLOLO feature #28 · F4: CTA al cotizador público de guías,
+          colocado a la izquierda de "Publicar anuncio" para que lo vean
+          sellers y visitantes por igual. */}
+      <CotizarEnvioLink />
 
       <CustomLinksMenu
         currentPage={currentPage}

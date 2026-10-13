@@ -360,3 +360,48 @@
     transition: none;
   }
 }
+
+/* XOLOLO feature #28 · F4: CTA al cotizador público de guías de
+   paquetería. Estilo OUTLINED (contorno púrpura sobre fondo blanco)
+   para destacar sin competir con el morado sólido de "Publicar anuncio"
+   (que está inmediatamente a su derecha). Visible siempre. */
+.cotizarEnvioLink {
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: 8px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+
+  font-weight: var(--fontWeightSemiBold);
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+
+  background-color: #ffffff;
+  color: #7c3aed;
+  border: 1.5px solid #7c3aed;
+  border-bottom: 1.5px solid #7c3aed;
+
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out,
+    transform 0.15s ease-in-out;
+}
+
+.cotizarEnvioLink:hover {
+  background-color: #7c3aed;
+  color: #ffffff;
+  text-decoration: none;
+  border: 1.5px solid #7c3aed;
+  border-bottom: 1.5px solid #7c3aed;
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cotizarEnvioLink {
+    transition: none;
+  }
+}
