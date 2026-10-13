@@ -20,6 +20,7 @@ const sellerBySlug = require('./api/seller-by-slug');
 const featuredStores = require('./api/featured-stores');
 const uploadStoreImage = require('./api/upload-store-image');
 const shippingQuote = require('./api/shipping-quote');
+const publicShippingQuote = require('./api/public-shipping-quote');
 const xololoShippingQuote = require('./api/xololo-shipping-quote');
 const verifyDeliveryCode = require('./api/verify-delivery-code');
 const txFlow = require('./api/tx-flow');
@@ -114,6 +115,8 @@ router.post('/upload-store-image', uploadStoreImage);
 // y que el seller haya configurado originPostalCode en /account/store.
 // body-parser JSON explícito porque el cliente manda application/json.
 router.post('/shipping-quote', bodyParser.json(), shippingQuote);
+// XOLOLO feature #28: cotizador PÚBLICO (sin login) de guías de paquetería.
+router.post('/public-shipping-quote', bodyParser.json(), publicShippingQuote);
 
 // XOLOLO Envíos v2 — Sub-commit C: loop de cotización del método "flete".
 // submit lo llama el SELLER para cotizar; authorize lo llama el BUYER

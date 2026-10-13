@@ -26,6 +26,7 @@ const InboxPage = loadable(() => import(/* webpackChunkName: "InboxPage" */ '../
 const MakeOfferPage = loadable(() => import(/* webpackChunkName: "MakeOfferPage" */ '../containers/MakeOfferPage/MakeOfferPage'));
 const LandingPage = loadable(() => import(/* webpackChunkName: "LandingPage" */ '../containers/LandingPage/LandingPage'));
 const SmartSearchPage = loadable(() => import(/* webpackChunkName: "SmartSearchPage" */ '../containers/SmartSearchPage/SmartSearchPage'));
+const CotizarEnvioPage = loadable(() => import(/* webpackChunkName: "CotizarEnvioPage" */ '../containers/CotizarEnvioPage/CotizarEnvioPage'));
 const ListingPageCoverPhoto = loadable(() => import(/* webpackChunkName: "ListingPageCoverPhoto" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCoverPhoto'));
 const ListingPageCarousel = loadable(() => import(/* webpackChunkName: "ListingPageCarousel" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCarousel'));
 const ManageListingsPage = loadable(() => import(/* webpackChunkName: "ManageListingsPage" */ '../containers/ManageListingsPage/ManageListingsPage'));
@@ -101,6 +102,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/buscar-ia',
       name: 'SmartSearchPage',
       component: SmartSearchPage,
+    },
+    // XOLOLO feature #28 · F1: cotizador público de guías de paquetería.
+    // Accesible sin login. La compra (F2) añadirá un flujo de checkout.
+    {
+      path: '/cotizar-envio',
+      name: 'CotizarEnvioPage',
+      component: CotizarEnvioPage,
     },
     {
       path: '/p/:pageId',
