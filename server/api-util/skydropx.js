@@ -350,6 +350,41 @@ const createShipment = async ({
       data?.errors || data
     );
   }
+  // XOLOLO: nuestro código asume que Skydropx cobra $25 fijo por el SOS
+  // Protección (política comercial documentada en docs/LOGISTICS_V1.md §5),
+  // pero la API no lo devuelve explícitamente en la cotización. Logueamos
+  // AQUÍ todos los campos de precio de la respuesta real al crear el
+  // shipment para verificar contra factura y poder reconciliar si cambia.
+  // Si Skydropx cobra distinto, nuestro margen del 12.5% público queda
+  // descuadrado. Grep de logs: "[skydropx.createShipment.pricing]"
+  try {
+    const shipment = data?.data || data?.shipment || data;
+    const pricingSnapshot = {
+      shipment_id: shipment?.id,
+      total_pricing: shipment?.total_pricing || shipment?.attributes?.total_pricing,
+      rate_total: shipment?.rate?.total || shipment?.attributes?.rate?.total,
+      service_pricing:
+        shipment?.service_pricing || shipment?.attributes?.service_pricing,
+      insurance_cost:
+        shipment?.insurance_cost ||
+        shipment?.attributes?.insurance_cost ||
+        shipment?.package_insurance_cost,
+      // Capturamos cualquier campo que contenga la palabra 'price',
+      // 'cost', 'total' o 'insurance' para no perder breakdown útil.
+      _rawKeys: shipment && typeof shipment === 'object'
+        ? Object.keys(shipment).filter(k =>
+            /price|cost|total|insurance|protection/i.test(k)
+          )
+        : [],
+    };
+    // eslint-disable-next-line no-console
+    console.log(
+      '[skydropx.createShipment.pricing]',
+      JSON.stringify(pricingSnapshot)
+    );
+  } catch (_e) {
+    // El log nunca debe tumbar el flujo real.
+  }
   return data;
 };
 

@@ -43,11 +43,20 @@ const DEFAULT_AREAS = {
   area_level3: 'Centro',
 };
 
-// Seguro Skydropx (acuerdo comercial Xololo): $25 MXN fijo con
-// cobertura hasta $100,000 MXN de valor declarado. Si el buyer declara
-// un valor mayor, igual aceptamos la compra pero el flag
-// coverageExceeded = true permite a la UI mostrar un disclaimer
-// explicando que el seguro cubre hasta $100,000 (no el total).
+// Seguro Skydropx — POLÍTICA COMERCIAL ASUMIDA, A VERIFICAR.
+//
+// La doc interna (docs/LOGISTICS_V1.md §5) dice: "$25 MXN fijo con
+// cobertura hasta $100,000 MXN". Pero la API Skydropx NO devuelve este
+// precio en la cotización — se cobra al crear el shipment real y
+// aparece sólo en facturación. Instrumentamos createShipment() en
+// skydropx.js para loguear el precio real que devuelva la API
+// (grep "[skydropx.createShipment.pricing]"), y hay que verificar
+// contra factura Skydropx antes de confiar en esta cifra para F2.
+//
+// Si Skydropx cobra distinto que $25, nuestro margen del 12.5% público
+// queda descuadrado. TODO F2: antes de habilitar la compra, confirmar
+// con account manager Skydropx o reemplazar por un endpoint real de
+// cotización de seguro si existe.
 const INSURANCE_FLAT_MXN = 25;
 const INSURANCE_MAX_COVERAGE_MXN = 100000;
 const computeInsurance = declaredValue => {
