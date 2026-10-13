@@ -65,6 +65,40 @@ const expandParty = p => ({
 
 const truncate = (s, n) => String(s || '').slice(0, n);
 
+// Enviar (o reenviar) el email de guía al buyer. Marca xololoEmailSentAt
+// en el PI para que no se mande 2 veces. Fire-and-forget: nunca throws.
+const tryResendGuideEmail = async (pi, meta) => {
+  const payload = extractPayload(meta);
+  if (!payload) return;
+  const from = expandParty(payload.f);
+  const to = expandParty(payload.t);
+  try {
+    await sendEventNotifications('public_shipping.guide_ready', {
+      buyer: { name: from.name, email: from.email },
+      carrier: {
+        name: meta.xololoCarrierName || 'tu paquetería',
+        service: meta.xololoCarrierService || '',
+      },
+      from: { postalCode: from.postalCode, city: from.city },
+      to: { postalCode: to.postalCode, city: to.city },
+      tracking: { number: meta.xololoTrackingNumber || 'disponible al recoger' },
+      label: { url: meta.xololoLabelUrl || '' },
+      order: { id: pi.id, publicTotal: meta.xololoPublicTotalMXN || '' },
+    });
+    const stripe = getStripeBilling();
+    if (stripe) {
+      try {
+        await stripe.paymentIntents.update(pi.id, {
+          metadata: { ...meta, xololoEmailSentAt: new Date().toISOString() },
+        });
+      } catch (_e) {}
+    }
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[public-shipping-fulfill] re-email falló:', e?.message);
+  }
+};
+
 /**
  * Dado un Stripe PaymentIntent ya pagado y con metadata xololoType =
  * 'public_shipping_guide', genera la guía Skydropx y guarda shipmentId
@@ -77,8 +111,17 @@ const truncate = (s, n) => String(s || '').slice(0, n);
  */
 const fulfillPublicShippingGuide = async pi => {
   const meta = pi?.metadata || {};
-  // Idempotencia: si ya hay shipmentId en la metadata, no re-generar.
+  // Idempotencia: si ya hay shipmentId en la metadata, no re-generar
+  // la guía. Pero SÍ reenviar el email si todavía no se marcó enviado
+  // (ejecución anterior falló al email). Para evitar emails duplicados
+  // en condición de carrera (webhook + fallback inline simultáneos),
+  // usamos xololoEmailSentAt como lock.
   if (meta.xololoShipmentId) {
+    if (!meta.xololoEmailSentAt) {
+      // Caso: guía ya generada pero email no enviado. Intentamos
+      // reenviar con los datos ya persistidos.
+      await tryResendGuideEmail(pi, meta);
+    }
     return {
       ok: true,
       skipped: 'already_fulfilled',
@@ -200,6 +243,10 @@ const fulfillPublicShippingGuide = async pi => {
             xololoCarrierName: carrierName,
             xololoCarrierService: carrierService,
             xololoFulfilledAt: new Date().toISOString(),
+            // Marca pre-emptiva: el email se dispara justo abajo. Si
+            // falla, tryResendGuideEmail en la próxima llamada lo
+            // reintentará porque borra el flag (ver abajo).
+            xololoEmailSentAt: new Date().toISOString(),
           },
         });
       } catch (e) {
