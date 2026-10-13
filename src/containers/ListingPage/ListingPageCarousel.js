@@ -330,6 +330,9 @@ export const ListingPageComponent = props => {
             />
           </div>
           <div className={css.orderColumnForProductLayout}>
+            {/* XOLOLO: wrapper sticky que agrupa OrderPanel + AddToCartCta
+                para que viajen juntos al scrollear y no se encimen. */}
+            <div className={css.productOrderStickyWrap}>
             <OrderPanel
               className={classNames(css.productOrderPanel, {
                 [css.imagesEnabled]: showListingImage,
@@ -380,6 +383,7 @@ export const ListingPageComponent = props => {
                 }
               />
             ) : null}
+            </div>
           </div>
         </div>
       </LayoutSingleColumn>

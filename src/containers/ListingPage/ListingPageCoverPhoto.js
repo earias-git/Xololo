@@ -344,6 +344,9 @@ export const ListingPageComponent = props => {
             />
           </div>
           <div className={css.orderColumnForHeroLayout}>
+            {/* XOLOLO: wrapper sticky que agrupa OrderPanel + AddToCartCta
+                para que viajen juntos al scrollear y no se encimen. */}
+            <div className={css.productOrderStickyWrap}>
             <OrderPanel
               className={css.orderPanel}
               listing={currentListing}
@@ -396,6 +399,7 @@ export const ListingPageComponent = props => {
                 />
               </div>
             ) : null}
+            </div>
           </div>
         </div>
       </LayoutSingleColumn>

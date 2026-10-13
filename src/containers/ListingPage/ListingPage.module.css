@@ -369,26 +369,34 @@
 }
 
 .orderPanel {
-  /* Note: panel height might be too much on small viewport - hence min-height */
-  @media (--viewportLarge) and (min-height: 950px) {
-    position: sticky;
-    top: 108px;
-  }
+  /* XOLOLO: antes aquí vivía el `position: sticky`. Se movió a
+     .productOrderStickyWrap para que OrderPanel + AddToCartCta
+     (hermanos en la columna) viajen juntos y no se encimen. */
 }
 
 .productOrderPanel {
   @media (--viewportLarge) {
     display: block;
   }
-  /* Note: panel height might be too much on small viewport - hence min-height */
-  @media (--viewportLarge) and (min-height: 950px) {
-    position: sticky;
-    top: 108px;
-  }
+  /* XOLOLO: antes aquí vivía el `position: sticky`. Se movió al wrapper
+     .productOrderStickyWrap porque ahora en esta columna conviven el
+     OrderPanel + AddToCartCta y hacer sticky sólo al panel provocaba
+     que el AddToCartCta (hermano no-sticky) se solapara al scrollear. */
   &.imagesEnabled {
     @media (--viewportLarge) {
       margin-top: 24px;
     }
+  }
+}
+
+/* XOLOLO: wrapper sticky que envuelve OrderPanel + AddToCartCta en la
+   ListingPage de producto. El sticky se aplica al bloque completo, no
+   sólo al panel, para que el carrito "viaje" junto al panel al scrollear
+   en lugar de encimarse. Mismo breakpoint que el original. */
+.productOrderStickyWrap {
+  @media (--viewportLarge) and (min-height: 950px) {
+    position: sticky;
+    top: 108px;
   }
 }
 
