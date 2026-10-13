@@ -126,6 +126,12 @@ module.exports = async (req, res) => {
       xololoBuyerEmail: body.from.email,
       xololoBuyerName: body.from.name,
       xololoCarrierRateId: body.rateId,
+      // XOLOLO feature #28: el cliente conoce el nombre del carrier
+      // elegido (viene en la lista de rates de la cotización). Lo
+      // guardamos aquí para usarlo en el email aunque el shipment
+      // response no lo exponga.
+      xololoCarrierName: String(body.carrierName || '').slice(0, 50),
+      xololoCarrierService: String(body.carrierService || '').slice(0, 50),
       xololoQuotationId: body.quotationId,
       xololoFromPostal: body.from.postalCode,
       xololoToPostal: body.to.postalCode,

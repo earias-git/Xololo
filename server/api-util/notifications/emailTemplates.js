@@ -76,16 +76,21 @@ const xololoHeader = () => `
   </div>
 `;
 
-// Footer con Xololo + mensaje de compra protegida (para todos)
-const xololoFooter = () => `
+// Footer con Xololo. `insuranceLine` controla si se muestra la línea
+// de "Compra protegida" — por defecto SÍ (compras de productos de
+// sellers que llevan SOS obligatorio). Para flujos donde el seguro es
+// opcional (ej. compra pública de guías de paquetería feature #28)
+// pasamos `insuranceLine: false` para no inducir a confusión.
+const xololoFooter = ({ insuranceLine = true } = {}) => `
   <div style="background: ${XOLOLO_PRIMARY}; color: #dfe4ee; padding: 24px 32px; text-align: center;">
+    ${insuranceLine ? `
     <p style="margin: 0 0 8px; font-size: 14px; color: #ffffff; font-weight: 700;">
-      🛡️ Compra protegida hasta $100,000 MXN
+      🛡️ Envíos por paquetería asegurados hasta $100,000 MXN
     </p>
     <p style="margin: 0 0 16px; font-size: 12.5px; color: rgba(223, 228, 238, 0.75); line-height: 1.5;">
-      Todos los envíos incluyen SOS Protección Skydropx: si no recibes<br />
-      el producto o llega dañado, te devolvemos tu dinero.
-    </p>
+      Los envíos por paquetería contratados con Xololo incluyen SOS<br />
+      Protección (Skydropx). No aplica a otros métodos de envío.
+    </p>` : ''}
     <p style="margin: 0 0 8px;">
       <a href="${XOLOLO_BRAND_HREF}" style="text-decoration: none; display: inline-block;">
         <img src="${XOLOLO_LOGO_URL}" alt="Xololo" height="24" style="height: 24px; width: auto; display: inline-block; border: 0; opacity: 0.9;" />
@@ -112,11 +117,12 @@ const buttonCta = ({ url, label }, brandColor) => {
 };
 
 // Renderiza el HTML completo del email.
-const renderEmailHtml = ({ actor, seller, title, bodyHtml, bodyText, cta }) => {
+const renderEmailHtml = ({ actor, seller, title, bodyHtml, bodyText, cta, footerOpts }) => {
   const isBuyer = actor === 'buyer';
   const brandColor = isBuyer && seller?.primaryColor ? seller.primaryColor : XOLOLO_PRIMARY;
   const bodyContent = bodyHtml || textToHtml(bodyText);
   const header = isBuyer ? sellerHeader({ seller }) : xololoHeader();
+  const footer = xololoFooter(footerOpts || {});
 
   return `<!doctype html>
 <html lang="es">
@@ -139,7 +145,7 @@ const renderEmailHtml = ({ actor, seller, title, bodyHtml, bodyText, cta }) => {
                 ${cta?.url && cta?.label ? buttonCta(cta, brandColor) : ''}
               </td>
             </tr>
-            <tr><td>${xololoFooter()}</td></tr>
+            <tr><td>${footer}</td></tr>
           </table>
         </td>
       </tr>

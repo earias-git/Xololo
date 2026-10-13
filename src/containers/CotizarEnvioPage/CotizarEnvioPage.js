@@ -405,6 +405,8 @@ const CotizarEnvioPage = () => {
     const payload = {
       quotationId: quoteState.data?.quotationId,
       rateId: selectedRateId,
+      carrierName: selectedRate?.carrier || '',
+      carrierService: selectedRate?.service || '',
       publicTotal: selectedRate?.publicTotal,
       includeInsurance: quoteForm.includeInsurance,
       parcel: {

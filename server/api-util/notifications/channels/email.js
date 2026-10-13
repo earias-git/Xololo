@@ -64,6 +64,11 @@ const send = async ({ actor, event, template, context }) => {
     actor === 'buyer' && !context?.useXololoBranding
       ? buildSellerContextForEmail(context?.seller)
       : null;
+  // XOLOLO feature #28: en compras públicas de guías el seguro es
+  // opcional. Si el buyer no lo contrató (o siempre que sea un email
+  // Xololo-direct sin seller), ocultamos la leyenda del footer para
+  // no inducir a confusión.
+  const insuranceLine = !context?.useXololoBranding;
   const html = renderEmailHtml({
     actor,
     seller: sellerForEmail,
@@ -71,6 +76,7 @@ const send = async ({ actor, event, template, context }) => {
     bodyHtml: rendered.bodyHtml,
     bodyText: rendered.bodyText,
     cta: rendered.cta,
+    footerOpts: { insuranceLine },
   });
 
   try {

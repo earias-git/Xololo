@@ -224,29 +224,50 @@ const fulfillPublicShippingGuide = async pi => {
     let labelUrl = extractLabel(created);
     let trackingNumber = extractTracking(created);
 
-    // Label suele estar listo tras 2-6s. Si viene vacío, polling corto.
+    // Label suele estar listo tras 2-6s pero algunos carriers tardan
+    // más. Polling hasta 25s. Si timeout, seguimos sin label — el
+    // próximo poll del cliente/webhook re-intentará gracias a que
+    // xololoEmailSentAt no se marca hasta tener el link.
     if (shipmentId && !labelUrl) {
       try {
-        const polled = await getShipment(shipmentId, { poll: true, maxPollMs: 10000 });
+        const polled = await getShipment(shipmentId, { poll: true, maxPollMs: 25000 });
         labelUrl = extractLabel(polled) || labelUrl;
         trackingNumber = extractTracking(polled) || trackingNumber;
+        if (!labelUrl) {
+          // Loguear el shape del response completo para debug — ayuda
+          // a identificar en qué campo viene label_url para este
+          // carrier específico (Skydropx no documenta esto bien).
+          // eslint-disable-next-line no-console
+          console.log(
+            '[public-shipping-fulfill] polled OK pero sin label — raw:',
+            JSON.stringify(polled).slice(0, 1500)
+          );
+        }
       } catch (e) {
         if (!(e instanceof SkydropxTimeoutError)) {
-          // Timeout es aceptable (seguimos sin label en este round);
-          // email reintenta en próxima consulta. Otros errores log.
           // eslint-disable-next-line no-console
           console.error('[public-shipping-fulfill] poll label:', e?.message);
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[public-shipping-fulfill] label TIMEOUT 25s para shipment ${shipmentId} — reintentará en siguiente consulta`
+          );
         }
       }
     }
 
+    // Preferimos el carrier name que el cliente mandó explícito (viene
+    // del rate elegido en la cotización) sobre el shipment response —
+    // el response no siempre lo trae en el mismo lugar.
     const carrierName =
+      meta.xololoCarrierName ||
       shipment?.attributes?.rate?.provider_display_name ||
       shipment?.attributes?.rate?.provider_name ||
       shipment?.rate?.provider_display_name ||
       shipment?.rate?.provider_name ||
       'tu paquetería';
     const carrierService =
+      meta.xololoCarrierService ||
       shipment?.attributes?.rate?.provider_service_name ||
       shipment?.rate?.provider_service_name ||
       '';
@@ -274,10 +295,11 @@ const fulfillPublicShippingGuide = async pi => {
             xololoCarrierName: carrierName,
             xololoCarrierService: carrierService,
             xololoFulfilledAt: new Date().toISOString(),
-            // Marca pre-emptiva: el email se dispara justo abajo. Si
-            // falla, tryResendGuideEmail en la próxima llamada lo
-            // reintentará porque borra el flag (ver abajo).
-            xololoEmailSentAt: new Date().toISOString(),
+            // Sólo marcamos email como enviado si realmente mandamos
+            // el PDF (labelUrl presente). Si no, dejamos sin marcar
+            // para que la próxima consulta (webhook + polling cliente)
+            // reintente — así eventualmente llega el email con PDF.
+            ...(labelUrl ? { xololoEmailSentAt: new Date().toISOString() } : {}),
           },
         });
       } catch (e) {
@@ -322,9 +344,19 @@ const fulfillPublicShippingGuide = async pi => {
       }
     }
 
-    // XOLOLO F3: mandamos el email con el PDF + tracking al buyer.
-    // Fire-and-forget: no bloquea la respuesta ni el flow de pago. Si
-    // Resend/API_KEY no está configurado, cae a log_only (no error).
+    // XOLOLO F3: SÓLO mandamos email cuando el labelUrl está listo.
+    // Si todavía no se generó la etiqueta (polling expiró), diferimos
+    // el envío al próximo retry que haga el polling del cliente o el
+    // webhook de Stripe — esto evita emails sin PDF ni link útil.
+    if (!labelUrl) {
+      // eslint-disable-next-line no-console
+      console.log(
+        '[public-shipping-fulfill] no email aún: label pendiente para',
+        pi.id
+      );
+      return { ok: true, shipmentId, trackingNumber, labelUrl: null };
+    }
+
     try {
       await sendEventNotifications('public_shipping.guide_ready', {
         // useXololoBranding: el header del email debe decir "Xololo"
