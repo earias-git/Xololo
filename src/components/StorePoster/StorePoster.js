@@ -612,41 +612,6 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
             {exporting ? 'Generando…' : '📄 Descargar PDF'}
           </button>
         ) : null}
-        {/* XOLOLO Debug: botón temporal para que el user copie el SVG
-            serializado y nos lo pase. Se elimina cuando el bug esté
-            resuelto. */}
-        <button
-          type="button"
-          className={css.linkBtn}
-          onClick={async () => {
-            const svgEl = svgRef.current;
-            if (!svgEl) return;
-            try {
-              const clone = svgEl.cloneNode(true);
-              clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-              clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-              const images = clone.querySelectorAll('image');
-              let extCount = 0;
-              images.forEach(img => {
-                const href = img.getAttribute('href') || img.getAttribute('xlink:href');
-                if (href && !href.startsWith('data:')) {
-                  extCount += 1;
-                  img.setAttribute('href', '');
-                  img.setAttribute('xlink:href', '');
-                }
-              });
-              const serializer = new XMLSerializer();
-              const svgString = serializer.serializeToString(clone);
-              const header = `/* StorePoster DEBUG — ${new Date().toISOString()}\n   template: ${template.key}\n   svgString length: ${svgString.length}\n   external images stripped: ${extCount}\n   images total: ${images.length}\n*/\n\n`;
-              await navigator.clipboard.writeText(header + svgString);
-              setError('✓ SVG copiado al clipboard. Pégalo en el chat.');
-            } catch (e) {
-              setError(`Debug copy failed: ${e?.message || e}`);
-            }
-          }}
-        >
-          🐛 Copiar SVG (debug)
-        </button>
         {onClose ? (
           <button type="button" className={css.linkBtn} onClick={onClose}>
             Cerrar
