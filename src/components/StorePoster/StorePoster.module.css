@@ -282,3 +282,60 @@
   height: 36px;
   border-radius: 4px;
 }
+
+.shareWrap {
+  position: relative;
+}
+
+.shareBtn {
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shareBtn:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.shareBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.sharePopover {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  min-width: 200px;
+  z-index: 20;
+  overflow: hidden;
+}
+
+.shareOption {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #0e1a2f;
+}
+
+.shareOption:hover {
+  background: #f3f4f6;
+}
+
+.shareOption + .shareOption {
+  border-top: 1px solid #f3f4f6;
+}

@@ -612,12 +612,190 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
             {exporting ? 'Generando…' : '📄 Descargar PDF'}
           </button>
         ) : null}
+        <ShareBar
+          svgRef={svgRef}
+          template={template}
+          storeName={sellerName}
+          storeUrl={seller?.storeUrl}
+          rasterizeWithFallback={rasterizeWithFallback}
+          slugifyFilename={slugifyFilename}
+          onError={setError}
+        />
         {onClose ? (
           <button type="button" className={css.linkBtn} onClick={onClose}>
             Cerrar
           </button>
         ) : null}
       </div>
+    </div>
+  );
+};
+
+// Share intents: WhatsApp, FB, X, Instagram (Web Share API en móvil),
+// Copiar link. Para WhatsApp / FB / X usamos URL schemes universales
+// (abren la app o la web del canal). Para Instagram (que no tiene
+// scheme web) usamos Web Share API nativa cuando el browser la
+// soporta — típicamente móviles — o descargamos PNG + instrucción
+// "pégalo en Instagram".
+const ShareBar = ({
+  svgRef,
+  template,
+  storeName,
+  storeUrl,
+  rasterizeWithFallback,
+  slugifyFilename,
+  onError,
+}) => {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const message = `Visita mi tienda ${storeName || ''} en Xololo 🛍️`.trim();
+  const shareUrl = storeUrl || (typeof window !== 'undefined' ? window.location.origin : '');
+  const canNativeShare =
+    typeof navigator !== 'undefined' &&
+    typeof navigator.share === 'function';
+
+  // Genera el PNG y lo convierte a File para Web Share API con imagen.
+  const buildImageFile = async () => {
+    const svgEl = svgRef.current;
+    if (!svgEl) return null;
+    const dataUrl = await rasterizeWithFallback(svgEl, template.exportPx);
+    const blob = await (await fetch(dataUrl)).blob();
+    return new File(
+      [blob],
+      `xololo-tienda-${slugifyFilename(storeName)}-${template.key}.png`,
+      { type: 'image/png' }
+    );
+  };
+
+  const handleWhatsApp = () => {
+    const url = `https://wa.me/?text=${encodeURIComponent(
+      `${message}\n${shareUrl}`
+    )}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleFacebook = () => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+      shareUrl
+    )}&quote=${encodeURIComponent(message)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleTwitter = () => {
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      message
+    )}&url=${encodeURIComponent(shareUrl)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      onError('✓ Link copiado al portapapeles');
+    } catch (_) {
+      onError('No pude copiar el link. Hazlo manualmente.');
+    }
+  };
+
+  // Compartir con imagen (prioridad): usa Web Share API si existe.
+  // Útil para Instagram y para compartir el PNG directo en WhatsApp
+  // en móviles. En desktop esta función no suele estar disponible.
+  const handleNativeShare = async () => {
+    setBusy(true);
+    try {
+      const file = await buildImageFile();
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: `Tienda ${storeName} en Xololo`,
+          text: `${message}\n${shareUrl}`,
+          files: [file],
+        });
+        onError(null);
+      } else {
+        // Fallback a texto + url
+        await navigator.share({
+          title: `Tienda ${storeName} en Xololo`,
+          text: message,
+          url: shareUrl,
+        });
+      }
+    } catch (e) {
+      if (e?.name !== 'AbortError') {
+        onError(`Compartir falló: ${e?.message || 'error'}`);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleInstagramHelp = async () => {
+    setBusy(true);
+    try {
+      const file = await buildImageFile();
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] });
+      } else {
+        // Fallback desktop: descargamos la imagen y damos instrucción.
+        const dataUrl = URL.createObjectURL(file);
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(dataUrl);
+        onError(
+          '✓ Imagen descargada. Súbela desde la app de Instagram en tu teléfono.'
+        );
+      }
+    } catch (e) {
+      if (e?.name !== 'AbortError') {
+        onError(`Instagram: ${e?.message || 'error'}`);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className={css.shareWrap}>
+      <button
+        type="button"
+        className={css.shareBtn}
+        onClick={() => setOpen(o => !o)}
+        disabled={busy}
+      >
+        {busy ? 'Preparando…' : '📤 Compartir'}
+      </button>
+      {open ? (
+        <div className={css.sharePopover}>
+          {canNativeShare ? (
+            <button
+              type="button"
+              className={css.shareOption}
+              onClick={handleNativeShare}
+            >
+              📱 Compartir con imagen
+            </button>
+          ) : null}
+          <button type="button" className={css.shareOption} onClick={handleWhatsApp}>
+            💬 WhatsApp
+          </button>
+          <button type="button" className={css.shareOption} onClick={handleFacebook}>
+            👥 Facebook
+          </button>
+          <button type="button" className={css.shareOption} onClick={handleTwitter}>
+            𝕏 X / Twitter
+          </button>
+          <button type="button" className={css.shareOption} onClick={handleInstagramHelp}>
+            📸 Instagram
+          </button>
+          <button type="button" className={css.shareOption} onClick={handleCopyLink}>
+            🔗 Copiar link
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 };
