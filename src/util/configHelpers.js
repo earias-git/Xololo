@@ -841,11 +841,46 @@ const validUserSaveConfig = config => {
   return [isValid, validValue];
 };
 
+// XOLOLO Envíos v2: en Sharetribe Console puede quedar un listing field
+// hospedado tipo "Método de entrega" / "Delivery method" (enum con
+// opciones shipping/pickup). Ese panel compite con nuestro selector v2
+// de 4 opciones (xololoShippingMethods) y genera inconsistencias
+// (seller marca uno, el otro queda en blanco → la ListingPage muestra
+// contradicciones y el guard legacy dispara el warning rojo falso).
+// Hasta que el admin lo desactive en Console, lo filtramos aquí para
+// que ni el EditListingWizard ni la ListingPage lo rendericen. Filtro
+// basado en label + enumOptions conocidas — defensivo, no bloqueante.
+const isLegacyDeliveryField = fieldConfig => {
+  const key = String(fieldConfig?.key || '').toLowerCase();
+  if (['deliverymethod', 'deliveryoptions', 'metodoentrega', 'metododeenvio'].includes(key)) {
+    return true;
+  }
+  const label = String(fieldConfig?.label || '').toLowerCase();
+  if (
+    label.includes('método de entrega') ||
+    label.includes('metodo de entrega') ||
+    label === 'delivery method' ||
+    label === 'delivery options'
+  ) {
+    return true;
+  }
+  // Como última red: cualquier enum con opciones que incluyan los labels
+  // viejos "Envío por paquetería" + "Entrega con código local" juntas.
+  const opts = Array.isArray(fieldConfig?.enumOptions) ? fieldConfig.enumOptions : [];
+  const optLabels = opts.map(o => String(o?.label || '').toLowerCase());
+  const hasPaqueteria = optLabels.some(l => l.includes('paqueter'));
+  const hasCodigoLocal = optLabels.some(l => l.includes('código local') || l.includes('codigo local'));
+  if (hasPaqueteria && hasCodigoLocal) return true;
+  return false;
+};
+
 const validListingFields = (listingFields, listingTypesInUse, categoriesInUse) => {
-  const keys = listingFields.map(d => d.key);
+  // XOLOLO: fuera cualquier field legacy de delivery que llegue hospedado.
+  const filteredListingFields = listingFields.filter(d => !isLegacyDeliveryField(d));
+  const keys = filteredListingFields.map(d => d.key);
   const scopeOptions = ['public', 'private', 'metadata'];
 
-  return listingFields.reduce((acc, data) => {
+  return filteredListingFields.reduce((acc, data) => {
     const schemaType = data.schemaType;
 
     const validationData = Object.entries(data).reduce(

@@ -393,11 +393,21 @@ const ProductOrderForm = props => {
     shippingEnabled,
     displayDeliveryMethod,
     allowOrdersOfMultipleItems,
+    xoloShippingMethods,
   } = props;
 
-  // Should not happen for listings that go through EditListingWizard.
-  // However, this might happen for imported listings.
-  if (displayDeliveryMethod && !pickupEnabled && !shippingEnabled) {
+  // XOLOLO Envíos v2: el listing puede tener habilitados sólo los
+  // métodos v2 (localDelivery/skydropxCarrier/freight) sin tocar los
+  // flags legacy pickupEnabled/shippingEnabled. En ese caso el guard
+  // original mostraba "no ha habilitado ningún método" aunque v2 sí
+  // tenía métodos activos. Consideramos CUALQUIER método (legacy o v2).
+  const hasAnyXoloMethod = !!(
+    xoloShippingMethods?.pickup?.enabled ||
+    xoloShippingMethods?.localDelivery?.enabled ||
+    xoloShippingMethods?.skydropxCarrier?.enabled ||
+    xoloShippingMethods?.freight?.enabled
+  );
+  if (displayDeliveryMethod && !pickupEnabled && !shippingEnabled && !hasAnyXoloMethod) {
     return (
       <p className={css.error}>
         <FormattedMessage id="ProductOrderForm.noDeliveryMethodSet" />
