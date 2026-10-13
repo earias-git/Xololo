@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
+import { Helmet } from 'react-helmet-async';
 import { connect, useSelector } from 'react-redux';
 import { string, bool, func, array, object } from 'prop-types';
 
@@ -306,6 +307,21 @@ const StorefrontPageComponent = props => {
   const secondary = pd.brandSecondaryColor || DEFAULT_SECONDARY;
   const logo = pd.logoUrl;
   const banners = [pd.bannerUrl, pd.bannerUrl2, pd.bannerUrl3].filter(Boolean);
+
+  // XOLOLO: meta tags Open Graph + Twitter Card para que al compartir el
+  // link del storefront (WhatsApp, Facebook, X, iMessage, Telegram, etc.)
+  // la vista previa muestre el logo del seller y su descripción, igual
+  // que los listings muestran la foto del producto. Se renderiza en el
+  // <head> inicial — el seller viene hidratado desde SSR
+  // (server/dataLoader.js) porque los crawlers de preview no corren JS.
+  const ogImage = pd.logoUrl || pd.bannerUrl || null;
+  const ogSecondImage = pd.logoUrl && pd.bannerUrl ? pd.bannerUrl : null;
+  const ogUrl = pd.slug ? `https://${pd.slug}.xololo.mx` : null;
+  const ogTitle = `${seller.displayName} en Xololo`;
+  const ogDescription =
+    pd.shortDescription ||
+    pd.tagline ||
+    `Conoce la tienda de ${seller.displayName} en Xololo.mx`;
   const whatsappUrl = buildWhatsAppUrl(pd.whatsapp, seller.displayName);
   const instagramUrl = buildInstagramUrl(pd.instagram);
   const facebookUrl = buildFacebookUrl(pd.facebook);
@@ -333,6 +349,23 @@ const StorefrontPageComponent = props => {
 
   return (
     <div className={css.root} style={rootStyle}>
+      <Helmet>
+        <title>{ogTitle}</title>
+        <meta name="description" content={ogDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={ogTitle} />
+        <meta property="og:description" content={ogDescription} />
+        {ogUrl ? <meta property="og:url" content={ogUrl} /> : null}
+        {ogImage ? <meta property="og:image" content={ogImage} /> : null}
+        {ogImage ? <meta property="og:image:alt" content={seller.displayName} /> : null}
+        {ogSecondImage ? <meta property="og:image" content={ogSecondImage} /> : null}
+        <meta property="og:site_name" content="Xololo" />
+        <meta property="og:locale" content="es_MX" />
+        <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+        <meta name="twitter:title" content={ogTitle} />
+        <meta name="twitter:description" content={ogDescription} />
+        {ogImage ? <meta name="twitter:image" content={ogImage} /> : null}
+      </Helmet>
       <header className={css.header}>
         <div className={css.headerInner}>
           <a href="/" className={css.brand}>

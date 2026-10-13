@@ -30,32 +30,33 @@ const putCached = (slug, seller) => {
   cache.set(slug, { seller, at: Date.now() });
 };
 
-module.exports = async (req, res) => {
-  const rawSlug = String(req.query.slug || '').trim().toLowerCase();
-  if (!rawSlug || !/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(rawSlug)) {
-    return res.status(400).json({ error: 'invalid_slug' });
+const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
+
+// XOLOLO: resolver puro reutilizable desde SSR (server/dataLoader.js) y
+// desde el handler HTTP. Devuelve:
+//   { seller }                     → encontrado
+//   { notFound: true }             → el slug no mapea a ningún user
+//   { error: 'invalid_slug' }      → slug no cumple formato permitido
+//   { error: 'not_configured' }    → sin credenciales de Integration API
+//   { error: 'internal', err }     → cualquier otra falla
+// Nunca throws: el caller decide cómo mapear a status HTTP o a fallback.
+const resolveSellerBySlug = async slug => {
+  const rawSlug = String(slug || '').trim().toLowerCase();
+  if (!rawSlug || !SLUG_RE.test(rawSlug)) {
+    return { error: 'invalid_slug' };
   }
 
   const cached = getCached(rawSlug);
-  if (cached) {
-    return res.status(200).json({ seller: cached });
-  }
+  if (cached) return { seller: cached };
 
   const sdk = getIntegrationSdk();
-  if (!sdk) {
-    // Sin credenciales de Integration API el endpoint no puede resolver
-    // — devolvemos 501 para que el cliente muestre un fallback claro
-    // (staging normalmente sí las tiene; en dev sin config también).
-    return res.status(501).json({ error: 'integration_api_not_configured' });
-  }
+  if (!sdk) return { error: 'not_configured' };
 
   try {
     // NOTA: Sharetribe Integration API ignora los filtros pub_* / meta_* en
     // el endpoint users.query (a diferencia de listings.query donde sí
     // funciona con "Enable field for search"). Por eso paginamos hasta
     // encontrar el user con publicData.slug matcheando, y cacheamos.
-    // Alcance de F2: pocos sellers, funciona. Si escala a miles, migrar a
-    // un índice mantenido en un event listener + Redis/DB.
     const perPage = 100;
     let page = 1;
     let match = null;
@@ -78,9 +79,8 @@ module.exports = async (req, res) => {
       if (page > 20) break;
     }
 
-    if (!match) {
-      return res.status(404).json({ error: 'not_found' });
-    }
+    if (!match) return { notFound: true };
+
     const profileImage = matchIncluded.find(i => i.type === 'image');
     const variants = profileImage?.attributes?.variants || {};
     const profileImageUrl =
@@ -99,11 +99,30 @@ module.exports = async (req, res) => {
     };
 
     putCached(rawSlug, seller);
-    return res.status(200).json({ seller });
+    return { seller };
   } catch (err) {
-    // Log del server pero respuesta genérica al cliente.
-    // eslint-disable-next-line no-console
-    console.error('[seller-by-slug] error', err?.status, err?.statusText, err?.data?.errors);
-    return res.status(500).json({ error: 'internal' });
+    return { error: 'internal', cause: err };
   }
 };
+
+const handler = async (req, res) => {
+  const result = await resolveSellerBySlug(req.query.slug);
+  if (result.seller) return res.status(200).json({ seller: result.seller });
+  if (result.notFound) return res.status(404).json({ error: 'not_found' });
+  if (result.error === 'invalid_slug') return res.status(400).json({ error: 'invalid_slug' });
+  if (result.error === 'not_configured') {
+    // Staging normalmente sí tiene credenciales; en dev sin config también.
+    return res.status(501).json({ error: 'integration_api_not_configured' });
+  }
+  // eslint-disable-next-line no-console
+  console.error(
+    '[seller-by-slug] error',
+    result.cause?.status,
+    result.cause?.statusText,
+    result.cause?.data?.errors
+  );
+  return res.status(500).json({ error: 'internal' });
+};
+
+module.exports = handler;
+module.exports.resolveSellerBySlug = resolveSellerBySlug;

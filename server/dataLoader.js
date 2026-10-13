@@ -1,6 +1,7 @@
 const { URL } = require('node:url');
 const log = require('./log');
 const { getRootURL } = require('./api-util/rootURL');
+const { resolveSellerBySlug } = require('./api/seller-by-slug');
 
 const PREVENT_DATA_LOADING_IN_SSR = process.env.PREVENT_DATA_LOADING_IN_SSR === 'true';
 
@@ -19,6 +20,14 @@ const extractHostedConfig = configAssets => {
 const setStorefrontSubdomain = slug => ({
   type: 'storefrontSubdomain/setStorefrontSubdomain',
   payload: slug,
+});
+
+// XOLOLO: hidrata storefrontSeller.seller en el store SSR. Imprescindible
+// para que los meta tags de OG (og:image = logo del seller) ya estén en el
+// HTML inicial — los crawlers de WhatsApp/Facebook/X no corren JS.
+const hydrateStorefrontSeller = seller => ({
+  type: 'storefrontSeller/hydrateStorefrontSeller',
+  payload: seller,
 });
 
 exports.loadData = function(requestUrl, sdk, appInfo, { storefrontSlug = null } = {}) {
@@ -41,6 +50,23 @@ exports.loadData = function(requestUrl, sdk, appInfo, { storefrontSlug = null } 
   if (storefrontSlug) {
     store.dispatch(setStorefrontSubdomain(storefrontSlug));
   }
+
+  // XOLOLO: en paralelo al fetch de assets hospedados, resolvemos el
+  // seller del storefront por slug para hidratar el store server-side.
+  // Esto permite que StorefrontPage renderice los meta tags OG (og:image
+  // = logo del seller) en el HTML inicial que ven los crawlers de redes.
+  // No bloqueante: si falla, el cliente lo refetchea al montar.
+  const storefrontSellerPromise = storefrontSlug
+    ? resolveSellerBySlug(storefrontSlug)
+        .then(result => {
+          if (result.seller) {
+            store.dispatch(hydrateStorefrontSeller(result.seller));
+          }
+        })
+        .catch(() => {
+          // Silencioso: cliente reintenta.
+        })
+    : Promise.resolve();
 
   if (PREVENT_DATA_LOADING_IN_SSR) {
     // This might help certain temporary scenarios, where DDOS attack adds load to server.
@@ -81,7 +107,8 @@ exports.loadData = function(requestUrl, sdk, appInfo, { storefrontSlug = null } 
       // Rest of the assets are considered as hosted configs
       // This structure just gives possibilities to add initial config data
       hostedConfig = { ...hostedConfig, ...extractHostedConfig(rest) };
-      return Promise.all(dataLoadingCalls(hostedConfig));
+      // Esperamos tanto los loadData de rutas como el fetch del seller SSR.
+      return Promise.all([...dataLoadingCalls(hostedConfig), storefrontSellerPromise]);
     })
     .then(() => {
       return { preloadedState: store.getState(), translations, hostedConfig };

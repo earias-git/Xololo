@@ -71,7 +71,17 @@ const initialState = {
 const storefrontSellerSlice = createSlice({
   name: 'storefrontSeller',
   initialState,
-  reducers: {},
+  reducers: {
+    // XOLOLO: hidrata el seller desde SSR (server/dataLoader.js resuelve el
+    // seller por slug con Integration API y lo deja en initialState) para
+    // que los meta tags de OG salgan en el HTML inicial — crawlers de
+    // WhatsApp/FB/X no corren JS y necesitan el logo ya en <head>.
+    hydrateStorefrontSeller(state, action) {
+      state.seller = action.payload || null;
+      state.inProgress = false;
+      state.notFound = !action.payload;
+    },
+  },
   extraReducers: builder => {
     builder
       .addCase(fetchStorefrontSellerThunk.pending, state => {
@@ -96,6 +106,8 @@ const storefrontSellerSlice = createSlice({
 });
 
 export default storefrontSellerSlice.reducer;
+
+export const { hydrateStorefrontSeller } = storefrontSellerSlice.actions;
 
 export const fetchStorefrontSeller = slug => dispatch =>
   dispatch(fetchStorefrontSellerThunk(slug)).unwrap();
