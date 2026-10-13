@@ -16,6 +16,7 @@ const {
   serialize,
   fetchCommission,
 } = require('../api-util/sdk');
+const { sendShippingCoordinationMessage } = require('../api-util/shippingCoordinationMessage');
 
 const { Money } = sharetribeSdk.types;
 
@@ -177,7 +178,25 @@ module.exports = (req, res) => {
       if (isSpeculative) {
         return trustedSdk.transactions.transitionSpeculative(body, queryParams);
       }
-      return trustedSdk.transactions.transition(body, queryParams);
+      return trustedSdk.transactions.transition(body, queryParams).then(apiResponse => {
+        // XOLOLO: al confirmar pago (orden concretada) disparamos un
+        // mensaje automático al chat para coordinar entrega/recolección
+        // en los métodos que lo requieren (pickup/localDelivery/freight).
+        // Fire-and-forget: no bloqueamos la respuesta.
+        if (transitionName === 'transition/confirm-payment') {
+          try {
+            const tx = apiResponse?.data?.data;
+            const txId = tx?.id;
+            const mode = tx?.attributes?.protectedData?.xololoShipping?.mode;
+            if (txId && mode) {
+              sendShippingCoordinationMessage(trustedSdk, txId, mode);
+            }
+          } catch (_e) {
+            // Nada: nunca romper la respuesta por este mensaje opcional.
+          }
+        }
+        return apiResponse;
+      });
     })
     .then(apiResponse => {
       const { status, statusText, data } = apiResponse;
