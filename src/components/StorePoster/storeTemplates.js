@@ -223,72 +223,83 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
     fontFamily,
     fontWeight,
     titleScale,
-    // Banner opcional como background del header (reemplaza la banda).
     bannerHref,
     showBanner,
   } = props;
+
+  // Zonas fijas proporcionales — garantía anti-overlap. Cada elemento
+  // vive en SU banda y no invade a otros. Las proporciones se ajustan
+  // levemente cuando algún toggle está off (más espacio para el QR).
 
   const padding = Math.max(48, widthU * 0.045);
   const bandColor = blackWhite ? '#111111' : colorPrimary;
   const textOnBand = '#ffffff';
 
-  // Logo. Ahora permitimos hasta 35% del lado más corto (antes limitaba
-  // mucho). Para carta vertical (2160×2800) → max logo 756 (visible).
-  const logoCap = Math.min(widthU, heightU) * 0.35;
-  const effectiveLogoSize = Math.min(logoSize, logoCap);
-  const logoY = padding;
-  const headerBottom = logoY + (showLogo ? effectiveLogoSize : 0) + 40;
+  const hasBand = true; // siempre hay banda (sólida o con banner atrás)
+  const hasHeader = showLogo || (verified && showVerified);
+  const hasInfo =
+    (showStats && ratingAvg != null) || (showCategory && primaryCategory);
+  const hasFooter = (showSlug && slug) || showCta;
 
-  // Banda / banner detrás del nombre + tagline. Más alta cuando lleva
-  // tagline adentro.
-  const bandY = headerBottom + 20;
-  const nameFontBase = isHorizontal ? heightU * 0.14 : heightU * 0.08;
-  const nameFontPx = Math.max(50, nameFontBase) * titleScale;
+  // Reparto proporcional (debe sumar 1). Si alguna zona no tiene nada,
+  // su altura se cede al QR.
+  const share = {
+    header: hasHeader ? 0.22 : 0.0,
+    band: hasBand ? 0.18 * titleScale : 0.0,
+    info: hasInfo ? 0.08 : 0.0,
+    footer: hasFooter ? 0.12 : 0.0,
+  };
+  share.qr = Math.max(
+    0.25,
+    1 - share.header - share.band - share.info - share.footer
+  );
+
+  const headerY = 0;
+  const headerH = heightU * share.header;
+  const bandY = headerY + headerH;
+  const bandH = heightU * share.band;
+  const infoY = bandY + bandH;
+  const infoH = heightU * share.info;
+  const qrY_zone = infoY + infoH;
+  const qrH = heightU * share.qr;
+  const footerY = qrY_zone + qrH;
+  const footerH = heightU * share.footer;
+
+  // Logo: dentro del header, respetando el slider pero capeado al 85%
+  // de la altura del header.
+  const logoCap = Math.min(headerH * 0.85, widthU * 0.6);
+  const effectiveLogoSize = Math.min(logoSize, logoCap);
+
+  // Nombre: tamaño proporcional a la banda (no al heightU global).
+  const nameFontBase = bandH * 0.4;
+  const nameFontPx = Math.max(40, nameFontBase);
   const nameLines = wrapTspans(
     storeName || 'Mi tienda',
     nameFontPx,
     widthU - padding * 2 - 40,
     2
   );
-  const taglineFontPx = Math.max(26, heightU * 0.022);
-  const taglineInBand = showTagline && tagline;
-  const bandH =
-    (nameLines.length * nameFontPx * 1.1 +
-      (taglineInBand ? taglineFontPx * 1.4 + 20 : 0) +
-      80) * titleScale;
 
-  // Después de la banda queda el espacio GRANDE para el QR + info chica.
-  let cursorY = bandY + bandH + Math.max(40, heightU * 0.03);
-  if (showStats && ratingAvg != null) {
-    cursorY += Math.max(90, heightU * 0.065);
-  }
-  if (showCategory && primaryCategory) {
-    cursorY += Math.max(60, heightU * 0.045);
-  }
+  // Tagline debajo de la banda (fuera, para no empujar el nombre).
+  // Vive en la zona de INFO (compartiendo con stats si están activos).
+  const taglineFontPx = Math.max(24, heightU * 0.02);
+  const taglineInBand = false; // ya no va dentro de la banda
 
-  // El QR es protagonista. Lo escalamos hasta 60% del ancho (clamp
-  // superior) y respetamos el slider, pero garantizamos un mínimo
-  // decente. También dejamos espacio reservado para slug/CTA.
-  const slugFontPx = Math.max(36, heightU * 0.032);
-  const ctaFontPx = Math.max(28, heightU * 0.024);
-  const bottomReserved =
-    (showSlug && slug ? slugFontPx + 20 : 0) +
-    (showCta ? ctaFontPx + 20 : 0) +
-    padding;
-  const spaceForQr = Math.max(heightU * 0.3, heightU - cursorY - bottomReserved);
-  const qrCap = Math.min(widthU * 0.6, heightU * 0.55, spaceForQr);
-  const effectiveQrSize = showQr
-    ? Math.max(240, Math.min(qrSize, qrCap))
-    : 0;
+  // QR centrado en SU zona.
+  const qrCap = Math.min(qrH * 0.9, widthU * 0.7);
+  const effectiveQrSize = showQr ? Math.max(200, Math.min(qrSize, qrCap)) : 0;
   const qrX = (widthU - effectiveQrSize) / 2;
-  // Centramos el QR en el espacio disponible debajo del cursor.
-  const qrAvailable = heightU - cursorY - bottomReserved;
-  const qrY = showQr ? cursorY + Math.max(0, (qrAvailable - effectiveQrSize) / 2) : cursorY;
+  const qrYCentered = qrY_zone + (qrH - effectiveQrSize) / 2;
 
-  // Ancho/alto reales del banner → cubre todo el header hasta antes de
-  // la banda. Si no hay banner, usamos banda sólida.
+  const slugFontPx = Math.max(32, footerH * 0.3);
+  const ctaFontPx = Math.max(24, footerH * 0.22);
+
+  // Banner opcional ocupa el header + la banda.
   const bannerY = 0;
-  const bannerH = showBanner && bannerHref ? bandY + bandH : 0;
+  const bannerH = showBanner && bannerHref ? headerH + bandH : 0;
+
+  // Info zone (stats, tagline, category)
+  const infoCenterY = infoY + infoH / 2;
 
   return (
     <svg
@@ -299,7 +310,7 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
       {/* Fondo blanco */}
       <rect x={0} y={0} width={widthU} height={heightU} fill="#ffffff" />
 
-      {/* Banner opcional (reemplaza la banda sólida) */}
+      {/* Banner opcional (header + banda) */}
       {showBanner && bannerHref ? (
         <>
           <image
@@ -316,119 +327,130 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
         <rect x={0} y={bandY} width={widthU} height={bandH} fill={bandColor} />
       )}
 
-      {/* Logo */}
+      {/* HEADER: Logo centrado verticalmente en su zona */}
       {showLogo ? (
-        <LogoOrText
-          href={logoHref}
-          sellerName={storeName}
-          align={logoAlign}
-          size={effectiveLogoSize}
-          bandY={logoY}
-          canvasW={widthU}
-          padding={padding}
-        />
+        <g>
+          <LogoOrText
+            href={logoHref}
+            sellerName={storeName}
+            align={logoAlign}
+            size={effectiveLogoSize}
+            bandY={headerY + (headerH - effectiveLogoSize) / 2}
+            canvasW={widthU}
+            padding={padding}
+          />
+        </g>
       ) : null}
 
-      {/* Badge Verified */}
+      {/* Badge Verified en header */}
       {verified && showVerified ? (
         <VerifiedPill
           x={widthU - padding - 240}
-          y={logoY + 10}
+          y={headerY + 20}
           scale={Math.max(0.9, Math.min(1.6, effectiveLogoSize / 180))}
         />
       ) : null}
 
-      {/* Nombre de la tienda sobre la banda / banner */}
+      {/* BANDA: Nombre centrado */}
       {(() => {
         const totalNameH = nameLines.length * nameFontPx * 1.1;
-        const totalBlockH = totalNameH + (taglineInBand ? taglineFontPx * 1.4 + 20 : 0);
-        const startY = bandY + (bandH - totalBlockH) / 2 + nameFontPx * 0.75;
+        const startY = bandY + (bandH - totalNameH) / 2 + nameFontPx * 0.75;
         return (
-          <>
-            <text
-              x={widthU / 2}
-              y={startY}
-              textAnchor="middle"
-              fontSize={nameFontPx}
-              fontWeight={fontWeight > 500 ? fontWeight : 700}
-              fill={textOnBand}
-            >
-              {nameLines.map((l, i) => (
-                <tspan key={i} x={widthU / 2} dy={i === 0 ? 0 : nameFontPx * 1.1}>
-                  {l}
-                </tspan>
-              ))}
-            </text>
-            {taglineInBand ? (
-              <text
-                x={widthU / 2}
-                y={startY + totalNameH + 10}
-                textAnchor="middle"
-                fontSize={taglineFontPx}
-                fill="rgba(255,255,255,0.9)"
-              >
-                {tagline.length > 90 ? tagline.slice(0, 87) + '…' : tagline}
-              </text>
-            ) : null}
-          </>
+          <text
+            x={widthU / 2}
+            y={startY}
+            textAnchor="middle"
+            fontSize={nameFontPx}
+            fontWeight={fontWeight > 500 ? fontWeight : 700}
+            fill={textOnBand}
+          >
+            {nameLines.map((l, i) => (
+              <tspan key={i} x={widthU / 2} dy={i === 0 ? 0 : nameFontPx * 1.1}>
+                {l}
+              </tspan>
+            ))}
+          </text>
         );
       })()}
 
-      {/* Stats */}
-      {showStats && ratingAvg != null ? (
-        <StarsLine
-          x={widthU / 2 - 180}
-          y={bandY + bandH + Math.max(80, heightU * 0.055)}
-          ratingAvg={ratingAvg}
-          reviewCount={reviewCount}
-          fontPx={Math.max(44, heightU * 0.034)}
+      {/* INFO zone: tagline (sombra discreta) + stats + categoría */}
+      {hasInfo ? (
+        <g>
+          {showStats && ratingAvg != null ? (
+            <StarsLine
+              x={widthU / 2 - 180}
+              y={infoCenterY + 10}
+              ratingAvg={ratingAvg}
+              reviewCount={reviewCount}
+              fontPx={Math.max(32, infoH * 0.3)}
+            />
+          ) : null}
+          {showCategory && primaryCategory ? (
+            <text
+              x={widthU / 2}
+              y={infoCenterY + (showStats ? 70 : 10)}
+              textAnchor="middle"
+              fontSize={Math.max(20, infoH * 0.22)}
+              fill="#6b7280"
+              letterSpacing="0.15em"
+            >
+              {String(primaryCategory).toUpperCase()}
+            </text>
+          ) : null}
+        </g>
+      ) : null}
+
+      {/* Tagline opcional debajo del nombre, dentro de la banda si cabe,
+          sino inmediatamente debajo. */}
+      {showTagline && tagline ? (
+        <text
+          x={widthU / 2}
+          y={bandY + bandH + taglineFontPx + 10}
+          textAnchor="middle"
+          fontSize={taglineFontPx}
+          fill="#4b5563"
+        >
+          {tagline.length > 90 ? tagline.slice(0, 87) + '…' : tagline}
+        </text>
+      ) : null}
+
+      {/* QR zone: QR gigante centrado */}
+      {showQr && effectiveQrSize > 0 ? (
+        <QrOrPlaceholder
+          href={qrHref}
+          x={qrX}
+          y={qrYCentered}
+          size={effectiveQrSize}
         />
       ) : null}
 
-      {/* Categoría */}
-      {showCategory && primaryCategory ? (
-        <text
-          x={widthU / 2}
-          y={bandY + bandH + (showStats ? Math.max(140, heightU * 0.1) : Math.max(70, heightU * 0.05))}
-          textAnchor="middle"
-          fontSize={Math.max(22, heightU * 0.018)}
-          fill="#6b7280"
-          letterSpacing="0.15em"
-        >
-          {String(primaryCategory).toUpperCase()}
-        </text>
-      ) : null}
-
-      {/* QR grande centrado */}
-      {showQr && effectiveQrSize > 0 ? (
-        <QrOrPlaceholder href={qrHref} x={qrX} y={qrY} size={effectiveQrSize} />
-      ) : null}
-
-      {/* slug / URL */}
-      {showSlug && slug ? (
-        <text
-          x={widthU / 2}
-          y={heightU - padding - (showCta ? ctaFontPx + 30 : 20)}
-          textAnchor="middle"
-          fontSize={slugFontPx}
-          fontWeight={700}
-          fill="#111111"
-        >
-          {storeUrl ? storeUrl.replace(/^https?:\/\//, '') : `${slug}.xololo.mx`}
-        </text>
-      ) : null}
-
-      {/* CTA */}
-      {showCta ? (
-        <text
-          x={widthU / 2}
-          y={heightU - padding - 20}
-          textAnchor="middle"
-          fontSize={ctaFontPx}
-          fill="#6b7280"
-        >
-          {showQr ? 'Escanéame y visita mi tienda en Xololo' : 'Visítame en Xololo'}
-        </text>
+      {/* FOOTER: slug + CTA */}
+      {hasFooter ? (
+        <g>
+          {showSlug && slug ? (
+            <text
+              x={widthU / 2}
+              y={footerY + footerH / 2 - (showCta ? ctaFontPx * 0.5 : 0)}
+              textAnchor="middle"
+              fontSize={slugFontPx}
+              fontWeight={700}
+              fill="#111111"
+            >
+              {storeUrl ? storeUrl.replace(/^https?:\/\//, '') : `${slug}.xololo.mx`}
+            </text>
+          ) : null}
+          {showCta ? (
+            <text
+              x={widthU / 2}
+              y={footerY + footerH / 2 + (showSlug && slug ? slugFontPx * 0.6 : 0)}
+              textAnchor="middle"
+              fontSize={ctaFontPx}
+              fill="#6b7280"
+            >
+              {showQr ? 'Escanéame y visita mi tienda en Xololo' : 'Visítame en Xololo'}
+            </text>
+          ) : null}
+        </g>
       ) : null}
     </svg>
   );
@@ -444,7 +466,11 @@ export const STORE_TEMPLATES = [
     hint: '21.6 × 28 cm · para muro / vitrina',
     width: 2160,
     height: 2800,
-    exportPx: [2550, 3300], // 300 DPI
+    // Reducido de 2550×3300 (300 DPI) → 1700×2200 (200 DPI). 200 DPI
+    // sigue siendo imprenta profesional pero evita rasterización
+    // enorme que algunos navegadores fallan en silencio con onerror
+    // genérico. jsPDF escala a mm sin pérdida visible.
+    exportPx: [1700, 2200],
     pdf: { widthMm: 215.9, heightMm: 279.4, orientation: 'portrait', format: [215.9, 279.4] },
     render: buildDesign({ widthU: 2160, heightU: 2800 }),
   },
@@ -455,7 +481,7 @@ export const STORE_TEMPLATES = [
     hint: '14 × 21.6 cm · posters chicos',
     width: 1400,
     height: 2160,
-    exportPx: [1654, 2551],
+    exportPx: [1100, 1700],
     pdf: { widthMm: 139.7, heightMm: 215.9, orientation: 'portrait', format: [139.7, 215.9] },
     render: buildDesign({ widthU: 1400, heightU: 2160 }),
   },
@@ -466,7 +492,7 @@ export const STORE_TEMPLATES = [
     hint: '20 × 20 cm · empaques, pizarras',
     width: 2000,
     height: 2000,
-    exportPx: [2362, 2362],
+    exportPx: [1600, 1600],
     pdf: { widthMm: 200, heightMm: 200, orientation: 'portrait', format: [200, 200] },
     render: buildDesign({ widthU: 2000, heightU: 2000 }),
   },
