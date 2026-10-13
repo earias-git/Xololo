@@ -83,6 +83,8 @@ module.exports = async (req, res) => {
       trackingNumber,
       labelUrl,
       fulfilledAt,
+      carrierName: refreshed.xololoCarrierName || null,
+      carrierService: refreshed.xololoCarrierService || null,
       publicTotal: Number(refreshed.xololoPublicTotalMXN) || null,
       buyerEmail: refreshed.xololoBuyerEmail || null,
       fromPostal: refreshed.xololoFromPostal || null,

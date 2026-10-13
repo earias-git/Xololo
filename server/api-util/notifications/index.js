@@ -101,6 +101,12 @@ const MATRIX = {
   'shipping.quote_authorized': {
     seller: ['email', 'push'],
   },
+  // XOLOLO feature #28 · F3: compra pública de guía de paquetería.
+  // Buyer recibe el PDF + tracking + orden por email. El actor es
+  // "buyer" porque el que compra la guía puede o no ser seller.
+  'public_shipping.guide_ready': {
+    buyer: ['email'],
+  },
 };
 
 const CHANNELS = { email, push, whatsapp };

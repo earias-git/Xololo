@@ -426,6 +426,33 @@ const TEMPLATES = {
       },
     },
   },
+  // XOLOLO feature #28 · F3: compra pública de guía — email al buyer
+  // con PDF + tracking + orden. No es seller→buyer, es Xololo→buyer
+  // directo (sin branding de tienda), por eso omitimos seller/listing.
+  'public_shipping.guide_ready': {
+    email: {
+      buyer: {
+        subject: 'Tu guía Xololo está lista — {carrier.name}',
+        bodyText:
+          'Hola {buyer.name},\n\n' +
+          '¡Gracias por tu compra en Xololo! Tu guía de paquetería ya está lista.\n\n' +
+          '📦 Paquetería: {carrier.name} · {carrier.service}\n' +
+          '📍 De: CP {from.postalCode} ({from.city})\n' +
+          '📍 A: CP {to.postalCode} ({to.city})\n' +
+          '🔖 Número de rastreo: {tracking.number}\n\n' +
+          'DESCARGA TU GUÍA PDF:\n{label.url}\n\n' +
+          'Imprime la guía, pégala al paquete y:\n' +
+          '  • Si elegiste drop-off: llévala a una sucursal {carrier.name}.\n' +
+          '  • Si elegiste pickup a domicilio: el mensajero pasa por ella.\n\n' +
+          'Rastrea tu envío cuando sea recogido con el número de arriba ' +
+          'en el sitio del carrier o en https://www.skydropx.com/tracking\n\n' +
+          'Número de orden: {order.id}\n' +
+          'Monto pagado: ${order.publicTotal} MXN\n\n' +
+          '¿Dudas? Escríbenos a soporte@xololo.mx\n\n' +
+          'Equipo Xololo',
+      },
+    },
+  },
 };
 
 const get = (event, channel, actor) => {

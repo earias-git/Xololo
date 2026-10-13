@@ -16,6 +16,7 @@
 
 const { getStripeBilling } = require('./stripeBilling');
 const { createShipment, SkydropxQuoteError } = require('./skydropx');
+const { sendEventNotifications } = require('./notifications');
 
 // Rehidrata el payload compacto que guardamos en PI metadata al crear
 // el pago. Puede venir en `xololoPayload` (una sola key si ≤450 chars)
@@ -165,6 +166,16 @@ const fulfillPublicShippingGuide = async pi => {
       shipment?.label_url ||
       shipment?.attributes?.label?.url ||
       null;
+    const carrierName =
+      shipment?.attributes?.rate?.provider_display_name ||
+      shipment?.attributes?.rate?.provider_name ||
+      shipment?.rate?.provider_display_name ||
+      shipment?.rate?.provider_name ||
+      'tu paquetería';
+    const carrierService =
+      shipment?.attributes?.rate?.provider_service_name ||
+      shipment?.rate?.provider_service_name ||
+      '';
 
     if (!shipmentId) {
       // eslint-disable-next-line no-console
@@ -186,6 +197,8 @@ const fulfillPublicShippingGuide = async pi => {
             xololoShipmentId: String(shipmentId),
             xololoTrackingNumber: trackingNumber || '',
             xololoLabelUrl: labelUrl || '',
+            xololoCarrierName: carrierName,
+            xololoCarrierService: carrierService,
             xololoFulfilledAt: new Date().toISOString(),
           },
         });
@@ -211,6 +224,44 @@ const fulfillPublicShippingGuide = async pi => {
         labelPresent: !!labelUrl,
       })
     );
+
+    // XOLOLO F3: mandamos el email con el PDF + tracking al buyer.
+    // Fire-and-forget: no bloquea la respuesta ni el flow de pago. Si
+    // Resend/API_KEY no está configurado, cae a log_only (no error).
+    try {
+      await sendEventNotifications('public_shipping.guide_ready', {
+        buyer: {
+          name: from.name,
+          email: from.email,
+        },
+        carrier: {
+          name: carrierName,
+          service: carrierService,
+        },
+        from: {
+          postalCode: from.postalCode,
+          city: from.city,
+        },
+        to: {
+          postalCode: to.postalCode,
+          city: to.city,
+        },
+        tracking: {
+          number: trackingNumber || 'disponible al recoger',
+        },
+        label: {
+          url: labelUrl || '',
+        },
+        order: {
+          id: pi.id,
+          publicTotal: meta.xololoPublicTotalMXN || '',
+        },
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[public-shipping-fulfill] email falló:', e?.message);
+    }
+
     return { ok: true, shipmentId, trackingNumber, labelUrl };
   } catch (e) {
     if (e instanceof SkydropxQuoteError) {
