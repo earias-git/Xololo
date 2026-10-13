@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import QRCode from 'qrcode';
 
 import {
@@ -612,15 +612,6 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
             {exporting ? 'Generando…' : '📄 Descargar PDF'}
           </button>
         ) : null}
-        <ShareBar
-          svgRef={svgRef}
-          template={template}
-          storeName={sellerName}
-          storeUrl={seller?.storeUrl}
-          rasterizeWithFallback={rasterizeWithFallback}
-          slugifyFilename={slugifyFilename}
-          onError={setError}
-        />
         {onClose ? (
           <button type="button" className={css.linkBtn} onClick={onClose}>
             Cerrar
@@ -814,34 +805,292 @@ const ToggleChip = ({ label, active, onClick, disabled }) => (
   </button>
 );
 
-const StorePoster = ({ seller, sellerLogoDataUrl, sellerName }) => {
-  const [open, setOpen] = useState(false);
+// -----------------------------------------------------------------
+// Share intents (patrón del ListingCard: botones en línea, sin dropdown)
+// -----------------------------------------------------------------
+
+const isMobileUA = () => {
+  if (typeof navigator === 'undefined') return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+};
+
+const buildStoreShareUrl = (seller, source) => {
+  if (typeof window === 'undefined') return '';
+  const base =
+    seller?.storeUrl ||
+    (seller?.slug
+      ? `${window.location.origin}/stores/${seller.slug}`
+      : window.location.origin);
+  try {
+    const u = new URL(base);
+    u.searchParams.set('utm_source', source);
+    u.searchParams.set('utm_medium', 'xolo-promo');
+    u.searchParams.set('utm_campaign', 'store');
+    return u.toString();
+  } catch (_) {
+    return base;
+  }
+};
+
+const buildShareText = sellerName =>
+  `${sellerName || 'Mi tienda'} en Xololo 🛍️\n\n¡Visítame y revisa mis productos y servicios!`;
+
+const StorePromoShareButtons = ({ seller, sellerName }) => {
+  const [copied, setCopied] = useState(null);
+
+  const shareFacebook = () => {
+    const url = buildStoreShareUrl(seller, 'facebook');
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      '_blank',
+      'noopener,noreferrer,width=600,height=600'
+    );
+  };
+
+  const shareTwitter = () => {
+    const url = buildStoreShareUrl(seller, 'twitter');
+    const text = buildShareText(sellerName);
+    window.open(
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+        text
+      )}&url=${encodeURIComponent(url)}`,
+      '_blank',
+      'noopener,noreferrer,width=600,height=600'
+    );
+  };
+
+  const shareWhatsApp = () => {
+    const url = buildStoreShareUrl(seller, 'whatsapp');
+    const text = `${buildShareText(sellerName)}\n${url}`;
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(text)}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  };
+
+  const shareViaWebOrCopy = async (source, brandUrl) => {
+    const url = buildStoreShareUrl(seller, source);
+    const text = `${buildShareText(sellerName)}\n${url}`;
+    if (isMobileUA() && navigator.share) {
+      try {
+        await navigator.share({ title: sellerName || 'Tienda', text, url });
+        return;
+      } catch (_) {
+        // cancelado
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(source);
+      setTimeout(() => setCopied(null), 3500);
+      window.open(brandUrl, '_blank', 'noopener,noreferrer');
+    } catch (_) {}
+  };
+
+  const handleCopyLink = async () => {
+    const url = buildStoreShareUrl(seller, 'link');
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied('link');
+      setTimeout(() => setCopied(null), 2500);
+    } catch (_) {}
+  };
+
   return (
-    <section className={css.storePromoCard}>
-      <div className={css.storePromoHeader}>
-        <div>
-          <h3 className={css.storePromoTitle}>Diseños para promocionar tu tienda</h3>
-          <p className={css.storePromoSubtitle}>
-            Crea un póster o publicación con el logo, QR y URL de tu tienda. 6
-            formatos listos para imprimir o compartir en redes.
-          </p>
-        </div>
+    <div className={css.shareLineRoot}>
+      <div className={css.shareLineRow}>
+        <button type="button" className={css.shareLineBtn} onClick={shareFacebook}>
+          <span aria-hidden>📘</span>
+          <span>Facebook</span>
+        </button>
         <button
           type="button"
-          className={css.openBtn}
-          onClick={() => setOpen(o => !o)}
+          className={css.shareLineBtn}
+          onClick={() => shareViaWebOrCopy('instagram', 'https://www.instagram.com')}
+          title="En móvil abre picker del sistema. En desktop copia el post y abre Instagram."
         >
-          {open ? 'Cerrar editor' : '✨ Abrir editor'}
+          <span aria-hidden>📸</span>
+          <span>Instagram</span>
+        </button>
+        <button
+          type="button"
+          className={css.shareLineBtn}
+          onClick={() => shareViaWebOrCopy('tiktok', 'https://www.tiktok.com')}
+          title="En móvil abre picker del sistema. En desktop copia el post y abre TikTok."
+        >
+          <span aria-hidden>🎵</span>
+          <span>TikTok</span>
+        </button>
+        <button type="button" className={css.shareLineBtn} onClick={shareWhatsApp}>
+          <span aria-hidden>💬</span>
+          <span>WhatsApp</span>
+        </button>
+        <button type="button" className={css.shareLineBtn} onClick={shareTwitter}>
+          <span aria-hidden>𝕏</span>
+          <span>X / Twitter</span>
         </button>
       </div>
-      {open ? (
-        <StorePosterEditor
-          seller={seller}
-          sellerLogoDataUrl={sellerLogoDataUrl}
-          sellerName={sellerName}
-          onClose={() => setOpen(false)}
-        />
+      <div className={css.shareLineRow}>
+        <button type="button" className={css.shareLineBtn} onClick={handleCopyLink}>
+          <span aria-hidden>🔗</span>
+          <span>Copiar link</span>
+        </button>
+      </div>
+      {copied === 'link' ? (
+        <p className={css.shareFeedback}>✓ Link copiado al portapapeles</p>
       ) : null}
+      {copied === 'instagram' ? (
+        <p className={css.shareFeedback}>
+          ✓ Post copiado. Abre Instagram y pega en tu Story o Publicación.
+        </p>
+      ) : null}
+      {copied === 'tiktok' ? (
+        <p className={css.shareFeedback}>
+          ✓ Post copiado. Abre TikTok y pega al crear tu publicación.
+        </p>
+      ) : null}
+    </div>
+  );
+};
+
+// -----------------------------------------------------------------
+// QR del storefront (patrón del ListingQRCode)
+// -----------------------------------------------------------------
+
+const StoreQRCode = ({ seller, sellerName }) => {
+  const [preview, setPreview] = useState(null);
+  const [error, setError] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const url = useMemo(() => buildStoreShareUrl(seller, 'qr'), [seller]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!url) return;
+    QRCode.toDataURL(url, {
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 160,
+      color: { dark: '#000000', light: '#ffffff' },
+    }).then(
+      dataUrl => {
+        if (!cancelled) setPreview(dataUrl);
+      },
+      err => {
+        if (!cancelled) setError(err?.message || 'qr_error');
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  const handleDownload = async () => {
+    if (!url) return;
+    setDownloading(true);
+    try {
+      const big = await QRCode.toDataURL(url, {
+        errorCorrectionLevel: 'M',
+        margin: 2,
+        width: 1024,
+        color: { dark: '#000000', light: '#ffffff' },
+      });
+      const a = document.createElement('a');
+      a.href = big;
+      a.download = `${slugifyFilename(sellerName)}-tienda-qr.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (e) {
+      setError(e?.message || 'download_error');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className={css.qrRoot}>
+      <div className={css.qrRow}>
+        <div className={css.qrBox}>
+          {preview ? (
+            <img src={preview} alt="Código QR de la tienda" />
+          ) : (
+            <span className={css.qrEmpty}>QR…</span>
+          )}
+        </div>
+        <div className={css.qrActions}>
+          <button
+            type="button"
+            className={css.qrBtn}
+            onClick={handleDownload}
+            disabled={!preview || downloading}
+            title="Descarga un PNG de alta resolución (1024×1024) listo para imprimir"
+          >
+            <span aria-hidden>⬇️</span>
+            <span>{downloading ? 'Generando…' : 'Descargar QR (PNG)'}</span>
+          </button>
+          <p className={css.qrHint}>Al escanearlo abre tu tienda en Xololo.</p>
+        </div>
+      </div>
+      {error ? <p className={css.error}>No se pudo generar el QR ({error}).</p> : null}
+    </div>
+  );
+};
+
+// -----------------------------------------------------------------
+// StorePoster: contenedor estilo ListingCard
+// -----------------------------------------------------------------
+
+const StorePoster = ({ seller, sellerLogoDataUrl, sellerName }) => {
+  const [designOpen, setDesignOpen] = useState(false);
+  return (
+    <section className={css.cardRoot}>
+      <div className={css.cardHeader}>
+        {sellerLogoDataUrl ? (
+          <img src={sellerLogoDataUrl} alt="" className={css.cardLogo} />
+        ) : (
+          <span className={css.cardLogoEmpty} aria-hidden>
+            🏬
+          </span>
+        )}
+        <div className={css.cardMain}>
+          <h3 className={css.cardTitle}>{sellerName || 'Tu tienda'}</h3>
+          {seller?.storeUrl ? (
+            <p className={css.cardUrl}>
+              {seller.storeUrl.replace(/^https?:\/\//, '')}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <StorePromoShareButtons seller={seller} sellerName={sellerName} />
+      <StoreQRCode seller={seller} sellerName={sellerName} />
+
+      <div className={css.designSection}>
+        <button
+          type="button"
+          className={css.designToggle}
+          onClick={() => setDesignOpen(o => !o)}
+          aria-expanded={designOpen}
+        >
+          <span className={css.designToggleLeft}>
+            <span aria-hidden>🏷️</span>
+            <strong>Diseños para Imprimir</strong>
+          </span>
+          <span className={css.designToggleBtn}>
+            {designOpen ? 'Cerrar' : 'Diseñar'}
+          </span>
+        </button>
+        {designOpen ? (
+          <StorePosterEditor
+            seller={seller}
+            sellerLogoDataUrl={sellerLogoDataUrl}
+            sellerName={sellerName}
+            onClose={() => setDesignOpen(false)}
+          />
+        ) : null}
+      </div>
     </section>
   );
 };

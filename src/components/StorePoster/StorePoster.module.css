@@ -339,3 +339,219 @@
 .shareOption + .shareOption {
   border-top: 1px solid #f3f4f6;
 }
+
+/* XOLOLO Promote · StorePoster (patrón estilo ListingCard) */
+.cardRoot {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cardHeader {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.cardLogo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #f3f4f6;
+  padding: 4px;
+}
+
+.cardLogoEmpty {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  border-radius: 10px;
+  font-size: 32px;
+}
+
+.cardMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardTitle {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0e1a2f;
+}
+
+.cardUrl {
+  margin: 0;
+  font-size: 13px;
+  color: #4b5563;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  word-break: break-all;
+}
+
+/* Share buttons row */
+.shareLineRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shareLineRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shareLineBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #111111;
+  cursor: pointer;
+}
+
+.shareLineBtn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.shareLineBtn > span[aria-hidden] {
+  font-size: 15px;
+}
+
+.shareFeedback {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #16a34a;
+  font-weight: 500;
+}
+
+/* QR row */
+.qrRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qrRow {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.qrBox {
+  width: 96px;
+  height: 96px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.qrBox img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qrEmpty {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.qrActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.qrBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: #0e1a2f;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.qrBtn:hover:not(:disabled) {
+  background: #1e40af;
+}
+
+.qrBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.qrHint {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Design (editor del poster) section */
+.designSection {
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 14px;
+}
+
+.designToggle {
+  background: transparent;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+  padding: 0;
+}
+
+.designToggleLeft {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 15px;
+  color: #0e1a2f;
+}
+
+.designToggleBtn {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0e1a2f;
+}
+
+.designToggle:hover .designToggleBtn {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
