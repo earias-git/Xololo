@@ -15,7 +15,7 @@
 // porque el user y los emails requieren configurar templates aparte.
 
 const { getStripeBilling } = require('./stripeBilling');
-const { createShipment, SkydropxQuoteError } = require('./skydropx');
+const { createShipment, getShipment, SkydropxQuoteError, SkydropxTimeoutError } = require('./skydropx');
 const { sendEventNotifications } = require('./notifications');
 
 // Rehidrata el payload compacto que guardamos en PI metadata al crear
@@ -200,15 +200,46 @@ const fulfillPublicShippingGuide = async pi => {
 
     const shipment = created?.data || created;
     const shipmentId = shipment?.id || shipment?.data?.id;
-    const trackingNumber =
-      shipment?.attributes?.tracking_number ||
-      shipment?.tracking_number ||
-      null;
-    const labelUrl =
-      shipment?.attributes?.label_url ||
-      shipment?.label_url ||
-      shipment?.attributes?.label?.url ||
-      null;
+    // Extracción tolerante — Skydropx devuelve JSON:API con label_url
+    // a veces en shipment.attributes, a veces en included[] (package).
+    const extractLabel = payload => {
+      const attrs = payload?.data?.attributes || payload?.attributes || payload || {};
+      if (attrs.label_url) return attrs.label_url;
+      const included = payload?.included || [];
+      for (const inc of included) {
+        if (inc?.attributes?.label_url) return inc.attributes.label_url;
+      }
+      return null;
+    };
+    const extractTracking = payload => {
+      const attrs = payload?.data?.attributes || payload?.attributes || payload || {};
+      if (attrs.tracking_number) return attrs.tracking_number;
+      const included = payload?.included || [];
+      for (const inc of included) {
+        if (inc?.attributes?.tracking_number) return inc.attributes.tracking_number;
+      }
+      return null;
+    };
+
+    let labelUrl = extractLabel(created);
+    let trackingNumber = extractTracking(created);
+
+    // Label suele estar listo tras 2-6s. Si viene vacío, polling corto.
+    if (shipmentId && !labelUrl) {
+      try {
+        const polled = await getShipment(shipmentId, { poll: true, maxPollMs: 10000 });
+        labelUrl = extractLabel(polled) || labelUrl;
+        trackingNumber = extractTracking(polled) || trackingNumber;
+      } catch (e) {
+        if (!(e instanceof SkydropxTimeoutError)) {
+          // Timeout es aceptable (seguimos sin label en este round);
+          // email reintenta en próxima consulta. Otros errores log.
+          // eslint-disable-next-line no-console
+          console.error('[public-shipping-fulfill] poll label:', e?.message);
+        }
+      }
+    }
+
     const carrierName =
       shipment?.attributes?.rate?.provider_display_name ||
       shipment?.attributes?.rate?.provider_name ||
@@ -272,11 +303,35 @@ const fulfillPublicShippingGuide = async pi => {
       })
     );
 
+    // Descargar el PDF de la guía para adjuntarlo al email. Si falla,
+    // mandamos el email con el link y sin attachment — no bloquea.
+    let labelPdfBase64 = null;
+    if (labelUrl) {
+      try {
+        const pdfRes = await fetch(labelUrl);
+        if (pdfRes.ok) {
+          const buf = Buffer.from(await pdfRes.arrayBuffer());
+          // Resend acepta hasta 40MB total por email — las guías son <200KB.
+          if (buf.length <= 10 * 1024 * 1024) {
+            labelPdfBase64 = buf.toString('base64');
+          }
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('[public-shipping-fulfill] fetch PDF:', e?.message);
+      }
+    }
+
     // XOLOLO F3: mandamos el email con el PDF + tracking al buyer.
     // Fire-and-forget: no bloquea la respuesta ni el flow de pago. Si
     // Resend/API_KEY no está configurado, cae a log_only (no error).
     try {
       await sendEventNotifications('public_shipping.guide_ready', {
+        // useXololoBranding: el header del email debe decir "Xololo"
+        // (no "Tienda") — este flujo es Xololo → buyer directo, no
+        // seller → buyer. channels/email.js lo lee para no armar el
+        // dual-brand con placeholder de tienda.
+        useXololoBranding: true,
         buyer: {
           name: from.name,
           email: from.email,
@@ -303,6 +358,15 @@ const fulfillPublicShippingGuide = async pi => {
           id: pi.id,
           publicTotal: meta.xololoPublicTotalMXN || '',
         },
+        attachments: labelPdfBase64
+          ? [
+              {
+                filename: `guia-xololo-${shipmentId}.pdf`,
+                content: labelPdfBase64,
+                contentType: 'application/pdf',
+              },
+            ]
+          : [],
       });
     } catch (e) {
       // eslint-disable-next-line no-console

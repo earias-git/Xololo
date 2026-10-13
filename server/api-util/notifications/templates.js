@@ -435,12 +435,13 @@ const TEMPLATES = {
         subject: 'Tu guía Xololo está lista — {carrier.name}',
         bodyText:
           'Hola {buyer.name},\n\n' +
-          '¡Gracias por tu compra en Xololo! Tu guía de paquetería ya está lista.\n\n' +
-          '📦 Paquetería: {carrier.name} · {carrier.service}\n' +
+          '¡Gracias por tu compra en Xololo! Tu guía de paquetería ya está lista — ' +
+          'la encontrarás adjunta a este correo en PDF.\n\n' +
+          '📦 Paquetería: {carrier.name} {carrier.service}\n' +
           '📍 De: CP {from.postalCode} ({from.city})\n' +
           '📍 A: CP {to.postalCode} ({to.city})\n' +
           '🔖 Número de rastreo: {tracking.number}\n\n' +
-          'DESCARGA TU GUÍA PDF:\n{label.url}\n\n' +
+          'Descargar guía también desde este enlace:\n{label.url}\n\n' +
           'Imprime la guía, pégala al paquete y:\n' +
           '  • Si elegiste drop-off: llévala a una sucursal {carrier.name}.\n' +
           '  • Si elegiste pickup a domicilio: el mensajero pasa por ella.\n\n' +

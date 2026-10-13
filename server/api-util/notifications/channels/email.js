@@ -57,9 +57,16 @@ const send = async ({ actor, event, template, context }) => {
   // Armamos el HTML dual-brand. Para SELLER pasamos seller=null para que
   // renderEmailHtml use el header Xololo puro. Para BUYER usamos el
   // context.seller (con logo, colores, slug) que trae el dispatcher.
+  // XOLOLO feature #28: para emails de compras públicas (guías de
+  // paquetería) pasamos useXololoBranding=true → forzamos header
+  // Xololo-only (sin "Tienda" placeholder porque no hay seller real).
+  const sellerForEmail =
+    actor === 'buyer' && !context?.useXololoBranding
+      ? buildSellerContextForEmail(context?.seller)
+      : null;
   const html = renderEmailHtml({
     actor,
-    seller: actor === 'buyer' ? buildSellerContextForEmail(context?.seller) : null,
+    seller: sellerForEmail,
     title: rendered.subject,
     bodyHtml: rendered.bodyHtml,
     bodyText: rendered.bodyText,
@@ -81,6 +88,11 @@ const send = async ({ actor, event, template, context }) => {
         html,
         // text fallback para clientes que no renderean HTML
         text: rendered.bodyText || undefined,
+        // XOLOLO feature #28: attachments para compras públicas de
+        // guías. Shape Resend: {filename, content (base64), contentType}.
+        attachments: Array.isArray(context?.attachments) && context.attachments.length > 0
+          ? context.attachments
+          : undefined,
       }),
     });
     const data = await res.json().catch(() => null);

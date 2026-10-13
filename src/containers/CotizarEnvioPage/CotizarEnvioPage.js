@@ -859,17 +859,17 @@ const CotizarEnvioPage = () => {
       ) : guideStatus.phase === 'timeout' ? (
         <p className={css.successText}>
           Tu pago se recibió correctamente, pero la generación de la guía
-          está tardando más de lo normal. La enviaremos por correo a{' '}
-          <strong>{purchaseForm.from.email}</strong> en cuanto esté lista.
-          Si no la recibes en los próximos minutos, escríbenos a
-          soporte@xololo.mx con tu número de orden.
+          está tardando más de lo normal. Te la enviaremos por correo a{' '}
+          <strong>{purchaseForm.from.email}</strong> en cuanto esté lista
+          (con el PDF adjunto). Si no la recibes en los próximos minutos,
+          escríbenos a soporte@xololo.mx con tu número de orden.
         </p>
       ) : (
         <>
           <p className={css.successText}>
             Estamos generando tu guía con la paquetería seleccionada —
             esto suele tardar menos de un minuto. La verás aquí abajo en
-            cuanto esté lista, y además la mandaremos a{' '}
+            cuanto esté lista, y además la mandaremos con el PDF adjunto a{' '}
             <strong>{purchaseForm.from.email}</strong>.
           </p>
           <div className={css.loadingEmpathic}>
