@@ -261,6 +261,85 @@
   font-style: italic;
 }
 
+/* Loading empático mientras Skydropx procesa la cotización
+   (puede tardar varios segundos). Café + reloj para suavizar la espera. */
+.loadingEmpathic {
+  margin-top: 20px;
+  background: linear-gradient(135deg, #faf7ff 0%, #f0f7ff 100%);
+  border: 1px solid #d9d0ff;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.loadingEmpathic strong {
+  display: block;
+  font-size: 15px;
+  color: #0e1a2f;
+  margin-bottom: 4px;
+}
+
+.loadingEmpathic p {
+  margin: 0;
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.loadingEmoji {
+  font-size: 36px;
+  animation: steam 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes steam {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(-4deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingEmoji { animation: none; }
+}
+
+/* Explicación de por qué varían precios/tiempos entre servicios del
+   mismo carrier, y aviso de paqueterías no disponibles. */
+.pricingExplainer {
+  margin-top: 24px;
+  padding: 16px 18px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.55;
+}
+
+.pricingExplainer h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0e1a2f;
+}
+
+.pricingExplainer p {
+  margin: 0 0 8px;
+}
+
+.pricingExplainer p:last-child {
+  margin-bottom: 0;
+}
+
+.unavailableNote {
+  margin-top: 10px !important;
+  padding: 10px 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  color: #78350f;
+}
+
 /* Wizard F2a: progreso + paso 2 (datos remitente/destinatario) */
 .steps {
   list-style: none;

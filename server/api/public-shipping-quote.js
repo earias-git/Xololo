@@ -85,7 +85,7 @@ module.exports = async (req, res) => {
     // Pedimos a Skydropx el precio real del seguro (campo
     // insuranceCostReal por rate). Si no lo pedimos (includeInsurance=false)
     // el rate.insuranceCostReal viene null y no sumamos nada.
-    const { rates, quotationId } = await getQuotationRates({
+    const { rates, quotationId, unavailableCount, unavailableCarriers } = await getQuotationRates({
       from: {
         postal_code: String(from.postal_code),
         area_level1: from.area_level1 || DEFAULT_AREAS.area_level1,
@@ -176,6 +176,10 @@ module.exports = async (req, res) => {
         maxCoverage: INSURANCE_MAX_COVERAGE_MXN,
         coverageExceeded,
       },
+      // XOLOLO: paqueterías que Skydropx no respondió para esta
+      // combinación — para que la UI pueda mencionar que faltan.
+      unavailableCount: unavailableCount || 0,
+      unavailableCarriers: unavailableCarriers || [],
     });
   } catch (e) {
     if (e instanceof SkydropxAuthError) {

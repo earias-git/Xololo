@@ -410,6 +410,20 @@ const CotizarEnvioPage = () => {
         </button>
       </form>
 
+      {quoteState.status === 'loading' ? (
+        <div className={css.loadingEmpathic} role="status" aria-live="polite">
+          <div className={css.loadingEmoji} aria-hidden>☕</div>
+          <div>
+            <strong>Preparando tu cotización…</strong>
+            <p>
+              Estamos consultando los precios en vivo de las paqueterías.
+              Esto puede tardar unos segundos — mientras, agárrate un café
+              o estira las piernas. ⏱️
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       {quoteState.status === 'error' ? (
         <div className={css.errorBox}>
           <strong>No pudimos cotizar.</strong> {quoteState.error}
@@ -457,6 +471,42 @@ const CotizarEnvioPage = () => {
               </li>
             ))}
           </ul>
+
+          {/* XOLOLO: explicación por qué varían precios y tiempos entre
+              servicios del mismo carrier + aviso de paqueterías que no
+              respondieron para esta combinación. */}
+          <aside className={css.pricingExplainer}>
+            <h3>¿Por qué varían los precios?</h3>
+            <p>
+              Cada paquetería tiene varios servicios (Standard, Express,
+              Overnight, etc.) con diferente red logística, cobertura
+              geográfica, tipo de transporte (terrestre vs aéreo) y
+              condiciones de garantía. Un servicio "Express" puede ser
+              más caro aunque tarde parecido porque incluye recolección
+              a domicilio, cobertura más amplia o compromiso de entrega
+              en ventana específica.
+            </p>
+            <p>
+              Los precios y días los proporciona cada paquetería en
+              tiempo real — Xololo no los fija ni los garantiza. Verifica
+              siempre condiciones del servicio antes de comprar.
+            </p>
+            {quoteState.data?.unavailableCount > 0 ? (
+              <p className={css.unavailableNote}>
+                <strong>
+                  {quoteState.data.unavailableCount}{' '}
+                  {quoteState.data.unavailableCount === 1 ? 'servicio' : 'servicios'} no
+                  disponible{quoteState.data.unavailableCount === 1 ? '' : 's'} para esta ruta/paquete
+                  {quoteState.data.unavailableCarriers?.length > 0
+                    ? ` (${quoteState.data.unavailableCarriers.join(', ')})`
+                    : ''}.
+                </strong>{' '}
+                Las paqueterías no respondieron por restricciones de peso,
+                dimensiones o cobertura. Si necesitas una opción específica,
+                ajusta el paquete o contáctanos.
+              </p>
+            ) : null}
+          </aside>
         </section>
       ) : null}
     </>

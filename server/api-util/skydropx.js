@@ -203,6 +203,28 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
     );
   }
 
+  // XOLOLO: contabilizamos también los rates fallidos (success:false)
+  // para poder decirle al buyer "N paqueterías no respondieron para esta
+  // combinación" y loguear los motivos para debug en Render.
+  const failedRatesSummary = (last.rates || [])
+    .filter(r => !r.success)
+    .map(r => ({
+      carrier: r.provider_display_name || r.provider_name,
+      service: r.provider_service_name,
+      reason:
+        r.error_messages?.[0] ||
+        r.message ||
+        r.error ||
+        'sin detalle',
+    }));
+  if (failedRatesSummary.length > 0) {
+    // eslint-disable-next-line no-console
+    console.log(
+      '[skydropx.quote] failed rates:',
+      JSON.stringify(failedRatesSummary)
+    );
+  }
+
   const successRates = (last.rates || [])
     .filter(r => r.success)
     .map(r => {
@@ -260,7 +282,16 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
     })
     .sort((a, b) => a.total - b.total);
 
-  return { quotationId, rates: successRates };
+  return {
+    quotationId,
+    rates: successRates,
+    unavailableCount: failedRatesSummary.length,
+    // Carriers que no respondieron (dedupe por nombre). Útil para que
+    // la UI diga "FedEx y DHL no respondieron" sin exponer detalles.
+    unavailableCarriers: Array.from(
+      new Set(failedRatesSummary.map(f => f.carrier).filter(Boolean))
+    ),
+  };
 };
 
 // XOLOLO: defaults SAT Carta Porte + tipo de empaque cuando el listing
