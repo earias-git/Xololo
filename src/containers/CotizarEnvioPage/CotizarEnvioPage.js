@@ -203,8 +203,8 @@ const CotizarEnvioPage = () => {
                   onChange={e => setField('includeInsurance', e.target.checked)}
                 />
                 <span>
-                  Quiero asegurar el paquete contra pérdida o daño —{' '}
-                  <strong>$28.13 MXN</strong> con cobertura hasta $100,000 MXN
+                  Quiero asegurar el paquete contra pérdida o daño (cobertura
+                  hasta $100,000 MXN; el costo exacto se muestra al cotizar)
                 </span>
               </label>
               {form.includeInsurance ? (

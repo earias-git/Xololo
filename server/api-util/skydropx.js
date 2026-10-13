@@ -130,7 +130,7 @@ const getAccessToken = async () => {
 //
 // from/to esperan: { postal_code, area_level1, area_level2, area_level3, country_code? }
 // parcel espera:  { length, width, height, weight } — cm y kg respectivamente.
-const getQuotationRates = async ({ from, to, parcel }) => {
+const getQuotationRates = async ({ from, to, parcel, insurance = false, declaredValue = 0 }) => {
   const token = await getAccessToken();
 
   // XOLOLO Bug 2a: log del parcel + destino para poder auditar por qué
@@ -140,8 +140,22 @@ const getQuotationRates = async ({ from, to, parcel }) => {
   // eslint-disable-next-line no-console
   console.log(
     `[skydropx.quote] parcel L=${parcel?.length}cm W=${parcel?.width}cm H=${parcel?.height}cm ` +
-      `weight=${parcel?.weight}kg | ${from?.postal_code} → ${to?.postal_code}`
+      `weight=${parcel?.weight}kg | ${from?.postal_code} → ${to?.postal_code}` +
+      (insurance ? ` | insurance=true declaredValue=${declaredValue}` : '')
   );
+
+  // XOLOLO: si pedimos seguro, Skydropx devuelve el costo real en los
+  // campos protection_value_total / total_value_with_protection / etc.
+  // Para que esos campos aparezcan en el response, el parcel tiene que
+  // incluir package_protected + declared_value. Esto reemplaza el
+  // hardcoded de $25 por el precio real por carrier.
+  const parcelPayload = insurance
+    ? {
+        ...parcel,
+        package_protected: true,
+        declared_value: Number(declaredValue) || 0,
+      }
+    : parcel;
 
   const createRes = await fetch(QUOTATION_URL, {
     method: 'POST',
@@ -153,7 +167,7 @@ const getQuotationRates = async ({ from, to, parcel }) => {
       quotation: {
         address_from: { country_code: 'MX', ...from },
         address_to: { country_code: 'MX', ...to },
-        parcel,
+        parcel: parcelPayload,
       },
     }),
   });
@@ -196,13 +210,34 @@ const getQuotationRates = async ({ from, to, parcel }) => {
       // El cliente y checkout ven `total` = precio público final.
       // `pricing` desglosa por si se necesita auditar o mostrar en el UI.
       const pricing = applyPricingPolicy(Number(r.total));
+
+      // XOLOLO: Skydropx devuelve el costo real del seguro en varios
+      // campos posibles según versión de API. Lo preferimos sobre el
+      // hardcoded. Si vino total_value_with_protection usamos la
+      // diferencia; si no, caemos a lo que indique el campo directo.
+      const totalWithProtection =
+        Number(r.total_value_with_protection) || Number(r.total_with_protection) || null;
+      const protectionTotal =
+        Number(r.protection_value_total) || Number(r.protection_total) || null;
+      let insuranceCostReal = null;
+      if (insurance) {
+        if (totalWithProtection && totalWithProtection > Number(r.total)) {
+          insuranceCostReal = Number((totalWithProtection - Number(r.total)).toFixed(2));
+        } else if (protectionTotal) {
+          insuranceCostReal = Number(protectionTotal.toFixed(2));
+        }
+      }
+
       // XOLOLO Bug 2a: log del breakdown por rate para poder rastrear
       // "por qué salió $X" — Skydropx neto + SOS + margen = precio público.
       // eslint-disable-next-line no-console
       console.log(
         `[skydropx.rate] ${r.provider_display_name} ${r.provider_service_name}: ` +
           `skydropx=$${pricing.skydropxTotal} +SOS=$${pricing.sosInsurance} ` +
-          `+margin=$${pricing.xololoMargin} → público=$${pricing.totalPublico}`
+          `+margin=$${pricing.xololoMargin} → público=$${pricing.totalPublico}` +
+          (insurance
+            ? ` | insurable=${r.insurable} insuranceReal=${insuranceCostReal ?? 'n/a'}`
+            : '')
       );
       return {
         id: r.id,
@@ -216,6 +251,11 @@ const getQuotationRates = async ({ from, to, parcel }) => {
         pickup: r.pickup,
         officeDelivery: r.office_delivery,
         pricing,
+        // Para el flujo de guías públicas (#28): costo real del seguro
+        // que devolvió Skydropx. Null si no pedimos seguro o si la API
+        // no expuso el campo (caso edge, caemos a hardcoded).
+        insurable: r.insurable,
+        insuranceCostReal,
       };
     })
     .sort((a, b) => a.total - b.total);

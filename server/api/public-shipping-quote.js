@@ -43,30 +43,14 @@ const DEFAULT_AREAS = {
   area_level3: 'Centro',
 };
 
-// Seguro Skydropx — POLÍTICA COMERCIAL ASUMIDA, A VERIFICAR.
-//
-// La doc interna (docs/LOGISTICS_V1.md §5) dice: "$25 MXN fijo con
-// cobertura hasta $100,000 MXN". Pero la API Skydropx NO devuelve este
-// precio en la cotización — se cobra al crear el shipment real y
-// aparece sólo en facturación. Instrumentamos createShipment() en
-// skydropx.js para loguear el precio real que devuelva la API
-// (grep "[skydropx.createShipment.pricing]"), y hay que verificar
-// contra factura Skydropx antes de confiar en esta cifra para F2.
-//
-// Si Skydropx cobra distinto que $25, nuestro margen del 12.5% público
-// queda descuadrado. TODO F2: antes de habilitar la compra, confirmar
-// con account manager Skydropx o reemplazar por un endpoint real de
-// cotización de seguro si existe.
-const INSURANCE_FLAT_MXN = 25;
+// Seguro: Skydropx SÍ devuelve el precio real en la cotización cuando
+// se le pasa package_protected + declared_value (ver getQuotationRates
+// en skydropx.js — campo insuranceCostReal por rate). Usamos ese valor
+// cuando esté disponible; si por alguna razón la API no lo expone,
+// caemos a $25 fijo (política documentada en LOGISTICS_V1.md §5).
+// Cobertura máxima: $100,000 (confirmar con Skydropx si cambia).
+const INSURANCE_FLAT_FALLBACK_MXN = 25;
 const INSURANCE_MAX_COVERAGE_MXN = 100000;
-const computeInsurance = declaredValue => {
-  const dv = Number(declaredValue) || 0;
-  if (dv <= 0) return { price: 0, coverageExceeded: false };
-  return {
-    price: INSURANCE_FLAT_MXN,
-    coverageExceeded: dv > INSURANCE_MAX_COVERAGE_MXN,
-  };
-};
 
 const validatePostalCode = cp => /^\d{5}$/.test(String(cp || ''));
 
@@ -95,11 +79,12 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'invalid_request', details: parcelErr });
     }
 
-    const insuranceInfo = includeInsurance
-      ? computeInsurance(declaredValue)
-      : { price: 0, coverageExceeded: false };
-    const insurancePrice = insuranceInfo.price;
+    const dv = Number(declaredValue) || 0;
+    const coverageExceeded = includeInsurance && dv > INSURANCE_MAX_COVERAGE_MXN;
 
+    // Pedimos a Skydropx el precio real del seguro (campo
+    // insuranceCostReal por rate). Si no lo pedimos (includeInsurance=false)
+    // el rate.insuranceCostReal viene null y no sumamos nada.
     const { rates, quotationId } = await getQuotationRates({
       from: {
         postal_code: String(from.postal_code),
@@ -119,14 +104,27 @@ module.exports = async (req, res) => {
         width: Number(parcel.width),
         height: Number(parcel.height),
       },
+      insurance: !!includeInsurance,
+      declaredValue: dv,
     });
 
-    // Aplicamos el margen a cada rate. SÓLO exponemos el total público
-    // al buyer; el breakdown va a logs internos para analytics/ledger.
+    // Aplicamos el margen a cada rate. El costo del seguro usado es:
+    //   1. El que devolvió Skydropx si existe (preferido, real por carrier)
+    //   2. Fallback a $25 fijo si el campo no vino (política documentada)
+    // SÓLO exponemos el total público al buyer; el breakdown va a logs
+    // internos para analytics/ledger.
     const buyerFacingRates = (rates || []).map(r => {
-      const skydropxTotal = Number(r.total) || 0;
-      const breakdown = applyPublicMargin(skydropxTotal, insurancePrice);
-      // Log para analytics futuros (F6).
+      // ⚠️ Nota: getQuotationRates ya aplicó internamente la "política
+      // de seller" (SOS obligatorio $25 + 14% margen) encima del total
+      // Skydropx raw. Para el flujo público usamos el rate RAW de
+      // Skydropx (r.pricing.skydropxTotal) y aplicamos nuestras propias
+      // reglas (12.5% + seguro opcional real) por separado.
+      const skydropxRaw = Number(r.pricing?.skydropxTotal) || Number(r.total) || 0;
+      const insReal = includeInsurance
+        ? Number(r.insuranceCostReal) || INSURANCE_FLAT_FALLBACK_MXN
+        : 0;
+      const breakdown = applyPublicMargin(skydropxRaw, insReal);
+      // Log para analytics (F6) y para verificar precio real del seguro.
       // eslint-disable-next-line no-console
       console.log(
         '[public-shipping-quote]',
@@ -134,6 +132,11 @@ module.exports = async (req, res) => {
           carrier: r.carrier,
           service: r.service,
           skydropxTotal: breakdown.skydropxRate,
+          insuranceSource: includeInsurance
+            ? r.insuranceCostReal != null
+              ? 'skydropx-api'
+              : 'fallback-25'
+            : 'none',
           insurance: breakdown.insurance,
           margin: breakdown.xololoMargin,
           publicTotal: breakdown.publicTotal,
@@ -148,19 +151,30 @@ module.exports = async (req, res) => {
         days: r.days,
         publicTotal: breakdown.publicTotal,
         currency: 'MXN',
-        insuranceAvailable: true,
-        insurancePrice: includeInsurance ? breakdown.insurance : null,
+        insuranceAvailable: !!r.insurable,
+        insurancePrice: includeInsurance
+          ? Number((insReal * (1 + 0.125)).toFixed(2))
+          : null,
       };
     });
+
+    // Precio promedio del seguro (público) a mostrar en el encabezado —
+    // en el caso típico todos los carriers cobran lo mismo, pero si
+    // varían, enseñamos el min para no sorprender al buyer.
+    const insuranceSamples = buyerFacingRates
+      .map(r => r.insurancePrice)
+      .filter(v => typeof v === 'number' && v > 0);
+    const insuranceDisplayPrice =
+      insuranceSamples.length > 0 ? Math.min(...insuranceSamples) : 0;
 
     return res.json({
       quotationId,
       rates: buyerFacingRates,
       insurance: {
         included: !!includeInsurance,
-        price: insurancePrice,
+        price: insuranceDisplayPrice,
         maxCoverage: INSURANCE_MAX_COVERAGE_MXN,
-        coverageExceeded: insuranceInfo.coverageExceeded,
+        coverageExceeded,
       },
     });
   } catch (e) {
