@@ -101,7 +101,9 @@ const StoreStatsWidget = ({
           <p className={css.metricLabel}>antigüedad</p>
         </div>
       </div>
-      <p className={css.foot}>🛡️ Cada compra en Xololo está protegida hasta $100,000 MXN.</p>
+      <p className={css.foot}>
+        🛡️ Envíos por paquetería contratados en Xololo asegurados hasta $100,000 MXN.
+      </p>
     </section>
   );
 };

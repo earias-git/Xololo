@@ -22,7 +22,7 @@ import css from './SellerBrandFrame.module.css';
 //
 // El header muestra el logo del seller GRANDE + "Powered by Xololo"
 // chico a la derecha. El footer muestra el logo Xololo compacto +
-// mensajes de "Compra protegida hasta $100,000" + link a xololo.mx.
+// mensaje de "Envíos por paquetería asegurados hasta $100,000" + link a xololo.mx.
 //
 // Uso:
 //   <SellerBrandFrame seller={seller}>
@@ -119,11 +119,13 @@ const SellerBrandFrame = ({ seller, children, className, showFooter = true }) =>
             </div>
             <div className={css.footerCol}>
               <p className={css.footerBenefit}>
-                🛡️ <strong>Compra protegida hasta $100,000</strong>
+                🛡️ <strong>Envíos por paquetería asegurados hasta $100,000</strong>
               </p>
               <p className={css.footerBenefitSub}>
-                Todos los envíos incluyen SOS Protección Skydropx: si no
-                recibes el producto o llega dañado, te devolvemos tu dinero.
+                Los envíos por paquetería contratados a través de Xololo
+                (Skydropx) incluyen SOS Protección: si el paquete se pierde
+                o llega dañado, te devolvemos tu dinero. No aplica a
+                recolección en domicilio, envío local ni flete.
               </p>
             </div>
           </div>
