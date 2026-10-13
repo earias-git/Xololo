@@ -203,7 +203,8 @@ const CotizarEnvioPage = () => {
                   onChange={e => setField('includeInsurance', e.target.checked)}
                 />
                 <span>
-                  Quiero asegurar el paquete contra pérdida o daño
+                  Quiero asegurar el paquete contra pérdida o daño —{' '}
+                  <strong>$28.13 MXN</strong> con cobertura hasta $100,000 MXN
                 </span>
               </label>
               {form.includeInsurance ? (
@@ -252,6 +253,13 @@ const CotizarEnvioPage = () => {
               <p className={css.resultsHint}>
                 Precios incluyen todo. {form.includeInsurance ? 'Con seguro contra pérdida o daño.' : 'Sin seguro — puedes añadirlo volviendo a cotizar.'}
               </p>
+              {state.data?.insurance?.coverageExceeded ? (
+                <p className={css.coverageWarning}>
+                  ⚠️ El seguro cubre hasta $100,000 MXN. Declaraste un valor
+                  mayor — el excedente no quedará cubierto. Si necesitas
+                  cobertura adicional, contáctanos.
+                </p>
+              ) : null}
               <ul className={css.rateList}>
                 {rates.map(r => (
                   <li key={r.id} className={css.rateCard}>

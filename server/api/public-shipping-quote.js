@@ -43,16 +43,20 @@ const DEFAULT_AREAS = {
   area_level3: 'Centro',
 };
 
-// Seguro: para F1 usamos un modelo simple 2% del valor declarado con
-// mínimo $30 MXN. En F2 lo reemplazamos por el endpoint real de
-// Skydropx insurance quote cuando el user esté por comprar. Por ahora
-// esto es suficiente para que el buyer vea un número aproximado.
-const PLACEHOLDER_INSURANCE_MIN = 30;
-const PLACEHOLDER_INSURANCE_PCT = 0.02;
-const computePlaceholderInsurance = declaredValue => {
+// Seguro Skydropx (acuerdo comercial Xololo): $25 MXN fijo con
+// cobertura hasta $100,000 MXN de valor declarado. Si el buyer declara
+// un valor mayor, igual aceptamos la compra pero el flag
+// coverageExceeded = true permite a la UI mostrar un disclaimer
+// explicando que el seguro cubre hasta $100,000 (no el total).
+const INSURANCE_FLAT_MXN = 25;
+const INSURANCE_MAX_COVERAGE_MXN = 100000;
+const computeInsurance = declaredValue => {
   const dv = Number(declaredValue) || 0;
-  if (dv <= 0) return 0;
-  return Math.max(PLACEHOLDER_INSURANCE_MIN, Math.round(dv * PLACEHOLDER_INSURANCE_PCT));
+  if (dv <= 0) return { price: 0, coverageExceeded: false };
+  return {
+    price: INSURANCE_FLAT_MXN,
+    coverageExceeded: dv > INSURANCE_MAX_COVERAGE_MXN,
+  };
 };
 
 const validatePostalCode = cp => /^\d{5}$/.test(String(cp || ''));
@@ -82,7 +86,10 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'invalid_request', details: parcelErr });
     }
 
-    const insurancePrice = includeInsurance ? computePlaceholderInsurance(declaredValue) : 0;
+    const insuranceInfo = includeInsurance
+      ? computeInsurance(declaredValue)
+      : { price: 0, coverageExceeded: false };
+    const insurancePrice = insuranceInfo.price;
 
     const { rates, quotationId } = await getQuotationRates({
       from: {
@@ -137,7 +144,16 @@ module.exports = async (req, res) => {
       };
     });
 
-    return res.json({ quotationId, rates: buyerFacingRates });
+    return res.json({
+      quotationId,
+      rates: buyerFacingRates,
+      insurance: {
+        included: !!includeInsurance,
+        price: insurancePrice,
+        maxCoverage: INSURANCE_MAX_COVERAGE_MXN,
+        coverageExceeded: insuranceInfo.coverageExceeded,
+      },
+    });
   } catch (e) {
     if (e instanceof SkydropxAuthError) {
       // eslint-disable-next-line no-console
