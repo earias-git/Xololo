@@ -245,3 +245,136 @@
   text-align: center;
   font-style: italic;
 }
+
+/* Wizard F2a: progreso + paso 2 (datos remitente/destinatario) */
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: inline-flex;
+  gap: 10px;
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.steps li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f3f4f6;
+}
+
+.stepActive {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+.stepDone {
+  background: #e5e7eb !important;
+  color: #4b5563 !important;
+}
+
+.selectedRateSummary {
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  color: #0e1a2f;
+}
+
+.selectedRateSummary small {
+  display: block;
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.selectedRateSide {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.selectedRateSide strong {
+  font-size: 18px;
+  color: #0e1a2f;
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  color: #7c3aed;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  text-decoration: underline;
+}
+
+.radioField {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  color: #0e1a2f;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.radioField input {
+  width: 18px;
+  height: 18px;
+  accent-color: #7c3aed;
+  margin-top: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.radioField strong {
+  color: #0e1a2f;
+}
+
+.purchaseActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.secondaryBtn {
+  background: #ffffff;
+  border: 1.5px solid #d1d5db;
+  color: #4b5563;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.secondaryBtn:hover {
+  background: #f3f4f6;
+}
+
+.successBox {
+  margin-top: 20px;
+  padding: 14px 16px;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.successBox p {
+  margin: 6px 0 0;
+}
