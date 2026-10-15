@@ -2,11 +2,11 @@
 
 .root {
   width: 100%;
-  padding: 20px 0 24px;
+  padding: 12px 0 16px;
   background-color: #ffffff;
 
   @media (--viewportMedium) {
-    padding: 32px 0 40px;
+    padding: 20px 0 24px;
   }
 }
 
@@ -27,16 +27,16 @@
   background: linear-gradient(135deg, #ff8a3d 0%, #ff4f91 100%);
   color: #ffffff;
   border-radius: 14px;
-  padding: 22px 18px 24px;
+  padding: 16px 16px 18px;
   display: grid;
-  gap: 20px;
+  gap: 14px;
   grid-template-columns: 1fr;
   box-shadow: 0 10px 30px rgba(255, 79, 145, 0.18);
 
   @media (--viewportMedium) {
-    gap: 28px;
-    padding: 36px 44px 40px;
-    border-radius: 18px;
+    gap: 18px;
+    padding: 22px 32px 24px;
+    border-radius: 16px;
   }
 }
 
@@ -58,15 +58,15 @@
 }
 
 .title {
-  margin: 0 0 10px;
-  font-size: 20px;
+  margin: 0 0 6px;
+  font-size: 18px;
   font-weight: 800;
   line-height: 1.2;
   color: #ffffff;
   text-wrap: balance;
 
   @media (--viewportMedium) {
-    font-size: 30px;
+    font-size: 24px;
     letter-spacing: -0.01em;
   }
 }
@@ -86,14 +86,14 @@
 
 .description {
   margin: 0;
-  font-size: 13.5px;
-  line-height: 1.5;
+  font-size: 12.5px;
+  line-height: 1.45;
   max-width: 68ch;
   color: rgba(255, 255, 255, 0.92);
 
   @media (--viewportMedium) {
-    font-size: 15px;
-    line-height: 1.55;
+    font-size: 13.5px;
+    line-height: 1.5;
   }
 }
 
@@ -103,16 +103,16 @@
   padding: 0;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: 10px;
 
   @media (min-width: 560px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px 24px;
+    gap: 12px 20px;
   }
 
   @media (--viewportLarge) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 20px;
+    gap: 16px;
   }
 }
 
@@ -124,8 +124,8 @@
 }
 
 .ring {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background-color: rgba(255, 255, 255, 0.18);
   display: inline-flex;
@@ -133,22 +133,22 @@
   justify-content: center;
   color: #ffffff;
   flex-shrink: 0;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border: 1.3px solid rgba(255, 255, 255, 0.4);
 
   @media (--viewportMedium) {
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
   }
 }
 
 .ring > svg {
-  width: 20px;
-  height: 20px;
+  width: 17px;
+  height: 17px;
   fill: none;
 
   @media (--viewportMedium) {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
   }
 }
 
@@ -200,9 +200,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 22px;
+  padding: 10px 20px;
   border-radius: 999px;
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 800;
   text-decoration: none;
   line-height: 1;

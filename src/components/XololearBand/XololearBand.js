@@ -26,7 +26,7 @@ const XololearBand = props => {
         <div className={css.band}>
           <header className={css.header}>
             <p className={css.eyebrow}>
-              Para social sellers <span aria-hidden="true">🔥</span>
+              Social Sellers — Vendedores en redes <span aria-hidden="true">🔥</span>
             </p>
             <h2 className={css.title}>
               <span className={css.verb}>Xololéalo{TRADEMARK_SYMBOL}.</span> Viraliza tus productos en 1 clic.

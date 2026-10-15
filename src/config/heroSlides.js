@@ -12,7 +12,7 @@ const heroSlides = [
     eyebrow: 'Xololo Verified™',
     title: 'Compra y vende con quien está verificado',
     description:
-      'Cada seller Xololo Verified pasó un filtro de identidad, documentos legales y cuenta de cobros. Tu dinero se libera solo cuando confirmas que recibiste.',
+      'Cada vendedor con Xololo Verified pasó un filtro de identidad, documentos legales y cuenta de cobros. Tu dinero se libera solo cuando confirmas que recibiste.',
     ctas: [
       { label: 'Explorar productos', href: '/s?pub_listingType=product' },
       { label: '¿Qué es Verified?', href: '/p/verified', variant: 'ghost' },

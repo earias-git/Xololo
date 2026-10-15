@@ -86,8 +86,8 @@ const VerifiedBand = props => {
             </h2>
             <p className={css.description}>
               Cada vendedor con este sello pasó por 4 filtros antes de ponerle un
-              producto frente a tus ojos. Para el buyer, es la garantía de que
-              compra sin miedo. Para el seller, es la razón por la que su
+              producto frente a tus ojos. Para el comprador, es la garantía de
+              que compra sin miedo. Para el vendedor, es la razón por la que su
               conversión sube.
             </p>
           </header>
@@ -118,12 +118,30 @@ const VerifiedBand = props => {
 
           {hideCtas ? null : (
             <div className={css.ctas}>
+              {/* 3 filtros rápidos para el comprador. "Ver tiendas" hoy va
+                  al mismo listing filtrado por verified — pendiente un
+                  directorio real /tiendas-verified con cards de storefront. */}
+              <div className={css.ctasBuyer}>
+                <a
+                  className={css.ctaSecondary}
+                  href="/s?pub_verified=true&pub_listingType=product"
+                >
+                  Ver productos
+                </a>
+                <a
+                  className={css.ctaSecondary}
+                  href="/s?pub_verified=true&pub_listingType=service,service-day"
+                >
+                  Ver servicios
+                </a>
+                <a className={css.ctaSecondary} href="/s?pub_verified=true">
+                  Ver tiendas
+                </a>
+              </div>
+              {/* CTA del vendedor: separado para que no compita visualmente
+                  con los 3 filtros de arriba. */}
               <a className={css.ctaPrimary} href="/p/verified#seller">
                 Quiero el sello Verified
-                <span aria-hidden="true"> →</span>
-              </a>
-              <a className={css.ctaSecondary} href="/s?pub_verified=true">
-                Ver tiendas Verified
                 <span aria-hidden="true"> →</span>
               </a>
             </div>

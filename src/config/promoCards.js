@@ -11,7 +11,7 @@ const promoCards = [
     kicker: 'Ofertas del día',
     title: 'Hasta 30% off en artesanías mexicanas',
     description:
-      'Piezas hechas a mano de sellers Verified en Oaxaca, Puebla y Michoacán.',
+      'Piezas hechas a mano de vendedores Verified en Oaxaca, Puebla y Michoacán.',
     cta: 'Ver ofertas',
     href: '/s?pub_categoryLevel1=artesanias',
     variant: 'amber',
@@ -27,7 +27,7 @@ const promoCards = [
   },
   {
     id: 'xololo-verified',
-    kicker: 'Para social sellers',
+    kicker: 'Social Sellers — Vendedores en redes',
     title: 'Obtén el sello Xololo Verified™',
     description:
       'Más conversión, visibilidad superior y pack de assets para tu bio de Instagram, portada de Facebook y firma de WhatsApp.',
