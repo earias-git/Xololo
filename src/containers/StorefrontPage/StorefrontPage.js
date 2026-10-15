@@ -10,6 +10,7 @@ import {
   selectStorefrontInProgress,
   selectStorefrontNotFound,
   selectStorefrontListings,
+  selectStorefrontListingsFetched,
 } from '../../ducks/storefrontSeller.duck';
 import { selectStorefrontSlug } from '../../ducks/storefrontSubdomain.duck';
 import { selectCartItemCount } from '../../ducks/cart.duck';
@@ -247,16 +248,26 @@ const StorefrontPageComponent = props => {
     slug,
     seller,
     listings,
+    listingsFetched,
     inProgress,
     notFound,
     onFetchSeller,
   } = props;
 
+  // XOLOLO: el SSR (server/dataLoader.js) hidrata sólo `seller` para que
+  // crawlers de WhatsApp/FB/X vean los meta OG en el HTML inicial. Los
+  // listings NO se hidratan server-side (requieren la Marketplace SDK del
+  // cliente). Si el guard fuera `!seller`, el fetch client-side nunca
+  // dispararía después del hydrate y el catálogo quedaría vacío — bug
+  // "Esta tienda aún no tiene productos" reportado 2026-10-15. El guard
+  // correcto es `!listingsFetched`: distingue "nunca intenté fetch" (listings
+  // null) de "fetch completado, aunque sea con 0 resultados" (listings con
+  // data[]). El thunk sobrescribe seller con los mismos datos, es idempotente.
   useEffect(() => {
-    if (slug && onFetchSeller && !seller && !notFound) {
+    if (slug && onFetchSeller && !listingsFetched && !notFound) {
       onFetchSeller(slug);
     }
-  }, [slug, seller, notFound, onFetchSeller]);
+  }, [slug, listingsFetched, notFound, onFetchSeller]);
 
   // XOLOLO F3 · ampliación admin: dispara store.viewed una vez por
   // sesión por seller. Alimenta la sección "Tráfico" de /admin
@@ -584,6 +595,7 @@ StorefrontPageComponent.propTypes = {
   slug: string,
   seller: object,
   listings: array,
+  listingsFetched: bool,
   inProgress: bool,
   notFound: bool,
   onFetchSeller: func,
@@ -593,6 +605,7 @@ const mapStateToProps = state => ({
   slug: selectStorefrontSlug(state),
   seller: selectStorefrontSeller(state),
   listings: selectStorefrontListings(state),
+  listingsFetched: selectStorefrontListingsFetched(state),
   inProgress: selectStorefrontInProgress(state),
   notFound: selectStorefrontNotFound(state),
 });

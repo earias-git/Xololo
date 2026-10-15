@@ -153,3 +153,10 @@ export const selectStorefrontListings = state => {
   if (!listings?.data?.length) return [];
   return listings.data.map((l, i) => listingToItem(l, listings.included, i));
 };
+
+// XOLOLO: distingue "nunca se intentó fetch" (null) de "fetch completado,
+// quizá con 0 resultados" (objeto con data[]). Lo usa StorefrontPage para
+// decidir si re-disparar el thunk client-side después de un SSR hydrate
+// que trajo seller pero no listings (ver dataLoader.js).
+export const selectStorefrontListingsFetched = state =>
+  state.storefrontSeller?.listings !== null && state.storefrontSeller?.listings !== undefined;
