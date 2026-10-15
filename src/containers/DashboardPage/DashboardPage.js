@@ -32,7 +32,7 @@ import css from './DashboardPage.module.css';
 const SECTIONS = [
   { key: 'ventas', label: 'Ventas' },
   { key: 'productos', label: 'Productos' },
-  { key: 'promote', label: 'Xololo Promote' },
+  { key: 'promote', label: 'Xololear' },
   { key: 'reportes', label: 'Reportes' },
 ];
 

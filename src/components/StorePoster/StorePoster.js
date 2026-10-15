@@ -757,7 +757,7 @@ const ShareBar = ({
         onClick={() => setOpen(o => !o)}
         disabled={busy}
       >
-        {busy ? 'Preparando…' : '📤 Compartir'}
+        {busy ? 'Preparando…' : '🔥 Xololéalo'}
       </button>
       {open ? (
         <div className={css.sharePopover}>
@@ -767,7 +767,7 @@ const ShareBar = ({
               className={css.shareOption}
               onClick={handleNativeShare}
             >
-              📱 Compartir con imagen
+              📱 Xololear con imagen
             </button>
           ) : null}
           <button type="button" className={css.shareOption} onClick={handleWhatsApp}>

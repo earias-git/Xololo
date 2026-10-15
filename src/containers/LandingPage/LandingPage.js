@@ -34,6 +34,7 @@ import PromoCards from '../../components/PromoCards/PromoCards';
 import FeaturedListings from '../../components/FeaturedListings/FeaturedListings';
 import FeaturedStores from '../../components/FeaturedStores/FeaturedStores';
 import VerifiedBand from '../../components/VerifiedBand/VerifiedBand';
+import XololearBand from '../../components/XololearBand/XololearBand';
 import AppBand from '../../components/AppBand/AppBand';
 import heroSlides from '../../config/heroSlides';
 import trustItems from '../../config/trustItems';
@@ -121,6 +122,7 @@ export const LandingPageComponent = props => {
         <>
           <CategoryRail categories={categories} />
           <PromoCards cards={promoCards} />
+          <XololearBand />
           <FeaturedListings
             title="Productos destacados"
             seeAllLabel="Ver todos los productos"

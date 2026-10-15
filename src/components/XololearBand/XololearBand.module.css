@@ -1,0 +1,235 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  width: 100%;
+  padding: 20px 0 24px;
+  background-color: #ffffff;
+
+  @media (--viewportMedium) {
+    padding: 32px 0 40px;
+  }
+}
+
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 16px;
+
+  @media (--viewportMedium) {
+    padding: 0 40px;
+  }
+}
+
+/* Fondo con gradiente ámbar → fucsia para que CONTRASTE con VerifiedBand
+   (que es navy sombrio). Xololear es la cara "fiesta/energía", Verified
+   es la cara "respaldo serio" — queremos que se vean distintas al scroll. */
+.band {
+  background: linear-gradient(135deg, #ff8a3d 0%, #ff4f91 100%);
+  color: #ffffff;
+  border-radius: 14px;
+  padding: 22px 18px 24px;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+  box-shadow: 0 10px 30px rgba(255, 79, 145, 0.18);
+
+  @media (--viewportMedium) {
+    gap: 28px;
+    padding: 36px 44px 40px;
+    border-radius: 18px;
+  }
+}
+
+.header {
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff2d4;
+
+  @media (--viewportMedium) {
+    font-size: 12px;
+  }
+}
+
+.title {
+  margin: 0 0 10px;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #ffffff;
+  text-wrap: balance;
+
+  @media (--viewportMedium) {
+    font-size: 30px;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* El verbo propio va en display "bomba" — un pelín más grande, con
+   acento gráfico. Es la pieza de contagio verbal. */
+.verb {
+  display: inline-block;
+  font-weight: 900;
+  background: linear-gradient(180deg, #fff6c2 0%, #ffffff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  padding-right: 2px;
+}
+
+.description {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  max-width: 68ch;
+  color: rgba(255, 255, 255, 0.92);
+
+  @media (--viewportMedium) {
+    font-size: 15px;
+    line-height: 1.55;
+  }
+}
+
+.tools {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+
+  @media (min-width: 560px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 24px;
+  }
+
+  @media (--viewportLarge) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+.tool {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ring {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+
+  @media (--viewportMedium) {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+.ring > svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+
+  @media (--viewportMedium) {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.toolCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.toolTitle {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.25;
+
+  @media (--viewportMedium) {
+    font-size: 14.5px;
+  }
+}
+
+.toolDesc {
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.85);
+
+  @media (--viewportMedium) {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+}
+
+.ctas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+
+  @media (min-width: 560px) {
+    flex-direction: row;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+}
+
+.ctaPrimary,
+.ctaSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 800;
+  text-decoration: none;
+  line-height: 1;
+  transition: transform 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+
+.ctaPrimary {
+  background-color: #ffffff;
+  color: #d6276b;
+}
+
+.ctaPrimary:hover,
+.ctaPrimary:focus-visible {
+  background-color: #fff2d4;
+  transform: translateY(-1px);
+}
+
+.ctaSecondary {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+}
+
+.ctaSecondary:hover,
+.ctaSecondary:focus-visible {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.8);
+  transform: translateY(-1px);
+}

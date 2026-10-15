@@ -104,10 +104,10 @@ const DashboardPromoteView = () => {
     <>
       <header className={css.header}>
         <div>
-          <h2 className={css.pageTitle}>Xololo Promote</h2>
+          <h2 className={css.pageTitle}>Xololear</h2>
           <p className={css.pageSubtitle}>
-            Comparte tus productos en redes sociales, genera códigos QR y descarga carteles para
-            imprimir. Toda la promoción de tus productos en un solo lugar.
+            Xololéalo. 🔥 Convierte seguidores en clientes sin salir del chat. Comparte productos,
+            genera QR y descarga carteles para IG, WhatsApp y TikTok — todo en un clic.
           </p>
         </div>
       </header>
