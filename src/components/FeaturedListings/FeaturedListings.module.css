@@ -57,13 +57,22 @@
   gap: 14px;
   grid-template-columns: repeat(2, 1fr);
 
-  @media (min-width: 560px) {
+  @media (--viewportSmall) {
     grid-template-columns: repeat(3, 1fr);
   }
 
+  /* Progresivo 3 → 4 → 6: antes saltábamos de 3 (560) directo a 6 (768),
+     lo que en iPad portrait (768x1024) hacía cards de ~120px con títulos y
+     precios cortados. 4 columnas en viewportMedium y 6 sólo en
+     viewportLarge mejora densidad sin sacrificar el "muchas cards" en
+     laptop/desktop. */
   @media (--viewportMedium) {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
+  }
+
+  @media (--viewportLarge) {
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 

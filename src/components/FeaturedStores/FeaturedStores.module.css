@@ -57,7 +57,7 @@
   gap: 16px;
   grid-template-columns: 1fr;
 
-  @media (min-width: 720px) {
+  @media (--viewportMedium) {
     grid-template-columns: repeat(3, 1fr);
   }
 }

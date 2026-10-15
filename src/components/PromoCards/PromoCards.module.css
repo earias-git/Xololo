@@ -22,8 +22,10 @@
   grid-template-columns: 1fr;
 
   /* From tablet width onwards, arrange the three cards in a row like the
-     mockup — first card slightly wider so its bigger headline breathes. */
-  @media (min-width: 640px) {
+     mockup — first card slightly wider so its bigger headline breathes.
+     --viewportMedium (768) en vez de 640 custom: así iPad portrait entra
+     limpio en la misma transición que el resto del landing. */
+  @media (--viewportMedium) {
     grid-template-columns: 1.3fr 1fr 1fr;
   }
 }

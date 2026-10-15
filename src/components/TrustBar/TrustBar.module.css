@@ -15,7 +15,7 @@
   gap: 18px;
   grid-template-columns: 1fr;
 
-  @media (min-width: 560px) {
+  @media (--viewportSmall) {
     grid-template-columns: 1fr 1fr;
     gap: 20px 32px;
   }
