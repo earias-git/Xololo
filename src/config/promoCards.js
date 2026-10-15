@@ -26,13 +26,13 @@ const promoCards = [
     variant: 'green',
   },
   {
-    id: 'vender-hoy',
-    kicker: 'Para tu negocio',
-    title: 'Vende en Xololo hoy mismo',
+    id: 'xololo-verified',
+    kicker: 'Para social sellers',
+    title: 'Obtén el sello Xololo Verified™',
     description:
-      'Tu tienda propia + acceso al marketplace, sin elegir entre uno u otro.',
-    cta: 'Empezar a vender',
-    href: '/signup',
+      'Más conversión, visibilidad superior y pack de assets para tu bio de Instagram, portada de Facebook y firma de WhatsApp.',
+    cta: 'Verificarme ahora',
+    href: '/p/verified#seller',
     variant: 'navy',
   },
 ];

@@ -5,26 +5,36 @@
 
 import React from 'react';
 
-const shieldPath = (
-  <path d="M12 3l7 3v5c0 5-3.4 8.4-7 10-3.6-1.6-7-5-7-10V6l7-3Z" />
-);
-
-const truckPath = (
+// Shield con palomita — verificación de identidad
+const shieldCheckPath = (
   <>
-    <path d="M3 7h11l4 4v6h-2M3 7v10h2M3 7l2-3h9l2 3" />
-    <circle cx="7" cy="18" r="1.6" />
-    <circle cx="17" cy="18" r="1.6" />
+    <path d="M12 3l7 3v5c0 5-3.4 8.4-7 10-3.6-1.6-7-5-7-10V6l7-3Z" />
+    <path d="M9 12l2.2 2.2L15.2 10" />
   </>
 );
 
-const flagPath = (
+// Candado — pago protegido
+const lockPath = (
   <>
-    <path d="M20.8 8.6c0 5-8.8 10.4-8.8 10.4S3.2 13.6 3.2 8.6a4.6 4.6 0 0 1 8.8-1.9 4.6 4.6 0 0 1 8.8 1.9Z" />
+    <rect x="5" y="10" width="14" height="10" rx="2" />
+    <path d="M8 10V7a4 4 0 0 1 8 0v3" />
   </>
 );
 
-const whatsappPath = (
-  <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.09-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2Z" />
+// Hoja con sello — factura automática
+const invoicePath = (
+  <>
+    <path d="M7 3h7l4 4v14H7z" />
+    <path d="M14 3v4h4" />
+    <path d="M10 13h5M10 17h3" />
+  </>
+);
+
+// Chat burbuja — soporte humano
+const chatPath = (
+  <>
+    <path d="M20 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2Z" />
+  </>
 );
 
 const Icon = ({ children }) => (
@@ -43,28 +53,28 @@ const Icon = ({ children }) => (
 
 const trustItems = [
   {
+    id: 'vendedores-verificados',
+    title: 'Vendedores verificados',
+    description: 'Identidad, RFC y documentos aprobados por Xololo',
+    icon: <Icon>{shieldCheckPath}</Icon>,
+  },
+  {
     id: 'pago-protegido',
     title: 'Pago protegido',
-    description: 'Tu dinero se libera hasta que confirmas',
-    icon: <Icon>{shieldPath}</Icon>,
+    description: 'Tu dinero se libera cuando confirmas que recibiste',
+    icon: <Icon>{lockPath}</Icon>,
   },
   {
-    id: 'envios-mexico',
-    title: 'Envíos a todo México',
-    description: 'Rastreo en tiempo real',
-    icon: <Icon>{truckPath}</Icon>,
+    id: 'factura-automatica',
+    title: 'Factura automática',
+    description: 'CFDI emitido al momento de la compra',
+    icon: <Icon>{invoicePath}</Icon>,
   },
   {
-    id: 'negocios-mx',
-    title: 'Hecho por negocios mexicanos',
-    description: 'MiPyMEs verificadas en tu ciudad',
-    icon: <Icon>{flagPath}</Icon>,
-  },
-  {
-    id: 'whatsapp',
-    title: 'Atención por WhatsApp',
-    description: 'Soporte humano, no bots',
-    icon: <Icon>{whatsappPath}</Icon>,
+    id: 'soporte-real',
+    title: 'Soporte real',
+    description: 'Chat y WhatsApp humano si algo no sale como esperabas',
+    icon: <Icon>{chatPath}</Icon>,
   },
 ];
 

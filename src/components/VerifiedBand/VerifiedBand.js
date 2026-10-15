@@ -3,47 +3,64 @@ import classNames from 'classnames';
 
 import css from './VerifiedBand.module.css';
 
-// XOLOLO: banda promocional del sello Xololo Verified™. Muestra el pitch de
-// confianza a la izquierda y cuatro mini badges (Verificado, Confiable,
-// Seguro, Negocio real) a la derecha.
+// XOLOLO: banda del sello Xololo Verified™. Explica los 4 criterios reales
+// que un seller cumple para obtener el badge (identidad, documentos legales,
+// cuenta de cobros y suscripción activa) y ofrece dos CTAs: una para sellers
+// que quieren verificarse y otra para buyers que quieren filtrar tiendas
+// verificadas en el marketplace.
+//
+// Los criterios aquí deben mantenerse alineados con la lógica real que
+// calcula el badge en el server: server/api-util/sellerVerified.js.
 const VerifiedBand = props => {
   const { className, rootClassName } = props;
 
-  const badges = [
+  const criteria = [
     {
-      id: 'verificado',
-      label: 'Verificado',
-      icon: (
-        <path d="M4 12l5 5L20 6" />
-      ),
-    },
-    {
-      id: 'confiable',
-      label: 'Confiable',
+      id: 'identidad',
+      title: 'Identidad validada',
+      description: 'INE, CURP y RFC verificados contra fuentes oficiales',
       icon: (
         <>
           <circle cx="12" cy="8" r="4" />
           <path d="M4 21c1.4-4 5-6 8-6s6.6 2 8 6" />
+          <path d="M15.5 7.5l1.5 1.5 3-3" />
         </>
       ),
     },
     {
-      id: 'seguro',
-      label: 'Seguro',
+      id: 'documentos',
+      title: 'Documentos aprobados',
+      description:
+        'Constancia fiscal, acta constitutiva (si moral) y RFC vigente, revisados por Xololo',
       icon: (
         <>
-          <rect x="5" y="10" width="14" height="10" rx="2" />
-          <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+          <path d="M7 3h7l4 4v14H7z" />
+          <path d="M14 3v4h4" />
+          <path d="M9.5 14l2 2 3.5-4" />
         </>
       ),
     },
     {
-      id: 'negocio-real',
-      label: 'Negocio real',
+      id: 'cobros',
+      title: 'Cuenta de cobros',
+      description:
+        'Pagos a cuenta bancaria registrada — no a cuenta personal desconocida',
       icon: (
         <>
-          <path d="M4 21V10l8-6 8 6v11" />
-          <path d="M9 21v-6h6v6" />
+          <path d="M3 10l9-6 9 6" />
+          <path d="M5 10v9h14v-9" />
+          <path d="M9 19v-6h6v6" />
+        </>
+      ),
+    },
+    {
+      id: 'suscripcion',
+      title: 'Negocio activo',
+      description: 'Suscripción vigente — no un vendedor fantasma',
+      icon: (
+        <>
+          <path d="M4 12l5 5L20 6" />
+          <circle cx="12" cy="12" r="10" />
         </>
       ),
     },
@@ -56,17 +73,22 @@ const VerifiedBand = props => {
     >
       <div className={css.container}>
         <div className={css.band}>
-          <div className={css.copy}>
-            <p className={css.eyebrow}>Confianza</p>
-            <h2 className={css.title}>Compra y vende con Xololo Verified™</h2>
+          <header className={css.header}>
+            <p className={css.eyebrow}>Confianza bidireccional</p>
+            <h2 className={css.title}>
+              Xololo Verified™ — el sello que respalda cada compra
+            </h2>
             <p className={css.description}>
-              El sello que confirma que un negocio cumple, es confiable y es real
-              — visible en cada listing y en el storefront del seller.
+              Cada vendedor con este sello pasó por 4 filtros antes de ponerle un
+              producto frente a tus ojos. Para el buyer, es la garantía de que
+              compra sin miedo. Para el seller, es la razón por la que su
+              conversión sube.
             </p>
-          </div>
-          <ul className={css.badges}>
-            {badges.map(b => (
-              <li key={b.id} className={css.badge}>
+          </header>
+
+          <ul className={css.criteria}>
+            {criteria.map(c => (
+              <li key={c.id} className={css.criterion}>
                 <span className={css.ring}>
                   <svg
                     viewBox="0 0 24 24"
@@ -77,13 +99,27 @@ const VerifiedBand = props => {
                     strokeLinejoin="round"
                     aria-hidden="true"
                   >
-                    {b.icon}
+                    {c.icon}
                   </svg>
                 </span>
-                <span className={css.label}>{b.label}</span>
+                <div className={css.criterionCopy}>
+                  <span className={css.criterionTitle}>{c.title}</span>
+                  <span className={css.criterionDesc}>{c.description}</span>
+                </div>
               </li>
             ))}
           </ul>
+
+          <div className={css.ctas}>
+            <a className={css.ctaPrimary} href="/p/verified#seller">
+              Quiero el sello Verified
+              <span aria-hidden="true"> →</span>
+            </a>
+            <a className={css.ctaSecondary} href="/s?pub_verified=true">
+              Ver tiendas Verified
+              <span aria-hidden="true"> →</span>
+            </a>
+          </div>
         </div>
       </div>
     </section>
