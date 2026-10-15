@@ -42,7 +42,7 @@
 
 .eyebrow {
   margin: 0 0 4px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -50,7 +50,7 @@
 
   @media (--viewportMedium) {
     margin: 0 0 6px;
-    font-size: 11px;
+    font-size: 13px;
   }
 }
 
@@ -156,13 +156,13 @@
 }
 
 .criterionDesc {
-  font-size: 12px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.78);
 
   @media (--viewportMedium) {
-    font-size: 13px;
-    line-height: 1.45;
+    font-size: 13.5px;
+    line-height: 1.5;
   }
 }
 
@@ -188,6 +188,10 @@
   gap: 6px;
 }
 
+/* Touch targets: iOS HIG recomienda ≥44pt y Material ≥48dp. Usamos
+   min-height 44px (ctaPrimary) y 40px (ctaSecondary chips de filtro —
+   son auxiliares, no acción principal) para evitar tap impreciso en
+   iPhone/Android sin agrandar la banda. */
 .ctaPrimary,
 .ctaSecondary {
   display: inline-flex;
@@ -201,8 +205,9 @@
 }
 
 .ctaPrimary {
-  padding: 10px 18px;
-  font-size: 13.5px;
+  min-height: 44px;
+  padding: 12px 22px;
+  font-size: 14.5px;
   background-color: #6bcb8c;
   color: #0f1a2e;
 }
@@ -214,8 +219,9 @@
 }
 
 .ctaSecondary {
-  padding: 7px 14px;
-  font-size: 12.5px;
+  min-height: 40px;
+  padding: 10px 16px;
+  font-size: 13.5px;
   background-color: transparent;
   color: #ffffff;
   border: 1.3px solid rgba(255, 255, 255, 0.35);
