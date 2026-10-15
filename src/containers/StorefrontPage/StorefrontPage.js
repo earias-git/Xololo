@@ -430,8 +430,11 @@ const StorefrontPageComponent = props => {
 
       {/* XOLOLO: sello de confianza — reutilizamos VerifiedBand del home
           para que la seña visual sea idéntica en toda la plataforma
-          (mismo layout, mismos íconos, mismo copy "Xololo Verified™"). */}
-      <VerifiedBand />
+          (mismo layout, mismos íconos, mismo copy "Xololo Verified™").
+          hideCtas: en storefront la banda es puramente informativa — no
+          queremos que el buyer salga hacia el marketplace general ni a
+          /p/verified mientras navega esta tienda. */}
+      <VerifiedBand hideCtas />
 
       {/* XOLOLO P2: la barra de stats se mudó al header (StoreHeaderStats).
           Antes vivía aquí como StoreStatsWidget grande — la info clave

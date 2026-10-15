@@ -9,10 +9,16 @@ import css from './VerifiedBand.module.css';
 // que quieren verificarse y otra para buyers que quieren filtrar tiendas
 // verificadas en el marketplace.
 //
+// Prop `hideCtas`: oculta ambos CTAs. Lo usamos cuando la banda vive dentro
+// del storefront de un seller — ahí sacar al buyer hacia /s?pub_verified=true
+// o /p/verified#seller rompe la narrativa de "estás en esta tienda". El bloque
+// se queda como pieza puramente informativa que respalda la confianza del
+// seller actual, sin links que redirijan fuera.
+//
 // Los criterios aquí deben mantenerse alineados con la lógica real que
 // calcula el badge en el server: server/api-util/sellerVerified.js.
 const VerifiedBand = props => {
-  const { className, rootClassName } = props;
+  const { className, rootClassName, hideCtas = false } = props;
 
   const criteria = [
     {
@@ -110,16 +116,18 @@ const VerifiedBand = props => {
             ))}
           </ul>
 
-          <div className={css.ctas}>
-            <a className={css.ctaPrimary} href="/p/verified#seller">
-              Quiero el sello Verified
-              <span aria-hidden="true"> →</span>
-            </a>
-            <a className={css.ctaSecondary} href="/s?pub_verified=true">
-              Ver tiendas Verified
-              <span aria-hidden="true"> →</span>
-            </a>
-          </div>
+          {hideCtas ? null : (
+            <div className={css.ctas}>
+              <a className={css.ctaPrimary} href="/p/verified#seller">
+                Quiero el sello Verified
+                <span aria-hidden="true"> →</span>
+              </a>
+              <a className={css.ctaSecondary} href="/s?pub_verified=true">
+                Ver tiendas Verified
+                <span aria-hidden="true"> →</span>
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </section>
