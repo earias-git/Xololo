@@ -10,10 +10,17 @@ const AUTOPLAY_INTERVAL_MS = 6000;
 // encima y hasta dos CTAs. Rota automáticamente a menos que el visitante
 // prefiera reduced motion; se pausa al pasar el mouse o al enfocar con
 // teclado, y expone flechas prev/next y bullets para navegación manual.
+// Touch swipe mínimo (en px) para considerar un gesto como "siguiente" o
+// "anterior". Un umbral bajo (~24px) atrapa swipes rápidos sin interferir
+// con scrolls verticales de la página — el handler compara X vs Y para
+// descartar deslizamientos no horizontales.
+const SWIPE_THRESHOLD_PX = 24;
+
 const HeroCarousel = props => {
   const { slides, className, rootClassName } = props;
   const [activeIdx, setActiveIdx] = useState(0);
   const containerRef = useRef(null);
+  const touchStart = useRef(null);
   const numSlides = slides?.length || 0;
 
   const goTo = useCallback(
@@ -27,6 +34,31 @@ const HeroCarousel = props => {
 
   const goNext = useCallback(() => goTo(activeIdx + 1), [goTo, activeIdx]);
   const goPrev = useCallback(() => goTo(activeIdx - 1), [goTo, activeIdx]);
+
+  // Touch swipe para móvil/tablet. Las flechas y bullets siguen activas —
+  // esto sólo añade el gesto natural de pasar slides con el dedo.
+  const handleTouchStart = useCallback(e => {
+    const t = e.changedTouches?.[0];
+    if (!t) return;
+    touchStart.current = { x: t.clientX, y: t.clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    e => {
+      const start = touchStart.current;
+      const t = e.changedTouches?.[0];
+      touchStart.current = null;
+      if (!start || !t) return;
+      const dx = t.clientX - start.x;
+      const dy = t.clientY - start.y;
+      // Descartar si el gesto fue más vertical que horizontal (scroll).
+      if (Math.abs(dy) > Math.abs(dx)) return;
+      if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
+      if (dx < 0) goNext();
+      else goPrev();
+    },
+    [goNext, goPrev]
+  );
 
   // Autoplay
   useEffect(() => {
@@ -99,6 +131,8 @@ const HeroCarousel = props => {
       className={classNames(rootClassName || css.root, className)}
       aria-roledescription="carousel"
       aria-label="Xololo hero"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <div className={css.viewport}>
         {slides.map((slide, idx) => {
