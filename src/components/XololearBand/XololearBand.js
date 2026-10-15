@@ -1,7 +1,9 @@
 import React from 'react';
 import classNames from 'classnames';
+import { useSelector } from 'react-redux';
 
 import xololearTools from '../../config/xololearTools';
+import { isSellerUserType } from '../../util/userTypes';
 
 import css from './XololearBand.module.css';
 
@@ -14,8 +16,23 @@ import css from './XololearBand.module.css';
 // Para habilitarlo cuando el trámite inicie, cambiar la constante abajo.
 const TRADEMARK_SYMBOL = ''; // cambiar a '™' cuando IMPI acuse recibo.
 
+// CTA primario según estado del usuario:
+//   - seller logueado → directo al dashboard de Xololear
+//   - cualquier otro caso (visitante, buyer, user sin userType) → signup
+// El label se adapta también para que un seller logueado no vea "ahora"
+// (ya tiene cuenta) y entre con el verbo directo.
+const buildCta = currentUser => {
+  const userType = currentUser?.attributes?.profile?.publicData?.userType;
+  if (currentUser && isSellerUserType(userType)) {
+    return { href: '/dashboard?section=promote', label: 'Xololear mis productos' };
+  }
+  return { href: '/signup?utm_source=xololear', label: 'Xololear ahora' };
+};
+
 const XololearBand = props => {
   const { className, rootClassName } = props;
+  const currentUser = useSelector(state => state.user?.currentUser);
+  const cta = buildCta(currentUser);
 
   return (
     <section
@@ -51,8 +68,8 @@ const XololearBand = props => {
           </ul>
 
           <div className={css.ctas}>
-            <a className={css.ctaPrimary} href="/signup?utm_source=xololear">
-              Xololear ahora
+            <a className={css.ctaPrimary} href={cta.href}>
+              {cta.label}
               <span aria-hidden="true"> →</span>
             </a>
             <a className={css.ctaSecondary} href="/p/como-funciona">

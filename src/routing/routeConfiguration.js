@@ -27,6 +27,7 @@ const MakeOfferPage = loadable(() => import(/* webpackChunkName: "MakeOfferPage"
 const LandingPage = loadable(() => import(/* webpackChunkName: "LandingPage" */ '../containers/LandingPage/LandingPage'));
 const SmartSearchPage = loadable(() => import(/* webpackChunkName: "SmartSearchPage" */ '../containers/SmartSearchPage/SmartSearchPage'));
 const CotizarEnvioPage = loadable(() => import(/* webpackChunkName: "CotizarEnvioPage" */ '../containers/CotizarEnvioPage/CotizarEnvioPage'));
+const TiendasVerifiedPage = loadable(() => import(/* webpackChunkName: "TiendasVerifiedPage" */ '../containers/TiendasVerifiedPage/TiendasVerifiedPage'));
 const ListingPageCoverPhoto = loadable(() => import(/* webpackChunkName: "ListingPageCoverPhoto" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCoverPhoto'));
 const ListingPageCarousel = loadable(() => import(/* webpackChunkName: "ListingPageCarousel" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCarousel'));
 const ManageListingsPage = loadable(() => import(/* webpackChunkName: "ManageListingsPage" */ '../containers/ManageListingsPage/ManageListingsPage'));
@@ -109,6 +110,14 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/cotizar-envio',
       name: 'CotizarEnvioPage',
       component: CotizarEnvioPage,
+    },
+    // XOLOLO: directorio público de tiendas Xololo Verified™.
+    // El CTA "Ver tiendas" de VerifiedBand aterriza aquí. Fetch
+    // client-side de /api/featured-stores?verified=true.
+    {
+      path: '/tiendas-verified',
+      name: 'TiendasVerifiedPage',
+      component: TiendasVerifiedPage,
     },
     {
       path: '/p/:pageId',

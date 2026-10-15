@@ -134,7 +134,7 @@ const VerifiedBand = props => {
                 >
                   Ver servicios
                 </a>
-                <a className={css.ctaSecondary} href="/s?pub_verified=true">
+                <a className={css.ctaSecondary} href="/tiendas-verified">
                   Ver tiendas
                 </a>
               </div>
