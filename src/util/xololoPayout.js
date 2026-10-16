@@ -39,17 +39,29 @@ const PCT_MOTOR = 0.036;
 const FIXED_XOLOLO_SUBUNITS = 1400;
 
 // Retención ISR por plataforma a personas físicas, LISR Art. 113-A.
-// Tasa fija (NO escala progresiva) para "enajenación de bienes y
-// prestación de servicios en general" = 1.0%. Para transporte terrestre y
-// entrega de bienes (Rappi/Uber Eats) sería 2.1%; para hospedaje
-// (Airbnb/Booking) 4%. En Xololo hoy el 99% de los sellers caen en 1.0%.
-// Sin RFC = 20% (gate antifraude task #39 fuerza RFC válido al publicar).
-// Reforma LIF 2026: personas morales 4% (no aplica a este placeholder
-// porque las retenciones hoy están desactivadas hasta registro SAT).
-const PCT_RET_ISR = 0.01;
+// La tasa depende del tipo de actividad fiscal del listing:
+//   - Enajenación de bienes y servicios en general: 1.0%  ← default Xololo
+//   - Transporte terrestre y entrega de bienes (Rappi, Uber Eats): 2.1%
+//   - Hospedaje (Airbnb, Booking, hoteles): 4%
+//   - Sin RFC: 20% fijo (gate antifraude #39 fuerza RFC al publicar)
+// Reforma LIF 2026: personas morales 4% uniforme (no modelado aquí porque
+// hoy las retenciones están desactivadas hasta registro SAT).
+export const TAX_ACTIVITIES = {
+  ENAJENACION_SERVICIOS: 'enajenacion',
+  TRANSPORTE_ENTREGA: 'transporte',
+  HOSPEDAJE: 'hospedaje',
+};
+
+const RET_ISR_PCT_BY_ACTIVITY = {
+  [TAX_ACTIVITIES.ENAJENACION_SERVICIOS]: 0.01,
+  [TAX_ACTIVITIES.TRANSPORTE_ENTREGA]: 0.021,
+  [TAX_ACTIVITIES.HOSPEDAJE]: 0.04,
+};
 
 // Retención IVA por plataforma a personas físicas inscritas, LIVA 18-J.
 // 8% = 50% del IVA causado del 16%. Sólo aplica si el producto es gravado.
+// La tasa de IVA retenido NO depende de la actividad fiscal, sólo del
+// régimen IVA del listing (16%, 0%, exento).
 const PCT_RET_IVA = 0.08;
 
 const round = n => Math.round(n);
@@ -67,12 +79,23 @@ const asSubunits = raw => {
   return Number.isFinite(n) ? Math.round(n) : 0;
 };
 
+// Formato legible del porcentaje de retención ISR según actividad.
+// Mantiene decimales sólo cuando aportan información (1.0% y 2.1%; 4%
+// se muestra como entero).
+const formatPct = pct => {
+  const asPercent = pct * 100;
+  const rounded = Math.round(asPercent * 10) / 10;
+  return Number.isInteger(rounded) ? `${rounded}%` : `${rounded.toFixed(1)}%`;
+};
+
 /**
  * Calcula el desglose completo del payout del seller.
  *
  * @param {Object} params
  * @param {number} params.priceSubunits - Precio total del producto en centavos.
  * @param {string} [params.ivaMode='16%'] - IVA_MODES.GRAVADO / TASA_CERO / EXENTO
+ * @param {string} [params.taxActivity='enajenacion'] - TAX_ACTIVITIES.*
+ *   determina la tasa de retención ISR (1% / 2.1% / 4%).
  * @param {number} [params.shippingSubunits=0] - Paquetería pass-through.
  * @param {boolean} [params.applyWithholdings=false] - Si retiene ISR/IVA.
  *   Default false hasta que Xololo se registre como plataforma tecnológica.
@@ -82,6 +105,7 @@ const asSubunits = raw => {
 export const computePayoutBreakdown = ({
   priceSubunits,
   ivaMode = IVA_MODES.GRAVADO,
+  taxActivity = TAX_ACTIVITIES.ENAJENACION_SERVICIOS,
   shippingSubunits = 0,
   applyWithholdings = false,
   sellerIsPhysicalPerson = true,
@@ -112,8 +136,11 @@ export const computePayoutBreakdown = ({
   const xololoAdminTotal = xololoAdminBase + ivaXololoAdmin;
 
   // Retenciones de plataforma. Placeholder hasta Facturapi + registro SAT.
+  const retIsrPct =
+    RET_ISR_PCT_BY_ACTIVITY[taxActivity] ??
+    RET_ISR_PCT_BY_ACTIVITY[TAX_ACTIVITIES.ENAJENACION_SERVICIOS];
   const shouldWithhold = applyWithholdings && sellerIsPhysicalPerson && price > 0;
-  const retIsr = shouldWithhold ? round(subtotal * PCT_RET_ISR) : 0;
+  const retIsr = shouldWithhold ? round(subtotal * retIsrPct) : 0;
   const retIva =
     shouldWithhold && ivaMode === IVA_MODES.GRAVADO ? round(subtotal * PCT_RET_IVA) : 0;
 
@@ -123,6 +150,7 @@ export const computePayoutBreakdown = ({
     // Entrada
     priceSubunits: price,
     ivaMode,
+    taxActivity,
     shippingSubunits: shipping,
 
     // Descomposición
@@ -136,6 +164,7 @@ export const computePayoutBreakdown = ({
 
     // Retenciones
     retIsrSubunits: retIsr,
+    retIsrPct,
     retIvaSubunits: retIva,
     appliedWithholdings: shouldWithhold,
 
@@ -147,7 +176,7 @@ export const computePayoutBreakdown = ({
       iva: ivaMode === IVA_MODES.GRAVADO ? '16%' : ivaMode === IVA_MODES.TASA_CERO ? '0%' : 'Exento',
       motorCobro: `${(PCT_MOTOR * 100).toFixed(1)}% + IVA`,
       xololoAdmin: `$${(FIXED_XOLOLO_SUBUNITS / 100).toFixed(2)} + IVA`,
-      retIsr: `${(PCT_RET_ISR * 100).toFixed(1)}%`,
+      retIsr: formatPct(retIsrPct),
       retIva: `${(PCT_RET_IVA * 100).toFixed(0)}%`,
     },
   };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { computePayoutBreakdown, IVA_MODES } from '../../util/xololoPayout';
+import { computePayoutBreakdown, IVA_MODES, TAX_ACTIVITIES } from '../../util/xololoPayout';
 
 import css from './XoloPayoutPreview.module.css';
 
@@ -27,6 +27,9 @@ import css from './XoloPayoutPreview.module.css';
 //   heading: título del bloque (default 'Cuánto recibirás por esta venta').
 //   ivaMode: '16%' | '0%' | 'exento' — default '16%'.
 //   ivaArticle: ej. "Art. 2-A I-b LIVA" — se muestra junto a IVA $0.00.
+//   taxActivity: 'enajenacion' | 'transporte' | 'hospedaje' (LISR 113-A).
+//     Determina la tasa de retención ISR (1.0% / 2.1% / 4%). Default
+//     'enajenacion' que cubre al 99% de los sellers Xololo.
 //   shippingSubunits: paquetería opcional pass-through.
 //   applyWithholdings: default false (Xololo aún no es plataforma SAT).
 //   sellerIsPhysicalPerson: default true.
@@ -63,6 +66,7 @@ const XoloPayoutPreview = ({
   heading = 'Cuánto recibirás por esta venta',
   ivaMode = IVA_MODES.GRAVADO,
   ivaArticle,
+  taxActivity = TAX_ACTIVITIES.ENAJENACION_SERVICIOS,
   shippingSubunits = 0,
   applyWithholdings = false,
   sellerIsPhysicalPerson = true,
@@ -94,6 +98,7 @@ const XoloPayoutPreview = ({
   const bd = computePayoutBreakdown({
     priceSubunits: Math.round(amount),
     ivaMode,
+    taxActivity,
     shippingSubunits,
     applyWithholdings,
     sellerIsPhysicalPerson,
@@ -152,11 +157,20 @@ const XoloPayoutPreview = ({
       </div>
 
       {/* Retenciones — placeholder hasta Facturapi + SAT. Siempre mostramos
-          la línea con base legal para que el seller aprenda el modelo. */}
+          la línea con base legal para que el seller aprenda el modelo. La
+          tasa ISR depende de la actividad fiscal del listing. */}
       <div className={`${css.row} ${css.muted}`}>
         <span>
           − Retención ISR plataforma ({bd.labels.retIsr}){' '}
-          <span className={css.article}>(LISR 113-A)</span>
+          <span className={css.article}>
+            (LISR 113-A ·{' '}
+            {taxActivity === TAX_ACTIVITIES.HOSPEDAJE
+              ? 'hospedaje'
+              : taxActivity === TAX_ACTIVITIES.TRANSPORTE_ENTREGA
+                ? 'transporte y entrega'
+                : 'enajenación y servicios'}
+            )
+          </span>
         </span>
         <span>−{money(bd.retIsrSubunits, currency)}</span>
       </div>
