@@ -1,25 +1,35 @@
 import React, { useEffect, useState } from 'react';
 
-import { computeFreightBreakdown } from '../../util/freightFees';
+import { computePayoutBreakdown, IVA_MODES } from '../../util/xololoPayout';
 
 import css from './XoloPayoutPreview.module.css';
 
-// XOLOLO: preview del payout que recibe el seller. Se usa en:
-//   - EditListingPricingForm: al definir precio del producto/servicio.
-//   - EditListingDeliveryForm: al definir costo de localDelivery.
-//   - FreightQuoteForm (via inline): al cotizar un envío por flete.
+// XOLOLO: preview del payout que recibe el seller al definir el precio
+// de un producto o servicio. Muestra:
+//   - Descomposición Subtotal + IVA (o IVA $0 con base legal si 0% o exento)
+//   - + Paquetería que paga el cliente (si aplica)
+//   - = Cliente paga total
+//   - – Motor de cobro (3.6% + IVA)
+//   - – Serv. administrativos ($14 + IVA)
+//   - – Retención ISR plataforma (1.1% — placeholder hasta Facturapi)
+//   - – Retención IVA plataforma (8% — placeholder, sólo si IVA 16%)
+//   - MONTO A RECIBIR EN TU CUENTA
+//   - Paquetería (pass-through a Skydropx, si aplica)
+//   - Nota educativa sobre retenciones y acreditamiento de IVA de insumos.
 //
-// La fórmula es la misma que aplica el server en compras normales
-// (server/api-util/xololoFees.js: 3.6% + IVA + $14 fijo + IVA) y en
-// cobros de flete (server/api-util/freightFees.js) — el modelo fiscal
-// es consistente. Reutilizamos computeFreightBreakdown que ya lo
-// implementa.
+// Se usa en:
+//   - EditListingPricingForm, EditListingPricingAndStockForm: al definir precio.
+//   - EditListingDeliveryForm: al definir costo de localDelivery.
 //
 // Props:
-//   amountSubunits: monto en centavos (integer). Si <=0 o no numérico,
-//                   no renderiza nada.
+//   price | amountSubunits: monto en centavos. Si <=0 muestra mensaje helper.
 //   currency: 'MXN' por default.
-//   heading: opcional, título del bloque.
+//   heading: título del bloque (default 'Cuánto recibirás por esta venta').
+//   ivaMode: '16%' | '0%' | 'exento' — default '16%'.
+//   ivaArticle: ej. "Art. 2-A I-b LIVA" — se muestra junto a IVA $0.00.
+//   shippingSubunits: paquetería opcional pass-through.
+//   applyWithholdings: default false (Xololo aún no es plataforma SAT).
+//   sellerIsPhysicalPerson: default true.
 
 const CURRENCY_LABEL = { MXN: '$', USD: 'US$' };
 const money = (subunits, currency = 'MXN') => {
@@ -46,7 +56,17 @@ const resolveSubunits = raw => {
   return null;
 };
 
-const XoloPayoutPreview = ({ amountSubunits, price, currency: currencyProp, heading }) => {
+const XoloPayoutPreview = ({
+  amountSubunits,
+  price,
+  currency: currencyProp,
+  heading = 'Cuánto recibirás por esta venta',
+  ivaMode = IVA_MODES.GRAVADO,
+  ivaArticle,
+  shippingSubunits = 0,
+  applyWithholdings = false,
+  sellerIsPhysicalPerson = true,
+}) => {
   // XOLOLO: client-only render (mounted-gate) para evitar mismatches
   // de hydration cuando values de FinalForm difieren entre server y
   // client (Money instances, initial values, etc.). El server siempre
@@ -70,38 +90,122 @@ const XoloPayoutPreview = ({ amountSubunits, price, currency: currencyProp, head
   }
   const currency =
     (typeof price === 'object' && price?.currency) || currencyProp || 'MXN';
-  const bd = computeFreightBreakdown(Math.round(amount));
+
+  const bd = computePayoutBreakdown({
+    priceSubunits: Math.round(amount),
+    ivaMode,
+    shippingSubunits,
+    applyWithholdings,
+    sellerIsPhysicalPerson,
+  });
+
+  const isGravado = ivaMode === IVA_MODES.GRAVADO;
+  const isExento = ivaMode === IVA_MODES.EXENTO;
+  const isTasaCero = ivaMode === IVA_MODES.TASA_CERO;
+  const hasShipping = bd.shippingSubunits > 0;
+  const defaultArticle = isGravado ? 'Art. 1 LIVA' : isTasaCero ? 'Art. 2-A LIVA' : 'Art. 9 LIVA';
+  const ivaArticleLabel = ivaArticle || defaultArticle;
+
   return (
     <div className={css.root}>
       {heading ? <p className={css.heading}>{heading}</p> : null}
-      <div className={css.row}>
-        <span>Precio (el comprador paga)</span>
-        <span>{money(bd.fleteSubunits, currency)}</span>
+
+      {/* Descomposición: Subtotal + IVA */}
+      <div className={`${css.row} ${css.muted}`}>
+        <span>Subtotal (sin IVA)</span>
+        <span>{money(bd.subtotalSubunits, currency)}</span>
       </div>
       <div className={`${css.row} ${css.muted}`}>
-        <span>Motor de Cobro ({bd.labels.motorCobro})</span>
-        <span>−{money(bd.motorCobroSubunits + bd.ivaMotorSubunits, currency)}</span>
+        <span>
+          IVA {bd.labels.iva} <span className={css.article}>({ivaArticleLabel})</span>
+        </span>
+        <span>{money(bd.ivaSubunits, currency)}</span>
+      </div>
+
+      <div className={`${css.row} ${css.subtotal}`}>
+        <span>Precio total del producto</span>
+        <span>{money(bd.priceSubunits, currency)}</span>
+      </div>
+
+      {/* Paquetería (si aplica) */}
+      {hasShipping ? (
+        <>
+          <div className={`${css.row} ${css.muted}`}>
+            <span>+ Paquetería que paga el cliente</span>
+            <span>{money(bd.shippingSubunits, currency)}</span>
+          </div>
+          <div className={`${css.row} ${css.subtotal}`}>
+            <span>Cliente paga total</span>
+            <span>{money(bd.clientPaysSubunits, currency)}</span>
+          </div>
+        </>
+      ) : null}
+
+      {/* Fees Xololo */}
+      <div className={`${css.row} ${css.muted}`}>
+        <span>− Motor de cobro ({bd.labels.motorCobro})</span>
+        <span>−{money(bd.motorCobroSubunits, currency)}</span>
       </div>
       <div className={`${css.row} ${css.muted}`}>
-        <span>Serv. Administrativos Xololo ({bd.labels.xololoAdmin})</span>
-        <span>−{money(bd.xololoAdminSubunits + bd.ivaXololoAdminSubunits, currency)}</span>
+        <span>− Serv. administrativos Xololo ({bd.labels.xololoAdmin})</span>
+        <span>−{money(bd.xololoAdminSubunits, currency)}</span>
       </div>
-      {bd.retIsrSubunits > 0 ? (
-        <div className={`${css.row} ${css.muted}`}>
-          <span>Retención ISR ({bd.labels.retIsr})</span>
-          <span>−{money(bd.retIsrSubunits, currency)}</span>
-        </div>
-      ) : null}
-      {bd.retIvaSubunits > 0 ? (
-        <div className={`${css.row} ${css.muted}`}>
-          <span>Retención IVA ({bd.labels.retIva})</span>
-          <span>−{money(bd.retIvaSubunits, currency)}</span>
-        </div>
-      ) : null}
+
+      {/* Retenciones — placeholder hasta Facturapi + SAT. Siempre mostramos
+          la línea con base legal para que el seller aprenda el modelo. */}
+      <div className={`${css.row} ${css.muted}`}>
+        <span>
+          − Retención ISR plataforma ({bd.labels.retIsr}){' '}
+          <span className={css.article}>(LISR 113-A)</span>
+        </span>
+        <span>−{money(bd.retIsrSubunits, currency)}</span>
+      </div>
+      <div className={`${css.row} ${css.muted}`}>
+        <span>
+          − Retención IVA plataforma {isGravado ? `(${bd.labels.retIva})` : ''}{' '}
+          <span className={css.article}>
+            {isGravado ? '(LIVA 18-J)' : `(no causa IVA · ${ivaArticleLabel})`}
+          </span>
+        </span>
+        <span>−{money(bd.retIvaSubunits, currency)}</span>
+      </div>
+
       <div className={`${css.row} ${css.total}`}>
-        <span>Recibirás</span>
+        <span>Monto a recibir en tu cuenta</span>
         <span>{money(bd.sellerReceivesSubunits, currency)}</span>
       </div>
+
+      {/* Paquetería pass-through: nota al final para que el seller entienda
+          que ese dinero NO entra a su cálculo — va directo a Skydropx. */}
+      {hasShipping ? (
+        <div className={`${css.row} ${css.passthrough}`}>
+          <span>Paquetería (pass-through a Skydropx)</span>
+          <span>{money(bd.shippingSubunits, currency)}</span>
+        </div>
+      ) : null}
+
+      {/* Nota educativa */}
+      <p className={css.footnote}>
+        {bd.appliedWithholdings
+          ? 'Las retenciones no son un gasto: son un pago adelantado de tu ISR/IVA que puedes acreditar al presentar tus declaraciones mensuales ante el SAT.'
+          : 'Hoy no aplicamos retenciones de plataforma. Cuando Xololo quede inscrita como plataforma tecnológica ante el SAT, estas líneas tomarán valor y serán acreditables en tu declaración mensual.'}
+        {isExento ? (
+          <>
+            {' '}
+            <strong>Producto exento ({ivaArticleLabel}):</strong> no causas IVA al
+            cliente, pero tampoco puedes acreditar el IVA que pagaste por tus
+            insumos relacionados.
+          </>
+        ) : null}
+        {isTasaCero ? (
+          <>
+            {' '}
+            <strong>Producto a tasa 0% ({ivaArticleLabel}):</strong> no cobras
+            IVA al cliente, pero sí puedes acreditar el IVA que pagaste por tus
+            insumos en tu declaración mensual.
+          </>
+        ) : null}
+      </p>
     </div>
   );
 };

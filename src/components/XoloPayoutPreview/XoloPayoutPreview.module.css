@@ -47,3 +47,53 @@
   color: var(--colorGrey900);
   font-size: 14px;
 }
+
+/* Línea de subtotal intermedio (precio total producto, cliente paga total)
+   — más contraste que .muted pero sin el peso de .total. Un divisor sutil
+   la separa del bloque siguiente. */
+.subtotal {
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--colorGrey100);
+  font-weight: 600;
+  color: var(--colorGrey900);
+  font-size: 13px;
+}
+
+/* Base legal entre paréntesis después del nombre de la línea
+   (ej. "IVA 16% (Art. 1 LIVA)"). Más pequeño y gris para no competir
+   con el valor principal. */
+.article {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--colorGrey600);
+}
+
+/* Línea de paquetería pass-through al transportista. Visualmente distinta
+   para que el seller entienda que NO forma parte de su payout — es dinero
+   que atraviesa Xololo pero va a Skydropx. */
+.passthrough {
+  margin-top: 10px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: var(--colorGrey50);
+  color: var(--colorGrey600);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Nota educativa al pie: retenciones no son gasto, exento/0% y acreditación
+   de IVA de insumos. Siempre visible debajo del breakdown. */
+.footnote {
+  margin: 12px 0 0 0;
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: var(--colorInfoLight, #eef3fb);
+  color: var(--colorGrey700);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.footnote strong {
+  color: var(--colorGrey900);
+}
