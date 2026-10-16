@@ -19,7 +19,9 @@
 //     - Serv administrativos: $14.00 + IVA = $16.24 fijo por transacción
 //
 //   Retenciones (sobre el subtotal sin IVA):
-//     - ISR plataforma: 1.1% (máxima escala LISR 113-A), 0.4-1.1% real
+//     - ISR plataforma: 1.0% fija (LISR 113-A — enajenación de bienes y
+//       servicios en general). Transporte/entrega sería 2.1%, hospedaje
+//       4% — no aplica a casi ningún seller Xololo hoy.
 //     - IVA plataforma: 8% (= 50% del IVA causado del 16%), sólo si GRAVADO
 //   Las retenciones se aplican SÓLO cuando `applyWithholdings=true` Y el
 //   seller es persona física. Hoy el default es false hasta que Xololo se
@@ -35,7 +37,19 @@
 const PCT_IVA = 0.16;
 const PCT_MOTOR = 0.036;
 const FIXED_XOLOLO_SUBUNITS = 1400;
-const PCT_RET_ISR = 0.011;
+
+// Retención ISR por plataforma a personas físicas, LISR Art. 113-A.
+// Tasa fija (NO escala progresiva) para "enajenación de bienes y
+// prestación de servicios en general" = 1.0%. Para transporte terrestre y
+// entrega de bienes (Rappi/Uber Eats) sería 2.1%; para hospedaje
+// (Airbnb/Booking) 4%. En Xololo hoy el 99% de los sellers caen en 1.0%.
+// Sin RFC = 20% (gate antifraude task #39 fuerza RFC válido al publicar).
+// Reforma LIF 2026: personas morales 4% (no aplica a este placeholder
+// porque las retenciones hoy están desactivadas hasta registro SAT).
+const PCT_RET_ISR = 0.01;
+
+// Retención IVA por plataforma a personas físicas inscritas, LIVA 18-J.
+// 8% = 50% del IVA causado del 16%. Sólo aplica si el producto es gravado.
 const PCT_RET_IVA = 0.08;
 
 const round = n => Math.round(n);
