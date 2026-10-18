@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 
-import { computePayoutBreakdown, IVA_MODES, TAX_ACTIVITIES } from '../../util/xololoPayout';
+import {
+  computePayoutBreakdown,
+  IVA_MODES,
+  TAX_ACTIVITIES,
+  PERSON_TYPES,
+} from '../../util/xololoPayout';
 import { getTaxDefaultsForCategory } from '../../util/xololoTaxCategories';
 
 import css from './XoloPayoutPreview.module.css';
@@ -34,9 +39,13 @@ import css from './XoloPayoutPreview.module.css';
 //   taxActivity: 'enajenacion' | 'transporte' | 'hospedaje' (LISR 113-A).
 //     Determina la tasa de retención ISR (1.0% / 2.1% / 4%). Default
 //     'enajenacion' que cubre al 99% de los sellers Xololo.
+//   personType: 'individual' | 'physical_business' | 'moral'. Define si
+//     aplican retenciones por plataforma. Particular ocasional y PM no
+//     son contribuyentes 113-A (retenciones = 0). Default 'physical_business'.
+//   hasRfc: boolean. Si el seller está inscrito al RFC. Sin RFC = ISR 20%
+//     + IVA 16%. Default true (gate antifraude #39 fuerza RFC al publicar).
 //   shippingSubunits: paquetería opcional pass-through.
 //   applyWithholdings: default false (Xololo aún no es plataforma SAT).
-//   sellerIsPhysicalPerson: default true.
 
 const CURRENCY_LABEL = { MXN: '$', USD: 'US$' };
 const money = (subunits, currency = 'MXN') => {
@@ -72,9 +81,10 @@ const XoloPayoutPreview = ({
   ivaMode: ivaModeProp,
   ivaArticle: ivaArticleProp,
   taxActivity: taxActivityProp,
+  personType = PERSON_TYPES.PHYSICAL_BUSINESS,
+  hasRfc = true,
   shippingSubunits = 0,
   applyWithholdings = false,
-  sellerIsPhysicalPerson = true,
 }) => {
   // Resuelve defaults a partir de la categoría del listing. Los props
   // explícitos tienen precedencia (p. ej. el checkbox de clasificación
@@ -111,9 +121,10 @@ const XoloPayoutPreview = ({
     priceSubunits: Math.round(amount),
     ivaMode,
     taxActivity,
+    personType,
+    hasRfc,
     shippingSubunits,
     applyWithholdings,
-    sellerIsPhysicalPerson,
   });
 
   const isGravado = ivaMode === IVA_MODES.GRAVADO;
@@ -170,27 +181,39 @@ const XoloPayoutPreview = ({
 
       {/* Retenciones — placeholder hasta Facturapi + SAT. Siempre mostramos
           la línea con base legal para que el seller aprenda el modelo. La
-          tasa ISR depende de la actividad fiscal del listing. */}
+          tasa ISR depende del tipo de persona + actividad fiscal + RFC. */}
       <div className={`${css.row} ${css.muted}`}>
         <span>
           − Retención ISR plataforma ({bd.labels.retIsr}){' '}
           <span className={css.article}>
-            (LISR 113-A ·{' '}
-            {taxActivity === TAX_ACTIVITIES.HOSPEDAJE
-              ? 'hospedaje'
-              : taxActivity === TAX_ACTIVITIES.TRANSPORTE_ENTREGA
-                ? 'transporte y entrega'
-                : 'enajenación y servicios'}
-            )
+            {personType === PERSON_TYPES.INDIVIDUAL
+              ? '(particular — no es contribuyente LISR 113-A)'
+              : personType === PERSON_TYPES.MORAL
+                ? '(persona moral — LISR 113-A no aplica)'
+                : !hasRfc
+                  ? '(sin RFC — 20% fijo LISR 113-A)'
+                  : `(LISR 113-A · ${
+                      taxActivity === TAX_ACTIVITIES.HOSPEDAJE
+                        ? 'hospedaje'
+                        : taxActivity === TAX_ACTIVITIES.TRANSPORTE_ENTREGA
+                          ? 'transporte y entrega'
+                          : 'enajenación y servicios'
+                    })`}
           </span>
         </span>
         <span>−{money(bd.retIsrSubunits, currency)}</span>
       </div>
       <div className={`${css.row} ${css.muted}`}>
         <span>
-          − Retención IVA plataforma {isGravado ? `(${bd.labels.retIva})` : ''}{' '}
+          − Retención IVA plataforma ({bd.labels.retIva}){' '}
           <span className={css.article}>
-            {isGravado ? '(LIVA 18-J)' : `(no causa IVA · ${ivaArticleLabel})`}
+            {!isGravado
+              ? `(no causa IVA · ${ivaArticleLabel})`
+              : personType === PERSON_TYPES.MORAL
+                ? '(persona moral — LIVA 18-J no aplica)'
+                : !hasRfc
+                  ? '(sin RFC — 100% del IVA causado)'
+                  : '(LIVA 18-J · 50% del IVA causado)'}
           </span>
         </span>
         <span>−{money(bd.retIvaSubunits, currency)}</span>

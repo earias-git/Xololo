@@ -44,8 +44,8 @@ const FIXED_XOLOLO_SUBUNITS = 1400;
 //   - Transporte terrestre y entrega de bienes (Rappi, Uber Eats): 2.1%
 //   - Hospedaje (Airbnb, Booking, hoteles): 4%
 //   - Sin RFC: 20% fijo (gate antifraude #39 fuerza RFC al publicar)
-// Reforma LIF 2026: personas morales 4% uniforme (no modelado aquí porque
-// hoy las retenciones están desactivadas hasta registro SAT).
+// Reforma LIF 2026: personas morales 4% uniforme (pendiente de modelar
+// cuando entre en vigor; hoy PM no tiene retención por plataforma).
 export const TAX_ACTIVITIES = {
   ENAJENACION_SERVICIOS: 'enajenacion',
   TRANSPORTE_ENTREGA: 'transporte',
@@ -58,11 +58,27 @@ const RET_ISR_PCT_BY_ACTIVITY = {
   [TAX_ACTIVITIES.HOSPEDAJE]: 0.04,
 };
 
+const PCT_RET_ISR_NO_RFC = 0.20;
+
+// Tipo de persona del seller. Define si aplican retenciones por plataforma:
+//   - INDIVIDUAL (particular ocasional): NO contribuyente LISR 113-A, no se
+//     le retiene ISR. Si vende producto gravado 16% sí se le retiene IVA.
+//   - PHYSICAL_BUSINESS (PF con actividad empresarial): aplica tabla LISR
+//     113-A según actividad; sin RFC = 20% + IVA 16% (100% del causado).
+//   - MORAL (persona moral): LISR 113-A y LIVA 18-J NO le aplican hoy.
+//     Reforma LIF 2026 agregará ISR 4% + IVA 8% retenidos cuando entre.
+export const PERSON_TYPES = {
+  INDIVIDUAL: 'individual',
+  PHYSICAL_BUSINESS: 'physical_business',
+  MORAL: 'moral',
+};
+
 // Retención IVA por plataforma a personas físicas inscritas, LIVA 18-J.
-// 8% = 50% del IVA causado del 16%. Sólo aplica si el producto es gravado.
-// La tasa de IVA retenido NO depende de la actividad fiscal, sólo del
-// régimen IVA del listing (16%, 0%, exento).
+// 8% = 50% del IVA causado del 16%. Sólo aplica si el producto es gravado
+// Y el seller es PF (particular o empresarial inscrito). Para PM no aplica
+// hoy (reforma LIF 2026 lo cambiará). Sin RFC = 16% (100% del causado).
 const PCT_RET_IVA = 0.08;
+const PCT_RET_IVA_NO_RFC = 0.16;
 
 const round = n => Math.round(n);
 
@@ -96,19 +112,23 @@ const formatPct = pct => {
  * @param {string} [params.ivaMode='16%'] - IVA_MODES.GRAVADO / TASA_CERO / EXENTO
  * @param {string} [params.taxActivity='enajenacion'] - TAX_ACTIVITIES.*
  *   determina la tasa de retención ISR (1% / 2.1% / 4%).
+ * @param {string} [params.personType='physical_business'] - PERSON_TYPES.*
+ *   Particular ocasional / PF empresarial / Persona moral. Define si aplican
+ *   retenciones LISR 113-A y LIVA 18-J (particular y PM = no aplican).
+ * @param {boolean} [params.hasRfc=true] - Si el seller está inscrito al RFC.
+ *   Solo relevante para PF empresarial. Sin RFC = ISR 20% + IVA 16%.
  * @param {number} [params.shippingSubunits=0] - Paquetería pass-through.
  * @param {boolean} [params.applyWithholdings=false] - Si retiene ISR/IVA.
  *   Default false hasta que Xololo se registre como plataforma tecnológica.
- * @param {boolean} [params.sellerIsPhysicalPerson=true] - Las retenciones de
- *   plataforma sólo aplican a personas físicas (LISR 113-A, LIVA 18-J).
  */
 export const computePayoutBreakdown = ({
   priceSubunits,
   ivaMode = IVA_MODES.GRAVADO,
   taxActivity = TAX_ACTIVITIES.ENAJENACION_SERVICIOS,
+  personType = PERSON_TYPES.PHYSICAL_BUSINESS,
+  hasRfc = true,
   shippingSubunits = 0,
   applyWithholdings = false,
-  sellerIsPhysicalPerson = true,
 } = {}) => {
   const price = asSubunits(priceSubunits);
   const shipping = asSubunits(shippingSubunits);
@@ -135,14 +155,37 @@ export const computePayoutBreakdown = ({
   const ivaXololoAdmin = round(xololoAdminBase * PCT_IVA);
   const xololoAdminTotal = xololoAdminBase + ivaXololoAdmin;
 
-  // Retenciones de plataforma. Placeholder hasta Facturapi + registro SAT.
-  const retIsrPct =
-    RET_ISR_PCT_BY_ACTIVITY[taxActivity] ??
-    RET_ISR_PCT_BY_ACTIVITY[TAX_ACTIVITIES.ENAJENACION_SERVICIOS];
-  const shouldWithhold = applyWithholdings && sellerIsPhysicalPerson && price > 0;
-  const retIsr = shouldWithhold ? round(subtotal * retIsrPct) : 0;
-  const retIva =
-    shouldWithhold && ivaMode === IVA_MODES.GRAVADO ? round(subtotal * PCT_RET_IVA) : 0;
+  // Retenciones de plataforma. Lógica legal estricta:
+  //   - Particular (ocasional, no empresa): no es contribuyente LISR 113-A.
+  //     Sin retención ISR. Sí retención IVA si el producto es gravado.
+  //   - Persona moral: ni LISR 113-A ni LIVA 18-J aplican hoy. Reforma
+  //     LIF 2026 agregará ISR 4% + IVA 8%; pendiente modelar.
+  //   - PF empresarial inscrita al RFC: ISR según actividad + IVA 8%.
+  //   - PF empresarial sin RFC: ISR 20% + IVA 16% (100% del causado).
+  //
+  // `applyWithholdings` sigue siendo el master-switch global (hoy false
+  // hasta que Xololo quede inscrita como plataforma tecnológica ante SAT).
+  const canRetain = applyWithholdings && price > 0;
+  const isMoral = personType === PERSON_TYPES.MORAL;
+  const isIndividual = personType === PERSON_TYPES.INDIVIDUAL;
+
+  // ISR: 0 para particular y PM; variable para PF empresarial.
+  let retIsrPct = 0;
+  if (canRetain && !isMoral && !isIndividual) {
+    retIsrPct = hasRfc
+      ? RET_ISR_PCT_BY_ACTIVITY[taxActivity] ??
+        RET_ISR_PCT_BY_ACTIVITY[TAX_ACTIVITIES.ENAJENACION_SERVICIOS]
+      : PCT_RET_ISR_NO_RFC;
+  }
+  const retIsr = round(subtotal * retIsrPct);
+
+  // IVA retenido: 0 para PM; para PF (particular o empresarial) aplica si
+  // el producto es gravado 16%.
+  let retIvaPct = 0;
+  if (canRetain && !isMoral && ivaMode === IVA_MODES.GRAVADO) {
+    retIvaPct = hasRfc ? PCT_RET_IVA : PCT_RET_IVA_NO_RFC;
+  }
+  const retIva = round(subtotal * retIvaPct);
 
   const sellerReceives = price - motorCobroTotal - xololoAdminTotal - retIsr - retIva;
 
@@ -151,6 +194,8 @@ export const computePayoutBreakdown = ({
     priceSubunits: price,
     ivaMode,
     taxActivity,
+    personType,
+    hasRfc,
     shippingSubunits: shipping,
 
     // Descomposición
@@ -166,7 +211,8 @@ export const computePayoutBreakdown = ({
     retIsrSubunits: retIsr,
     retIsrPct,
     retIvaSubunits: retIva,
-    appliedWithholdings: shouldWithhold,
+    retIvaPct,
+    appliedWithholdings: canRetain,
 
     // Resultado
     sellerReceivesSubunits: sellerReceives,
@@ -177,7 +223,7 @@ export const computePayoutBreakdown = ({
       motorCobro: `${(PCT_MOTOR * 100).toFixed(1)}% + IVA`,
       xololoAdmin: `$${(FIXED_XOLOLO_SUBUNITS / 100).toFixed(2)} + IVA`,
       retIsr: formatPct(retIsrPct),
-      retIva: `${(PCT_RET_IVA * 100).toFixed(0)}%`,
+      retIva: formatPct(retIvaPct),
     },
   };
 };
