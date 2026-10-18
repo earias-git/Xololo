@@ -141,6 +141,7 @@ export const EditListingPricingAndStockForm = props => (
         updateInProgress,
         fetchErrors,
         values,
+        categoryId,
       } = formRenderProps;
 
       const intl = useIntl();
@@ -198,11 +199,14 @@ export const EditListingPricingAndStockForm = props => (
           />
 
           {/* XOLOLO: preview del payout del seller. Client-only,
-              se auto-oculta hasta que hay precio. */}
+              se auto-oculta hasta que hay precio. categoryId resuelve
+              el default fiscal (ivaMode + taxActivity) vía
+              xololoTaxCategories. */}
           <XoloPayoutPreview
             price={values?.price}
             currency={marketplaceCurrency}
             heading="Cuánto recibirás por esta venta"
+            categoryId={categoryId}
           />
 
           <UpdateStockToInfinityCheckboxMaybe

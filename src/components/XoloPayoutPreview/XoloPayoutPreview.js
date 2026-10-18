@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { computePayoutBreakdown, IVA_MODES, TAX_ACTIVITIES } from '../../util/xololoPayout';
+import { getTaxDefaultsForCategory } from '../../util/xololoTaxCategories';
 
 import css from './XoloPayoutPreview.module.css';
 
@@ -25,7 +26,10 @@ import css from './XoloPayoutPreview.module.css';
 //   price | amountSubunits: monto en centavos. Si <=0 muestra mensaje helper.
 //   currency: 'MXN' por default.
 //   heading: título del bloque (default 'Cuánto recibirás por esta venta').
-//   ivaMode: '16%' | '0%' | 'exento' — default '16%'.
+//   categoryId: ej. 'artesanias' (listing.attributes.publicData.categoryLevel1).
+//     Si viene, resuelve ivaMode / taxActivity / ivaArticle vía el mapa de
+//     xololoTaxCategories. Los props explícitos abajo tienen precedencia.
+//   ivaMode: '16%' | '0%' | 'exento' — default '16%' (o el de la categoría).
 //   ivaArticle: ej. "Art. 2-A I-b LIVA" — se muestra junto a IVA $0.00.
 //   taxActivity: 'enajenacion' | 'transporte' | 'hospedaje' (LISR 113-A).
 //     Determina la tasa de retención ISR (1.0% / 2.1% / 4%). Default
@@ -64,13 +68,21 @@ const XoloPayoutPreview = ({
   price,
   currency: currencyProp,
   heading = 'Cuánto recibirás por esta venta',
-  ivaMode = IVA_MODES.GRAVADO,
-  ivaArticle,
-  taxActivity = TAX_ACTIVITIES.ENAJENACION_SERVICIOS,
+  categoryId,
+  ivaMode: ivaModeProp,
+  ivaArticle: ivaArticleProp,
+  taxActivity: taxActivityProp,
   shippingSubunits = 0,
   applyWithholdings = false,
   sellerIsPhysicalPerson = true,
 }) => {
+  // Resuelve defaults a partir de la categoría del listing. Los props
+  // explícitos tienen precedencia (p. ej. el checkbox de clasificación
+  // especial del commit 4 pasará ivaMode y ivaArticle directamente).
+  const categoryDefaults = getTaxDefaultsForCategory(categoryId);
+  const ivaMode = ivaModeProp ?? categoryDefaults.ivaMode;
+  const taxActivity = taxActivityProp ?? categoryDefaults.taxActivity;
+  const ivaArticle = ivaArticleProp ?? categoryDefaults.ivaArticle;
   // XOLOLO: client-only render (mounted-gate) para evitar mismatches
   // de hydration cuando values de FinalForm difieren entre server y
   // client (Money instances, initial values, etc.). El server siempre

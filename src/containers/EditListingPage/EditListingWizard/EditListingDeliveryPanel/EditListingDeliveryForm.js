@@ -61,6 +61,7 @@ export const EditListingDeliveryForm = props => (
         updated,
         updateInProgress,
         values,
+        categoryId,
       } = formRenderProps;
 
       // This is a bug fix for Final Form.
@@ -159,11 +160,14 @@ export const EditListingDeliveryForm = props => (
                   currencyConfig={currencyConfig}
                   validate={required('El costo es requerido.')}
                 />
-                {/* XOLOLO: preview del payout del envío local. */}
+                {/* XOLOLO: preview del payout del envío local. categoryId
+                    resuelve el default fiscal (ivaMode + taxActivity)
+                    vía xololoTaxCategories. */}
                 <XoloPayoutPreview
                   price={xoloMethods.localDelivery?.price}
                   currency={marketplaceCurrency}
                   heading="Del cobro del envío recibirás"
+                  categoryId={categoryId}
                 />
                 <FieldTextInput
                   id={`${formId}.xoloLocalZone`}

@@ -145,6 +145,7 @@ const EditListingDeliveryPanel = props => {
         <EditListingDeliveryForm
           className={css.form}
           initialValues={state.initialValues}
+          categoryId={listing?.attributes?.publicData?.categoryLevel1}
           onSubmit={values => {
             const { xololoMethods } = values;
 

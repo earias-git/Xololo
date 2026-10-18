@@ -161,6 +161,7 @@ const EditListingPricingPanel = props => {
         <EditListingPricingForm
           className={css.form}
           initialValues={initialValues}
+          categoryId={listing?.attributes?.publicData?.categoryLevel1}
           onSubmit={values => {
             const { price } = values;
 

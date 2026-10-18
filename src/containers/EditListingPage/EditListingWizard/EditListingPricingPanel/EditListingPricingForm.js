@@ -117,6 +117,7 @@ export const EditListingPricingForm = props => (
         fetchErrors,
         initialValues: formInitialValues,
         values: formValues,
+        categoryId,
       } = formRenderProps;
 
       const intl = useIntl();
@@ -173,11 +174,15 @@ export const EditListingPricingForm = props => (
           )}
 
           {/* XOLOLO: preview del payout del seller. Client-only,
-              se auto-oculta hasta que hay precio. */}
+              se auto-oculta hasta que hay precio. categoryId resuelve
+              el default fiscal (ivaMode + taxActivity) vía
+              xololoTaxCategories; sin categoría, usa el default
+              conservador 16% + enajenacion. */}
           <XoloPayoutPreview
             price={formValues?.price}
             currency={marketplaceCurrency}
             heading="Cuánto recibirás por esta venta"
+            categoryId={categoryId}
           />
 
           {isFixedLengthBooking ? (
