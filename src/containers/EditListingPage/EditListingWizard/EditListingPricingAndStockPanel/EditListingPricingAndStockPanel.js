@@ -8,7 +8,6 @@ import { LISTING_STATE_DRAFT, STOCK_INFINITE_ITEMS, propTypes } from '../../../.
 import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
 import { getTaxProfile } from '../../../../util/xololoTaxProfile';
-import { getSellerMode } from '../../../../util/xololoSellerMode';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -148,10 +147,9 @@ const EditListingPricingAndStockPanel = props => {
   const classes = classNames(rootClassName || css.root, className);
   const initialValues = state.initialValues;
 
-  // XOLOLO: perfil fiscal + modo del seller (declarados en Account Settings).
+  // XOLOLO: perfil fiscal del seller (declarado en Account Settings).
   const currentUser = useSelector(state => state.user?.currentUser);
   const sellerTaxProfile = getTaxProfile(currentUser);
-  const sellerMode = getSellerMode(currentUser);
 
   // Form needs to know data from listingType
   const publicData = listing?.attributes?.publicData;
@@ -205,7 +203,6 @@ const EditListingPricingAndStockPanel = props => {
           initialValues={initialValues}
           categoryId={listing?.attributes?.publicData?.categoryLevel1}
           sellerTaxProfile={sellerTaxProfile}
-          sellerMode={sellerMode}
           onSubmit={values => {
             const { price, stock, stockTypeInfinity } = values;
 

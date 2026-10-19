@@ -151,7 +151,6 @@ export const EditListingPricingAndStockForm = props => (
         values,
         categoryId,
         sellerTaxProfile,
-        sellerMode,
       } = formRenderProps;
 
       const intl = useIntl();
@@ -266,7 +265,6 @@ export const EditListingPricingAndStockForm = props => (
                 personType={sellerTaxProfile?.personType}
                 hasRfc={sellerTaxProfile?.hasRfc}
                 usedGoodsNotice={notice}
-                sellerMode={sellerMode}
               />
             );
           })()}

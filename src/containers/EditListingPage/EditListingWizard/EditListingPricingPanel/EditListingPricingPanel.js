@@ -10,7 +10,6 @@ import { isPriceVariationsEnabled } from '../../../../util/configHelpers';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
 import { FIXED, isBookingProcess } from '../../../../transactions/transaction';
 import { getTaxProfile } from '../../../../util/xololoTaxProfile';
-import { getSellerMode } from '../../../../util/xololoSellerMode';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -165,13 +164,12 @@ const EditListingPricingPanel = props => {
   const initialValues = state.initialValues;
   const isPublished = listing?.id && listing?.attributes?.state !== LISTING_STATE_DRAFT;
 
-  // XOLOLO: perfil fiscal + modo del seller (declarados en Account Settings).
-  // personType + hasRfc modulan la retención ISR 113-A y la retención por
-  // falta de RFC. sellerMode cambia la comisión de serv administrativos
-  // ($14 fijo → tabla 9/6/3% por tramos de precio).
+  // XOLOLO: perfil fiscal del seller (declarado en Account Settings).
+  // personType + hasRfc modulan la retención ISR 113-A y la retención
+  // por falta de RFC. La comisión Xololo depende del precio del listing
+  // (COMMISSION_TIERS en xololoPayout), no del seller.
   const currentUser = useSelector(state => state.user?.currentUser);
   const sellerTaxProfile = getTaxProfile(currentUser);
-  const sellerMode = getSellerMode(currentUser);
 
   const publicData = listing?.attributes?.publicData;
   const listingTypeConfig = getListingTypeConfig(publicData, listingTypes);
@@ -223,7 +221,6 @@ const EditListingPricingPanel = props => {
           initialValues={initialValues}
           categoryId={listing?.attributes?.publicData?.categoryLevel1}
           sellerTaxProfile={sellerTaxProfile}
-          sellerMode={sellerMode}
           onSubmit={values => {
             const { price } = values;
 

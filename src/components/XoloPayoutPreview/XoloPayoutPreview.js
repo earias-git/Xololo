@@ -86,7 +86,6 @@ const XoloPayoutPreview = ({
   shippingSubunits = 0,
   applyWithholdings = false,
   usedGoodsNotice = null,
-  sellerMode = 'store',
 }) => {
   // Resuelve defaults a partir de la categoría del listing. Los props
   // explícitos tienen precedencia (p. ej. el checkbox de clasificación
@@ -127,7 +126,6 @@ const XoloPayoutPreview = ({
     hasRfc,
     shippingSubunits,
     applyWithholdings,
-    sellerMode,
   });
 
   const isGravado = ivaMode === IVA_MODES.GRAVADO;
