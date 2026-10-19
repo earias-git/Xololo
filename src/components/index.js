@@ -105,6 +105,8 @@ export { default as FieldRadioButton } from './FieldRadioButton/FieldRadioButton
 export { default as FieldReviewRating } from './FieldReviewRating/FieldReviewRating';
 export { default as FieldSelect } from './FieldSelect/FieldSelect';
 export { default as FieldSelectTree } from './FieldSelectTree/FieldSelectTree';
+// XOLOLO: campo de clasificación fiscal especial del listing (gate antifraude #39).
+export { default as TaxClassificationField } from './TaxClassificationField/TaxClassificationField';
 export { default as FieldTextInput } from './FieldTextInput/FieldTextInput';
 
 // Fields that use other Fields

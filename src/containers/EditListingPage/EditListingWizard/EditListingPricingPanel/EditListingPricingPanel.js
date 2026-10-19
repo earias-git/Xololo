@@ -37,17 +37,58 @@ const getListingTypeConfig = (publicData, listingTypes) => {
 const getInitialValues = props => {
   const { listing, listingTypes } = props;
   const { publicData } = listing?.attributes || {};
-  const { unitType } = publicData || {};
+  const { unitType, taxClassification } = publicData || {};
   const listingTypeConfig = getListingTypeConfig(publicData, listingTypes);
   // Note: publicData contains priceVariationsEnabled if listing is created with priceVariations enabled.
   const isPriceVariationsInUse = isPriceVariationsEnabled(publicData, listingTypeConfig);
+
+  // XOLOLO: hidratar los campos del form desde publicData.taxClassification.
+  // El form opera con dos campos simples (checkbox + code); el objeto completo
+  // con reviewStatus/declaredAt se arma en el submit.
+  const taxClassificationInitial = taxClassification?.code
+    ? {
+        hasTaxSpecialClassification: true,
+        taxClassificationCode: taxClassification.code,
+      }
+    : {};
 
   return unitType === FIXED || isPriceVariationsInUse
     ? {
         ...getInitialValuesForPriceVariants(props, isPriceVariationsInUse),
         ...getInitialValuesForStartTimeInterval(props),
+        ...taxClassificationInitial,
       }
-    : { price: listing?.attributes?.price };
+    : { price: listing?.attributes?.price, ...taxClassificationInitial };
+};
+
+// XOLOLO: construye el payload persistido en publicData.taxClassification
+// a partir de los valores del form. Si el seller no marcó la casilla o no
+// eligió código, limpia la clasificación con null. Si marcó y eligió código:
+//   - listing nuevo o cambio de código → nueva declaración con pending
+//   - mismo código que el persistido → preserva reviewStatus/reviewedBy/at
+// El gate antifraude (#39) revisa 'pending' en /ops antes de aplicar override.
+const buildTaxClassificationUpdate = (values, listing) => {
+  const existing = listing?.attributes?.publicData?.taxClassification || null;
+  const hasSpecial = !!values?.hasTaxSpecialClassification;
+  const code = values?.taxClassificationCode;
+
+  if (!hasSpecial || !code) {
+    return existing ? { taxClassification: null } : {};
+  }
+
+  if (existing && existing.code === code) {
+    return { taxClassification: existing };
+  }
+
+  return {
+    taxClassification: {
+      code,
+      declaredAt: new Date().toISOString(),
+      reviewStatus: 'pending',
+      reviewedBy: null,
+      reviewedAt: null,
+    },
+  };
 };
 
 // This is needed to show the listing's price consistently over XHR calls.
@@ -205,6 +246,19 @@ const EditListingPricingPanel = props => {
                   }
                 : {};
               updateValues = { price, ...priceVariationsEnabledMaybe };
+            }
+
+            // XOLOLO: fold tax classification into publicData sin romper
+            // los otros campos de publicData que vienen de los helpers.
+            const taxUpdate = buildTaxClassificationUpdate(values, listing);
+            if (taxUpdate.taxClassification !== undefined) {
+              updateValues = {
+                ...updateValues,
+                publicData: {
+                  ...(updateValues.publicData || {}),
+                  taxClassification: taxUpdate.taxClassification,
+                },
+              };
             }
 
             // Save the initialValues to state

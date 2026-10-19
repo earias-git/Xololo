@@ -12,8 +12,9 @@ import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { FIXED, isBookingProcess } from '../../../../transactions/transaction';
 
 // Import shared components
-import { Button, Form, FieldCurrencyInput } from '../../../../components';
+import { Button, Form, FieldCurrencyInput, TaxClassificationField } from '../../../../components';
 import XoloPayoutPreview from '../../../../components/XoloPayoutPreview/XoloPayoutPreview';
+import { getClassificationByCode } from '../../../../util/xololoTaxClassification';
 
 import BookingPriceVariants from './BookingPriceVariants';
 import StartTimeInterval from './StartTimeInverval';
@@ -173,17 +174,35 @@ export const EditListingPricingForm = props => (
             />
           )}
 
+          {/* XOLOLO: clasificación fiscal especial (gate antifraude #39).
+              Si no está marcado, el preview usa el default de la categoría.
+              Si está marcado y seleccionado + aprobado, el preview aplica
+              el override (ivaMode + taxActivity + ivaArticle). Mientras
+              está en revisión, el preview sigue usando el default. */}
+          <TaxClassificationField formId={formId} values={formValues} />
+
           {/* XOLOLO: preview del payout del seller. Client-only,
               se auto-oculta hasta que hay precio. categoryId resuelve
               el default fiscal (ivaMode + taxActivity) vía
               xololoTaxCategories; sin categoría, usa el default
               conservador 16% + enajenacion. */}
-          <XoloPayoutPreview
-            price={formValues?.price}
-            currency={marketplaceCurrency}
-            heading="Cuánto recibirás por esta venta"
-            categoryId={categoryId}
-          />
+          {(() => {
+            const hasSpecial = !!formValues?.hasTaxSpecialClassification;
+            const selectedEntry = hasSpecial
+              ? getClassificationByCode(formValues?.taxClassificationCode)
+              : null;
+            return (
+              <XoloPayoutPreview
+                price={formValues?.price}
+                currency={marketplaceCurrency}
+                heading="Cuánto recibirás por esta venta"
+                categoryId={categoryId}
+                ivaMode={selectedEntry?.ivaMode}
+                taxActivity={selectedEntry?.taxActivity}
+                ivaArticle={selectedEntry?.ivaArticle}
+              />
+            );
+          })()}
 
           {isFixedLengthBooking ? (
             <StartTimeInterval

@@ -19,8 +19,10 @@ import {
   FieldCurrencyInput,
   FieldCheckboxGroup,
   FieldTextInput,
+  TaxClassificationField,
 } from '../../../../components';
 import XoloPayoutPreview from '../../../../components/XoloPayoutPreview/XoloPayoutPreview';
+import { getClassificationByCode } from '../../../../util/xololoTaxClassification';
 
 // Import modules from this directory
 import css from './EditListingPricingAndStockForm.module.css';
@@ -198,16 +200,34 @@ export const EditListingPricingAndStockForm = props => (
             validate={priceValidators}
           />
 
+          {/* XOLOLO: clasificación fiscal especial del listing (gate antifraude #39).
+              Permite declarar que el producto es exento (Art. 9/15 LIVA) o
+              tasa 0% (Art. 2-A LIVA) o actividad distinta en LISR 113-A.
+              Entra a revisión en /ops antes de aplicarse en producción. */}
+          <TaxClassificationField formId={formId} values={values} />
+
           {/* XOLOLO: preview del payout del seller. Client-only,
               se auto-oculta hasta que hay precio. categoryId resuelve
               el default fiscal (ivaMode + taxActivity) vía
-              xololoTaxCategories. */}
-          <XoloPayoutPreview
-            price={values?.price}
-            currency={marketplaceCurrency}
-            heading="Cuánto recibirás por esta venta"
-            categoryId={categoryId}
-          />
+              xololoTaxCategories; si el seller eligió una clasificación
+              especial, se pasa como override en vivo (educativo). */}
+          {(() => {
+            const hasSpecial = !!values?.hasTaxSpecialClassification;
+            const selectedEntry = hasSpecial
+              ? getClassificationByCode(values?.taxClassificationCode)
+              : null;
+            return (
+              <XoloPayoutPreview
+                price={values?.price}
+                currency={marketplaceCurrency}
+                heading="Cuánto recibirás por esta venta"
+                categoryId={categoryId}
+                ivaMode={selectedEntry?.ivaMode}
+                taxActivity={selectedEntry?.taxActivity}
+                ivaArticle={selectedEntry?.ivaArticle}
+              />
+            );
+          })()}
 
           <UpdateStockToInfinityCheckboxMaybe
             formId={formId}

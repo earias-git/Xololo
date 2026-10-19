@@ -46,7 +46,47 @@ const getInitialValues = props => {
       : 1;
   const stockTypeInfinity = [];
 
-  return { price, stock, stockTypeInfinity };
+  // XOLOLO: hidratar los campos del form desde publicData.taxClassification
+  // (gate antifraude #39). El form opera con dos campos simples; el objeto
+  // completo con reviewStatus/declaredAt se arma al submit.
+  const taxClassification = publicData?.taxClassification;
+  const taxClassificationInitial = taxClassification?.code
+    ? {
+        hasTaxSpecialClassification: true,
+        taxClassificationCode: taxClassification.code,
+      }
+    : {};
+
+  return { price, stock, stockTypeInfinity, ...taxClassificationInitial };
+};
+
+// XOLOLO: construye el payload persistido en publicData.taxClassification
+// a partir de los valores del form. Si el seller no marcó la casilla o no
+// eligió código, limpia la clasificación con null. Si marcó y eligió código:
+//   - listing nuevo o cambio de código → nueva declaración con pending
+//   - mismo código que el persistido → preserva reviewStatus/reviewedBy/at
+const buildTaxClassificationUpdate = (values, listing) => {
+  const existing = listing?.attributes?.publicData?.taxClassification || null;
+  const hasSpecial = !!values?.hasTaxSpecialClassification;
+  const code = values?.taxClassificationCode;
+
+  if (!hasSpecial || !code) {
+    return existing ? { taxClassification: null } : null;
+  }
+
+  if (existing && existing.code === code) {
+    return { taxClassification: existing };
+  }
+
+  return {
+    taxClassification: {
+      code,
+      declaredAt: new Date().toISOString(),
+      reviewStatus: 'pending',
+      reviewedBy: null,
+      reviewedAt: null,
+    },
+  };
 };
 
 /**
@@ -175,10 +215,17 @@ const EditListingPricingAndStockPanel = props => {
                   }
                 : {};
 
+            // XOLOLO: añade publicData.taxClassification al update.
+            const taxUpdate = buildTaxClassificationUpdate(values, listing);
+            const publicDataMaybe = taxUpdate
+              ? { publicData: { taxClassification: taxUpdate.taxClassification } }
+              : {};
+
             // New values for listing attributes
             const updateValues = {
               price,
               ...stockUpdateMaybe,
+              ...publicDataMaybe,
             };
             // Save the initialValues to state
             // Otherwise, re-rendering would overwrite the values during XHR call.
