@@ -250,13 +250,29 @@ const getInitialValues = (
   const listingType = publicData?.listingType || preselectedListingType;
 
   const nestedCategories = pickCategoryFields(publicData, categoryKey, 1, listingCategories);
+  // XOLOLO: si el listing existente tiene publicData.condition='used'
+  // Y es tipo 'product', hidratamos como pseudo-tipo 'product-used'
+  // para que el selector muestre "Producto usado" en vez de "Producto".
+  // El pseudo-tipo se guarda vía override después de getTransactionInfo
+  // (que no sabe del pseudo-tipo).
+  const txInfo = getTransactionInfo({
+    listingTypes,
+    existingListingTypeInfo,
+    preselectedListingType,
+  });
+  const shouldHydrateAsUsed =
+    publicData?.condition === 'used' && txInfo?.listingType === 'product';
+  const txInfoHydrated = shouldHydrateAsUsed
+    ? { ...txInfo, listingType: 'product-used' }
+    : txInfo;
+
   // Initial values for the form
   return {
     title,
     description,
     ...nestedCategories,
     // Transaction type info: listingType, transactionProcessAlias, unitType
-    ...getTransactionInfo({ listingTypes, existingListingTypeInfo, preselectedListingType }),
+    ...txInfoHydrated,
     ...initialValuesForListingFields(
       publicData,
       'public',
@@ -322,9 +338,26 @@ const EditListingDetailsPanel = props => {
   const currentUser = useSelector(s => s.user?.currentUser);
   const isCasual = getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
   const allListingTypes = config.listing.listingTypes;
-  const listingTypes = isCasual
-    ? allListingTypes.filter(t => !isBookingProcess(t.transactionType?.process))
-    : allListingTypes;
+
+  // XOLOLO: pseudo-tipo "Producto usado". No existe en el catálogo real
+  // de Sharetribe — es un atajo visual. Se construye clonando el tipo
+  // 'product' con label y listingType distintos. Al submit, se mapea
+  // de vuelta a 'product' + publicData.condition='used' (ver abajo).
+  const PRODUCT_USED_PSEUDO_TYPE = 'product-used';
+  const productType = allListingTypes.find(t => t.listingType === 'product');
+  const virtualUsedType = productType
+    ? { ...productType, listingType: PRODUCT_USED_PSEUDO_TYPE, label: 'Producto usado' }
+    : null;
+
+  const listingTypes = (() => {
+    // Casual: sólo "Producto usado" (ya no mostramos "Producto" nuevo).
+    if (isCasual) {
+      return virtualUsedType ? [virtualUsedType] : [];
+    }
+    // Store: catálogo completo + "Producto usado" como opción adicional.
+    const nonBooking = allListingTypes;
+    return virtualUsedType ? [...nonBooking, virtualUsedType] : nonBooking;
+  })();
   const listingFields = config.listing.listingFields;
   const listingCategories = config.categoryConfiguration.categories;
   const categoryKey = config.categoryConfiguration.key;
@@ -407,6 +440,14 @@ const EditListingDetailsPanel = props => {
               ...rest
             } = values;
 
+            // XOLOLO: el pseudo-tipo 'product-used' se mapea a 'product'
+            // real + marca el flag publicData.condition='used' para que
+            // el panel de Pricing hidrate la condición preseleccionada.
+            // Nunca se persiste 'product-used' en el storage (sería un
+            // listingType inexistente en Sharetribe).
+            const isVirtualUsed = listingType === PRODUCT_USED_PSEUDO_TYPE;
+            const realListingType = isVirtualUsed ? 'product' : listingType;
+
             const nestedCategories = pickCategoryFields(rest, categoryKey, 1, listingCategories);
             // Remove old categories by explicitly saving null for them.
             const cleanedNestedCategories = {
@@ -416,14 +457,14 @@ const EditListingDetailsPanel = props => {
             const publicListingFields = pickListingFieldsData(
               rest,
               'public',
-              listingType,
+              realListingType,
               nestedCategories,
               listingFields
             );
             const privateListingFields = pickListingFieldsData(
               rest,
               'private',
-              listingType,
+              realListingType,
               nestedCategories,
               listingFields
             );
@@ -432,11 +473,12 @@ const EditListingDetailsPanel = props => {
               title: title.trim(),
               description,
               publicData: {
-                listingType,
+                listingType: realListingType,
                 transactionProcessAlias,
                 unitType,
                 ...cleanedNestedCategories,
                 ...publicListingFields,
+                ...(isVirtualUsed ? { condition: 'used' } : {}),
               },
               privateData: privateListingFields,
               ...setNoAvailabilityForUnbookableListings(transactionProcessAlias),
