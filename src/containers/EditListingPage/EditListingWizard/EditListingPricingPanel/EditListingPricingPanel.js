@@ -296,14 +296,19 @@ const EditListingPricingPanel = props => {
               };
             }
 
-            // XOLOLO: condición del artículo. Siempre persiste 'new' o 'used'
-            // para que el motor fiscal tenga el dato explícito al cobrar.
-            const conditionValue = values?.condition === 'used' ? 'used' : 'new';
-            // XOLOLO: nivel de estado — null cuando no aplica (producto nuevo)
-            // o cuando el seller aún no eligió. El buyer sólo lo verá cuando
-            // esté definido y condition='used'.
+            // XOLOLO: condición del artículo. SÓLO tiene sentido para
+            // productos (bienes); los servicios (booking) nunca llevan
+            // condition. Si llegara a existir un valor viejo persistido en
+            // un servicio (migración desde versión anterior del form), lo
+            // limpiamos con null al re-guardar para que no termine en la
+            // sección "Segunda mano destacada" del landing.
+            const conditionValue = isBooking
+              ? null
+              : values?.condition === 'used'
+                ? 'used'
+                : 'new';
             const usedConditionValue =
-              conditionValue === 'used' && values?.usedCondition
+              !isBooking && conditionValue === 'used' && values?.usedCondition
                 ? values.usedCondition
                 : null;
             updateValues = {

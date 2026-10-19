@@ -196,9 +196,10 @@ export const EditListingPricingForm = props => (
             />
           )}
 
-          {/* XOLOLO: condición del artículo. Oculta para casual (siempre
-              'used' forzado); visible para store para alternar nuevo/usado. */}
-          {!isCasual ? (
+          {/* XOLOLO: condición del artículo. Sólo tiene sentido para bienes
+              — los servicios (booking) nunca se publican como 'nuevo' o
+              'usado'. También oculta para casual (siempre 'used' forzado). */}
+          {!isCasual && !isBooking ? (
             <fieldset className={css.conditionFieldset}>
               <legend className={css.conditionLegend}>Condición del artículo</legend>
               <div className={css.conditionRow}>
@@ -215,8 +216,8 @@ export const EditListingPricingForm = props => (
             </fieldset>
           ) : null}
 
-          {/* XOLOLO: nivel de estado del artículo usado. */}
-          {formValues?.condition === 'used' ? (
+          {/* XOLOLO: nivel de estado del artículo usado — no aplica a servicios. */}
+          {!isBooking && formValues?.condition === 'used' ? (
             <>
               <FieldSelect
                 id={`${formId}.usedCondition`}

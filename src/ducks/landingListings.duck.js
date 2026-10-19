@@ -55,10 +55,12 @@ const fetchLandingListingsPayloadCreator = async (_, { extra: sdk, rejectWithVal
         ...commonQueryParams(),
       }),
       // XOLOLO: tercera query para la sección "Segunda mano destacada" del
-      // landing. Filtra por publicData.condition='used' sobre el pool entero
-      // de listings (todos los rubros). Mismo shape que las otras dos.
+      // landing. Filtra por publicData.condition='used' Y SÓLO productos
+      // (los servicios no tienen condición, y si algún servicio quedó con
+      // condition='used' por un submit viejo no debe aparecer aquí).
       sdk.listings.query({
         pub_condition: 'used',
+        pub_listingType: 'product',
         ...commonQueryParams(),
       }),
     ]);
