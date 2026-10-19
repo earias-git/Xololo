@@ -2,31 +2,38 @@ import { LEGAL_DOC_SLOTS, slotsForPersonType } from './legalDocSlots';
 
 describe('legalDocSlots client mirror', () => {
   describe('slotsForPersonType — modo store (default)', () => {
-    it('devuelve INE, comprobante domicilio, constancia y CURP para fisica', () => {
+    it('pide INE frente+reverso, comprobante domicilio, constancia y CURP para fisica', () => {
       const keys = slotsForPersonType('fisica').map(s => s.key);
-      expect(keys).toContain('identificacionOficial');
+      expect(keys).toContain('identificacionOficialFrente');
+      expect(keys).toContain('identificacionOficialReverso');
       expect(keys).toContain('comprobanteDomicilio');
       expect(keys).toContain('constanciaFiscal');
       expect(keys).toContain('curp');
     });
 
-    it('devuelve INE, comprobante, constancia y los 3 docs de PM para moral', () => {
+    it('pide INE frente+reverso del seller, representante frente+reverso y docs de PM para moral', () => {
       const keys = slotsForPersonType('moral').map(s => s.key);
-      expect(keys).toContain('identificacionOficial');
+      expect(keys).toContain('identificacionOficialFrente');
+      expect(keys).toContain('identificacionOficialReverso');
       expect(keys).toContain('comprobanteDomicilio');
       expect(keys).toContain('constanciaFiscal');
       expect(keys).toContain('actaConstitutiva');
       expect(keys).toContain('poderNotarial');
-      expect(keys).toContain('ineRepresentante');
+      expect(keys).toContain('ineRepresentanteFrente');
+      expect(keys).toContain('ineRepresentanteReverso');
       // CURP es sólo para fisica
       expect(keys).not.toContain('curp');
     });
   });
 
   describe('slotsForPersonType — modo casual_reseller', () => {
-    it('para fisica casual, SÓLO pide INE + comprobante de domicilio', () => {
+    it('para fisica casual, pide INE frente, INE reverso y comprobante de domicilio', () => {
       const keys = slotsForPersonType('fisica', 'casual_reseller').map(s => s.key);
-      expect(keys).toEqual(['identificacionOficial', 'comprobanteDomicilio']);
+      expect(keys).toEqual([
+        'identificacionOficialFrente',
+        'identificacionOficialReverso',
+        'comprobanteDomicilio',
+      ]);
     });
 
     it('omite Constancia Fiscal porque el casual tiene hasRfc=false', () => {

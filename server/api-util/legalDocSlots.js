@@ -28,8 +28,14 @@
 
 const LEGAL_DOC_SLOTS = [
   {
-    key: 'identificacionOficial',
-    label: 'Identificación oficial (INE o pasaporte)',
+    key: 'identificacionOficialFrente',
+    label: 'Identificación oficial (INE o pasaporte) — frente',
+    personType: 'both',
+    accept: ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'],
+  },
+  {
+    key: 'identificacionOficialReverso',
+    label: 'Identificación oficial (INE o pasaporte) — reverso',
     personType: 'both',
     accept: ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'],
   },
@@ -66,8 +72,14 @@ const LEGAL_DOC_SLOTS = [
     accept: ['application/pdf'],
   },
   {
-    key: 'ineRepresentante',
-    label: 'Identificación oficial del representante legal',
+    key: 'ineRepresentanteFrente',
+    label: 'Identificación oficial del representante legal — frente',
+    personType: 'moral',
+    accept: ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'],
+  },
+  {
+    key: 'ineRepresentanteReverso',
+    label: 'Identificación oficial del representante legal — reverso',
     personType: 'moral',
     accept: ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'],
   },

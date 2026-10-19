@@ -6,8 +6,16 @@
 
 export const LEGAL_DOC_SLOTS = [
   {
-    key: 'identificacionOficial',
+    key: 'identificacionOficialFrente',
     label: 'Identificación oficial (INE o pasaporte)',
+    hint: 'Foto de la cara frontal (donde está la foto y los datos personales).',
+    personType: 'both',
+    accept: 'image/png,image/jpeg,application/pdf',
+  },
+  {
+    key: 'identificacionOficialReverso',
+    label: 'Identificación oficial — reverso',
+    hint: 'Foto de la parte de atrás (código QR, firma o número).',
     personType: 'both',
     accept: 'image/png,image/jpeg,application/pdf',
   },
@@ -50,8 +58,16 @@ export const LEGAL_DOC_SLOTS = [
     accept: 'application/pdf',
   },
   {
-    key: 'ineRepresentante',
+    key: 'ineRepresentanteFrente',
     label: 'Identificación oficial del representante legal',
+    hint: 'Foto de la cara frontal.',
+    personType: 'moral',
+    accept: 'image/png,image/jpeg,application/pdf',
+  },
+  {
+    key: 'ineRepresentanteReverso',
+    label: 'Identificación oficial del representante legal — reverso',
+    hint: 'Foto de la parte de atrás.',
     personType: 'moral',
     accept: 'image/png,image/jpeg,application/pdf',
   },

@@ -304,10 +304,16 @@ Tests en `AuthenticationPage.helpers.test.js`.
 
 ### 5.3b. Documentos legales recortados 🟢
 
-Para el casual, el catálogo de `/account/legal-docs` sólo pide:
+Para el casual, el catálogo de `/account/legal-docs` sólo pide 3
+subidas:
 
-- **Identificación oficial** (INE o pasaporte) — antifraude básico.
+- **Identificación oficial — frente** (INE o pasaporte).
+- **Identificación oficial — reverso** (código QR/firma).
 - **Comprobante de domicilio** — localización en caso de dispute.
+
+La INE se pide en dos lados porque el reverso tiene el QR/CIC que
+permite validación oficial del documento ante el INE; para
+seguridad razonable, antifraude pide ambas caras.
 
 Se omiten explícitamente:
 
