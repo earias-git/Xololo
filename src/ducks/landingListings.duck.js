@@ -163,19 +163,23 @@ const listingToFeaturedItem = (kind, listing, included, idx) => {
   };
 };
 
+// XOLOLO: `pub_condition=used` del SDK NO filtra correctamente porque
+// `condition` no está registrado como listing field en Sharetribe
+// Console (Build → Listings → Listing fields). Como consecuencia la
+// query trae todos los productos y hay que filtrar en memoria por
+// `publicData.condition === 'used'`. Cuando se registre el campo en
+// Console, el filtro server-side empezará a funcionar y este filtro
+// en memoria queda como seguro redundante.
+const isUsedListing = listing => listing.attributes?.publicData?.condition === 'used';
+
 export const selectFeaturedProducts = state => {
   const products = state.landingListings.products;
   if (!products?.data?.length) return [];
-  // XOLOLO: "Productos destacados" NO debe incluir usados — viven en
-  // "Segunda mano destacada". Usamos la query de usados (que el SDK ya
-  // filtró por pub_condition=used) como fuente de verdad: cualquier ID
-  // que esté en 'used' se excluye de 'products'. Más robusto que leer
-  // publicData.condition del listing porque no depende de sparse
-  // fieldsets ni de que publicData venga en la respuesta.
-  const used = state.landingListings.used;
-  const usedIds = new Set((used?.data || []).map(l => l.id.uuid));
+  // "Productos destacados" sólo muestra nuevos o sin condición declarada
+  // (legacy). Excluye los usados por publicData.condition — fuente única
+  // de verdad hasta que el campo exista en Console.
   return products.data
-    .filter(l => !usedIds.has(l.id.uuid))
+    .filter(l => !isUsedListing(l))
     .map((l, i) => listingToFeaturedItem('product', l, products.included, i));
 };
 
@@ -188,7 +192,12 @@ export const selectFeaturedServices = state => {
 export const selectFeaturedUsed = state => {
   const used = state.landingListings.used;
   if (!used?.data?.length) return [];
-  return used.data.map((l, i) => listingToFeaturedItem('used', l, used.included, i));
+  // Mismo motivo que arriba: el SDK no filtra `pub_condition=used`
+  // porque el campo no está registrado en Console. Filtramos en
+  // memoria para que la sección sea realmente exclusiva de usados.
+  return used.data
+    .filter(isUsedListing)
+    .map((l, i) => listingToFeaturedItem('used', l, used.included, i));
 };
 
 // Backward compat action creator wrapper
