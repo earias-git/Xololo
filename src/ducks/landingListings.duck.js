@@ -12,7 +12,9 @@ import { storableError } from '../util/errors';
 // a loadData en una iteración futura. Pero visualmente el usuario ve las
 // listings reales apenas hidrata.
 
-const RECENT_LISTINGS_LIMIT = 6;
+// XOLOLO: 12 listings por sección (antes 6) para que el landing tenga
+// más densidad de catálogo visible sin scrollear al rail siguiente.
+const RECENT_LISTINGS_LIMIT = 12;
 
 // Paleta de tonos para el thumbnail placeholder cuando no hay imagen.
 // El componente FeaturedListings usa `tone` para pintar el gradiente.

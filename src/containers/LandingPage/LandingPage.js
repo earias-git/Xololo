@@ -127,15 +127,26 @@ export const LandingPageComponent = props => {
       }
       afterSections={
         <>
-          <UsedGoodsBand />
           <CategoryRail categories={categories} />
           <PromoCards cards={promoCards} />
+          {/* XOLOLO: 3 banners agrupados en orden pedido —
+              Xololéalo (Promote) → Verified (confianza) → Vende tus usados. */}
           <XololearBand />
+          <VerifiedBand />
+          <UsedGoodsBand />
+          {/* XOLOLO: 3 listings en orden pedido —
+              Productos → Servicios → Segunda mano. */}
           <FeaturedListings
             title="Productos destacados"
             seeAllLabel="Ver todos los productos"
             seeAllHref="/s?pub_listingType=product"
             items={productsToShow}
+          />
+          <FeaturedListings
+            title="Servicios populares"
+            seeAllLabel="Ver todos los servicios"
+            seeAllHref="/s?pub_listingType=service,service-day"
+            items={servicesToShow}
           />
           {usedToShow ? (
             <FeaturedListings
@@ -145,14 +156,7 @@ export const LandingPageComponent = props => {
               items={usedToShow}
             />
           ) : null}
-          <FeaturedListings
-            title="Servicios populares"
-            seeAllLabel="Ver todos los servicios"
-            seeAllHref="/s?pub_listingType=service,service-day"
-            items={servicesToShow}
-          />
           <FeaturedStores stores={storesToShow} />
-          <VerifiedBand />
           <AppBand />
         </>
       }
