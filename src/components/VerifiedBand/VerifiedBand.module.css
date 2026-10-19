@@ -1,12 +1,13 @@
 @import '../../styles/customMediaQueries.css';
 
 .root {
+  /* XOLOLO: espaciado unificado del landing — ver XololearBand. */
   width: 100%;
-  padding: 12px 0 16px;
+  padding: 16px 0;
   background-color: #ffffff;
 
   @media (--viewportMedium) {
-    padding: 20px 0 24px;
+    padding: 28px 0;
   }
 }
 

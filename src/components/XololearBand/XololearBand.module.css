@@ -1,12 +1,15 @@
 @import '../../styles/customMediaQueries.css';
 
 .root {
+  /* XOLOLO: espaciado unificado del landing — 16px top/bottom en mobile,
+     28px en desktop. Vecinos obtienen 32/56px de aire, consistente entre
+     todas las secciones (bands y listings). */
   width: 100%;
-  padding: 12px 0 16px;
+  padding: 16px 0;
   background-color: #ffffff;
 
   @media (--viewportMedium) {
-    padding: 20px 0 24px;
+    padding: 28px 0;
   }
 }
 

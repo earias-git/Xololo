@@ -1,9 +1,14 @@
 @import '../../styles/customMediaQueries.css';
 
 .root {
+  /* XOLOLO: espaciado unificado del landing. */
   width: 100%;
-  padding: 24px 0 20px;
+  padding: 16px 0;
   background-color: #ffffff;
+
+  @media (--viewportMedium) {
+    padding: 28px 0;
+  }
 }
 
 .container {
