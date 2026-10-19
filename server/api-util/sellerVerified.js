@@ -37,22 +37,30 @@ const computeVerifiedFromUser = user => {
   const publicData = profile.publicData || {};
   const metadata = profile.metadata || {};
 
-  // (1) Subscription activa
-  const sub = metadata.xololoSubscription || {};
-  if (sub.status !== 'active') return false;
+  // XOLOLO: seller casual (segunda mano particular) no paga suscripción
+  // ni tiene storefront con slug — se le pide un criterio recortado.
+  const sellerMode = publicData.sellerMode || 'store';
+  const isCasual = sellerMode === 'casual_reseller';
 
-  // (2) Payouts configurados
+  // (1) Subscription activa — sólo para seller 'store'.
+  if (!isCasual) {
+    const sub = metadata.xololoSubscription || {};
+    if (sub.status !== 'active') return false;
+  }
+
+  // (2) Payouts configurados — para todos.
   if (attrs.stripeConnected !== true) return false;
 
-  // (3) Perfil completo
+  // (3) Perfil completo. Nombre + displayName siempre; slug sólo para 'store'.
   if (!profile.firstName || !profile.lastName || !profile.displayName) return false;
-  if (!publicData.slug) return false;
+  if (!isCasual && !publicData.slug) return false;
 
-  // (4) Documentos legales aprobados
+  // (4) Documentos legales aprobados. El set requerido ya se filtra por
+  // sellerMode (Constancia Fiscal y CURP se excluyen para casual).
   const legal = metadata.xololoLegalDocs || {};
   const personType = legal.personType;
   if (!personType) return false;
-  const requiredSlots = slotsForPersonType(personType);
+  const requiredSlots = slotsForPersonType(personType, sellerMode);
   if (requiredSlots.length === 0) return false;
   const docs = legal.docs || {};
   const allApproved = requiredSlots.every(slot => isDocApproved(docs[slot.key]));

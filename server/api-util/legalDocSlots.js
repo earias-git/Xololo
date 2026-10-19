@@ -11,6 +11,14 @@
 //   'fisica' → sólo si el seller es Persona Física.
 //   'moral'  → sólo si el seller es Persona Moral (empresa).
 //
+// casualOk (default true):
+//   true  → el documento se pide incluso en modo casual_reseller.
+//   false → se OMITE para el seller casual (segunda mano particular).
+//     Rationale documentado en docs/SELLER_CASUAL.md:
+//     - Constancia Fiscal: el casual tiene hasRfc=false por definición
+//       (Art. 9 IV LIVA requiere no tener actividad empresarial).
+//     - CURP: redundante — ya aparece en la identificación oficial.
+//
 // PENDIENTE (docs/SUBSCRIPTIONS_V1.md §5): confirmar con earias la
 // modalidad de integración con Facturama — si Xololo timbra
 // centralizado con su propio CSD, 'rfc'/'constanciaFiscal' aquí
@@ -35,12 +43,14 @@ const LEGAL_DOC_SLOTS = [
     key: 'constanciaFiscal',
     label: 'Constancia de Situación Fiscal (SAT)',
     personType: 'both',
+    casualOk: false,
     accept: ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'],
   },
   {
     key: 'curp',
     label: 'CURP',
     personType: 'fisica',
+    casualOk: false,
     accept: ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'],
   },
   {
@@ -65,8 +75,19 @@ const LEGAL_DOC_SLOTS = [
 
 const PERSON_TYPES = new Set(['fisica', 'moral']);
 
-const slotsForPersonType = personType =>
-  LEGAL_DOC_SLOTS.filter(s => s.personType === 'both' || s.personType === personType);
+const SELLER_MODE_CASUAL = 'casual_reseller';
+
+// Filtra los slots aplicables al seller. `sellerMode` acepta 'store' (default)
+// y 'casual_reseller'; en casual se omiten los slots con casualOk===false
+// (Constancia Fiscal y CURP) porque el casual tiene hasRfc=false y el CURP
+// ya viene en la identificación oficial.
+const slotsForPersonType = (personType, sellerMode = 'store') =>
+  LEGAL_DOC_SLOTS.filter(s => {
+    const matchesPerson = s.personType === 'both' || s.personType === personType;
+    if (!matchesPerson) return false;
+    if (sellerMode === SELLER_MODE_CASUAL && s.casualOk === false) return false;
+    return true;
+  });
 
 const findSlot = key => LEGAL_DOC_SLOTS.find(s => s.key === key) || null;
 

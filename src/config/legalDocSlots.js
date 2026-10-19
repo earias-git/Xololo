@@ -22,12 +22,19 @@ export const LEGAL_DOC_SLOTS = [
     key: 'constanciaFiscal',
     label: 'Constancia de Situación Fiscal (SAT)',
     personType: 'both',
+    // XOLOLO: omitido para seller casual — el casual tiene hasRfc=false
+    // por definición y por lo tanto no tiene constancia que entregar.
+    casualOk: false,
     accept: 'image/png,image/jpeg,application/pdf',
   },
   {
     key: 'curp',
     label: 'CURP',
     personType: 'fisica',
+    // XOLOLO: omitido para seller casual — el CURP ya aparece en la
+    // identificación oficial (INE/pasaporte), pedirlo por separado es
+    // fricción sin valor para una venta ocasional.
+    casualOk: false,
     accept: 'image/png,image/jpeg,application/pdf',
   },
   {
@@ -50,8 +57,15 @@ export const LEGAL_DOC_SLOTS = [
   },
 ];
 
-export const slotsForPersonType = personType =>
-  LEGAL_DOC_SLOTS.filter(s => s.personType === 'both' || s.personType === personType);
+// Filtra los slots aplicables al seller. En modo 'casual_reseller'
+// (segunda mano particular) se omiten los slots con casualOk===false.
+export const slotsForPersonType = (personType, sellerMode = 'store') =>
+  LEGAL_DOC_SLOTS.filter(s => {
+    const matchesPerson = s.personType === 'both' || s.personType === personType;
+    if (!matchesPerson) return false;
+    if (sellerMode === 'casual_reseller' && s.casualOk === false) return false;
+    return true;
+  });
 
 export const STATUS_LABELS = {
   pending: { text: 'En revisión', tone: 'pending' },

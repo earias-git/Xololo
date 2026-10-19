@@ -302,6 +302,35 @@ Tests en `AuthenticationPage.helpers.test.js`.
   `/account`.
 - Perfil público `/u/:id`: pill verde "Vendedor casual" + explicación.
 
+### 5.3b. Documentos legales recortados 🟢
+
+Para el casual, el catálogo de `/account/legal-docs` sólo pide:
+
+- **Identificación oficial** (INE o pasaporte) — antifraude básico.
+- **Comprobante de domicilio** — localización en caso de dispute.
+
+Se omiten explícitamente:
+
+- **Constancia de Situación Fiscal (SAT)** — el casual tiene
+  `hasRfc=false` por definición (Art. 9 IV LIVA requiere ausencia
+  de actividad empresarial); no puede entregar la constancia.
+- **CURP** — ya aparece en la identificación oficial; pedirla por
+  separado es fricción sin valor.
+
+Implementación: `casualOk: false` en los slots omitidos (ver
+`src/config/legalDocSlots.js` y su mirror en server). El filtro
+`slotsForPersonType(personType, sellerMode)` las excluye cuando
+`sellerMode='casual_reseller'`.
+
+El picker inicial "Persona física / Persona moral" se salta para el
+casual: `useEffect` auto-fija `personType='fisica'` al cargar la
+página porque el casual es particular por definición.
+
+Impacto en Xololo Verified: `sellerVerified.computeVerifiedFromUser`
+también acepta sellerMode. Para casual se omite el criterio de
+suscripción activa y el requisito de slug — basta con payouts
+configurados + nombre + los dos docs aprobados.
+
 ### 5.4. Preview para un bien usado $1,500 por particular
 
 ```
@@ -328,8 +357,9 @@ Seller recibe                                   $1,280.76
 | `xololoTaxProfile.test.js` | 7 | Default conservador PF empresarial + hasRfc. Hidratación parcial, timestamps ISO. |
 | `xololoTaxClassification.test.js` | 7 | Catálogo bien formado. `CLASSIFICATION_GROUPS` cubre cada código exactamente una vez. `resolveTaxOverride` sólo pasa con `approved`. |
 | `AuthenticationPage.helpers.test.js` | 5 | Signup NO añade data casual sin pedirla; SÍ persiste `publicData.sellerMode` + perfil fiscal particular firmado cuando casual. |
+| `legalDocSlots.test.js` | 7 | Catálogo store/casual: casual sólo pide INE + comprobante; constancia + CURP se excluyen; moral+casual (improbable) sigue entregando docs de PM. |
 
-**Total: 54 tests pasando** (`yarn test`).
+**Total: 61 tests pasando** (`yarn test`).
 
 ---
 

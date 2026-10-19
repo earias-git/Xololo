@@ -39,10 +39,15 @@ const getStatus = async (req, res) => {
 
   try {
     const resp = await isdk.users.show({ id: sellerId });
-    const legalDocs = resp.data.data.attributes?.profile?.metadata?.xololoLegalDocs || {};
+    const profile = resp.data.data.attributes?.profile || {};
+    const legalDocs = profile.metadata?.xololoLegalDocs || {};
     const personType = legalDocs.personType || null;
     const docs = legalDocs.docs || {};
-    const requiredSlots = personType ? slotsForPersonType(personType) : [];
+    // XOLOLO: seller casual omite Constancia Fiscal + CURP del catálogo.
+    // sellerMode vive en publicData — lo lee el server para filtrar los
+    // slots obligatorios antes de responderle al cliente.
+    const sellerMode = profile.publicData?.sellerMode || 'store';
+    const requiredSlots = personType ? slotsForPersonType(personType, sellerMode) : [];
     return res.json({ personType, docs, requiredSlots });
   } catch (e) {
     // eslint-disable-next-line no-console

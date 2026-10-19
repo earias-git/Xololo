@@ -12,6 +12,7 @@ import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
 import { LEGAL_DOC_SLOTS, slotsForPersonType, STATUS_LABELS } from '../../config/legalDocSlots';
+import { getSellerMode } from '../../util/xololoSellerMode';
 
 import css from './LegalDocsPage.module.css';
 
@@ -142,6 +143,21 @@ const LegalDocsPageComponent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // XOLOLO: el seller casual es particular por definición. Si llega a
+  // esta página sin haber elegido tipo de persona (no ha pasado por
+  // el picker porque lo saltamos), lo auto-fijamos como 'fisica' para
+  // que vea directamente los 2 docs filtrados (INE + comprobante).
+  const casualNeedsAutoPersonType =
+    getSellerMode(currentUser) === 'casual_reseller' &&
+    state.status === 'ok' &&
+    !state.data?.personType;
+  useEffect(() => {
+    if (casualNeedsAutoPersonType) {
+      choosePersonType('fisica');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [casualNeedsAutoPersonType]);
+
   const choosePersonType = async personType => {
     setSavingPersonType(true);
     try {
@@ -188,8 +204,11 @@ const LegalDocsPageComponent = () => {
     showPayoutDetails,
   };
 
+  // XOLOLO: seller casual (segunda mano particular) omite Constancia
+  // Fiscal y CURP (ver docs/SELLER_CASUAL.md §5).
+  const sellerMode = getSellerMode(currentUser);
   const personType = state.data?.personType || null;
-  const requiredSlots = personType ? slotsForPersonType(personType) : [];
+  const requiredSlots = personType ? slotsForPersonType(personType, sellerMode) : [];
   const docs = state.data?.docs || {};
 
   return (
@@ -210,8 +229,9 @@ const LegalDocsPageComponent = () => {
         <div className={css.content}>
           <H3 as="h1">Documentos legales</H3>
           <p className={css.intro}>
-            Necesitamos verificar algunos documentos antes de activar tu tienda. Xololo los
-            revisa manualmente — te avisamos si algo necesita corrección.
+            {sellerMode === 'casual_reseller'
+              ? 'Como vendedor casual sólo te pedimos identificación y comprobante de domicilio. Xololo los revisa manualmente — te avisamos si algo necesita corrección.'
+              : 'Necesitamos verificar algunos documentos antes de activar tu tienda. Xololo los revisa manualmente — te avisamos si algo necesita corrección.'}
           </p>
 
           {state.status === 'loading' ? (
