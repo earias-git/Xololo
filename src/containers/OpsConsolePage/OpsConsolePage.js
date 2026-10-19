@@ -8,6 +8,7 @@ import { Page } from '../../components';
 
 import MfaEnrollView from './MfaEnrollView';
 import OperatorsView from './OperatorsView';
+import TaxReviewsView from './TaxReviewsView';
 
 import css from './OpsConsolePage.module.css';
 
@@ -257,6 +258,7 @@ const MODULE_CARDS = [
   { key: 'accounting', label: 'Contabilidad', emoji: '🧾', hint: 'Facturama, Stripe balance, CxC/CxP', route: null },
   { key: 'users', label: 'Usuarios', emoji: '👤', hint: 'Historial de sellers y buyers', route: null },
   { key: 'operators', label: 'Operadores', emoji: '🔐', hint: 'CRUD de operadores (super admin)', route: '/ops/operators', roles: ['super_admin'] },
+  { key: 'tax_reviews', label: 'Revisión fiscal', emoji: '🧾', hint: 'Clasificaciones fiscales declaradas por sellers (exento, tasa 0%, actividad distinta)', route: '/ops/tax-reviews' },
   { key: 'audit_log', label: 'Audit log', emoji: '📋', hint: 'Registro de todas las acciones', route: null },
 ];
 
@@ -493,6 +495,8 @@ const OpsConsolePage = () => {
     } else {
       content = <OperatorsView currentOperator={session.operator} onBack={backToDashboard} />;
     }
+  } else if (location.pathname === '/ops/tax-reviews') {
+    content = <TaxReviewsView onBack={backToDashboard} />;
   } else {
     content = (
       <Dashboard

@@ -371,6 +371,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: OpsConsolePage,
     },
     {
+      // XOLOLO Gate antifraude fiscal (task #39): cola de clasificaciones
+      // fiscales declaradas por sellers que esperan revisión humana.
+      path: '/ops/tax-reviews',
+      name: 'OpsTaxReviewsPage',
+      component: OpsConsolePage,
+    },
+    {
       // XOLOLO Cart.4: página del carrito del seller identificado por
       // sellerId. Los items viven en localStorage (cart.duck) — la
       // page los lee del store y permite editar cantidades, remover

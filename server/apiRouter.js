@@ -36,6 +36,7 @@ const uploadSosPhoto = require('./api/upload-sos-photo');
 const uploadLegalDoc = require('./api/upload-legal-doc');
 const sellerLegalDocs = require('./api/seller-legal-docs');
 const adminLegalDocs = require('./api/admin-legal-docs');
+const adminTaxReviews = require('./api/admin-tax-reviews');
 const adminAuth = require('./api/admin-auth');
 const adminOperators = require('./api/admin-operators');
 const createSubscriptionCheckout = require('./api/create-subscription-checkout');
@@ -189,6 +190,11 @@ router.post('/seller-legal-docs', bodyParser.json(), sellerLegalDocs);
 // Admin: cola de revisión + aprobar/rechazar un documento.
 router.get('/admin/legal-docs', adminLegalDocs.list);
 router.post('/admin/legal-docs/review', bodyParser.json(), adminLegalDocs.review);
+
+// XOLOLO Gate antifraude fiscal (task #39): cola de clasificaciones
+// fiscales declaradas por sellers que esperan revisión humana en /ops.
+router.get('/admin/tax-reviews', adminTaxReviews.list);
+router.post('/admin/tax-reviews/review', bodyParser.json(), adminTaxReviews.review);
 
 // XOLOLO Fase 1C.3 — Autenticación de operadores Xololo (RBAC + MFA
 // futuro). Ver docs/ARQUITECTURA_PENALIDADES.md §6. Rutas:

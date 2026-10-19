@@ -709,3 +709,183 @@
   color: #8694af;
   font-style: italic;
 }
+
+/* XOLOLO Gate antifraude fiscal (task #39) — cola /ops/tax-reviews */
+
+.taxReviewList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.taxReviewCard {
+  background: #fff;
+  border: 1px solid #e4e8ef;
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.taxReviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.taxReviewTitle {
+  margin: 0 0 4px;
+  font-size: 16px;
+  color: #0e1a2f;
+}
+
+.taxReviewMeta {
+  margin: 0;
+  font-size: 12.5px;
+  color: #647593;
+  line-height: 1.4;
+}
+
+.statusPill {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.statusPending {
+  background: #fff6d9;
+  color: #8a6a00;
+}
+
+.statusRejected {
+  background: #fde8e8;
+  color: #b00020;
+}
+
+.taxReviewBody {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 16px;
+  padding: 12px 14px;
+  background: #f6f8fc;
+  border-radius: 8px;
+}
+
+@media (max-width: 640px) {
+  .taxReviewBody {
+    grid-template-columns: 1fr;
+  }
+}
+
+.taxReviewLegal strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #0e1a2f;
+  font-size: 14px;
+}
+
+.taxReviewArticle {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 8px;
+  background: #e8f0ff;
+  color: #1a4bd1;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.taxReviewGroup {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #eef5ee;
+  color: #286a3a;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.taxReviewDesc {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: #44546e;
+  line-height: 1.45;
+}
+
+.taxReviewDl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.taxReviewDl > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.taxReviewDl dt {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8694af;
+  font-weight: 600;
+}
+
+.taxReviewDl dd {
+  margin: 0;
+  font-size: 12.5px;
+  color: #0e1a2f;
+}
+
+.taxReviewActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.taxReviewBtns {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.approveBtn,
+.rejectBtn {
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.approveBtn {
+  background: #1f8c3f;
+  color: #fff;
+}
+
+.approveBtn:hover:not(:disabled) {
+  background: #1a7a37;
+}
+
+.rejectBtn {
+  background: #fff;
+  color: #b00020;
+  border-color: #b00020;
+}
+
+.rejectBtn:hover:not(:disabled) {
+  background: #fde8e8;
+}
+
+.approveBtn:disabled,
+.rejectBtn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
