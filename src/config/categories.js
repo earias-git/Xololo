@@ -136,6 +136,25 @@ const categories = [
       </Icon>
     ),
   },
+  {
+    // XOLOLO: NO es una categoría real del catálogo (segunda mano es una
+    // CONDICIÓN transversal — hay usados en todas las categorías). Esta
+    // card es un atajo a /s?pub_condition=used para que buyers encuentren
+    // la vertical de reventa sin tener que recorrer cada rubro. Sellers
+    // no eligen "segunda mano" como categoría; eligen rubro + marcan
+    // condition=used en el form de Pricing.
+    id: 'segunda-mano',
+    label: 'Segunda mano',
+    href: '/s?pub_condition=used',
+    icon: (
+      <Icon>
+        <path d="M3 12a9 9 0 0 1 15.5-6.3L21 8" />
+        <path d="M21 3v5h-5" />
+        <path d="M21 12a9 9 0 0 1-15.5 6.3L3 16" />
+        <path d="M3 21v-5h5" />
+      </Icon>
+    ),
+  },
 ];
 
 export default categories;
