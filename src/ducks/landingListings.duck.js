@@ -160,13 +160,22 @@ const listingToFeaturedItem = (kind, listing, included, idx) => {
     imageUrl: imageUrlFromListing(listing, included),
     tone: TONES[idx % TONES.length],
     href: `/l/${slug}/${listing.id.uuid}`,
+    // XOLOLO: exponemos la condición al selector para que
+    // "Productos destacados" pueda excluir los usados y mantenerlos
+    // sólo en "Segunda mano destacada".
+    condition: listing.attributes?.publicData?.condition || null,
   };
 };
 
 export const selectFeaturedProducts = state => {
   const products = state.landingListings.products;
   if (!products?.data?.length) return [];
-  return products.data.map((l, i) => listingToFeaturedItem('product', l, products.included, i));
+  return products.data
+    .map((l, i) => listingToFeaturedItem('product', l, products.included, i))
+    // XOLOLO: "Productos destacados" sólo muestra productos NUEVOS o
+    // sin condición declarada (legacy). Los usados viven en su propia
+    // sección "Segunda mano destacada", de modo que no se dupliquen.
+    .filter(item => item.condition !== 'used');
 };
 
 export const selectFeaturedServices = state => {
