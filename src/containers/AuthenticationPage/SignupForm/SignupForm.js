@@ -40,7 +40,13 @@ const SignupFormComponent = props => (
   <FinalForm
     {...props}
     mutators={{ ...arrayMutators }}
-    initialValues={{ userType: props.preselectedUserType || getSoleUserTypeMaybe(props.userTypes) }}
+    initialValues={{
+      userType: props.preselectedUserType || getSoleUserTypeMaybe(props.userTypes),
+      // XOLOLO: si el banner "Vende lo que ya no usas" trajo al visitante
+      // con ?sellerMode=casual_reseller, pre-seleccionamos ese radio para
+      // que no tenga que elegir dos veces.
+      ...(props.preselectedSellerMode ? { sellerMode: props.preselectedSellerMode } : {}),
+    }}
     render={formRenderProps => {
       const {
         rootClassName,

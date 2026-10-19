@@ -36,6 +36,7 @@ import FeaturedListings from '../../components/FeaturedListings/FeaturedListings
 import FeaturedStores from '../../components/FeaturedStores/FeaturedStores';
 import VerifiedBand from '../../components/VerifiedBand/VerifiedBand';
 import XololearBand from '../../components/XololearBand/XololearBand';
+import UsedGoodsBand from '../../components/UsedGoodsBand/UsedGoodsBand';
 import AppBand from '../../components/AppBand/AppBand';
 import heroSlides from '../../config/heroSlides';
 import trustItems from '../../config/trustItems';
@@ -126,6 +127,7 @@ export const LandingPageComponent = props => {
       }
       afterSections={
         <>
+          <UsedGoodsBand />
           <CategoryRail categories={categories} />
           <PromoCards cards={promoCards} />
           <XololearBand />

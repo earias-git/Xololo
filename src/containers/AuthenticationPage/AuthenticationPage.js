@@ -251,6 +251,20 @@ export const AuthenticationPageComponent = props => {
 
   const isConfirm = tab === 'confirm';
   const isLogin = tab === 'login';
+  // XOLOLO: lee ?sellerMode=casual_reseller del query para pre-seleccionar
+  // el radio del SignupForm. Se dispara desde el banner "Vende lo que ya
+  // no usas" del landing. Sólo se acepta ese valor; cualquier otro cae a null.
+  const sellerModeFromQuery = (() => {
+    try {
+      const search = location?.search || '';
+      const params = new URLSearchParams(search);
+      const v = params.get('sellerMode');
+      return v === 'casual_reseller' ? 'casual_reseller' : null;
+    } catch (_) {
+      return null;
+    }
+  })();
+
   const userTypeInPushState = location.state?.userType || null;
   const userTypeInAuthInfo = isConfirm && authInfo?.userType ? authInfo?.userType : null;
   const userType = pathParams?.userType || userTypeInPushState || userTypeInAuthInfo || null;
@@ -397,6 +411,7 @@ export const AuthenticationPageComponent = props => {
                   inProgress={authInProgress}
                   termsAndConditions={termsAndConditions}
                   preselectedUserType={preselectedUserType}
+                  preselectedSellerMode={sellerModeFromQuery}
                   userTypes={userTypes}
                   userFields={userFields}
                 />
