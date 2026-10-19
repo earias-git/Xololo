@@ -38,36 +38,56 @@ const PCT_IVA = 0.16;
 const PCT_MOTOR = 0.036;
 
 // XOLOLO: comisión de servicios administrativos de Xololo. Se calcula
-// POR PRODUCTO (no por seller) con una tabla por tramos según el precio
-// del listing. Un mismo seller puede tener listings en distintos tramos
-// — cada venta se cobra con la tasa que corresponda a su precio.
+// POR PRODUCTO (no por seller) con tramos MARGINALES — cada porción del
+// precio dentro de un tramo se cobra con la tasa de ese tramo (como ISR).
+// Un mismo seller puede tener listings cayendo en distintos niveles.
 //
-// Rationale del escalonado: una tasa plana lastima al ticket bajo (una
-// venta de $300 con 10% quema la operación del seller casual) o
-// subsidia al ticket alto. La curva baja al subir el ticket para que
-// Xololo capture valor en ventas chicas sin volverse prohibitivo arriba.
+// Rationale del escalonado marginal: una tabla plana por tramos genera
+// un salto absurdo en el borde (vender a $50,001 pagaría menos total que
+// vender a $50,000). Marginal elimina el salto y hace la curva monótona:
+// subir el precio siempre sube la comisión en pesos, pero la tasa
+// efectiva baja al subir el ticket.
 //
-// Tramos:
-//   - $1 - $50,000       (<= 5000000 subunits):  9%
-//   - $50,001 - $100,000 (<= 10000000 subunits): 6%
-//   - Más de $100,000:                            3%
+// Tramos marginales:
+//   - Hasta  $50,000     (primeros 5000000 subunits):  9% sobre esa porción
+//   - Entre  $50,001-$100,000 (siguientes 5000000):    6% sobre esa porción
+//   - Más de $100,000:                                 3% sobre lo que exceda
 //
-// Al cargo porcentual se le suma IVA 16% (Xololo factura su comisión y
-// causa IVA aunque el bien vendido esté exento por Art. 9 IV LIVA).
+// Al cargo total se le suma IVA 16% (Xololo es contribuyente del IVA
+// aunque el bien vendido esté exento por Art. 9 IV LIVA).
+//
+// Ejemplos:
+//   $75,000  → 50000*9% + 25000*6% = 4500 + 1500 = 6000  (efectivo 8.0%)
+//   $150,000 → 50000*9% + 50000*6% + 50000*3% = 9000      (efectivo 6.0%)
 export const COMMISSION_TIERS = [
-  { upToSubunits: 5000000, pct: 0.09, label: '$1 - $50,000' },
+  { upToSubunits: 5000000, pct: 0.09, label: 'Primeros $50,000' },
   { upToSubunits: 10000000, pct: 0.06, label: '$50,001 - $100,000' },
   { upToSubunits: Infinity, pct: 0.03, label: 'Más de $100,000' },
 ];
 
-export const resolveCommissionTier = priceSubunits => {
-  const p = Number(priceSubunits) || 0;
-  return COMMISSION_TIERS.find(t => p <= t.upToSubunits) || null;
-};
-
-export const resolveCommissionPct = priceSubunits => {
-  const tier = resolveCommissionTier(priceSubunits);
-  return tier ? tier.pct : 0;
+/**
+ * Comisión Xololo (sin IVA) para un precio dado, usando tramos
+ * marginales. Devuelve subunits enteros, con desglose por tramo.
+ */
+export const computeMarginalCommission = priceSubunits => {
+  const p = Math.max(0, Number(priceSubunits) || 0);
+  let remaining = p;
+  let lastCap = 0;
+  let baseFloat = 0;
+  const breakdown = [];
+  for (const tier of COMMISSION_TIERS) {
+    if (remaining <= 0) break;
+    const span = tier.upToSubunits === Infinity ? remaining : Math.max(0, tier.upToSubunits - lastCap);
+    const applied = Math.min(remaining, span);
+    const fee = applied * tier.pct;
+    baseFloat += fee;
+    breakdown.push({ pct: tier.pct, portion: applied, feeSubunits: Math.round(fee) });
+    remaining -= applied;
+    lastCap = tier.upToSubunits;
+  }
+  const base = Math.round(baseFloat);
+  const effectivePct = p > 0 ? base / p : 0;
+  return { baseSubunits: base, breakdown, effectivePct };
 };
 
 // Retención ISR por plataforma a personas físicas, LISR Art. 113-A.
@@ -183,14 +203,11 @@ export const computePayoutBreakdown = ({
   const ivaMotor = round(motorCobroBase * PCT_IVA);
   const motorCobroTotal = motorCobroBase + ivaMotor;
 
-  // XOLOLO: comisión de servicios administrativos — tabla por tramos
-  // según el PRECIO del listing (no según el seller). El mismo seller
-  // puede tener distintos listings cayendo en distintos tramos.
-  //   $1 - $50,000: 9% · $50,001 - $100,000: 6% · $100,001+: 3%
-  // Al cargo se le suma IVA 16% (Xololo es contribuyente del IVA).
-  const commissionTier = resolveCommissionTier(price);
-  const commissionPct = commissionTier ? commissionTier.pct : 0;
-  const xololoAdminBase = round(price * commissionPct);
+  // XOLOLO: comisión de servicios administrativos — tramos MARGINALES
+  // sobre el precio del listing. Primeros $50K @ 9%, siguientes $50K @ 6%,
+  // excedente @ 3%. Al cargo se le suma IVA 16%.
+  const commission = computeMarginalCommission(price);
+  const xololoAdminBase = commission.baseSubunits;
   const ivaXololoAdmin = round(xololoAdminBase * PCT_IVA);
   const xololoAdminTotal = xololoAdminBase + ivaXololoAdmin;
 
@@ -245,6 +262,8 @@ export const computePayoutBreakdown = ({
     // Fees Xololo
     motorCobroSubunits: motorCobroTotal,
     xololoAdminSubunits: xololoAdminTotal,
+    xololoAdminBreakdown: commission.breakdown,
+    xololoAdminEffectivePct: commission.effectivePct,
 
     // Retenciones
     retIsrSubunits: retIsr,
@@ -260,7 +279,7 @@ export const computePayoutBreakdown = ({
     labels: {
       iva: ivaMode === IVA_MODES.GRAVADO ? '16%' : ivaMode === IVA_MODES.TASA_CERO ? '0%' : 'Exento',
       motorCobro: `${(PCT_MOTOR * 100).toFixed(1)}% + IVA`,
-      xololoAdmin: `${(commissionPct * 100).toFixed(0)}% + IVA · ${commissionTier?.label || ''}`,
+      xololoAdmin: `${(commission.effectivePct * 100).toFixed(1)}% efectivo + IVA · tramos marginales 9/6/3`,
       retIsr: formatPct(retIsrPct),
       retIva: formatPct(retIvaPct),
     },
