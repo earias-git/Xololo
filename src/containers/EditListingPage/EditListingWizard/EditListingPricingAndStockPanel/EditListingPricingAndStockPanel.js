@@ -8,6 +8,7 @@ import { LISTING_STATE_DRAFT, STOCK_INFINITE_ITEMS, propTypes } from '../../../.
 import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
 import { getTaxProfile } from '../../../../util/xololoTaxProfile';
+import { SELLER_MODES, getSellerMode } from '../../../../util/xololoSellerMode';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -25,7 +26,7 @@ const getListingTypeConfig = (publicData, listingTypes) => {
 };
 
 const getInitialValues = props => {
-  const { listing, listingTypes } = props;
+  const { listing, listingTypes, defaultCondition = 'new' } = props;
   const isPublished = listing?.id && listing?.attributes?.state !== LISTING_STATE_DRAFT;
   const price = listing?.attributes?.price;
   const currentStock = listing?.currentStock;
@@ -59,9 +60,16 @@ const getInitialValues = props => {
       }
     : {};
 
-  // XOLOLO: condición del artículo. Default 'new' si nunca se guardó.
+  // XOLOLO: condición del artículo. Si el listing ya tenía valor, lo
+  // respetamos. Si es nuevo, usamos defaultCondition del caller (los
+  // sellers casual lo reciben con 'used' pre-seleccionado).
   const conditionInitial = {
-    condition: publicData?.condition === 'used' ? 'used' : 'new',
+    condition:
+      publicData?.condition === 'used'
+        ? 'used'
+        : publicData?.condition === 'new'
+          ? 'new'
+          : defaultCondition,
   };
 
   return {
@@ -123,8 +131,15 @@ const buildTaxClassificationUpdate = (values, listing) => {
  * @returns {JSX.Element}
  */
 const EditListingPricingAndStockPanel = props => {
+  // XOLOLO: perfil fiscal + modo del seller. Default 'used' para casual.
+  const currentUser = useSelector(state => state.user?.currentUser);
+  const sellerTaxProfile = getTaxProfile(currentUser);
+  const defaultCondition =
+    getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER ? 'used' : 'new';
   // State is needed since re-rendering would overwrite the values during XHR call.
-  const [state, setState] = useState({ initialValues: getInitialValues(props) });
+  const [state, setState] = useState({
+    initialValues: getInitialValues({ ...props, defaultCondition }),
+  });
 
   const {
     className,
@@ -147,9 +162,7 @@ const EditListingPricingAndStockPanel = props => {
   const classes = classNames(rootClassName || css.root, className);
   const initialValues = state.initialValues;
 
-  // XOLOLO: perfil fiscal del seller (declarado en Account Settings).
-  const currentUser = useSelector(state => state.user?.currentUser);
-  const sellerTaxProfile = getTaxProfile(currentUser);
+  // currentUser y sellerTaxProfile ya se leyeron arriba.
 
   // Form needs to know data from listingType
   const publicData = listing?.attributes?.publicData;

@@ -3,6 +3,7 @@
  * Navigational 'aside' content should be added to this wrapper.
  */
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 import { FormattedMessage } from '../../../util/reactIntl';
@@ -92,6 +93,15 @@ const LayoutWrapperAccountSettingsSideNav = props => {
   }, [mounted]);
 
   const { currentPage, showPaymentMethods, showPayoutDetails } = accountSettingsNavProps;
+
+  // XOLOLO: seller casual (segunda mano particular) NO tiene storefront
+  // ni paga suscripción — leemos sellerMode directo del store para no
+  // obligar a cada page a propagarlo via props.
+  const isCasualReseller = useSelector(
+    state =>
+      state.user?.currentUser?.attributes?.profile?.publicData?.sellerMode ===
+      'casual_reseller'
+  );
   const payoutDetailsMaybe = showPayoutDetails
     ? [
         {
@@ -150,24 +160,31 @@ const LayoutWrapperAccountSettingsSideNav = props => {
     },
     ...payoutDetailsMaybe,
     ...paymentMethodsMaybe,
-    {
-      // XOLOLO: tab del dashboard del seller
-      text: <span>Mi tienda</span>,
-      selected: currentPage === 'ManageStorePage',
-      id: 'ManageStorePageTab',
-      linkProps: {
-        name: 'ManageStorePage',
-      },
-    },
-    {
-      // XOLOLO Track C: suscripción del seller (docs/SUBSCRIPTIONS_V1.md §3)
-      text: <FormattedMessage id="LayoutWrapperAccountSettingsSideNav.subscriptionTabTitle" />,
-      selected: currentPage === 'SubscriptionPage',
-      id: 'SubscriptionPageTab',
-      linkProps: {
-        name: 'SubscriptionPage',
-      },
-    },
+    // XOLOLO: seller casual (segunda mano particular) NO tiene storefront
+    // ni paga suscripción. Omitimos ambos tabs de su nav.
+    ...(isCasualReseller
+      ? []
+      : [
+          {
+            text: <span>Mi tienda</span>,
+            selected: currentPage === 'ManageStorePage',
+            id: 'ManageStorePageTab',
+            linkProps: {
+              name: 'ManageStorePage',
+            },
+          },
+          {
+            // XOLOLO Track C: suscripción del seller (docs/SUBSCRIPTIONS_V1.md §3)
+            text: (
+              <FormattedMessage id="LayoutWrapperAccountSettingsSideNav.subscriptionTabTitle" />
+            ),
+            selected: currentPage === 'SubscriptionPage',
+            id: 'SubscriptionPageTab',
+            linkProps: {
+              name: 'SubscriptionPage',
+            },
+          },
+        ]),
     {
       // XOLOLO Track B: documentos legales del seller (docs/SUBSCRIPTIONS_V1.md §2)
       text: <FormattedMessage id="LayoutWrapperAccountSettingsSideNav.legalDocsTabTitle" />,

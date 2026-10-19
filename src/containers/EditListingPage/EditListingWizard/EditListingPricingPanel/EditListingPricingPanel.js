@@ -10,6 +10,7 @@ import { isPriceVariationsEnabled } from '../../../../util/configHelpers';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
 import { FIXED, isBookingProcess } from '../../../../transactions/transaction';
 import { getTaxProfile } from '../../../../util/xololoTaxProfile';
+import { SELLER_MODES, getSellerMode } from '../../../../util/xololoSellerMode';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -37,7 +38,7 @@ const getListingTypeConfig = (publicData, listingTypes) => {
 // exporting helper functions that handle the initial values and the submission values.
 // This is a tentative approach to contain logic in one place.
 const getInitialValues = props => {
-  const { listing, listingTypes } = props;
+  const { listing, listingTypes, defaultCondition = 'new' } = props;
   const { publicData } = listing?.attributes || {};
   const { unitType, taxClassification, condition } = publicData || {};
   const listingTypeConfig = getListingTypeConfig(publicData, listingTypes);
@@ -54,8 +55,12 @@ const getInitialValues = props => {
       }
     : {};
 
-  // XOLOLO: condición del artículo. Default 'new' si nunca se guardó.
-  const conditionInitial = { condition: condition === 'used' ? 'used' : 'new' };
+  // XOLOLO: condición del artículo. Si el listing ya tenía valor, lo
+  // respetamos. Si es nuevo, usamos defaultCondition del caller (los
+  // sellers casual lo reciben con 'used' pre-seleccionado).
+  const conditionInitial = {
+    condition: condition === 'used' ? 'used' : condition === 'new' ? 'new' : defaultCondition,
+  };
 
   return unitType === FIXED || isPriceVariationsInUse
     ? {
@@ -140,7 +145,15 @@ const getOptimisticListing = (listing, updateValues) => {
  * @returns {JSX.Element}
  */
 const EditListingPricingPanel = props => {
-  const [state, setState] = useState({ initialValues: getInitialValues(props) });
+  // XOLOLO: perfil fiscal + modo del seller. Se lee aquí (en vez de en
+  // getInitialValues) para que useSelector respete reglas de hooks.
+  const currentUser = useSelector(state => state.user?.currentUser);
+  const sellerTaxProfile = getTaxProfile(currentUser);
+  const defaultCondition =
+    getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER ? 'used' : 'new';
+  const [state, setState] = useState({
+    initialValues: getInitialValues({ ...props, defaultCondition }),
+  });
 
   const {
     className,
@@ -164,12 +177,10 @@ const EditListingPricingPanel = props => {
   const initialValues = state.initialValues;
   const isPublished = listing?.id && listing?.attributes?.state !== LISTING_STATE_DRAFT;
 
-  // XOLOLO: perfil fiscal del seller (declarado en Account Settings).
-  // personType + hasRfc modulan la retención ISR 113-A y la retención
-  // por falta de RFC. La comisión Xololo depende del precio del listing
-  // (COMMISSION_TIERS en xololoPayout), no del seller.
-  const currentUser = useSelector(state => state.user?.currentUser);
-  const sellerTaxProfile = getTaxProfile(currentUser);
+  // currentUser/sellerTaxProfile ya se leyeron arriba (antes de useState)
+  // para computar defaultCondition. personType + hasRfc modulan la
+  // retención ISR 113-A y la retención por falta de RFC. La comisión
+  // Xololo depende del precio del listing (COMMISSION_TIERS), no del seller.
 
   const publicData = listing?.attributes?.publicData;
   const listingTypeConfig = getListingTypeConfig(publicData, listingTypes);

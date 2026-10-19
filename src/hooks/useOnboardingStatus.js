@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { apiBaseUrl } from '../util/api';
+import { SELLER_MODES, getSellerMode } from '../util/xololoSellerMode';
 
 // XOLOLO: checklist de onboarding del seller — misma fuente de verdad
 // para dos consumidores:
@@ -116,9 +117,18 @@ export const useOnboardingStatus = (currentUser, enabled = true) => {
   const loading = !legalDocs.settled || !subscription.settled;
   const failed = !loading && (legalDocs.data === null || subscription.data === null);
 
+  // XOLOLO: seller casual (segunda mano particular, modo 'casual_reseller')
+  // NO necesita tienda (no tiene storefront) ni suscripción (no paga). El
+  // checklist se recorta: profile + contact + payouts + legalDocs. Sigue
+  // bloqueando publicar si falta algo esencial para cobrar.
+  const isCasual = getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
+  const filteredSteps = isCasual ? STEPS.filter(s => s.key !== 'store') : STEPS;
+
   const results = [
-    ...STEPS.map(step => ({ ...step, done: step.check(currentUser) })),
-    { ...SUBSCRIPTION_STEP, done: subscription.data?.status === 'active' },
+    ...filteredSteps.map(step => ({ ...step, done: step.check(currentUser) })),
+    ...(isCasual
+      ? []
+      : [{ ...SUBSCRIPTION_STEP, done: subscription.data?.status === 'active' }]),
     { ...LEGAL_DOCS_STEP, done: isLegalDocsStepDone(legalDocs.data) },
   ];
   const doneCount = results.filter(r => r.done).length;
