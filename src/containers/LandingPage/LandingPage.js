@@ -15,6 +15,7 @@ import {
   fetchLandingListings,
   selectFeaturedProducts,
   selectFeaturedServices,
+  selectFeaturedUsed,
 } from '../../ducks/landingListings.duck';
 import { fetchLandingStores, selectLandingStores } from '../../ducks/landingStores.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
@@ -75,6 +76,7 @@ export const LandingPageComponent = props => {
     onFetchLandingStores,
     featuredProducts,
     featuredServices,
+    featuredUsed,
     featuredStores,
     storefrontSlug,
   } = props;
@@ -103,6 +105,10 @@ export const LandingPageComponent = props => {
 
   const productsToShow = featuredProducts?.length ? featuredProducts : featuredProductsPlaceholder;
   const servicesToShow = featuredServices?.length ? featuredServices : featuredServicesPlaceholder;
+  // XOLOLO: segunda mano NO cae a placeholders — si no hay inventario real
+  // de usados aún, la sección completa se omite para no mostrar bikes nuevas
+  // bajo un rótulo de "segunda mano".
+  const usedToShow = featuredUsed?.length ? featuredUsed : null;
   const storesToShow = featuredStores?.length ? featuredStores : featuredStoresPlaceholder;
 
   return (
@@ -129,6 +135,14 @@ export const LandingPageComponent = props => {
             seeAllHref="/s?pub_listingType=product"
             items={productsToShow}
           />
+          {usedToShow ? (
+            <FeaturedListings
+              title="Segunda mano destacada"
+              seeAllLabel="Ver todo lo usado"
+              seeAllHref="/s?pub_condition=used"
+              items={usedToShow}
+            />
+          ) : null}
           <FeaturedListings
             title="Servicios populares"
             seeAllLabel="Ver todos los servicios"
@@ -167,6 +181,7 @@ const mapStateToProps = state => {
     error,
     featuredProducts: selectFeaturedProducts(state),
     featuredServices: selectFeaturedServices(state),
+    featuredUsed: selectFeaturedUsed(state),
     featuredStores: selectLandingStores(state),
     storefrontSlug: selectStorefrontSlug(state),
   };

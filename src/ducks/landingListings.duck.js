@@ -48,10 +48,17 @@ const commonQueryParams = () => ({
 
 const fetchLandingListingsPayloadCreator = async (_, { extra: sdk, rejectWithValue }) => {
   try {
-    const [productsRes, servicesRes] = await Promise.all([
+    const [productsRes, servicesRes, usedRes] = await Promise.all([
       sdk.listings.query({ pub_listingType: 'product', ...commonQueryParams() }),
       sdk.listings.query({
         pub_listingType: 'service,service-day',
+        ...commonQueryParams(),
+      }),
+      // XOLOLO: tercera query para la sección "Segunda mano destacada" del
+      // landing. Filtra por publicData.condition='used' sobre el pool entero
+      // de listings (todos los rubros). Mismo shape que las otras dos.
+      sdk.listings.query({
+        pub_condition: 'used',
         ...commonQueryParams(),
       }),
     ]);
@@ -63,6 +70,10 @@ const fetchLandingListingsPayloadCreator = async (_, { extra: sdk, rejectWithVal
       services: {
         data: servicesRes.data.data || [],
         included: servicesRes.data.included || [],
+      },
+      used: {
+        data: usedRes.data.data || [],
+        included: usedRes.data.included || [],
       },
     };
   } catch (err) {
@@ -78,6 +89,7 @@ export const fetchLandingListingsThunk = createAsyncThunk(
 const initialState = {
   products: null,
   services: null,
+  used: null,
   inProgress: false,
   error: null,
 };
@@ -96,6 +108,7 @@ const landingListingsSlice = createSlice({
         state.inProgress = false;
         state.products = action.payload.products;
         state.services = action.payload.services;
+        state.used = action.payload.used;
       })
       .addCase(fetchLandingListingsThunk.rejected, (state, action) => {
         state.inProgress = false;
@@ -158,6 +171,12 @@ export const selectFeaturedServices = state => {
   const services = state.landingListings.services;
   if (!services?.data?.length) return [];
   return services.data.map((l, i) => listingToFeaturedItem('service', l, services.included, i));
+};
+
+export const selectFeaturedUsed = state => {
+  const used = state.landingListings.used;
+  if (!used?.data?.length) return [];
+  return used.data.map((l, i) => listingToFeaturedItem('used', l, used.included, i));
 };
 
 // Backward compat action creator wrapper
