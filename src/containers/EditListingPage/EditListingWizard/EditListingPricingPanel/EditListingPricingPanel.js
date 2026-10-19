@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 // Import configs and util modules
@@ -8,6 +9,7 @@ import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { isPriceVariationsEnabled } from '../../../../util/configHelpers';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
 import { FIXED, isBookingProcess } from '../../../../transactions/transaction';
+import { getTaxProfile } from '../../../../util/xololoTaxProfile';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -154,6 +156,12 @@ const EditListingPricingPanel = props => {
   const initialValues = state.initialValues;
   const isPublished = listing?.id && listing?.attributes?.state !== LISTING_STATE_DRAFT;
 
+  // XOLOLO: perfil fiscal del seller (declarado en Account Settings). Lo
+  // pasamos al preview para que personType + hasRfc modulen la retención
+  // de ISR 113-A y el 20%/16% extra por falta de RFC.
+  const currentUser = useSelector(state => state.user?.currentUser);
+  const sellerTaxProfile = getTaxProfile(currentUser);
+
   const publicData = listing?.attributes?.publicData;
   const listingTypeConfig = getListingTypeConfig(publicData, listingTypes);
   const transactionProcessAlias = listingTypeConfig?.transactionType?.alias;
@@ -203,6 +211,7 @@ const EditListingPricingPanel = props => {
           className={css.form}
           initialValues={initialValues}
           categoryId={listing?.attributes?.publicData?.categoryLevel1}
+          sellerTaxProfile={sellerTaxProfile}
           onSubmit={values => {
             const { price } = values;
 

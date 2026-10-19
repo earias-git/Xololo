@@ -28,6 +28,8 @@ import DeleteAccountForm from './DeleteAccountForm/DeleteAccountForm';
 import { deleteAccount, resetPassword, updateProfile } from './ManageAccountPage.duck';
 import css from './ManageAccountPage.module.css';
 import PrivateDetailsForm from './PrivateDetailsForm/PrivateDetailsForm';
+import TaxProfileForm from './TaxProfileForm/TaxProfileForm';
+import { buildTaxProfilePayload, getTaxProfile } from '../../util/xololoTaxProfile';
 
 /**
  * @param {Object} props
@@ -90,6 +92,24 @@ export const ManageAccountPageComponent = props => {
     };
 
     onUpdateProfile(profile);
+  };
+
+  // XOLOLO: perfil fiscal del seller — se guarda en profile.protectedData.
+  // Mergeamos con los otros campos de protected para no sobreescribir lo que
+  // ya exista (ej. respuestas de PrivateDetailsForm).
+  const taxProfile = getTaxProfile(currentUser);
+  const taxProfileInitialValues = {
+    personType: taxProfile.personType,
+    hasRfc: taxProfile.hasRfc,
+  };
+  const handleTaxProfileSubmit = values => {
+    const existingProtected = protectedData || {};
+    onUpdateProfile({
+      protectedData: {
+        ...existingProtected,
+        xololoTaxProfile: buildTaxProfilePayload(values),
+      },
+    });
   };
 
   const handleDeleteSubmit = values => {
@@ -159,10 +179,30 @@ export const ManageAccountPageComponent = props => {
                 intl={intl}
               />
               <hr className={css.accountPageDivider} />
-              <H4 as="h3" className={css.deleteAccountSubtitle}>
-                <FormattedMessage id="ManageAccountPage.deleteAccountSubtitle" />
-              </H4>
             </>
+          ) : null}
+
+          {/* XOLOLO: perfil fiscal — siempre visible para todos los user types.
+              Impacta cómo se calcula ISR 113-A y la retención por falta de RFC
+              en TODOS los listings del seller. */}
+          {user.id ? (
+            <>
+              <TaxProfileForm
+                className={css.form}
+                initialValues={taxProfileInitialValues}
+                onSubmit={handleTaxProfileSubmit}
+                updateInProgress={updateProfileInProgress}
+                updateProfileError={updateProfileError}
+                ready={!!taxProfile.declaredAt}
+              />
+              <hr className={css.accountPageDivider} />
+            </>
+          ) : null}
+
+          {user.id ? (
+            <H4 as="h3" className={css.deleteAccountSubtitle}>
+              <FormattedMessage id="ManageAccountPage.deleteAccountSubtitle" />
+            </H4>
           ) : null}
           {user.id ? (
             <DeleteAccountForm

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 // Import configs and util modules
@@ -6,6 +7,7 @@ import { FormattedMessage } from '../../../../util/reactIntl';
 import { LISTING_STATE_DRAFT, STOCK_INFINITE_ITEMS, propTypes } from '../../../../util/types';
 import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
+import { getTaxProfile } from '../../../../util/xololoTaxProfile';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -134,6 +136,10 @@ const EditListingPricingAndStockPanel = props => {
   const classes = classNames(rootClassName || css.root, className);
   const initialValues = state.initialValues;
 
+  // XOLOLO: perfil fiscal del seller (declarado en Account Settings).
+  const currentUser = useSelector(state => state.user?.currentUser);
+  const sellerTaxProfile = getTaxProfile(currentUser);
+
   // Form needs to know data from listingType
   const publicData = listing?.attributes?.publicData;
   const unitType = publicData.unitType;
@@ -185,6 +191,7 @@ const EditListingPricingAndStockPanel = props => {
           className={css.form}
           initialValues={initialValues}
           categoryId={listing?.attributes?.publicData?.categoryLevel1}
+          sellerTaxProfile={sellerTaxProfile}
           onSubmit={values => {
             const { price, stock, stockTypeInfinity } = values;
 

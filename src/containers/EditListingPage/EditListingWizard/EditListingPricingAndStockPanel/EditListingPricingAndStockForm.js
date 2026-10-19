@@ -144,6 +144,7 @@ export const EditListingPricingAndStockForm = props => (
         fetchErrors,
         values,
         categoryId,
+        sellerTaxProfile,
       } = formRenderProps;
 
       const intl = useIntl();
@@ -225,6 +226,8 @@ export const EditListingPricingAndStockForm = props => (
                 ivaMode={selectedEntry?.ivaMode}
                 taxActivity={selectedEntry?.taxActivity}
                 ivaArticle={selectedEntry?.ivaArticle}
+                personType={sellerTaxProfile?.personType}
+                hasRfc={sellerTaxProfile?.hasRfc}
               />
             );
           })()}
