@@ -38,6 +38,48 @@ export const SELLER_MODES = {
   CASUAL_RESELLER: 'casual_reseller',
 };
 
+// XOLOLO: comisión variable por tramos de precio para el seller casual
+// (segunda mano particular). Reemplaza la cuota fija de "serv.
+// administrativos" ($14 + IVA) del modo tienda. Rationale: la venta
+// casual típica es de bajo ticket y el valor absoluto de $14 pesaría
+// demasiado en un listing de $300; en ticket alto el 9% quemaría al
+// seller — por eso se degrada 9 → 6 → 3.
+//
+// Tramos (precio total con IVA incluido si aplica):
+//   - Hasta $5,000  (<= 500000 subunits): 9%
+//   - $5,001 - $100,000: 6%
+//   - Más de $100,000 (> 10000000 subunits): 3%
+//
+// Al cargo porcentual se le suma IVA 16% (Xololo factura la comisión).
+// Nota: con sellerMode=casual_reseller y personType=individual se
+// aplica Art. 9 IV LIVA al bien vendido, pero la comisión DE XOLOLO
+// sigue causando IVA porque Xololo sí es contribuyente del IVA.
+export const CASUAL_COMMISSION_TIERS = [
+  { upToSubunits: 500000, pct: 0.09, label: 'Hasta $5,000' },
+  { upToSubunits: 10000000, pct: 0.06, label: '$5,001 - $100,000' },
+  { upToSubunits: Infinity, pct: 0.03, label: 'Más de $100,000' },
+];
+
+/**
+ * Devuelve la tasa de comisión aplicable al seller casual para el
+ * precio dado (en subunits). Siempre encuentra tramo porque el último
+ * es Infinity.
+ */
+export const resolveCasualCommissionPct = priceSubunits => {
+  const p = Number(priceSubunits) || 0;
+  const tier = CASUAL_COMMISSION_TIERS.find(t => p <= t.upToSubunits);
+  return tier ? tier.pct : 0;
+};
+
+/**
+ * Mismo cálculo pero devolviendo el tramo completo (porcentaje + label
+ * humano) para mostrar en el preview "6% + IVA · $5,001 - $100,000".
+ */
+export const resolveCasualCommissionTier = priceSubunits => {
+  const p = Number(priceSubunits) || 0;
+  return CASUAL_COMMISSION_TIERS.find(t => p <= t.upToSubunits) || null;
+};
+
 export const LISTING_CONDITIONS = {
   NEW: 'new',
   USED: 'used',

@@ -132,6 +132,7 @@ export const EditListingPricingForm = props => (
         values: formValues,
         categoryId,
         sellerTaxProfile,
+        sellerMode,
       } = formRenderProps;
 
       const intl = useIntl();
@@ -250,6 +251,7 @@ export const EditListingPricingForm = props => (
                 personType={sellerTaxProfile?.personType}
                 hasRfc={sellerTaxProfile?.hasRfc}
                 usedGoodsNotice={notice}
+                sellerMode={sellerMode}
               />
             );
           })()}

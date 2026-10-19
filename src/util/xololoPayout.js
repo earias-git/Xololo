@@ -38,6 +38,25 @@ const PCT_IVA = 0.16;
 const PCT_MOTOR = 0.036;
 const FIXED_XOLOLO_SUBUNITS = 1400;
 
+// XOLOLO: identificador del modo seller casual (segunda mano particular).
+// Importado como string literal para no crear dependencia circular con
+// xololoSellerMode.js. Debe mantenerse en sync con SELLER_MODES.CASUAL_RESELLER.
+const SELLER_MODE_CASUAL = 'casual_reseller';
+
+// Tramos de comisión por precio para seller casual. Mismos valores que
+// xololoSellerMode.CASUAL_COMMISSION_TIERS (duplicado deliberado para
+// evitar ciclo de imports). Si uno cambia, actualizar ambos.
+const CASUAL_COMMISSION_TIERS = [
+  { upToSubunits: 500000, pct: 0.09 },
+  { upToSubunits: 10000000, pct: 0.06 },
+  { upToSubunits: Infinity, pct: 0.03 },
+];
+
+const resolveCasualPct = price => {
+  const tier = CASUAL_COMMISSION_TIERS.find(t => price <= t.upToSubunits);
+  return tier ? tier.pct : 0;
+};
+
 // Retención ISR por plataforma a personas físicas, LISR Art. 113-A.
 // La tasa depende del tipo de actividad fiscal del listing:
 //   - Enajenación de bienes y servicios en general: 1.0%  ← default Xololo
@@ -120,6 +139,9 @@ const formatPct = pct => {
  * @param {number} [params.shippingSubunits=0] - Paquetería pass-through.
  * @param {boolean} [params.applyWithholdings=false] - Si retiene ISR/IVA.
  *   Default false hasta que Xololo se registre como plataforma tecnológica.
+ * @param {string} [params.sellerMode='store'] - 'store' | 'casual_reseller'.
+ *   En 'casual_reseller' la comisión Xololo cambia de $14 fijo a una tabla
+ *   por tramos de precio (9% / 6% / 3%).
  */
 export const computePayoutBreakdown = ({
   priceSubunits,
@@ -129,6 +151,7 @@ export const computePayoutBreakdown = ({
   hasRfc = true,
   shippingSubunits = 0,
   applyWithholdings = false,
+  sellerMode = 'store',
 } = {}) => {
   const price = asSubunits(priceSubunits);
   const shipping = asSubunits(shippingSubunits);
@@ -151,7 +174,16 @@ export const computePayoutBreakdown = ({
   const ivaMotor = round(motorCobroBase * PCT_IVA);
   const motorCobroTotal = motorCobroBase + ivaMotor;
 
-  const xololoAdminBase = FIXED_XOLOLO_SUBUNITS;
+  // XOLOLO: comisión de servicios administrativos. En modo 'store' es
+  // una cuota fija ($14 + IVA). En modo 'casual_reseller' es una tabla
+  // por tramos (9% / 6% / 3% + IVA sobre el porcentaje). Esto encaja
+  // la operación de venta ocasional (bajo ticket típicamente) con
+  // el cuidado de no quemar al seller en tickets altos.
+  const isCasualMode = sellerMode === SELLER_MODE_CASUAL;
+  const casualPct = isCasualMode ? resolveCasualPct(price) : 0;
+  const xololoAdminBase = isCasualMode
+    ? round(price * casualPct)
+    : FIXED_XOLOLO_SUBUNITS;
   const ivaXololoAdmin = round(xololoAdminBase * PCT_IVA);
   const xololoAdminTotal = xololoAdminBase + ivaXololoAdmin;
 
@@ -221,7 +253,9 @@ export const computePayoutBreakdown = ({
     labels: {
       iva: ivaMode === IVA_MODES.GRAVADO ? '16%' : ivaMode === IVA_MODES.TASA_CERO ? '0%' : 'Exento',
       motorCobro: `${(PCT_MOTOR * 100).toFixed(1)}% + IVA`,
-      xololoAdmin: `$${(FIXED_XOLOLO_SUBUNITS / 100).toFixed(2)} + IVA`,
+      xololoAdmin: isCasualMode
+        ? `${(casualPct * 100).toFixed(0)}% + IVA (tabla casual)`
+        : `$${(FIXED_XOLOLO_SUBUNITS / 100).toFixed(2)} + IVA`,
       retIsr: formatPct(retIsrPct),
       retIva: formatPct(retIvaPct),
     },
