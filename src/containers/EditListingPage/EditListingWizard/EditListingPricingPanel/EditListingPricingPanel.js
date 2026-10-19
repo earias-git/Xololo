@@ -39,7 +39,7 @@ const getListingTypeConfig = (publicData, listingTypes) => {
 const getInitialValues = props => {
   const { listing, listingTypes } = props;
   const { publicData } = listing?.attributes || {};
-  const { unitType, taxClassification } = publicData || {};
+  const { unitType, taxClassification, condition } = publicData || {};
   const listingTypeConfig = getListingTypeConfig(publicData, listingTypes);
   // Note: publicData contains priceVariationsEnabled if listing is created with priceVariations enabled.
   const isPriceVariationsInUse = isPriceVariationsEnabled(publicData, listingTypeConfig);
@@ -54,13 +54,21 @@ const getInitialValues = props => {
       }
     : {};
 
+  // XOLOLO: condición del artículo. Default 'new' si nunca se guardó.
+  const conditionInitial = { condition: condition === 'used' ? 'used' : 'new' };
+
   return unitType === FIXED || isPriceVariationsInUse
     ? {
         ...getInitialValuesForPriceVariants(props, isPriceVariationsInUse),
         ...getInitialValuesForStartTimeInterval(props),
         ...taxClassificationInitial,
+        ...conditionInitial,
       }
-    : { price: listing?.attributes?.price, ...taxClassificationInitial };
+    : {
+        price: listing?.attributes?.price,
+        ...taxClassificationInitial,
+        ...conditionInitial,
+      };
 };
 
 // XOLOLO: construye el payload persistido en publicData.taxClassification
@@ -269,6 +277,17 @@ const EditListingPricingPanel = props => {
                 },
               };
             }
+
+            // XOLOLO: condición del artículo. Siempre persiste 'new' o 'used'
+            // para que el motor fiscal tenga el dato explícito al cobrar.
+            const conditionValue = values?.condition === 'used' ? 'used' : 'new';
+            updateValues = {
+              ...updateValues,
+              publicData: {
+                ...(updateValues.publicData || {}),
+                condition: conditionValue,
+              },
+            };
 
             // Save the initialValues to state
             // Otherwise, re-rendering would overwrite the values during XHR call.

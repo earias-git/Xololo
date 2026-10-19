@@ -42,3 +42,25 @@
     margin-top: 100px;
   }
 }
+
+/* XOLOLO: selector de condición del artículo (nuevo/usado) */
+.conditionFieldset {
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  padding: 10px 14px 6px;
+  margin: 16px 0 8px;
+}
+
+.conditionLegend {
+  padding: 0 6px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--colorGrey900);
+}
+
+.conditionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 6px 0 2px;
+}

@@ -85,6 +85,7 @@ const XoloPayoutPreview = ({
   hasRfc = true,
   shippingSubunits = 0,
   applyWithholdings = false,
+  usedGoodsNotice = null,
 }) => {
   // Resuelve defaults a partir de la categoría del listing. Los props
   // explícitos tienen precedencia (p. ej. el checkbox de clasificación
@@ -137,6 +138,19 @@ const XoloPayoutPreview = ({
   return (
     <div className={css.root}>
       {heading ? <p className={css.heading}>{heading}</p> : null}
+
+      {/* XOLOLO: nota educativa para artículos usados — explica por qué
+          cambian (o no) las retenciones según el personType del seller. */}
+      {usedGoodsNotice ? (
+        <p
+          className={`${css.article} ${
+            usedGoodsNotice.kind === 'exempt' ? css.footnote : css.passthrough
+          }`}
+          style={{ padding: '8px 10px', borderRadius: 6, lineHeight: 1.4 }}
+        >
+          {usedGoodsNotice.text}
+        </p>
+      ) : null}
 
       {/* Descomposición: Subtotal + IVA */}
       <div className={`${css.row} ${css.muted}`}>

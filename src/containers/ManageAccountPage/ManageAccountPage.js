@@ -29,7 +29,12 @@ import { deleteAccount, resetPassword, updateProfile } from './ManageAccountPage
 import css from './ManageAccountPage.module.css';
 import PrivateDetailsForm from './PrivateDetailsForm/PrivateDetailsForm';
 import TaxProfileForm from './TaxProfileForm/TaxProfileForm';
-import { buildTaxProfilePayload, getTaxProfile } from '../../util/xololoTaxProfile';
+import {
+  PERSON_TYPES,
+  buildTaxProfilePayload,
+  getTaxProfile,
+} from '../../util/xololoTaxProfile';
+import { SELLER_MODES, getSellerMode } from '../../util/xololoSellerMode';
 
 /**
  * @param {Object} props
@@ -94,20 +99,34 @@ export const ManageAccountPageComponent = props => {
     onUpdateProfile(profile);
   };
 
-  // XOLOLO: perfil fiscal del seller — se guarda en profile.protectedData.
-  // Mergeamos con los otros campos de protected para no sobreescribir lo que
-  // ya exista (ej. respuestas de PrivateDetailsForm).
+  // XOLOLO: perfil fiscal del seller — personType + hasRfc en
+  // protectedData; sellerMode (store | casual_reseller) en publicData
+  // porque otros contextos (motor fiscal, storefront) necesitan leerlo
+  // sin privilegios.
   const taxProfile = getTaxProfile(currentUser);
+  const sellerMode = getSellerMode(currentUser);
   const taxProfileInitialValues = {
     personType: taxProfile.personType,
     hasRfc: taxProfile.hasRfc,
+    sellerMode: sellerMode === SELLER_MODES.CASUAL_RESELLER ? SELLER_MODES.CASUAL_RESELLER : null,
   };
   const handleTaxProfileSubmit = values => {
     const existingProtected = protectedData || {};
+    const existingPublic = publicData || {};
+    const isCasual = values?.sellerMode === SELLER_MODES.CASUAL_RESELLER;
+    // En modo casual forzamos personType=individual sin RFC — es el
+    // único shape fiscal consistente con Art. 9 IV LIVA.
+    const effectiveValues = isCasual
+      ? { ...values, personType: PERSON_TYPES.INDIVIDUAL, hasRfc: false }
+      : values;
     onUpdateProfile({
       protectedData: {
         ...existingProtected,
-        xololoTaxProfile: buildTaxProfilePayload(values),
+        xololoTaxProfile: buildTaxProfilePayload(effectiveValues),
+      },
+      publicData: {
+        ...existingPublic,
+        sellerMode: isCasual ? SELLER_MODES.CASUAL_RESELLER : SELLER_MODES.STORE,
       },
     });
   };

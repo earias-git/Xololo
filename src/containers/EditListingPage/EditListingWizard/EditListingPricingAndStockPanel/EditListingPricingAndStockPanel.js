@@ -59,7 +59,18 @@ const getInitialValues = props => {
       }
     : {};
 
-  return { price, stock, stockTypeInfinity, ...taxClassificationInitial };
+  // XOLOLO: condición del artículo. Default 'new' si nunca se guardó.
+  const conditionInitial = {
+    condition: publicData?.condition === 'used' ? 'used' : 'new',
+  };
+
+  return {
+    price,
+    stock,
+    stockTypeInfinity,
+    ...taxClassificationInitial,
+    ...conditionInitial,
+  };
 };
 
 // XOLOLO: construye el payload persistido en publicData.taxClassification
@@ -224,15 +235,17 @@ const EditListingPricingAndStockPanel = props => {
 
             // XOLOLO: añade publicData.taxClassification al update.
             const taxUpdate = buildTaxClassificationUpdate(values, listing);
-            const publicDataMaybe = taxUpdate
-              ? { publicData: { taxClassification: taxUpdate.taxClassification } }
-              : {};
+            const conditionValue = values?.condition === 'used' ? 'used' : 'new';
+            const publicDataPayload = {
+              ...(taxUpdate ? { taxClassification: taxUpdate.taxClassification } : {}),
+              condition: conditionValue,
+            };
 
             // New values for listing attributes
             const updateValues = {
               price,
               ...stockUpdateMaybe,
-              ...publicDataMaybe,
+              publicData: publicDataPayload,
             };
             // Save the initialValues to state
             // Otherwise, re-rendering would overwrite the values during XHR call.

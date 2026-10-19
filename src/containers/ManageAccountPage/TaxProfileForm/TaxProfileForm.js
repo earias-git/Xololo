@@ -4,6 +4,7 @@ import classNames from 'classnames';
 
 import { Button, FieldCheckbox, FieldRadioButton, Form, H4 } from '../../../components';
 import { PERSON_TYPES, PERSON_TYPE_OPTIONS } from '../../../util/xololoTaxProfile';
+import { SELLER_MODES } from '../../../util/xololoSellerMode';
 
 import css from './TaxProfileForm.module.css';
 
@@ -36,7 +37,11 @@ const TaxProfileForm = props => (
       const classes = classNames(rootClassName || css.root, className);
       const submitDisabled = invalid || pristine || updateInProgress;
       const submitReady = ready;
-      const needsRfc = values?.personType !== PERSON_TYPES.PARTICULAR;
+      const isCasual = values?.sellerMode === SELLER_MODES.CASUAL_RESELLER;
+      // Si marcó modo casual, se trata como particular por definición
+      // (Art. 9 IV LIVA sólo aplica a quien NO tiene actividad empresarial).
+      const effectivePersonType = isCasual ? PERSON_TYPES.INDIVIDUAL : values?.personType;
+      const needsRfc = effectivePersonType !== PERSON_TYPES.INDIVIDUAL;
 
       return (
         <Form className={classes} onSubmit={handleSubmit}>
@@ -56,20 +61,40 @@ const TaxProfileForm = props => (
             </p>
           ) : null}
 
-          <fieldset className={css.fieldset}>
-            <legend className={css.legend}>¿Cómo vendes en Xololo?</legend>
-            {PERSON_TYPE_OPTIONS.map(opt => (
-              <div key={opt.key} className={css.radioRow}>
-                <FieldRadioButton
-                  id={`taxProfile_personType_${opt.key}`}
-                  name="personType"
-                  value={opt.key}
-                  label={opt.label}
-                />
-                <p className={css.radioHelper}>{opt.helper}</p>
-              </div>
-            ))}
-          </fieldset>
+          <div className={css.rfcBlock}>
+            <FieldCheckbox
+              id="taxProfile_sellerMode"
+              name="sellerMode"
+              value={SELLER_MODES.CASUAL_RESELLER}
+              label="Soy vendedor casual: sólo vendo artículos usados ocasionalmente, no es mi negocio"
+            />
+            <p className={css.rfcHelper}>
+              Si marcas esta casilla, Xololo te trata como particular bajo
+              Art. 9 IV LIVA: tus ventas de usado no causan IVA y no te
+              retiene ISR 113-A. No necesitas tienda ni pagas suscripción,
+              pero conservas la protección del pago hasta recibir y las
+              validaciones antifraude. Si en algún momento empiezas a
+              vender como negocio (habitualmente, con actividad empresarial)
+              debes desmarcarlo.
+            </p>
+          </div>
+
+          {!isCasual ? (
+            <fieldset className={css.fieldset}>
+              <legend className={css.legend}>¿Cómo vendes en Xololo?</legend>
+              {PERSON_TYPE_OPTIONS.map(opt => (
+                <div key={opt.key} className={css.radioRow}>
+                  <FieldRadioButton
+                    id={`taxProfile_personType_${opt.key}`}
+                    name="personType"
+                    value={opt.key}
+                    label={opt.label}
+                  />
+                  <p className={css.radioHelper}>{opt.helper}</p>
+                </div>
+              ))}
+            </fieldset>
+          ) : null}
 
           {needsRfc ? (
             <div className={css.rfcBlock}>

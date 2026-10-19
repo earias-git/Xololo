@@ -12,9 +12,21 @@ import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { FIXED, isBookingProcess } from '../../../../transactions/transaction';
 
 // Import shared components
-import { Button, Form, FieldCurrencyInput, TaxClassificationField } from '../../../../components';
+import {
+  Button,
+  FieldRadioButton,
+  Form,
+  FieldCurrencyInput,
+  TaxClassificationField,
+} from '../../../../components';
 import XoloPayoutPreview from '../../../../components/XoloPayoutPreview/XoloPayoutPreview';
 import { getClassificationByCode } from '../../../../util/xololoTaxClassification';
+import {
+  LISTING_CONDITIONS,
+  LISTING_CONDITION_OPTIONS,
+  getUsedGoodsNotice,
+  resolveUsedGoodsOverride,
+} from '../../../../util/xololoSellerMode';
 
 import BookingPriceVariants from './BookingPriceVariants';
 import StartTimeInterval from './StartTimeInverval';
@@ -175,6 +187,25 @@ export const EditListingPricingForm = props => (
             />
           )}
 
+          {/* XOLOLO: condición del artículo (nuevo o usado).
+              Si es usado y el seller es particular (personType=individual),
+              el preview aplica automáticamente Art. 9 IV LIVA sin requerir
+              revisión humana — la combinación es verificable. */}
+          <fieldset className={css.conditionFieldset}>
+            <legend className={css.conditionLegend}>Condición del artículo</legend>
+            <div className={css.conditionRow}>
+              {LISTING_CONDITION_OPTIONS.map(opt => (
+                <FieldRadioButton
+                  key={opt.key}
+                  id={`${formId}_condition_${opt.key}`}
+                  name="condition"
+                  value={opt.key}
+                  label={opt.label}
+                />
+              ))}
+            </div>
+          </fieldset>
+
           {/* XOLOLO: clasificación fiscal especial (gate antifraude #39).
               Si no está marcado, el preview usa el default de la categoría.
               Si está marcado y seleccionado + aprobado, el preview aplica
@@ -188,21 +219,37 @@ export const EditListingPricingForm = props => (
               xololoTaxCategories; sin categoría, usa el default
               conservador 16% + enajenacion. */}
           {(() => {
+            // Precedencia de override fiscal:
+            //  1) Clasificación especial declarada manualmente (en revisión)
+            //  2) Resolución automática por condición usado + particular
+            //  3) Default de la categoría (lo computa el preview)
             const hasSpecial = !!formValues?.hasTaxSpecialClassification;
-            const selectedEntry = hasSpecial
+            const manual = hasSpecial
               ? getClassificationByCode(formValues?.taxClassificationCode)
               : null;
+            const auto = !manual
+              ? resolveUsedGoodsOverride({
+                  condition: formValues?.condition,
+                  personType: sellerTaxProfile?.personType,
+                })
+              : null;
+            const override = manual || auto;
+            const notice = getUsedGoodsNotice({
+              condition: formValues?.condition,
+              personType: sellerTaxProfile?.personType,
+            });
             return (
               <XoloPayoutPreview
                 price={formValues?.price}
                 currency={marketplaceCurrency}
                 heading="Cuánto recibirás por esta venta"
                 categoryId={categoryId}
-                ivaMode={selectedEntry?.ivaMode}
-                taxActivity={selectedEntry?.taxActivity}
-                ivaArticle={selectedEntry?.ivaArticle}
+                ivaMode={override?.ivaMode}
+                taxActivity={override?.taxActivity}
+                ivaArticle={override?.ivaArticle}
                 personType={sellerTaxProfile?.personType}
                 hasRfc={sellerTaxProfile?.hasRfc}
+                usedGoodsNotice={notice}
               />
             );
           })()}

@@ -18,11 +18,17 @@ import {
   Form,
   FieldCurrencyInput,
   FieldCheckboxGroup,
+  FieldRadioButton,
   FieldTextInput,
   TaxClassificationField,
 } from '../../../../components';
 import XoloPayoutPreview from '../../../../components/XoloPayoutPreview/XoloPayoutPreview';
 import { getClassificationByCode } from '../../../../util/xololoTaxClassification';
+import {
+  LISTING_CONDITION_OPTIONS,
+  getUsedGoodsNotice,
+  resolveUsedGoodsOverride,
+} from '../../../../util/xololoSellerMode';
 
 // Import modules from this directory
 import css from './EditListingPricingAndStockForm.module.css';
@@ -201,6 +207,24 @@ export const EditListingPricingAndStockForm = props => (
             validate={priceValidators}
           />
 
+          {/* XOLOLO: condición del artículo (nuevo o usado).
+              Si usado + personType=individual, auto-aplica Art. 9 IV LIVA
+              sin revisión manual. */}
+          <fieldset className={css.conditionFieldset}>
+            <legend className={css.conditionLegend}>Condición del artículo</legend>
+            <div className={css.conditionRow}>
+              {LISTING_CONDITION_OPTIONS.map(opt => (
+                <FieldRadioButton
+                  key={opt.key}
+                  id={`${formId}_condition_${opt.key}`}
+                  name="condition"
+                  value={opt.key}
+                  label={opt.label}
+                />
+              ))}
+            </div>
+          </fieldset>
+
           {/* XOLOLO: clasificación fiscal especial del listing (gate antifraude #39).
               Permite declarar que el producto es exento (Art. 9/15 LIVA) o
               tasa 0% (Art. 2-A LIVA) o actividad distinta en LISR 113-A.
@@ -213,21 +237,34 @@ export const EditListingPricingAndStockForm = props => (
               xololoTaxCategories; si el seller eligió una clasificación
               especial, se pasa como override en vivo (educativo). */}
           {(() => {
+            // Precedencia: clasificación manual > auto (usado+particular) > default categoría.
             const hasSpecial = !!values?.hasTaxSpecialClassification;
-            const selectedEntry = hasSpecial
+            const manual = hasSpecial
               ? getClassificationByCode(values?.taxClassificationCode)
               : null;
+            const auto = !manual
+              ? resolveUsedGoodsOverride({
+                  condition: values?.condition,
+                  personType: sellerTaxProfile?.personType,
+                })
+              : null;
+            const override = manual || auto;
+            const notice = getUsedGoodsNotice({
+              condition: values?.condition,
+              personType: sellerTaxProfile?.personType,
+            });
             return (
               <XoloPayoutPreview
                 price={values?.price}
                 currency={marketplaceCurrency}
                 heading="Cuánto recibirás por esta venta"
                 categoryId={categoryId}
-                ivaMode={selectedEntry?.ivaMode}
-                taxActivity={selectedEntry?.taxActivity}
-                ivaArticle={selectedEntry?.ivaArticle}
+                ivaMode={override?.ivaMode}
+                taxActivity={override?.taxActivity}
+                ivaArticle={override?.ivaArticle}
                 personType={sellerTaxProfile?.personType}
                 hasRfc={sellerTaxProfile?.hasRfc}
+                usedGoodsNotice={notice}
               />
             );
           })()}
