@@ -128,26 +128,27 @@ export const LandingPageComponent = props => {
       afterSections={
         <>
           <CategoryRail categories={categories} />
-          <PromoCards cards={promoCards} />
-          {/* XOLOLO: 3 banners agrupados en orden pedido —
-              Xololéalo (Promote) → Verified (confianza) → Vende tus usados. */}
+          {/* XOLOLO: patrón intercalado banner → listing
+              1. Xololéalo       → 2. Productos
+              3. Verified        → 4. Servicios
+              5. Vende tus usados → 6. Segunda mano
+              7. PromoCards      → 8. Tiendas destacadas
+              9. AppBand         → 10. Footer (lo pone PageBuilder) */}
           <XololearBand />
-          <VerifiedBand />
-          <UsedGoodsBand />
-          {/* XOLOLO: 3 listings en orden pedido —
-              Productos → Servicios → Segunda mano. */}
           <FeaturedListings
             title="Productos destacados"
             seeAllLabel="Ver todos los productos"
             seeAllHref="/s?pub_listingType=product"
             items={productsToShow}
           />
+          <VerifiedBand />
           <FeaturedListings
             title="Servicios populares"
             seeAllLabel="Ver todos los servicios"
             seeAllHref="/s?pub_listingType=service,service-day"
             items={servicesToShow}
           />
+          <UsedGoodsBand />
           {usedToShow ? (
             <FeaturedListings
               title="Segunda mano destacada"
@@ -156,6 +157,7 @@ export const LandingPageComponent = props => {
               items={usedToShow}
             />
           ) : null}
+          <PromoCards cards={promoCards} />
           <FeaturedStores stores={storesToShow} />
           <AppBand />
         </>
