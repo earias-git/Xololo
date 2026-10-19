@@ -160,22 +160,23 @@ const listingToFeaturedItem = (kind, listing, included, idx) => {
     imageUrl: imageUrlFromListing(listing, included),
     tone: TONES[idx % TONES.length],
     href: `/l/${slug}/${listing.id.uuid}`,
-    // XOLOLO: exponemos la condición al selector para que
-    // "Productos destacados" pueda excluir los usados y mantenerlos
-    // sólo en "Segunda mano destacada".
-    condition: listing.attributes?.publicData?.condition || null,
   };
 };
 
 export const selectFeaturedProducts = state => {
   const products = state.landingListings.products;
   if (!products?.data?.length) return [];
+  // XOLOLO: "Productos destacados" NO debe incluir usados — viven en
+  // "Segunda mano destacada". Usamos la query de usados (que el SDK ya
+  // filtró por pub_condition=used) como fuente de verdad: cualquier ID
+  // que esté en 'used' se excluye de 'products'. Más robusto que leer
+  // publicData.condition del listing porque no depende de sparse
+  // fieldsets ni de que publicData venga en la respuesta.
+  const used = state.landingListings.used;
+  const usedIds = new Set((used?.data || []).map(l => l.id.uuid));
   return products.data
-    .map((l, i) => listingToFeaturedItem('product', l, products.included, i))
-    // XOLOLO: "Productos destacados" sólo muestra productos NUEVOS o
-    // sin condición declarada (legacy). Los usados viven en su propia
-    // sección "Segunda mano destacada", de modo que no se dupliquen.
-    .filter(item => item.condition !== 'used');
+    .filter(l => !usedIds.has(l.id.uuid))
+    .map((l, i) => listingToFeaturedItem('product', l, products.included, i));
 };
 
 export const selectFeaturedServices = state => {
