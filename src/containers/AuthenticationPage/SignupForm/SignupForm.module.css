@@ -59,3 +59,18 @@
     padding: 8px 0;
   }
 }
+
+/* XOLOLO: selector de modo seller durante signup */
+.sellerModeFieldset {
+  margin: 20px 0 0;
+  padding: 12px 14px 6px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+}
+
+.sellerModeLegend {
+  padding: 0 6px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--colorGrey900);
+}

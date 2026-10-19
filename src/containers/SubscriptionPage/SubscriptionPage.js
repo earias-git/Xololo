@@ -8,7 +8,15 @@ import { showCreateListingLinkForUser, showPaymentDetailsForUser } from '../../u
 import { useConfiguration } from '../../context/configurationContext';
 import { useIntl } from '../../util/reactIntl';
 
-import { H3, IconSpinner, LayoutSideNavigation, Page, UserNav } from '../../components';
+import {
+  H3,
+  IconSpinner,
+  LayoutSideNavigation,
+  NamedRedirect,
+  Page,
+  UserNav,
+} from '../../components';
+import { SELLER_MODES, getSellerMode } from '../../util/xololoSellerMode';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
@@ -95,6 +103,12 @@ const SubscriptionPageComponent = () => {
   const [banner, setBanner] = useState(null);
   const confirmedRef = useRef(false);
 
+  // XOLOLO: seller casual no paga suscripción. El redirect va DESPUÉS de
+  // los hooks para no romper rules-of-hooks; se evalúa al final antes
+  // del render principal.
+  const isCasual =
+    !!currentUser?.id && getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
+
   const load = () => {
     setState(s => ({ ...s, status: 'loading' }));
     fetchJson(`${apiBaseUrl()}/api/seller-subscription`).then(
@@ -163,6 +177,10 @@ const SubscriptionPageComponent = () => {
   const sub = state.data;
   const isActive = sub?.status === 'active';
   const statusLabel = sub?.status ? STATUS_LABELS[sub.status] : null;
+
+  if (isCasual) {
+    return <NamedRedirect name="ManageAccountPage" />;
+  }
 
   return (
     <Page title="Suscripción" scrollingDisabled={scrollingDisabled}>

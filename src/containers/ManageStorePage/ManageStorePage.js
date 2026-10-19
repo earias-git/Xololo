@@ -13,7 +13,8 @@ import {
 
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 
-import { H3, Page, UserNav, LayoutSideNavigation } from '../../components';
+import { H3, NamedRedirect, Page, UserNav, LayoutSideNavigation } from '../../components';
+import { SELLER_MODES, getSellerMode } from '../../util/xololoSellerMode';
 
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
@@ -113,6 +114,13 @@ export const ManageStorePageComponent = props => {
 
   const user = ensureCurrentUser(currentUser);
   const publicData = user.attributes?.profile?.publicData || {};
+
+  // XOLOLO: seller casual (segunda mano particular) no tiene storefront.
+  // Si llega aquí por URL directa lo mandamos a su cuenta donde puede
+  // cambiar el modo si quiere abrir tienda.
+  if (user.id && getSellerMode(user) === SELLER_MODES.CASUAL_RESELLER) {
+    return <NamedRedirect name="ManageAccountPage" />;
+  }
 
   // XOLOLO: hidratamos las 3 direcciones. Si la cuenta viene del schema
   // viejo (solo `address` como string) mostramos el string en el campo

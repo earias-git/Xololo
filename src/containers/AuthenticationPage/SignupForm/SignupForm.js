@@ -8,7 +8,13 @@ import { propTypes } from '../../../util/types';
 import * as validators from '../../../util/validators';
 import { getPropsForCustomUserFieldInputs } from '../../../util/userHelpers';
 
-import { Form, PrimaryButton, FieldTextInput, CustomExtendedDataField } from '../../../components';
+import {
+  FieldRadioButton,
+  Form,
+  PrimaryButton,
+  FieldTextInput,
+  CustomExtendedDataField,
+} from '../../../components';
 
 import FieldSelectUserType from '../FieldSelectUserType';
 import UserFieldDisplayName from '../UserFieldDisplayName';
@@ -204,6 +210,35 @@ const SignupFormComponent = props => (
                 userTypeConfig={userTypeConfig}
                 intl={intl}
               />
+
+              {/* XOLOLO: pregunta de onboarding — modo de venta. Si eligen
+                  casual, el handler persiste publicData.sellerMode y un
+                  perfil fiscal particular, saltándose storefront y
+                  suscripción. Dejar vacío (opción "más tarde") equivale a
+                  modo 'store' por default. */}
+              <fieldset className={css.sellerModeFieldset}>
+                <legend className={css.sellerModeLegend}>
+                  ¿Cómo vas a usar Xololo?
+                </legend>
+                <FieldRadioButton
+                  id={formId ? `${formId}.sellerMode.later` : 'sellerMode.later'}
+                  name="sellerMode"
+                  value=""
+                  label="Elijo más tarde (puedo vender como negocio o sólo comprar)"
+                />
+                <FieldRadioButton
+                  id={formId ? `${formId}.sellerMode.store` : 'sellerMode.store'}
+                  name="sellerMode"
+                  value="store"
+                  label="Voy a vender como negocio (tengo tienda, catálogo, suscripción)"
+                />
+                <FieldRadioButton
+                  id={formId ? `${formId}.sellerMode.casual` : 'sellerMode.casual'}
+                  name="sellerMode"
+                  value="casual_reseller"
+                  label="Sólo quiero vender mis cosas usadas ocasionalmente (sin tienda, sin suscripción)"
+                />
+              </fieldset>
             </div>
           ) : null}
 

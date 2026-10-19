@@ -334,3 +334,34 @@
     margin-bottom: 24px;
   }
 }
+
+/* XOLOLO: badge para distinguir al vendedor casual (segunda mano particular). */
+.casualResellerBadge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: #eef5ee;
+  border-left: 3px solid #286a3a;
+  border-radius: 6px;
+}
+
+.casualResellerPill {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #286a3a;
+  color: #fff;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.casualResellerText {
+  flex: 1 1 240px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--colorGrey700);
+}

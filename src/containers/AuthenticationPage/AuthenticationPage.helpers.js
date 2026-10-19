@@ -89,12 +89,45 @@ export const getExtendedDataMaybe = (submitValues, userType, userFields, extraDa
  * @returns {(values: Object) => void}
  */
 export const getHandleSubmitSignup = ({ submitSignup, userFields, userTypes }) => values => {
-  const { userType, email, password, fname, lname, displayName, ...rest } = values;
+  const { userType, email, password, fname, lname, displayName, sellerMode, ...rest } = values;
   const displayNameMaybe = displayName ? { displayName: displayName.trim() } : {};
 
   // Set referral to user private data if it exists and is valid
   const userTypeConfig = getUserTypeConfig(userType, userTypes);
   const extraPrivateData = pickReferralData(userTypeConfig);
+
+  // XOLOLO: si el nuevo seller eligió modo "casual" en el signup, lo
+  // dejamos listo para publicar segunda mano sin pasar por Account
+  // Settings: publicData.sellerMode + protectedData.xololoTaxProfile
+  // (particular, sin RFC) + declaredAt firmando bajo protesta.
+  const isCasual = sellerMode === 'casual_reseller';
+  const casualExtraData = isCasual
+    ? {
+        publicData: { sellerMode: 'casual_reseller' },
+        protectedData: {
+          xololoTaxProfile: {
+            personType: 'individual',
+            hasRfc: false,
+            declaredAt: new Date().toISOString(),
+          },
+        },
+      }
+    : {};
+
+  const extended = getExtendedDataMaybe(rest, userType, userFields, {
+    privateData: extraPrivateData,
+  });
+
+  // Fold casualExtraData into whatever getExtendedDataMaybe produced
+  // (both can bring publicData/protectedData — we merge, not replace).
+  const mergedExtended = {
+    ...extended,
+    publicData: { ...(extended.publicData || {}), ...(casualExtraData.publicData || {}) },
+    protectedData: {
+      ...(extended.protectedData || {}),
+      ...(casualExtraData.protectedData || {}),
+    },
+  };
 
   const submitParams = {
     email,
@@ -102,9 +135,7 @@ export const getHandleSubmitSignup = ({ submitSignup, userFields, userTypes }) =
     firstName: fname.trim(),
     lastName: lname.trim(),
     ...displayNameMaybe,
-    ...getExtendedDataMaybe(rest, userType, userFields, {
-      privateData: extraPrivateData,
-    }),
+    ...mergedExtended,
   };
 
   submitSignup(submitParams);

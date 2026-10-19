@@ -288,11 +288,25 @@ export const MainContent = props => {
       </p>
     );
   }
+  // XOLOLO: badge para distinguir visualmente al vendedor casual (segunda
+  // mano particular). Se lee del publicData del perfil que ya está en
+  // props; no requiere fetch extra.
+  const isCasualReseller = publicData?.sellerMode === 'casual_reseller';
+
   return (
     <div>
       <H2 as="h1" className={css.desktopHeading}>
         <FormattedMessage id="ProfilePage.desktopHeading" values={{ name: displayName }} />
       </H2>
+      {isCasualReseller ? (
+        <p className={css.casualResellerBadge}>
+          <span className={css.casualResellerPill}>Vendedor casual</span>
+          <span className={css.casualResellerText}>
+            Vende sus artículos usados ocasionalmente. La protección Xololo
+            del pago y antifraude aplica igual.
+          </span>
+        </p>
+      ) : null}
       {hasBio ? <p className={css.bio}>{bioWithLinks}</p> : null}
 
       {displayName ? (
