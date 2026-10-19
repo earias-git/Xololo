@@ -40,7 +40,7 @@ const getListingTypeConfig = (publicData, listingTypes) => {
 const getInitialValues = props => {
   const { listing, listingTypes, defaultCondition = 'new' } = props;
   const { publicData } = listing?.attributes || {};
-  const { unitType, taxClassification, condition } = publicData || {};
+  const { unitType, taxClassification, condition, usedCondition } = publicData || {};
   const listingTypeConfig = getListingTypeConfig(publicData, listingTypes);
   // Note: publicData contains priceVariationsEnabled if listing is created with priceVariations enabled.
   const isPriceVariationsInUse = isPriceVariationsEnabled(publicData, listingTypeConfig);
@@ -62,17 +62,22 @@ const getInitialValues = props => {
     condition: condition === 'used' ? 'used' : condition === 'new' ? 'new' : defaultCondition,
   };
 
+  // XOLOLO: nivel de estado del artículo usado.
+  const usedConditionInitial = usedCondition ? { usedCondition } : {};
+
   return unitType === FIXED || isPriceVariationsInUse
     ? {
         ...getInitialValuesForPriceVariants(props, isPriceVariationsInUse),
         ...getInitialValuesForStartTimeInterval(props),
         ...taxClassificationInitial,
         ...conditionInitial,
+        ...usedConditionInitial,
       }
     : {
         price: listing?.attributes?.price,
         ...taxClassificationInitial,
         ...conditionInitial,
+        ...usedConditionInitial,
       };
 };
 
@@ -232,6 +237,7 @@ const EditListingPricingPanel = props => {
           initialValues={initialValues}
           categoryId={listing?.attributes?.publicData?.categoryLevel1}
           sellerTaxProfile={sellerTaxProfile}
+          sellerMode={getSellerMode(currentUser)}
           onSubmit={values => {
             const { price } = values;
 
@@ -293,11 +299,19 @@ const EditListingPricingPanel = props => {
             // XOLOLO: condición del artículo. Siempre persiste 'new' o 'used'
             // para que el motor fiscal tenga el dato explícito al cobrar.
             const conditionValue = values?.condition === 'used' ? 'used' : 'new';
+            // XOLOLO: nivel de estado — null cuando no aplica (producto nuevo)
+            // o cuando el seller aún no eligió. El buyer sólo lo verá cuando
+            // esté definido y condition='used'.
+            const usedConditionValue =
+              conditionValue === 'used' && values?.usedCondition
+                ? values.usedCondition
+                : null;
             updateValues = {
               ...updateValues,
               publicData: {
                 ...(updateValues.publicData || {}),
                 condition: conditionValue,
+                usedCondition: usedConditionValue,
               },
             };
 

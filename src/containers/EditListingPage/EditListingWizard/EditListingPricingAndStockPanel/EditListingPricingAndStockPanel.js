@@ -9,6 +9,7 @@ import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
 import { getTaxProfile } from '../../../../util/xololoTaxProfile';
 import { SELLER_MODES, getSellerMode } from '../../../../util/xololoSellerMode';
+// Note: SELLER_MODES used by the Form for isCasual check downstream.
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -72,12 +73,18 @@ const getInitialValues = props => {
           : defaultCondition,
   };
 
+  // XOLOLO: nivel de estado del artículo usado.
+  const usedConditionInitial = publicData?.usedCondition
+    ? { usedCondition: publicData.usedCondition }
+    : {};
+
   return {
     price,
     stock,
     stockTypeInfinity,
     ...taxClassificationInitial,
     ...conditionInitial,
+    ...usedConditionInitial,
   };
 };
 
@@ -216,6 +223,7 @@ const EditListingPricingAndStockPanel = props => {
           initialValues={initialValues}
           categoryId={listing?.attributes?.publicData?.categoryLevel1}
           sellerTaxProfile={sellerTaxProfile}
+          sellerMode={getSellerMode(currentUser)}
           onSubmit={values => {
             const { price, stock, stockTypeInfinity } = values;
 
@@ -249,9 +257,17 @@ const EditListingPricingAndStockPanel = props => {
             // XOLOLO: añade publicData.taxClassification al update.
             const taxUpdate = buildTaxClassificationUpdate(values, listing);
             const conditionValue = values?.condition === 'used' ? 'used' : 'new';
+            // XOLOLO: nivel de estado — null si el seller no eligió aún
+            // (o si volvió a 'new'); el buyer sólo lo verá cuando venga
+            // definido y la condition sea 'used'.
+            const usedConditionValue =
+              conditionValue === 'used' && values?.usedCondition
+                ? values.usedCondition
+                : null;
             const publicDataPayload = {
               ...(taxUpdate ? { taxClassification: taxUpdate.taxClassification } : {}),
               condition: conditionValue,
+              usedCondition: usedConditionValue,
             };
 
             // New values for listing attributes

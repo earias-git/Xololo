@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 // Import util modules
@@ -15,7 +16,8 @@ import {
   isFieldForListingType,
   pickCategoryFields,
 } from '../../../../util/fieldHelpers';
-import { isBookingProcessAlias } from '../../../../transactions/transaction';
+import { isBookingProcess, isBookingProcessAlias } from '../../../../transactions/transaction';
+import { SELLER_MODES, getSellerMode } from '../../../../util/xololoSellerMode';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -313,7 +315,16 @@ const EditListingDetailsPanel = props => {
 
   const classes = classNames(rootClassName || css.root, className);
   const { publicData, state } = listing?.attributes || {};
-  const listingTypes = config.listing.listingTypes;
+
+  // XOLOLO: seller casual (segunda mano particular) sólo publica
+  // PRODUCTOS. Filtramos del catálogo los listing types cuya
+  // transactionType sea un proceso de booking (servicios por hora/día).
+  const currentUser = useSelector(s => s.user?.currentUser);
+  const isCasual = getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
+  const allListingTypes = config.listing.listingTypes;
+  const listingTypes = isCasual
+    ? allListingTypes.filter(t => !isBookingProcess(t.transactionType?.process))
+    : allListingTypes;
   const listingFields = config.listing.listingFields;
   const listingCategories = config.categoryConfiguration.categories;
   const categoryKey = config.categoryConfiguration.key;

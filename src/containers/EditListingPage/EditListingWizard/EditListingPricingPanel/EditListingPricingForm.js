@@ -15,6 +15,7 @@ import { FIXED, isBookingProcess } from '../../../../transactions/transaction';
 import {
   Button,
   FieldRadioButton,
+  FieldSelect,
   Form,
   FieldCurrencyInput,
   TaxClassificationField,
@@ -24,9 +25,14 @@ import { getClassificationByCode } from '../../../../util/xololoTaxClassificatio
 import {
   LISTING_CONDITIONS,
   LISTING_CONDITION_OPTIONS,
+  SELLER_MODES,
   getUsedGoodsNotice,
   resolveUsedGoodsOverride,
 } from '../../../../util/xololoSellerMode';
+import {
+  NOTICE as USED_CONDITION_NOTICE,
+  USED_CONDITION_OPTIONS,
+} from '../../../../util/xololoUsedCondition';
 
 import BookingPriceVariants from './BookingPriceVariants';
 import StartTimeInterval from './StartTimeInverval';
@@ -132,7 +138,10 @@ export const EditListingPricingForm = props => (
         values: formValues,
         categoryId,
         sellerTaxProfile,
+        sellerMode,
       } = formRenderProps;
+
+      const isCasual = sellerMode === SELLER_MODES.CASUAL_RESELLER;
 
       const intl = useIntl();
       const priceValidators = getPriceValidators(
@@ -187,31 +196,47 @@ export const EditListingPricingForm = props => (
             />
           )}
 
-          {/* XOLOLO: condición del artículo (nuevo o usado).
-              Si es usado y el seller es particular (personType=individual),
-              el preview aplica automáticamente Art. 9 IV LIVA sin requerir
-              revisión humana — la combinación es verificable. */}
-          <fieldset className={css.conditionFieldset}>
-            <legend className={css.conditionLegend}>Condición del artículo</legend>
-            <div className={css.conditionRow}>
-              {LISTING_CONDITION_OPTIONS.map(opt => (
-                <FieldRadioButton
-                  key={opt.key}
-                  id={`${formId}_condition_${opt.key}`}
-                  name="condition"
-                  value={opt.key}
-                  label={opt.label}
-                />
-              ))}
-            </div>
-          </fieldset>
+          {/* XOLOLO: condición del artículo. Oculta para casual (siempre
+              'used' forzado); visible para store para alternar nuevo/usado. */}
+          {!isCasual ? (
+            <fieldset className={css.conditionFieldset}>
+              <legend className={css.conditionLegend}>Condición del artículo</legend>
+              <div className={css.conditionRow}>
+                {LISTING_CONDITION_OPTIONS.map(opt => (
+                  <FieldRadioButton
+                    key={opt.key}
+                    id={`${formId}_condition_${opt.key}`}
+                    name="condition"
+                    value={opt.key}
+                    label={opt.label}
+                  />
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
 
-          {/* XOLOLO: clasificación fiscal especial (gate antifraude #39).
-              Si no está marcado, el preview usa el default de la categoría.
-              Si está marcado y seleccionado + aprobado, el preview aplica
-              el override (ivaMode + taxActivity + ivaArticle). Mientras
-              está en revisión, el preview sigue usando el default. */}
-          <TaxClassificationField formId={formId} values={formValues} />
+          {/* XOLOLO: nivel de estado del artículo usado. */}
+          {formValues?.condition === 'used' ? (
+            <>
+              <FieldSelect
+                id={`${formId}.usedCondition`}
+                name="usedCondition"
+                className={css.input}
+                label="Nivel de estado del artículo usado"
+              >
+                <option value="">Selecciona cómo está tu artículo…</option>
+                {USED_CONDITION_OPTIONS.map(opt => (
+                  <option key={opt.key} value={opt.key}>
+                    {opt.label}
+                  </option>
+                ))}
+              </FieldSelect>
+              <p className={css.usedConditionNotice}>{USED_CONDITION_NOTICE}</p>
+            </>
+          ) : null}
+
+          {/* XOLOLO: clasificación fiscal especial — oculta para casual. */}
+          {!isCasual ? <TaxClassificationField formId={formId} values={formValues} /> : null}
 
           {/* XOLOLO: preview del payout del seller. Client-only,
               se auto-oculta hasta que hay precio. categoryId resuelve

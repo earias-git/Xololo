@@ -291,7 +291,25 @@ Tests en `AuthenticationPage.helpers.test.js`.
 
 - `RequireSellerOnboarding` no lo redirige (no exige subscription ni
   store).
-- Form de Pricing abre con `condition='used'` pre-seleccionado.
+- **Tipo de anuncio** filtrado: en el panel de Detalles el casual
+  sólo ve "Producto"; los tipos cuyo `transactionType.process` sea
+  booking (servicios por hora/día) se filtran del catálogo porque
+  Art. 9 IV LIVA aplica a bienes muebles usados, no a servicios.
+- Form de Pricing:
+  - **`condition='used'`** fijo (no se renderiza el selector
+    nuevo/usado — el casual sólo vende usado por definición).
+  - **Clasificación fiscal especial oculta**: el casual sólo tiene
+    acceso al Art. 9 IV automático; cualquier otra clasificación
+    requeriría dejar de ser casual.
+  - **Selector "Nivel de estado del artículo usado"** con 5
+    opciones estandarizadas (como nuevo / muy buen estado / buen
+    estado / regular / muy mal estado). Se persiste en
+    `publicData.usedCondition`.
+  - Nota "as-is" visible debajo del selector: *"Los productos de
+    segunda mano se venden como usados. Cualquier aclaración
+    resuélvela con el vendedor directamente. Al recibir, revísalo
+    bien."* El mismo texto se debe pintar al buyer en ListingPage y
+    en el flujo de confirmación de pedido (fase 2c pendiente).
 - Preview aplica Art. 9 IV LIVA en vivo: IVA $0, ret ISR $0, sólo
   comisión Xololo.
 
@@ -364,8 +382,9 @@ Seller recibe                                   $1,280.76
 | `xololoTaxClassification.test.js` | 7 | Catálogo bien formado. `CLASSIFICATION_GROUPS` cubre cada código exactamente una vez. `resolveTaxOverride` sólo pasa con `approved`. |
 | `AuthenticationPage.helpers.test.js` | 5 | Signup NO añade data casual sin pedirla; SÍ persiste `publicData.sellerMode` + perfil fiscal particular firmado cuando casual. |
 | `legalDocSlots.test.js` | 7 | Catálogo store/casual: casual sólo pide INE + comprobante; constancia + CURP se excluyen; moral+casual (improbable) sigue entregando docs de PM. |
+| `xololoUsedCondition.test.js` | 5 | 5 niveles de estado con labels bien definidos; `getUsedConditionLabel` resuelve o devuelve null; NOTICE menciona "as-is" y pide revisar al recibir. |
 
-**Total: 61 tests pasando** (`yarn test`).
+**Total: 66 tests pasando** (`yarn test`).
 
 ---
 

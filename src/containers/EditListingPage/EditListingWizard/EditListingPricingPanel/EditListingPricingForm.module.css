@@ -60,3 +60,15 @@
   gap: 18px;
   padding: 6px 0 2px;
 }
+
+/* XOLOLO: nota de "as-is" bajo el selector de nivel de estado */
+.usedConditionNotice {
+  margin: 6px 0 16px;
+  padding: 10px 12px;
+  background: var(--colorAttentionLight, #fff6d9);
+  border-left: 3px solid var(--colorAttention, #ffd54f);
+  border-radius: 4px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--colorGrey700);
+}
