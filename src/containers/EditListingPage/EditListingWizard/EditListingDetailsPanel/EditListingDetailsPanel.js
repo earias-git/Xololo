@@ -358,6 +358,19 @@ const EditListingDetailsPanel = props => {
     const nonBooking = allListingTypes;
     return virtualUsedType ? [...nonBooking, virtualUsedType] : nonBooking;
   })();
+
+  // XOLOLO: para la VALIDACIÓN del tipo persistido (hasValidExistingListing
+  // Type) sí incluimos el catálogo real completo. Un casual que ya tiene
+  // listings guardados con publicData.listingType='product' (porque el
+  // pseudo-tipo se mapea a 'product' real al submit) tiene que poder
+  // seguir editándolos sin ver "Anuncio obsoleto". El dropdown visible
+  // sigue mostrando sólo lo filtrado arriba (`listingTypes`); la
+  // hidratación convierte 'product' → 'product-used' para que se vea
+  // bien en el select (ver getInitialValues).
+  const listingTypesForValidation = isCasual
+    ? [...allListingTypes, ...(virtualUsedType ? [virtualUsedType] : [])]
+    : listingTypes;
+
   const listingFields = config.listing.listingFields;
   const listingCategories = config.categoryConfiguration.categories;
   const categoryKey = config.categoryConfiguration.key;
@@ -365,7 +378,7 @@ const EditListingDetailsPanel = props => {
   const { hasExistingListingType, existingListingTypeInfo } = hasSetListingType(publicData);
   const hasValidExistingListingType =
     hasExistingListingType &&
-    !!listingTypes.find(conf => {
+    !!listingTypesForValidation.find(conf => {
       const listinTypesMatch = conf.listingType === existingListingTypeInfo.listingType;
       const unitTypesMatch = conf.transactionType?.unitType === existingListingTypeInfo.unitType;
       return listinTypesMatch && unitTypesMatch;
