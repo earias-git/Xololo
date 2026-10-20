@@ -41,6 +41,7 @@ const adminAuth = require('./api/admin-auth');
 const adminOperators = require('./api/admin-operators');
 const createSubscriptionCheckout = require('./api/create-subscription-checkout');
 const sellerSubscription = require('./api/seller-subscription');
+const sellerPayoutGate = require('./api/seller-payout-gate');
 const sellerHasListings = require('./api/seller-has-listings');
 const stripeBillingWebhook = require('./api/webhooks/stripe-billing');
 const skydropxWebhook = require('./api/webhooks/skydropx');
@@ -249,6 +250,10 @@ router.post('/create-subscription-checkout', bodyParser.json(), createSubscripti
 // GET status propio / POST confirma un Checkout Session recién pagado.
 router.get('/seller-subscription', sellerSubscription);
 router.post('/seller-subscription', bodyParser.json(), sellerSubscription);
+
+// XOLOLO Track #27: gate de requisitos para liberar el primer payout
+// (Stripe Connect + docs legales). Fuente de verdad para PayoutGateBanner.
+router.get('/seller-payout-gate', sellerPayoutGate);
 
 // XOLOLO: ¿este seller ya tiene alguna listing publicada? Usado por
 // RequireSellerOnboarding para distinguir seller nuevo vs establecido.

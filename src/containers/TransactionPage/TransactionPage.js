@@ -53,6 +53,7 @@ import {
   OrderTimeline,
   PostDeliverySurvey,
   SellerBrandFrame,
+  PayoutGateBanner,
 } from '../../components';
 
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
@@ -1043,6 +1044,14 @@ export const TransactionPageComponent = props => {
               duplicación de UI + copy inconsistente (decía "pago fuera
               de la plataforma" pero implementamos Stripe PI secundario
               en el sub-commit 5). */}
+          {/* XOLOLO Track #27: gate del payout. Solo visible al PROVIDER
+              (el seller mirando su venta). Si tiene blockers, el banner
+              rojo le empuja a configurar Stripe + subir docs antes de
+              que podamos liberarle el dinero. Auto-oculto si ya puede
+              recibir pagos. */}
+          {isProviderRole && isDataAvailable ? (
+            <PayoutGateBanner variant="urgent" />
+          ) : null}
           {/* XOLOLO: timeline de la orden (Fase D.7). Visible para ambas
               partes — cada uno ve el estado en tiempo real alimentado
               por los eventos del webhook Skydropx (D.6). */}

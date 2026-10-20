@@ -50,6 +50,7 @@ import {
   UserDisplayName,
   LayoutSideNavigation,
   SellerDashboardHero,
+  PayoutGateBanner,
 } from '../../components';
 
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
@@ -421,6 +422,14 @@ export const InboxPageComponent = props => {
           routeConfiguration={routeConfiguration}
           history={history}
         />
+        {/* XOLOLO Track #27: gate del primer payout. Visible al seller
+            apenas entra a Sales — si ya hay ventas en curso, con
+            variant='urgent' (rojo) para empujar el setup; si todavía
+            no ha vendido, variant 'default' (amarillo informativo).
+            El componente se auto-oculta si no tiene blockers. */}
+        {!isOrders ? (
+          <PayoutGateBanner variant={hasTransactions ? 'urgent' : 'default'} />
+        ) : null}
         {/* XOLOLO F3 · Fase 1: dashboard hero para seller. Sólo en tab sales
             y cuando ya cargaron las tx (evita flash con la ausencia de datos). */}
         {!isOrders && !fetchInProgress && hasTransactions ? (

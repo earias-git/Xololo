@@ -63,6 +63,7 @@ export { default as PropertyGroup } from './PropertyGroup/PropertyGroup';
 export { default as RangeSlider } from './RangeSlider/RangeSlider';
 export { default as RequireSellerOnboarding } from './RequireSellerOnboarding/RequireSellerOnboarding';
 export { default as PayoutDocsWarning } from './PayoutDocsWarning/PayoutDocsWarning';
+export { default as PayoutGateBanner } from './PayoutGateBanner/PayoutGateBanner';
 export { default as ResponsiveImage } from './ResponsiveImage/ResponsiveImage';
 export { default as ResponsiveBackgroundImageContainer } from './ResponsiveBackgroundImageContainer/ResponsiveBackgroundImageContainer';
 export { default as TimeRange } from './TimeRange/TimeRange';
