@@ -301,6 +301,7 @@ export const EditListingPricingAndStockForm = props => (
                 personType={sellerTaxProfile?.personType}
                 hasRfc={sellerTaxProfile?.hasRfc}
                 usedGoodsNotice={notice}
+                sellerMode={sellerMode}
               />
             );
           })()}

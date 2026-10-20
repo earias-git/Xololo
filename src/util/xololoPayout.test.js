@@ -193,16 +193,53 @@ describe('xololoPayout', () => {
     });
   });
 
-  describe('computePayoutBreakdown — comisión marginal', () => {
-    it('applies the marginal commission to xololoAdminSubunits', () => {
+  describe('computePayoutBreakdown — comisión según sellerMode', () => {
+    it('applies the marginal commission ONLY for casual_reseller', () => {
       const bd = computePayoutBreakdown({
         priceSubunits: 7500000, // $75,000
         ivaMode: IVA_MODES.EXENTO,
+        sellerMode: 'casual_reseller',
       });
       // base: $6,000 → + 16% IVA = $6,960 (696,000 subunits)
       expect(bd.xololoAdminSubunits).toBe(696000);
       expect(bd.xololoAdminEffectivePct).toBeCloseTo(0.08, 5);
       expect(bd.xololoAdminBreakdown).toHaveLength(2);
+    });
+
+    it('applies FIXED $14 + IVA for store seller (default), regardless of price', () => {
+      // Rationale: seller con tienda ya paga suscripción; la comisión por
+      // venta es simbólica. $14 base + 16% IVA = $16.24 → 1624 subunits.
+      const bdStore75k = computePayoutBreakdown({
+        priceSubunits: 7500000,
+        ivaMode: IVA_MODES.GRAVADO,
+        sellerMode: 'store',
+      });
+      expect(bdStore75k.xololoAdminSubunits).toBe(1624);
+
+      const bdStore5k = computePayoutBreakdown({
+        priceSubunits: 500000, // $5,000
+        ivaMode: IVA_MODES.GRAVADO,
+        sellerMode: 'store',
+      });
+      expect(bdStore5k.xololoAdminSubunits).toBe(1624);
+    });
+
+    it('defaults to store cuota fija when sellerMode is omitted', () => {
+      const bd = computePayoutBreakdown({
+        priceSubunits: 500000,
+        ivaMode: IVA_MODES.GRAVADO,
+      });
+      expect(bd.xololoAdminSubunits).toBe(1624);
+    });
+
+    it('casual_reseller en $5,000 cobra 9% + IVA = $522 (52200 subunits)', () => {
+      // 500000 * 9% = 45000; + 16% IVA → 52200
+      const bd = computePayoutBreakdown({
+        priceSubunits: 500000,
+        ivaMode: IVA_MODES.EXENTO,
+        sellerMode: 'casual_reseller',
+      });
+      expect(bd.xololoAdminSubunits).toBe(52200);
     });
   });
 });
