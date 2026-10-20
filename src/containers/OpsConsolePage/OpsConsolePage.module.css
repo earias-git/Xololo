@@ -889,3 +889,103 @@
   opacity: 0.6;
   cursor: progress;
 }
+
+/* XOLOLO Track #27 Fase 2 — PayoutQueueView */
+.viewRoot {
+  padding: 16px 20px 48px;
+}
+
+.viewHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.backBtn {
+  background: transparent;
+  border: 1px solid var(--colorGrey300, #d0d0d0);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.viewTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.loading {
+  color: var(--colorGrey600, #777);
+  font-size: 14px;
+}
+
+.empty {
+  padding: 20px;
+  background: #f0f8f0;
+  border-left: 3px solid #286a3a;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.statCardRow {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.statCard {
+  flex: 1 1 180px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--colorGrey200, #e8e8e8);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--colorGrey600, #777);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statValue {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sellerName {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+.sellerEmail {
+  font-size: 12px;
+  color: var(--colorGrey600, #777);
+}
+
+.amountCell {
+  font-weight: 700;
+  text-align: right;
+}
+
+.gateReady {
+  color: #1f8c3f;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.gateBlocked {
+  color: #b00020;
+  font-size: 12.5px;
+}
+
+.notReady {
+  color: var(--colorGrey500, #999);
+}

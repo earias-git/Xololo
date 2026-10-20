@@ -379,6 +379,12 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: OpsConsolePage,
     },
     {
+      // XOLOLO Track #27 Fase 2: cola de sellers con dinero retenido en Xololo.
+      path: '/ops/payout-queue',
+      name: 'OpsPayoutQueuePage',
+      component: OpsConsolePage,
+    },
+    {
       // XOLOLO: puente para que un buyer logueado se convierta en
       // vendedor casual con 1 click + aceptación de T&C. Después de
       // activar, redirige a /l/new.

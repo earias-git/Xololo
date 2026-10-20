@@ -9,6 +9,7 @@ import { Page } from '../../components';
 import MfaEnrollView from './MfaEnrollView';
 import OperatorsView from './OperatorsView';
 import TaxReviewsView from './TaxReviewsView';
+import PayoutQueueView from './PayoutQueueView';
 
 import css from './OpsConsolePage.module.css';
 
@@ -259,6 +260,7 @@ const MODULE_CARDS = [
   { key: 'users', label: 'Usuarios', emoji: '👤', hint: 'Historial de sellers y buyers', route: null },
   { key: 'operators', label: 'Operadores', emoji: '🔐', hint: 'CRUD de operadores (super admin)', route: '/ops/operators', roles: ['super_admin'] },
   { key: 'tax_reviews', label: 'Revisión fiscal', emoji: '🧾', hint: 'Clasificaciones fiscales declaradas por sellers (exento, tasa 0%, actividad distinta)', route: '/ops/tax-reviews' },
+  { key: 'payout_queue', label: 'Payouts retenidos', emoji: '💰', hint: 'Sellers con ventas cerradas sin payout liberado (Stripe + docs pendientes)', route: '/ops/payout-queue' },
   { key: 'audit_log', label: 'Audit log', emoji: '📋', hint: 'Registro de todas las acciones', route: null },
 ];
 
@@ -497,6 +499,8 @@ const OpsConsolePage = () => {
     }
   } else if (location.pathname === '/ops/tax-reviews') {
     content = <TaxReviewsView onBack={backToDashboard} />;
+  } else if (location.pathname === '/ops/payout-queue') {
+    content = <PayoutQueueView onBack={backToDashboard} />;
   } else {
     content = (
       <Dashboard

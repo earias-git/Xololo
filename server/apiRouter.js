@@ -37,11 +37,13 @@ const uploadLegalDoc = require('./api/upload-legal-doc');
 const sellerLegalDocs = require('./api/seller-legal-docs');
 const adminLegalDocs = require('./api/admin-legal-docs');
 const adminTaxReviews = require('./api/admin-tax-reviews');
+const adminPayoutQueue = require('./api/admin-payout-queue');
 const adminAuth = require('./api/admin-auth');
 const adminOperators = require('./api/admin-operators');
 const createSubscriptionCheckout = require('./api/create-subscription-checkout');
 const sellerSubscription = require('./api/seller-subscription');
 const sellerPayoutGate = require('./api/seller-payout-gate');
+const sellerPendingPayouts = require('./api/seller-pending-payouts');
 const sellerHasListings = require('./api/seller-has-listings');
 const stripeBillingWebhook = require('./api/webhooks/stripe-billing');
 const skydropxWebhook = require('./api/webhooks/skydropx');
@@ -197,6 +199,10 @@ router.post('/admin/legal-docs/review', bodyParser.json(), adminLegalDocs.review
 router.get('/admin/tax-reviews', adminTaxReviews.list);
 router.post('/admin/tax-reviews/review', bodyParser.json(), adminTaxReviews.review);
 
+// XOLOLO Track #27 Fase 2: cola de sellers con dinero retenido.
+router.get('/admin/payout-queue', adminPayoutQueue.list);
+router.post('/admin/payout-queue/release', bodyParser.json(), adminPayoutQueue.release);
+
 // XOLOLO Fase 1C.3 — Autenticación de operadores Xololo (RBAC + MFA
 // futuro). Ver docs/ARQUITECTURA_PENALIDADES.md §6. Rutas:
 //   POST /api/admin/auth/bootstrap  (1 sola vez, con token secreto)
@@ -254,6 +260,8 @@ router.post('/seller-subscription', bodyParser.json(), sellerSubscription);
 // XOLOLO Track #27: gate de requisitos para liberar el primer payout
 // (Stripe Connect + docs legales). Fuente de verdad para PayoutGateBanner.
 router.get('/seller-payout-gate', sellerPayoutGate);
+// XOLOLO Track #27 Fase 2: lista de ventas con dinero retenido en Xololo.
+router.get('/seller-pending-payouts', sellerPendingPayouts);
 
 // XOLOLO: ¿este seller ya tiene alguna listing publicada? Usado por
 // RequireSellerOnboarding para distinguir seller nuevo vs establecido.
