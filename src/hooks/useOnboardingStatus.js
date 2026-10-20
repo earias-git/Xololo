@@ -118,11 +118,22 @@ export const useOnboardingStatus = (currentUser, enabled = true) => {
   const failed = !loading && (legalDocs.data === null || subscription.data === null);
 
   // XOLOLO: seller casual (segunda mano particular, modo 'casual_reseller')
-  // NO necesita tienda (no tiene storefront) ni suscripción (no paga). El
-  // checklist se recorta: profile + contact + payouts + legalDocs. Sigue
-  // bloqueando publicar si falta algo esencial para cobrar.
+  // puede PUBLICAR con fricción mínima: sólo profile + contact bloquean
+  // publicar. Los pasos de 'payouts' (Stripe Connect) y 'legalDocs' NO
+  // bloquean publicar, pero SÍ se exigen antes de liberar el primer
+  // payout real (gate del dinero, task #27). Mientras tanto el pago
+  // queda en escrow Xololo.
+  //
+  // Para 'store' (seller con tienda) el checklist completo sigue como
+  // antes: profile + contact + payouts + store + subscription deben estar
+  // antes de publicar; legalDocs es no-bloqueante (gate futuro de payout).
   const isCasual = getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
-  const filteredSteps = isCasual ? STEPS.filter(s => s.key !== 'store') : STEPS;
+  const filteredSteps = isCasual
+    ? STEPS.filter(s => s.key !== 'store').map(s =>
+        // Para casual, payouts no bloquea publicar (se exige antes del cobro).
+        s.key === 'payouts' ? { ...s, blocksPublish: false } : s
+      )
+    : STEPS;
 
   const results = [
     ...filteredSteps.map(step => ({ ...step, done: step.check(currentUser) })),

@@ -22,7 +22,9 @@ const buildCta = currentUser => {
     return { href: '/l/new', label: 'Publicar mi usado' };
   }
   if (currentUser) {
-    return { href: '/account', label: 'Activar modo casual' };
+    // XOLOLO: buyer logueado — página puente que activa modo casual con
+    // 1 click + T&C, luego redirige al wizard de nuevo listing.
+    return { href: '/promote-to-casual', label: 'Publicar mi usado' };
   }
   return {
     href: '/signup?sellerMode=casual_reseller&utm_source=used_band',

@@ -46,6 +46,7 @@ const SearchPageWithMap = loadable(() => import(/* webpackChunkName: "SearchPage
 const SearchPageWithGrid = loadable(() => import(/* webpackChunkName: "SearchPageWithGrid" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithGrid'));
 const StripePayoutPage = loadable(() => import(/* webpackChunkName: "StripePayoutPage" */ '../containers/StripePayoutPage/StripePayoutPage'));
 const ManageStorePage = loadable(() => import(/* webpackChunkName: "ManageStorePage" */ '../containers/ManageStorePage/ManageStorePage'));
+const PromoteToCasualPage = loadable(() => import(/* webpackChunkName: "PromoteToCasualPage" */ '../containers/PromoteToCasualPage/PromoteToCasualPage'));
 const TermsOfServicePage = loadable(() => import(/* webpackChunkName: "TermsOfServicePage" */ '../containers/TermsOfServicePage/TermsOfServicePage'));
 const TransactionPage = loadable(() => import(/* webpackChunkName: "TransactionPage" */ '../containers/TransactionPage/TransactionPage'));
 const NoAccessPage = loadable(() => import(/* webpackChunkName: "NoAccessPage" */ '../containers/NoAccessPage/NoAccessPage'));
@@ -376,6 +377,15 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/ops/tax-reviews',
       name: 'OpsTaxReviewsPage',
       component: OpsConsolePage,
+    },
+    {
+      // XOLOLO: puente para que un buyer logueado se convierta en
+      // vendedor casual con 1 click + aceptación de T&C. Después de
+      // activar, redirige a /l/new.
+      path: '/promote-to-casual',
+      name: 'PromoteToCasualPage',
+      auth: true,
+      component: PromoteToCasualPage,
     },
     {
       // XOLOLO Cart.4: página del carrito del seller identificado por
