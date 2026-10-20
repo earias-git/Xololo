@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useForm } from 'react-final-form';
 
 import { FieldCheckbox, FieldSelect } from '../index';
 import {
   CLASSIFICATION_GROUPS,
+  TAX_CLASSIFICATIONS,
   getClassificationByCode,
 } from '../../util/xololoTaxClassification';
 
@@ -51,53 +53,51 @@ const TaxClassificationField = props => {
     acceptanceName = 'taxClassificationAccepted',
     values = {},
     condition,
-    personType,
+    personType, // reservado para futuras reglas por persona
   } = props;
+  // personType se recibe para posibles reglas futuras; no se usa hoy.
+  void personType;
 
   const isUsed = condition === 'used';
-  const isIndividual = personType === 'individual';
-
-  // XOLOLO: si el producto es usado Y el seller es particular, la
-  // clasificación fiscal se deriva automáticamente (Art. 9 IV). No hay
-  // choice manual; el seller sólo ve la nota + manifiesto bajo protesta.
-  // Para usado + comercial (physical_business o moral), Art. 9 IV NO aplica
-  // y el seller ve el dropdown normal con esa opción filtrada.
-  if (isUsed && isIndividual) {
-    return (
-      <div className={css.root}>
-        <div className={css.autoAppliedCard}>
-          <strong className={css.autoAppliedTitle}>
-            Clasificación fiscal auto-aplicada
-          </strong>
-          <p className={css.autoAppliedText}>
-            Al marcar <strong>Usado / segunda mano</strong>, tu producto queda
-            bajo <strong>Art. 9 fracc. IV LIVA</strong>{' '}
-            (bienes muebles usados por particular). No se cobra IVA al cliente
-            y no se te retiene ISR 113-A. Esta exención aplica únicamente si
-            no realizas actividad empresarial ni vendes de forma habitual.
-          </p>
-          <p className={css.autoAppliedDeclaration}>
-            Al publicar manifiestas <strong>bajo protesta de decir verdad</strong>
-            {' '}que el bien es tuyo, usado y vendido de forma ocasional, y aceptas
-            ser el único responsable ante el SAT por esta declaración.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Producto nuevo: catálogo manual con dropdown. Las clasificaciones
-  // `requiresUsed: true` (Art. 9 IV) quedan OCULTAS porque son
-  // incompatibles con producto nuevo.
   const isEnabled = !!values[checkboxName];
   const selectedCode = values[codeName];
   const selectedEntry = getClassificationByCode(selectedCode);
   const acceptanceChecked = !!values[acceptanceName];
 
+  // XOLOLO: auto-selección al marcar 'Usado / segunda mano'.
+  // Cuando `condition` pasa a 'used':
+  //   1. Marca el checkbox 'hasTaxSpecialClassification' si no lo está.
+  //   2. Setea el código a EXENTO_9_IV si no hay otro ya seleccionado.
+  //   3. Pre-marca el manifiesto bajo protesta.
+  // Cuando `condition` vuelve a 'new':
+  //   - Si el código actual es EXENTO_9_IV (incompatible con nuevo), lo
+  //     limpia y desmarca el checkbox + aceptación.
+  //   - Si el código actual es OTRO (ej. tasa 0% Art. 2-A), lo conserva.
+  const form = useForm();
+  useEffect(() => {
+    if (!form) return;
+    if (isUsed) {
+      if (!isEnabled) form.change(checkboxName, true);
+      if (!selectedCode) form.change(codeName, TAX_CLASSIFICATIONS.EXENTO_9_IV);
+      if (!acceptanceChecked) form.change(acceptanceName, true);
+    } else {
+      // condition !== 'used' — si estaba Art. 9 IV, limpiar porque no
+      // puede aplicar a producto nuevo.
+      if (selectedCode === TAX_CLASSIFICATIONS.EXENTO_9_IV) {
+        form.change(codeName, '');
+        form.change(checkboxName, false);
+        form.change(acceptanceName, false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isUsed]);
+
+  // Catálogo del dropdown: Art. 9 IV sólo aparece si condition='used';
+  // en 'new' lo filtra out porque es incompatible con producto nuevo.
   const renderOption = code => {
     const entry = getClassificationByCode(code);
     if (!entry) return null;
-    if (entry.requiresUsed) return null; // filtra Art. 9 IV cuando condition='new'
+    if (entry.requiresUsed && !isUsed) return null;
     return (
       <option key={code} value={code}>
         {entry.label}
