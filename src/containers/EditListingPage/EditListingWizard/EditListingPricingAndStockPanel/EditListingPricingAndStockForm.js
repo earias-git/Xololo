@@ -161,6 +161,12 @@ export const EditListingPricingAndStockForm = props => (
       } = formRenderProps;
 
       const isCasual = sellerMode === SELLER_MODES.CASUAL_RESELLER;
+      // XOLOLO: para casual, la condición es SIEMPRE 'used' (único modo
+      // que puede publicar). Lo forzamos aquí para que la lógica de
+      // auto-selección (Art. 9 IV + manifiesto) y el payout funcionen
+      // incluso si publicData.condition no está persistido (listings
+      // viejos) o si react-final-form aún no hidrató values.condition.
+      const effectiveCondition = isCasual ? 'used' : values?.condition;
 
       const intl = useIntl();
       const priceValidators = getPriceValidators(
@@ -242,7 +248,7 @@ export const EditListingPricingAndStockForm = props => (
               condition='used' (siempre para casual, condicional para store).
               Se persiste en publicData.usedCondition y el buyer lo ve en
               la ListingPage al lado del título. */}
-          {values?.condition === 'used' ? (
+          {effectiveCondition === 'used' ? (
             <>
               <FieldSelect
                 id={`${formId}.usedCondition`}
@@ -271,7 +277,7 @@ export const EditListingPricingAndStockForm = props => (
           <TaxClassificationField
             formId={formId}
             values={values}
-            condition={values?.condition}
+            condition={effectiveCondition}
             personType={sellerTaxProfile?.personType}
           />
 
@@ -288,13 +294,13 @@ export const EditListingPricingAndStockForm = props => (
               : null;
             const auto = !manual
               ? resolveUsedGoodsOverride({
-                  condition: values?.condition,
+                  condition: effectiveCondition,
                   personType: sellerTaxProfile?.personType,
                 })
               : null;
             const override = manual || auto;
             const notice = getUsedGoodsNotice({
-              condition: values?.condition,
+              condition: effectiveCondition,
               personType: sellerTaxProfile?.personType,
             });
             return (

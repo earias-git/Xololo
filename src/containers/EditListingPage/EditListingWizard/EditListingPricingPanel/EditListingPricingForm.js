@@ -142,6 +142,10 @@ export const EditListingPricingForm = props => (
       } = formRenderProps;
 
       const isCasual = sellerMode === SELLER_MODES.CASUAL_RESELLER;
+      // XOLOLO: para casual, condición siempre 'used' (única permitida).
+      // Forzado para que la auto-selección de Art. 9 IV + payout sin IVA
+      // funcionen incluso en listings viejos sin publicData.condition.
+      const effectiveCondition = isCasual ? 'used' : formValues?.condition;
 
       const intl = useIntl();
       const priceValidators = getPriceValidators(
@@ -217,7 +221,7 @@ export const EditListingPricingForm = props => (
           ) : null}
 
           {/* XOLOLO: nivel de estado del artículo usado — no aplica a servicios. */}
-          {!isBooking && formValues?.condition === 'used' ? (
+          {!isBooking && effectiveCondition === 'used' ? (
             <>
               <FieldSelect
                 id={`${formId}.usedCondition`}
@@ -243,7 +247,7 @@ export const EditListingPricingForm = props => (
           <TaxClassificationField
             formId={formId}
             values={formValues}
-            condition={formValues?.condition}
+            condition={effectiveCondition}
             personType={sellerTaxProfile?.personType}
           />
 
@@ -263,13 +267,13 @@ export const EditListingPricingForm = props => (
               : null;
             const auto = !manual
               ? resolveUsedGoodsOverride({
-                  condition: formValues?.condition,
+                  condition: effectiveCondition,
                   personType: sellerTaxProfile?.personType,
                 })
               : null;
             const override = manual || auto;
             const notice = getUsedGoodsNotice({
-              condition: formValues?.condition,
+              condition: effectiveCondition,
               personType: sellerTaxProfile?.personType,
             });
             return (

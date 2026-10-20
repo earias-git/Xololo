@@ -264,8 +264,20 @@ const EditListingPricingAndStockPanel = props => {
                 : {};
 
             // XOLOLO: añade publicData.taxClassification al update.
-            const taxUpdate = buildTaxClassificationUpdate(values, listing);
-            const conditionValue = values?.condition === 'used' ? 'used' : 'new';
+            // Para casual, condition siempre es 'used' (único modo que puede
+            // publicar). Esto hidrata correctamente listings viejos que
+            // quedaron sin publicData.condition persistido.
+            const isCasualSubmit =
+              getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
+            const taxUpdate = buildTaxClassificationUpdate(
+              isCasualSubmit ? { ...values, condition: 'used' } : values,
+              listing
+            );
+            const conditionValue = isCasualSubmit
+              ? 'used'
+              : values?.condition === 'used'
+                ? 'used'
+                : 'new';
             // XOLOLO: nivel de estado — null si el seller no eligió aún
             // (o si volvió a 'new'); el buyer sólo lo verá cuando venga
             // definido y la condition sea 'used'.
