@@ -10,7 +10,6 @@ import { isPriceVariationsEnabled } from '../../../../util/configHelpers';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
 import { FIXED, isBookingProcess } from '../../../../transactions/transaction';
 import { getTaxProfile } from '../../../../util/xololoTaxProfile';
-import { getSellerMode } from '../../../../util/xololoSellerMode';
 import { SELLER_MODES, getSellerMode } from '../../../../util/xololoSellerMode';
 
 // Import shared components
@@ -238,7 +237,6 @@ const EditListingPricingPanel = props => {
           initialValues={initialValues}
           categoryId={listing?.attributes?.publicData?.categoryLevel1}
           sellerTaxProfile={sellerTaxProfile}
-          sellerMode={getSellerMode(currentUser)}
           sellerMode={getSellerMode(currentUser)}
           onSubmit={values => {
             const { price } = values;

@@ -8,7 +8,6 @@ import { LISTING_STATE_DRAFT, STOCK_INFINITE_ITEMS, propTypes } from '../../../.
 import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
 import { getTaxProfile } from '../../../../util/xololoTaxProfile';
-import { getSellerMode } from '../../../../util/xololoSellerMode';
 import { SELLER_MODES, getSellerMode } from '../../../../util/xololoSellerMode';
 // Note: SELLER_MODES used by the Form for isCasual check downstream.
 
@@ -224,7 +223,6 @@ const EditListingPricingAndStockPanel = props => {
           initialValues={initialValues}
           categoryId={listing?.attributes?.publicData?.categoryLevel1}
           sellerTaxProfile={sellerTaxProfile}
-          sellerMode={getSellerMode(currentUser)}
           sellerMode={getSellerMode(currentUser)}
           onSubmit={values => {
             const { price, stock, stockTypeInfinity } = values;
