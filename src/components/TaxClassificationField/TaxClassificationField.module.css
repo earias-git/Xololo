@@ -54,3 +54,53 @@
 .reviewNotice strong {
   color: var(--colorGrey900);
 }
+
+/* XOLOLO: card informativa cuando condition='used' (clasificación auto). */
+.autoAppliedCard {
+  margin-top: 10px;
+  padding: 14px 16px;
+  background: #eef5ee;
+  border-left: 3px solid #286a3a;
+  border-radius: 8px;
+}
+
+.autoAppliedTitle {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13.5px;
+  color: #10351c;
+}
+
+.autoAppliedText {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #294636;
+}
+
+.autoAppliedDeclaration {
+  margin: 0;
+  padding: 10px 12px;
+  background: #ffffff;
+  border-left: 3px solid var(--colorAttention, #ffd54f);
+  border-radius: 4px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--colorGrey900);
+}
+
+/* Checkbox de aceptación bajo protesta cuando elige clasificación especial */
+.acceptanceBlock {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #fff6d9;
+  border-left: 3px solid var(--colorAttention, #ffd54f);
+  border-radius: 4px;
+}
+
+.acceptanceHint {
+  margin: 6px 0 0 28px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--colorGrey700);
+}

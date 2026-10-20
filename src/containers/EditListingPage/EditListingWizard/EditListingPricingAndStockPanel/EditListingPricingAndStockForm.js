@@ -261,11 +261,20 @@ export const EditListingPricingAndStockForm = props => (
             </>
           ) : null}
 
-          {/* XOLOLO: clasificación fiscal especial — se oculta para seller
-              casual (sólo le aplica Art. 9 IV LIVA automático; cualquier
-              otra clasificación requeriría dejar de ser casual). Para
-              store, sigue disponible con el gate antifraude #39. */}
-          {!isCasual ? <TaxClassificationField formId={formId} values={values} /> : null}
+          {/* XOLOLO: clasificación fiscal especial. Se oculta para casual
+              (sólo le aplica Art. 9 IV LIVA automático). Para store, el
+              componente mismo decide qué renderizar según `condition`:
+              si used → auto-aplica Art. 9 IV con manifiesto; si new →
+              dropdown filtrado (sin Art. 9 IV) + checkbox de aceptación
+              bajo protesta. */}
+          {!isCasual ? (
+            <TaxClassificationField
+              formId={formId}
+              values={values}
+              condition={values?.condition}
+              personType={sellerTaxProfile?.personType}
+            />
+          ) : null}
 
           {/* XOLOLO: preview del payout del seller. Client-only,
               se auto-oculta hasta que hay precio. categoryId resuelve

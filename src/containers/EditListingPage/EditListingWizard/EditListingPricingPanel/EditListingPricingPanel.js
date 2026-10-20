@@ -52,6 +52,9 @@ const getInitialValues = props => {
     ? {
         hasTaxSpecialClassification: true,
         taxClassificationCode: taxClassification.code,
+        // XOLOLO: si ya aceptó el manifiesto en el pasado, lo trae
+        // marcado para no obligarlo a re-aceptar en cada edición.
+        taxClassificationAccepted: !!taxClassification.declarationAccepted,
       }
     : {};
 
@@ -82,17 +85,25 @@ const getInitialValues = props => {
 };
 
 // XOLOLO: construye el payload persistido en publicData.taxClassification
-// a partir de los valores del form. Si el seller no marcó la casilla o no
-// eligió código, limpia la clasificación con null. Si marcó y eligió código:
-//   - listing nuevo o cambio de código → nueva declaración con pending
-//   - mismo código que el persistido → preserva reviewStatus/reviewedBy/at
+// a partir de los valores del form. Reglas:
+//   - Si no marcó la casilla, no eligió código, o NO aceptó el manifiesto
+//     bajo protesta → limpia la clasificación con null (preserva nada).
+//   - Si marcó + eligió + aceptó, y es nuevo listing o cambio de código →
+//     nueva declaración con reviewStatus='pending' + declarationAccepted.
+//   - Mismo código que el persistido → preserva reviewStatus/reviewedBy/at.
 // El gate antifraude (#39) revisa 'pending' en /ops antes de aplicar override.
+const TAX_DECLARATION_TERMS_VERSION = 'v1-2026-10';
+
 const buildTaxClassificationUpdate = (values, listing) => {
   const existing = listing?.attributes?.publicData?.taxClassification || null;
   const hasSpecial = !!values?.hasTaxSpecialClassification;
   const code = values?.taxClassificationCode;
+  const accepted = !!values?.taxClassificationAccepted;
 
-  if (!hasSpecial || !code) {
+  // Sin checkbox, sin código, o SIN manifiesto aceptado → no se persiste.
+  // Esto obliga al seller a aceptar explícitamente el manifiesto para que
+  // la clasificación tenga efecto legal en Xololo.
+  if (!hasSpecial || !code || !accepted) {
     return existing ? { taxClassification: null } : {};
   }
 
@@ -104,6 +115,8 @@ const buildTaxClassificationUpdate = (values, listing) => {
     taxClassification: {
       code,
       declaredAt: new Date().toISOString(),
+      declarationAccepted: true,
+      declarationTermsVersion: TAX_DECLARATION_TERMS_VERSION,
       reviewStatus: 'pending',
       reviewedBy: null,
       reviewedAt: null,

@@ -58,6 +58,11 @@ const CATALOG = {
     description:
       'Vendedor particular que vende sus propios bienes usados de forma ocasional. Pierde la exención si es empresa o si lo hace de forma habitual.',
     requiresReview: true,
+    // XOLOLO: esta clasificación es incompatible con producto nuevo.
+    // El dropdown de TaxClassificationField la oculta cuando condition='new'
+    // y la auto-aplica cuando condition='used' + personType='individual'
+    // (ver resolveUsedGoodsOverride en xololoSellerMode).
+    requiresUsed: true,
   },
   [TAX_CLASSIFICATIONS.EXENTO_9_III]: {
     label: 'Libro/revista/obra del propio autor (Art. 9 III)',
