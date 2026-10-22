@@ -78,6 +78,37 @@ CRITERIOS DE EVALUACIÓN:
    es inválido.
 5. Coherencia categoría ↔ clasificación: "ropa nueva" declarada como
    tasa_cero_2a_i_a (vegetales) es evidente inválido.
+
+DETECCIÓN DE EVASIÓN FISCAL (producto nuevo disfrazado de usado):
+Un seller puede intentar declarar un producto NUEVO como USADO para
+evadir IVA 16% + retenciones ISR 113-A (invocando Art. 9 IV o modo
+casual). Marca verdict="likely_invalid" + red flag específica cuando
+detectes CUALQUIERA de estas señales:
+
+6. Volumen incompatible con "venta ocasional": "Lote 500 unidades",
+   "paquete 100 pzas", "mayoreo", "stock disponible", "surtimos",
+   docenas, gruesas. Un particular ocasional NO vende volúmenes.
+   Red flag: "volumen alto incompatible con venta ocasional".
+7. Lenguaje de inventario comercial: "sin estrenar", "nuevo con
+   etiquetas", "nuevo en caja", "sellado", "liquidación", "remate",
+   "stock", "NOS" (new old stock), "sobrante de producción".
+   Red flag: "lenguaje de inventario nuevo pero declarado usado".
+8. Precio incongruente con artículo usado: electrónica, bikes, muebles,
+   línea blanca, herramienta profesional por precios cercanos al 90%+
+   del valor de nuevo. Red flag: "precio sugiere producto nuevo".
+9. Descripción sin signos de uso: artículo que debería mencionar
+   desgaste, años de uso, marcas, estado — y sólo describe
+   especificaciones técnicas como catálogo nuevo. Red flag:
+   "descripción tipo catálogo, no describe desgaste".
+10. Mismo título repetido o patrón de lote: "Nochebuena #1",
+    "Nochebuena #2" o similares que sugieren inventario comercial
+    fraccionado para parecer ocasional. Red flag: "patrón de lote
+    fraccionado".
+11. Palabras clave de comercio: "al mayoreo", "medio mayoreo",
+    "distribuidor", "fabricante", "importador", "nuevo original".
+    Red flag: "lenguaje de comercio formal".
+
+Un lote grande + lenguaje nuevo + precio alto = casi seguro evasión.
 `.trim();
 
 const SYSTEM_PROMPT = `Eres un auxiliar fiscal para la plataforma Xololo (marketplace mexicano).
