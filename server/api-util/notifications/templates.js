@@ -454,6 +454,67 @@ const TEMPLATES = {
       },
     },
   },
+  // XOLOLO #39 — notificaciones del gate antifraude fiscal.
+  // El context que arma admin-tax-reviews al llamar: {seller, listing,
+  // taxReview: {code, label, article, reviewedBy, reviewNote}}.
+  'listing.tax_approved': {
+    email: {
+      seller: {
+        subject: 'Tu clasificación fiscal fue aprobada · {listing.title}',
+        bodyText:
+          'Hola {seller.name},\n\n' +
+          'El equipo de Xololo revisó la clasificación fiscal especial que ' +
+          'declaraste para tu anuncio "{listing.title}" y la aprobó:\n\n' +
+          '• Clasificación: {taxReview.label}\n' +
+          '• Artículo: {taxReview.article}\n' +
+          '• Revisado por: {taxReview.reviewedBy}\n' +
+          '{taxReview.noteText}' +
+          '\nA partir de ahora, tus próximas ventas de este anuncio aplicarán ' +
+          'el régimen fiscal aprobado (en vez del default IVA 16%).\n\n' +
+          'Ver tu anuncio: {listing.url}\n\n' +
+          'Recuerda que firmaste bajo protesta de decir verdad — eres el ' +
+          'único responsable ante el SAT por esta clasificación.\n\n' +
+          'Equipo Xololo',
+      },
+    },
+    push: {
+      seller: {
+        title: '✓ Clasificación fiscal aprobada',
+        body: '{listing.title} — ya aplica {taxReview.label}',
+        url: '{listing.url}',
+      },
+    },
+  },
+  'listing.tax_rejected': {
+    email: {
+      seller: {
+        subject: 'Tu clasificación fiscal fue rechazada · {listing.title}',
+        bodyText:
+          'Hola {seller.name},\n\n' +
+          'El equipo de Xololo revisó la clasificación fiscal especial que ' +
+          'declaraste para tu anuncio "{listing.title}" y la rechazó:\n\n' +
+          '• Clasificación declarada: {taxReview.label}\n' +
+          '• Artículo: {taxReview.article}\n' +
+          '• Revisado por: {taxReview.reviewedBy}\n' +
+          '{taxReview.noteText}' +
+          '\nQué significa:\n' +
+          '  • Tu anuncio sigue publicado normalmente.\n' +
+          '  • Las ventas de este anuncio aplican IVA 16% por default (ningún cambio).\n' +
+          '  • Puedes revisar la clasificación desde el panel de precio y volver a declarar ' +
+          '    una distinta si corresponde.\n\n' +
+          'Editar anuncio: {listing.editUrl}\n\n' +
+          '¿Dudas? Escríbenos a soporte@xololo.mx\n\n' +
+          'Equipo Xololo',
+      },
+    },
+    push: {
+      seller: {
+        title: '✗ Clasificación fiscal rechazada',
+        body: '{listing.title} — sigue con IVA 16% default',
+        url: '{listing.editUrl}',
+      },
+    },
+  },
 };
 
 const get = (event, channel, actor) => {

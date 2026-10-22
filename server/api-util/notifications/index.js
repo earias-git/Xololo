@@ -107,6 +107,17 @@ const MATRIX = {
   'public_shipping.guide_ready': {
     buyer: ['email'],
   },
+  // XOLOLO #39 — gate antifraude fiscal: notificar al seller cuando
+  // Ops aprueba o rechaza su declaración. Email + push (buzón in-app).
+  // Al aprobar, el override fiscal entra en vigor en próximos cobros.
+  // Al rechazar, el listing sigue con default 16% y el seller debe
+  // revisar la clasificación.
+  'listing.tax_approved': {
+    seller: ['email', 'push'],
+  },
+  'listing.tax_rejected': {
+    seller: ['email', 'push'],
+  },
 };
 
 const CHANNELS = { email, push, whatsapp };

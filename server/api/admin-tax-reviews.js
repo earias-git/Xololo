@@ -22,6 +22,27 @@
 
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { classifyTaxDeclaration } = require('../api-util/taxReviewAi');
+const { sendEventNotifications } = require('../api-util/notifications');
+
+// XOLOLO: mapa code → {label, article} para armar el email al seller.
+// Replica el catálogo de src/util/xololoTaxClassification.js (el archivo
+// cliente es ESM y no se puede require desde el server). Si se agrega
+// un code nuevo allá, replicar aquí.
+const TAX_CODE_META = {
+  exento_9_iv: { label: 'Bienes muebles usados por particular', article: 'Art. 9 fracc. IV LIVA' },
+  exento_9_iii: { label: 'Libro/revista/obra del propio autor', article: 'Art. 9 fracc. III LIVA' },
+  tasa_cero_2a_i_a: { label: 'Animales y vegetales no industrializados', article: 'Art. 2-A I-a LIVA' },
+  tasa_cero_2a_i_b: { label: 'Alimentos NO procesados', article: 'Art. 2-A I-b LIVA' },
+  tasa_cero_2a_i_d: { label: 'Ixtle, palma y lechuguilla', article: 'Art. 2-A I-d LIVA' },
+  tasa_cero_2a_i_f: { label: 'Fertilizantes y plaguicidas agrícolas', article: 'Art. 2-A I-f LIVA' },
+  tasa_cero_2a_i_i: { label: 'Libros editados por el propio contribuyente', article: 'Art. 2-A I-i LIVA' },
+  tasa_cero_2a_i_j: { label: 'Toallas sanitarias, tampones y copas', article: 'Art. 2-A I-j LIVA' },
+  exento_15_iv: { label: 'Enseñanza con RVOE o preescolar', article: 'Art. 15 IV LIVA' },
+  exento_15_xiv: { label: 'Servicios médicos con cédula', article: 'Art. 15 XIV LIVA' },
+  exento_15_xvi: { label: 'Regalías del autor por obra inscrita', article: 'Art. 15 XVI LIVA' },
+  actividad_transporte: { label: 'Transporte terrestre', article: 'LISR 113-A' },
+  actividad_hospedaje: { label: 'Hospedaje', article: 'LISR 113-A' },
+};
 
 const CACHE_TTL_MS = 2 * 60 * 1000; // 2 min: cola de revisión activa.
 let cache = null;
@@ -174,19 +195,22 @@ const review = async (req, res) => {
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
   try {
-    const resp = await isdk.listings.show({ id: listingId });
-    const existing = resp.data.data?.attributes?.publicData?.taxClassification;
+    const resp = await isdk.listings.show({ id: listingId, include: ['author'] });
+    const listing = resp.data.data;
+    const existing = listing?.attributes?.publicData?.taxClassification;
     if (!existing || !existing.code) {
       return res
         .status(400)
         .json({ error: 'invalid_request', details: 'El listing no tiene clasificación fiscal declarada.' });
     }
 
+    const reviewedBy = req.operator?.email || null;
+    const reviewedAt = new Date().toISOString();
     const updated = {
       ...existing,
       reviewStatus: status,
-      reviewedBy: req.operator?.email || null,
-      reviewedAt: new Date().toISOString(),
+      reviewedBy,
+      reviewedAt,
       reviewNote: reviewNote || null,
     };
 
@@ -194,6 +218,47 @@ const review = async (req, res) => {
       id: listingId,
       publicData: { taxClassification: updated },
     });
+
+    // XOLOLO #39: notificar al seller del veredicto. Email + push
+    // (buzón in-app). Fire-and-forget — no bloquea el response de Ops.
+    try {
+      const author = (resp.data.included || []).find(inc => inc.type === 'user');
+      const sellerEmail = author?.attributes?.email || null;
+      const sellerName =
+        author?.attributes?.profile?.displayName ||
+        author?.attributes?.profile?.firstName ||
+        'vendedor';
+      const codeMeta = TAX_CODE_META[existing.code] || { label: existing.code, article: '' };
+      const listingSlug = listing.attributes?.publicData?.slug || listing.id.uuid;
+      const baseUrl = process.env.ROOT_URL || 'https://xololo.mx';
+      const event = status === 'approved' ? 'listing.tax_approved' : 'listing.tax_rejected';
+      sendEventNotifications(event, {
+        seller: {
+          id: listing.relationships?.author?.data?.id?.uuid,
+          email: sellerEmail,
+          name: sellerName,
+        },
+        listing: {
+          id: listing.id.uuid,
+          title: listing.attributes?.title || '(sin título)',
+          url: `${baseUrl}/l/${listingSlug}/${listing.id.uuid}`,
+          editUrl: `${baseUrl}/l/${listingSlug}/${listing.id.uuid}/edit/pricing-and-stock`,
+        },
+        taxReview: {
+          code: existing.code,
+          label: codeMeta.label,
+          article: codeMeta.article,
+          reviewedBy: reviewedBy || 'equipo Xololo',
+          noteText: reviewNote ? `• Nota del revisor: ${reviewNote}\n` : '',
+        },
+      }).catch(e => {
+        // eslint-disable-next-line no-console
+        console.warn('[admin-tax-reviews] notify failed:', e?.message);
+      });
+    } catch (notifErr) {
+      // eslint-disable-next-line no-console
+      console.warn('[admin-tax-reviews] notify build failed:', notifErr?.message);
+    }
 
     // Invalida cache de la lista — el próximo GET refleja el cambio.
     cache = null;
