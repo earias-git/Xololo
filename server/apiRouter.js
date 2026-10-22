@@ -46,6 +46,7 @@ const sellerSubscription = require('./api/seller-subscription');
 const sellerPayoutGate = require('./api/seller-payout-gate');
 const sellerPendingPayouts = require('./api/seller-pending-payouts');
 const sellerTaxAiClassify = require('./api/seller-tax-ai-classify');
+const sellerListingLegalityCheck = require('./api/seller-listing-legality-check');
 const sellerHasListings = require('./api/seller-has-listings');
 const stripeBillingWebhook = require('./api/webhooks/stripe-billing');
 const skydropxWebhook = require('./api/webhooks/skydropx');
@@ -305,6 +306,10 @@ router.get('/seller-pending-payouts', sellerPendingPayouts);
 // XOLOLO Track #39: el seller dispara el análisis de IA al declarar su
 // clasificación. Precarga aiReview para que Ops no lo haga manual.
 router.post('/seller-tax-ai-classify', bodyParser.json(), sellerTaxAiClassify);
+// XOLOLO: moderación de legalidad del listing. Fire-and-forget al
+// publicar/editar. Si la IA detecta ilícito, cierra el listing y
+// notifica al seller + Ops.
+router.post('/seller-listing-legality-check', bodyParser.json(), sellerListingLegalityCheck);
 
 // XOLOLO: ¿este seller ya tiene alguna listing publicada? Usado por
 // RequireSellerOnboarding para distinguir seller nuevo vs establecido.

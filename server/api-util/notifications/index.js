@@ -118,6 +118,12 @@ const MATRIX = {
   'listing.tax_rejected': {
     seller: ['email', 'push'],
   },
+  // XOLOLO — moderación de legalidad: la IA detectó producto/servicio
+  // ilícito y bloqueó automáticamente el listing. Email + push al seller
+  // (buzón in-app) explicando por qué y cómo apelar.
+  'listing.legality_blocked': {
+    seller: ['email', 'push'],
+  },
 };
 
 const CHANNELS = { email, push, whatsapp };

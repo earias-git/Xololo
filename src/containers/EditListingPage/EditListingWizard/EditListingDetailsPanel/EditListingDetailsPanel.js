@@ -18,6 +18,7 @@ import {
 } from '../../../../util/fieldHelpers';
 import { isBookingProcess, isBookingProcessAlias } from '../../../../transactions/transaction';
 import { SELLER_MODES, getSellerMode } from '../../../../util/xololoSellerMode';
+import { apiBaseUrl } from '../../../../util/api';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -497,7 +498,26 @@ const EditListingDetailsPanel = props => {
               ...setNoAvailabilityForUnbookableListings(transactionProcessAlias),
             };
 
-            onSubmit(updateValues);
+            const submitResult = onSubmit(updateValues);
+            // XOLOLO: fire-and-forget al endpoint de moderación de
+            // legalidad después de que el update propague. La IA
+            // revisa title + description y, si detecta producto/servicio
+            // ilícito con alta confianza, cierra el listing y notifica
+            // al seller. Fail-open: errores no bloquean al seller.
+            if (listing?.id?.uuid && submitResult?.then) {
+              submitResult
+                .then(() => {
+                  setTimeout(() => {
+                    fetch(`${apiBaseUrl()}/api/seller-listing-legality-check`, {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ listingId: listing.id.uuid }),
+                    }).catch(() => {});
+                  }, 1500);
+                })
+                .catch(() => {});
+            }
           }}
           selectableListingTypes={listingTypes.map(conf =>
             getTransactionInfo({

@@ -485,6 +485,36 @@ const TEMPLATES = {
       },
     },
   },
+  'listing.legality_blocked': {
+    email: {
+      seller: {
+        subject: '⚠️ Tu anuncio fue bloqueado · {listing.title}',
+        bodyText:
+          'Hola {seller.name},\n\n' +
+          'Nuestro sistema de moderación detectó contenido potencialmente ilícito ' +
+          'en tu anuncio "{listing.title}" y lo bloqueó automáticamente.\n\n' +
+          '• Categoría detectada: {moderation.category}\n' +
+          '• Motivo: {moderation.reasoning}\n\n' +
+          'Qué significa:\n' +
+          '  • Tu anuncio ya NO es visible para compradores.\n' +
+          '  • Si crees que fue un error, edita el anuncio para aclarar la ' +
+          '    descripción y nuestro equipo lo revisará nuevamente.\n' +
+          '  • Si el contenido infringe nuestras políticas o la ley mexicana, ' +
+          '    el bloqueo es definitivo y tu cuenta puede ser suspendida.\n\n' +
+          'Editar anuncio: {listing.editUrl}\n\n' +
+          'Si necesitas apelar escríbenos a soporte@xololo.mx con el ID del ' +
+          'anuncio: {listing.id}\n\n' +
+          'Equipo Xololo',
+      },
+    },
+    push: {
+      seller: {
+        title: '⚠️ Anuncio bloqueado',
+        body: '{listing.title} — categoría: {moderation.category}',
+        url: '{listing.editUrl}',
+      },
+    },
+  },
   'listing.tax_rejected': {
     email: {
       seller: {
