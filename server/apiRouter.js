@@ -37,6 +37,7 @@ const uploadLegalDoc = require('./api/upload-legal-doc');
 const sellerLegalDocs = require('./api/seller-legal-docs');
 const adminLegalDocs = require('./api/admin-legal-docs');
 const adminTaxReviews = require('./api/admin-tax-reviews');
+const adminCheck = require('./api/admin-check');
 const adminPayoutQueue = require('./api/admin-payout-queue');
 const adminAuth = require('./api/admin-auth');
 const adminOperators = require('./api/admin-operators');
@@ -196,6 +197,10 @@ router.post('/admin/legal-docs/review', bodyParser.json(), adminLegalDocs.review
 
 // XOLOLO Gate antifraude fiscal (task #39): cola de clasificaciones
 // fiscales declaradas por sellers que esperan revisión humana en /ops.
+// XOLOLO: diagnóstico self-service — devuelve el email del user logueado
+// y si pasa el gate admin. No requiere ser admin. Útil para debug cuando
+// alguien recibe not_admin sin entender por qué.
+router.get('/admin-check', adminCheck);
 router.get('/admin/tax-reviews', adminTaxReviews.list);
 router.post('/admin/tax-reviews/review', bodyParser.json(), adminTaxReviews.review);
 // XOLOLO #39: pre-clasificación con IA de la declaración fiscal.
