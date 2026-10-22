@@ -205,6 +205,17 @@ const classifyTaxDeclaration = async ctx => {
     const effectiveVerdict =
       verdict === 'likely_valid' && confidence < 60 ? 'needs_review' : verdict;
 
+    // XOLOLO: auto-aprobación cuando el verdict es textbook claro
+    // (likely_valid con alta confianza) Y no hay red flags. Permite
+    // que la cola humana se enfoque en los dudosos/sospechosos.
+    // Threshold 85% — subir si quieres menos auto-approves.
+    const AUTO_APPROVE_THRESHOLD = 85;
+    const noRedFlags = !data.redFlags || data.redFlags.length === 0;
+    const shouldAutoApprove =
+      effectiveVerdict === 'likely_valid' &&
+      confidence >= AUTO_APPROVE_THRESHOLD &&
+      noRedFlags;
+
     return {
       verdict: effectiveVerdict,
       verdictRaw: verdict !== effectiveVerdict ? verdict : undefined,
@@ -214,6 +225,7 @@ const classifyTaxDeclaration = async ctx => {
       model: process.env.XOLOLO_AI_MODEL || 'claude-haiku-5-5',
       classifiedAt: new Date().toISOString(),
       latencyMs: Date.now() - startedAt,
+      shouldAutoApprove,
     };
   } catch (e) {
     // eslint-disable-next-line no-console

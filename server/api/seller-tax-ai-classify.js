@@ -21,6 +21,25 @@
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { classifyTaxDeclaration } = require('../api-util/taxReviewAi');
+const { sendEventNotifications } = require('../api-util/notifications');
+
+// XOLOLO: mismo mapa que admin-tax-reviews.js para el email de
+// auto-aprobación. Mantener sincronizados.
+const TAX_CODE_META = {
+  exento_9_iv: { label: 'Bienes muebles usados por particular', article: 'Art. 9 fracc. IV LIVA' },
+  exento_9_iii: { label: 'Libro/revista/obra del propio autor', article: 'Art. 9 fracc. III LIVA' },
+  tasa_cero_2a_i_a: { label: 'Animales y vegetales no industrializados', article: 'Art. 2-A I-a LIVA' },
+  tasa_cero_2a_i_b: { label: 'Alimentos NO procesados', article: 'Art. 2-A I-b LIVA' },
+  tasa_cero_2a_i_d: { label: 'Ixtle, palma y lechuguilla', article: 'Art. 2-A I-d LIVA' },
+  tasa_cero_2a_i_f: { label: 'Fertilizantes y plaguicidas agrícolas', article: 'Art. 2-A I-f LIVA' },
+  tasa_cero_2a_i_i: { label: 'Libros editados por el propio contribuyente', article: 'Art. 2-A I-i LIVA' },
+  tasa_cero_2a_i_j: { label: 'Toallas sanitarias, tampones y copas', article: 'Art. 2-A I-j LIVA' },
+  exento_15_iv: { label: 'Enseñanza con RVOE o preescolar', article: 'Art. 15 IV LIVA' },
+  exento_15_xiv: { label: 'Servicios médicos con cédula', article: 'Art. 15 XIV LIVA' },
+  exento_15_xvi: { label: 'Regalías del autor por obra inscrita', article: 'Art. 15 XVI LIVA' },
+  actividad_transporte: { label: 'Transporte terrestre', article: 'LISR 113-A' },
+  actividad_hospedaje: { label: 'Hospedaje', article: 'LISR 113-A' },
+};
 
 const RECENT_HOURS = 24;
 
@@ -95,13 +114,69 @@ module.exports = async (req, res) => {
 
     // 5) Persiste. classifiedForCode permite detectar cuando el seller
     //    cambia la clasificación y hay que re-correr.
-    const updated = { ...tc, aiReview: { ...aiReview, classifiedForCode: tc.code } };
+    //
+    // XOLOLO: si la IA marca shouldAutoApprove (likely_valid con
+    // confianza ≥85% y sin red flags), aprobamos sin pasar por Ops.
+    // El operador humano SÓLO revisa needs_review y likely_invalid.
+    const autoApproved = !!aiReview.shouldAutoApprove;
+    const now = new Date().toISOString();
+    const nextTax = {
+      ...tc,
+      aiReview: { ...aiReview, classifiedForCode: tc.code },
+    };
+    if (autoApproved) {
+      nextTax.reviewStatus = 'approved';
+      nextTax.reviewedBy = 'xololo-ia-auto';
+      nextTax.reviewedAt = now;
+      nextTax.reviewNote = `Auto-aprobado por IA (confianza ${aiReview.confidence}%)`;
+    }
+
     await isdk.listings.update({
       id: listingId,
-      publicData: { taxClassification: updated },
+      publicData: { taxClassification: nextTax },
     });
 
-    return res.json({ ok: true, aiReview: updated.aiReview });
+    // 6) Si se auto-aprobó, notificar al seller como lo haría Ops.
+    //    Fire-and-forget — no bloquea el response del seller.
+    if (autoApproved) {
+      try {
+        const codeMeta = TAX_CODE_META[tc.code] || { label: tc.code, article: '' };
+        const listingSlug = l.attributes?.publicData?.slug || l.id.uuid;
+        const baseUrl = process.env.ROOT_URL || 'https://xololo.mx';
+        const sellerName =
+          authorInc?.attributes?.profile?.displayName ||
+          authorInc?.attributes?.profile?.firstName ||
+          'vendedor';
+        sendEventNotifications('listing.tax_approved', {
+          seller: {
+            id: userId,
+            email: authorInc?.attributes?.email || null,
+            name: sellerName,
+          },
+          listing: {
+            id: l.id.uuid,
+            title: l.attributes?.title || '(sin título)',
+            url: `${baseUrl}/l/${listingSlug}/${l.id.uuid}`,
+            editUrl: `${baseUrl}/l/${listingSlug}/${l.id.uuid}/edit/pricing-and-stock`,
+          },
+          taxReview: {
+            code: tc.code,
+            label: codeMeta.label,
+            article: codeMeta.article,
+            reviewedBy: `Xololo IA (${aiReview.confidence}% confianza)`,
+            noteText: '',
+          },
+        }).catch(e => {
+          // eslint-disable-next-line no-console
+          console.warn('[seller-tax-ai-classify] notify failed:', e?.message);
+        });
+      } catch (notifErr) {
+        // eslint-disable-next-line no-console
+        console.warn('[seller-tax-ai-classify] notify build failed:', notifErr?.message);
+      }
+    }
+
+    return res.json({ ok: true, aiReview: nextTax.aiReview, autoApproved });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[seller-tax-ai-classify] error:', e?.message);
