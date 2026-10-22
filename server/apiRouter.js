@@ -202,6 +202,9 @@ router.post('/admin/tax-reviews/review', bodyParser.json(), adminTaxReviews.revi
 // XOLOLO Track #27 Fase 2: cola de sellers con dinero retenido.
 router.get('/admin/payout-queue', adminPayoutQueue.list);
 router.post('/admin/payout-queue/release', bodyParser.json(), adminPayoutQueue.release);
+// XOLOLO Track #27 Fase 3: reintentar transfer para tx liberadas pero
+// cuyo transfer real falló.
+router.post('/admin/payout-queue/retry', bodyParser.json(), adminPayoutQueue.retry);
 
 // XOLOLO Fase 1C.3 — Autenticación de operadores Xololo (RBAC + MFA
 // futuro). Ver docs/ARQUITECTURA_PENALIDADES.md §6. Rutas:

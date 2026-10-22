@@ -33,6 +33,10 @@
 const { requireAdmin } = require('../api-util/adminGate');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { slotsForPersonType } = require('../api-util/legalDocSlots');
+const {
+  getSellerStripeAccountId,
+  createPayoutTransfer,
+} = require('../api-util/stripePayouts');
 
 const CACHE_TTL_MS = 60 * 1000; // 1 min — datos de dinero esperando.
 let cache = null;
@@ -51,14 +55,22 @@ const COMPLETED_TRANSITIONS = new Set([
 ]);
 const EXCLUDED_STATES = new Set(['canceled', 'refunded', 'disputed']);
 
+// "Pendiente" para esta cola admin = la tx no está exclu ida (refund/
+// cancel/dispute), está en estado completed/delivered/reviewed Y
+// todavía NO tiene un transfer exitoso. Esto incluye 2 escenarios:
+//   a) Nunca liberada (xololoPayoutReleased != true)
+//   b) Liberada pero el transfer real falló (released=true + transferError
+//      presente + sin transferId). Importante mostrarlas también para
+//      que Ops las vea y use el botón de reintento.
 const isPendingPayout = tx => {
   const attrs = tx.attributes || {};
   if (EXCLUDED_STATES.has(attrs.state)) return false;
   const meta = attrs.metadata || {};
-  if (meta.xololoPayoutReleased === true) return false;
-  if (COMPLETED_STATES.has(attrs.state)) return true;
-  if (attrs.lastTransition && COMPLETED_TRANSITIONS.has(attrs.lastTransition)) return true;
-  return false;
+  if (meta.xololoPayoutTransferId) return false; // transfer exitoso → ya salió
+  const isCompletedState =
+    COMPLETED_STATES.has(attrs.state) ||
+    (attrs.lastTransition && COMPLETED_TRANSITIONS.has(attrs.lastTransition));
+  return isCompletedState;
 };
 
 const isLegalDocsComplete = (personType, docs, sellerMode) => {
@@ -84,7 +96,7 @@ const list = async (req, res) => {
 
   try {
     // 1) Barremos todas las tx completadas-y-no-liberadas.
-    const bySeller = new Map(); // providerId → { count, amount, oldest, txIds }
+    const bySeller = new Map(); // providerId → { count, amount, oldest, txIds, txFailedIds }
     for (let page = 1; page <= MAX_PAGES; page++) {
       const resp = await isdk.transactions.query({
         page,
@@ -105,12 +117,27 @@ const list = async (req, res) => {
         if (!providerId) continue;
         let agg = bySeller.get(providerId);
         if (!agg) {
-          agg = { count: 0, amount: 0, oldest: null, txIds: [] };
+          agg = {
+            count: 0,
+            amount: 0,
+            oldest: null,
+            txIds: [],
+            failedTxIds: [],
+            lastTransferError: null,
+          };
           bySeller.set(providerId, agg);
         }
         agg.count += 1;
         agg.amount += tx.attributes?.payoutTotal?.amount || 0;
-        agg.txIds.push(tx.id?.uuid || tx.id);
+        const txUuid = tx.id?.uuid || tx.id;
+        agg.txIds.push(txUuid);
+        const meta = tx.attributes?.metadata || {};
+        if (meta.xololoPayoutReleased === true && !meta.xololoPayoutTransferId) {
+          agg.failedTxIds.push(txUuid);
+          if (meta.xololoPayoutTransferError) {
+            agg.lastTransferError = meta.xololoPayoutTransferError;
+          }
+        }
         const t = tx.attributes?.lastTransitionedAt;
         if (t && (!agg.oldest || new Date(t) < new Date(agg.oldest))) {
           agg.oldest = t;
@@ -155,6 +182,11 @@ const list = async (req, res) => {
           canReceivePayout,
           blockers,
           txIds: agg.txIds,
+          // Fase 3: transfers que fallaron después de release. Ops los
+          // ve con un badge rojo y usa "Reintentar transfer".
+          failedTransferCount: agg.failedTxIds.length,
+          failedTxIds: agg.failedTxIds,
+          lastTransferError: agg.lastTransferError,
         });
       } catch (e) {
         // Un seller cuyo show falla no bloquea el resto de la cola.
@@ -182,6 +214,19 @@ const list = async (req, res) => {
   }
 };
 
+// Trae el payoutTotal + state de una tx para validar antes de transferir.
+const fetchTxForTransfer = async (isdk, txId) => {
+  try {
+    const resp = await isdk.transactions.show({
+      id: txId,
+      'fields.transaction': ['state', 'payoutTotal', 'metadata'],
+    });
+    return resp.data.data;
+  } catch (e) {
+    return null;
+  }
+};
+
 const release = async (req, res) => {
   const admin = await requireAdmin(req, res);
   if (!admin.ok) return;
@@ -196,37 +241,157 @@ const release = async (req, res) => {
   const isdk = getIntegrationSdk();
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
-  let releasedCount = 0;
-  try {
-    for (const txId of txIds) {
-      try {
-        // XOLOLO: marcar metadata. Esto NO ejecuta el transfer — es un
-        // flag que la contabilidad usa para liberar manualmente desde
-        // Stripe dashboard. En Fase 3, un cron hará el transfer real.
-        await isdk.transactions.updateMetadata({
-          id: txId,
-          metadata: {
-            xololoPayoutReleased: true,
-            xololoPayoutReleasedAt: new Date().toISOString(),
-            xololoPayoutReleasedBy: admin.operatorId || null,
-            xololoPayoutReleaseNote: note || null,
-          },
+  // Resolvemos el stripeAccountId del seller UNA vez (todas sus tx van
+  // al mismo destino). Si no lo tiene, igual marcamos released=true
+  // pero cada tx queda con transferError 'seller_no_stripe_account'
+  // para que Ops lo vea.
+  const sellerStripeAccountId = await getSellerStripeAccountId(isdk, sellerId);
+
+  const results = [];
+  for (const txId of txIds) {
+    const result = { txId, released: false, transferred: false, transferError: null };
+    try {
+      // 1) Marcar released=true (si falla, saltamos al siguiente).
+      await isdk.transactions.updateMetadata({
+        id: txId,
+        metadata: {
+          xololoPayoutReleased: true,
+          xololoPayoutReleasedAt: new Date().toISOString(),
+          xololoPayoutReleasedBy: admin.operatorId || null,
+          xololoPayoutReleaseNote: note || null,
+        },
+      });
+      result.released = true;
+
+      // 2) Intentar transfer real. Validamos amount desde la tx (NO
+      //    confiamos en lo que vino del cliente para evitar transfer
+      //    arbitrario).
+      const tx = await fetchTxForTransfer(isdk, txId);
+      const amount = tx?.attributes?.payoutTotal?.amount || 0;
+      const currency = tx?.attributes?.payoutTotal?.currency || 'MXN';
+      const alreadyTransferred = tx?.attributes?.metadata?.xololoPayoutTransferId;
+      if (alreadyTransferred) {
+        result.transferred = true;
+        result.transferId = alreadyTransferred;
+      } else {
+        const transfer = await createPayoutTransfer({
+          txId,
+          sellerStripeAccountId,
+          amountSubunits: amount,
+          currency,
+          description: note ? `Xololo payout tx ${txId} — ${note}` : undefined,
         });
-        releasedCount += 1;
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn('[admin-payout-queue] release failed for', txId, e?.message);
+        if (transfer.ok) {
+          await isdk.transactions.updateMetadata({
+            id: txId,
+            metadata: {
+              xololoPayoutTransferId: transfer.transferId,
+              xololoPayoutTransferredAt: new Date().toISOString(),
+              xololoPayoutTransferError: null,
+            },
+          });
+          result.transferred = true;
+          result.transferId = transfer.transferId;
+        } else {
+          const errMsg = transfer.code + (transfer.message ? `: ${transfer.message}` : '');
+          await isdk.transactions.updateMetadata({
+            id: txId,
+            metadata: {
+              xololoPayoutTransferError: errMsg,
+              xololoPayoutTransferErrorAt: new Date().toISOString(),
+            },
+          });
+          result.transferError = errMsg;
+        }
       }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[admin-payout-queue] release failed for', txId, e?.message);
+      result.transferError = result.transferError || e?.message || 'unknown';
     }
-    // Invalida cache para que la siguiente consulta refleje la liberación.
-    cache = null;
-    cacheAt = 0;
-    return res.json({ ok: true, releasedCount });
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error('[admin-payout-queue] release error:', e?.message);
-    return res.status(500).json({ error: 'internal' });
+    results.push(result);
   }
+
+  const releasedCount = results.filter(r => r.released).length;
+  const transferredCount = results.filter(r => r.transferred).length;
+  const failedCount = results.filter(r => r.released && !r.transferred).length;
+
+  // Invalida cache para que la siguiente consulta refleje el estado.
+  cache = null;
+  cacheAt = 0;
+  return res.json({
+    ok: true,
+    releasedCount,
+    transferredCount,
+    failedCount,
+    results,
+  });
 };
 
-module.exports = { list, release };
+// Reintenta el transfer para tx que ya están released=true pero el
+// transfer falló (xololoPayoutTransferError existe, transferId no).
+const retry = async (req, res) => {
+  const admin = await requireAdmin(req, res);
+  if (!admin.ok) return;
+
+  const sellerId = String(req.body?.sellerId || '').trim();
+  const txIds = Array.isArray(req.body?.txIds) ? req.body.txIds : [];
+  if (!sellerId || !txIds.length) {
+    return res.status(400).json({ error: 'invalid_request' });
+  }
+
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+
+  const sellerStripeAccountId = await getSellerStripeAccountId(isdk, sellerId);
+
+  const results = [];
+  for (const txId of txIds) {
+    const tx = await fetchTxForTransfer(isdk, txId);
+    const meta = tx?.attributes?.metadata || {};
+    if (meta.xololoPayoutTransferId) {
+      results.push({ txId, transferred: true, transferId: meta.xololoPayoutTransferId });
+      continue;
+    }
+    const amount = tx?.attributes?.payoutTotal?.amount || 0;
+    const currency = tx?.attributes?.payoutTotal?.currency || 'MXN';
+    const transfer = await createPayoutTransfer({
+      txId,
+      sellerStripeAccountId,
+      amountSubunits: amount,
+      currency,
+    });
+    if (transfer.ok) {
+      await isdk.transactions.updateMetadata({
+        id: txId,
+        metadata: {
+          xololoPayoutTransferId: transfer.transferId,
+          xololoPayoutTransferredAt: new Date().toISOString(),
+          xololoPayoutTransferError: null,
+        },
+      });
+      results.push({ txId, transferred: true, transferId: transfer.transferId });
+    } else {
+      const errMsg = transfer.code + (transfer.message ? `: ${transfer.message}` : '');
+      await isdk.transactions.updateMetadata({
+        id: txId,
+        metadata: {
+          xololoPayoutTransferError: errMsg,
+          xololoPayoutTransferErrorAt: new Date().toISOString(),
+        },
+      });
+      results.push({ txId, transferred: false, transferError: errMsg });
+    }
+  }
+
+  cache = null;
+  cacheAt = 0;
+  return res.json({
+    ok: true,
+    transferredCount: results.filter(r => r.transferred).length,
+    failedCount: results.filter(r => !r.transferred).length,
+    results,
+  });
+};
+
+module.exports = { list, release, retry };
