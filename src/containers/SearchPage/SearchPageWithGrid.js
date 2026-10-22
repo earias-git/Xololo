@@ -31,6 +31,25 @@ import SearchErrors from './SearchErrors';
 
 import css from './SearchPage.module.css';
 
+// XOLOLO: filtro client-side para `pub_condition=used`. El SDK de
+// Sharetribe NO filtra server-side porque `condition` no está
+// registrado como listing field en Console; mientras tanto, el link
+// "Ver todo lo usado" del landing llega aquí con el param y nosotros
+// filtramos en memoria. Dos señales (OR), misma lógica que
+// src/ducks/landingListings.duck.js#isUsedListing:
+//   a) publicData.condition === 'used'
+//   b) publicData.taxClassification.code === 'exento_9_iv' (Art. 9 IV
+//      LIVA sólo aplica a usados por particular ocasional).
+// Nota: pagination del server queda desincronizado (dice "18" pero
+// pintamos menos). Se corrige cuando `condition` se registre en Console.
+const filterUsedListingsIfRequested = (listings, search) => {
+  if (!search || !search.includes('pub_condition=used')) return listings;
+  return (listings || []).filter(l => {
+    const pd = l?.attributes?.publicData || {};
+    return pd.condition === 'used' || pd.taxClassification?.code === 'exento_9_iv';
+  });
+};
+
 const MODAL_BREAKPOINT = 768; // Search is in modal on mobile layout
 
 // SortBy component has its content in dropdown-popup.
@@ -314,7 +333,7 @@ export class SearchPageComponent extends Component {
                 />
                 <SearchResultsPanel
                   className={css.searchListingsPanel}
-                  listings={listings}
+                  listings={filterUsedListingsIfRequested(listings, location.search)}
                   pagination={listingsAreLoaded ? pagination : null}
                   search={parse(location.search)}
                   isMapVariant={false}

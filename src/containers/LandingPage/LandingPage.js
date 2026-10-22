@@ -16,6 +16,7 @@ import {
   selectFeaturedProducts,
   selectFeaturedServices,
   selectFeaturedUsed,
+  selectLandingListingsLoading,
 } from '../../ducks/landingListings.duck';
 import { fetchLandingStores, selectLandingStores } from '../../ducks/landingStores.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
@@ -79,6 +80,7 @@ export const LandingPageComponent = props => {
     featuredServices,
     featuredUsed,
     featuredStores,
+    featuredLoading,
     storefrontSlug,
   } = props;
 
@@ -104,8 +106,20 @@ export const LandingPageComponent = props => {
     }
   }, [onFetchLandingListings, onFetchLandingStores]);
 
-  const productsToShow = featuredProducts?.length ? featuredProducts : featuredProductsPlaceholder;
-  const servicesToShow = featuredServices?.length ? featuredServices : featuredServicesPlaceholder;
+  // XOLOLO: evitar el flash de placeholders mientras el fetch está en
+  // curso. Mientras `featuredLoading=true`, pasamos [] a FeaturedListings
+  // (el componente se auto-oculta con items vacíos). Al terminar el
+  // fetch: data real si vino, placeholder solo como último recurso.
+  const productsToShow = featuredProducts?.length
+    ? featuredProducts
+    : featuredLoading
+      ? []
+      : featuredProductsPlaceholder;
+  const servicesToShow = featuredServices?.length
+    ? featuredServices
+    : featuredLoading
+      ? []
+      : featuredServicesPlaceholder;
   // XOLOLO: segunda mano NO cae a placeholders — si no hay inventario real
   // de usados aún, la sección completa se omite para no mostrar bikes nuevas
   // bajo un rótulo de "segunda mano".
@@ -191,6 +205,7 @@ const mapStateToProps = state => {
     featuredServices: selectFeaturedServices(state),
     featuredUsed: selectFeaturedUsed(state),
     featuredStores: selectLandingStores(state),
+    featuredLoading: selectLandingListingsLoading(state),
     storefrontSlug: selectStorefrontSlug(state),
   };
 };

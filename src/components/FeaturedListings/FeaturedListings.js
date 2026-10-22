@@ -90,13 +90,16 @@ const FeaturedListings = props => {
                       {item.priceUnit ? `${item.priceUnit} ` : ''}${currencyMXN.format(item.price)}
                     </span>
                   ) : null}
-                  {item.kind === 'product' ? (
+                  {/* XOLOLO: product y used son bienes (muestra "Pago
+                      protegido"). Sólo los servicios (service/service-day)
+                      llevan "Reservar" — reserva es para bookings. */}
+                  {item.kind === 'service' || item.kind === 'service-day' ? (
+                    <span className={css.reserveButton}>Reservar</span>
+                  ) : (
                     <span className={css.protectedRow}>
                       <ShieldIcon />
                       <span>Pago protegido</span>
                     </span>
-                  ) : (
-                    <span className={css.reserveButton}>Reservar</span>
                   )}
                 </div>
               </a>

@@ -172,7 +172,19 @@ const listingToFeaturedItem = (kind, listing, included, idx) => {
 // `publicData.condition === 'used'`. Cuando se registre el campo en
 // Console, el filtro server-side empezará a funcionar y este filtro
 // en memoria queda como seguro redundante.
-const isUsedListing = listing => listing.attributes?.publicData?.condition === 'used';
+//
+// Detectamos "usado" por 2 señales (OR):
+//  a) publicData.condition === 'used' — el pricing panel lo persiste.
+//  b) publicData.taxClassification.code === 'exento_9_iv' — Art. 9 IV LIVA
+//     SÓLO aplica a bienes usados vendidos por particular ocasional.
+//     Es señal equivalente y captura listings viejos donde `condition`
+//     no quedó persistido por bugs del wizard previo al fix de casual.
+const isUsedListing = listing => {
+  const pd = listing.attributes?.publicData || {};
+  if (pd.condition === 'used') return true;
+  if (pd.taxClassification?.code === 'exento_9_iv') return true;
+  return false;
+};
 
 export const selectFeaturedProducts = state => {
   const products = state.landingListings.products;
@@ -201,6 +213,14 @@ export const selectFeaturedUsed = state => {
     .filter(isUsedListing)
     .map((l, i) => listingToFeaturedItem('used', l, used.included, i));
 };
+
+// XOLOLO: expone el flag de loading para que la UI distinga "fetching"
+// de "vacío". Evita el flash de mockups mientras los listings reales
+// cargan: la LandingPage pasa items=[] a FeaturedListings durante el
+// fetch (el componente se auto-oculta) y sólo cae al placeholder si el
+// fetch terminó sin resultados.
+export const selectLandingListingsLoading = state =>
+  state.landingListings?.inProgress === true;
 
 // Backward compat action creator wrapper
 export const fetchLandingListings = () => dispatch =>
