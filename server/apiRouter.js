@@ -198,6 +198,8 @@ router.post('/admin/legal-docs/review', bodyParser.json(), adminLegalDocs.review
 // fiscales declaradas por sellers que esperan revisión humana en /ops.
 router.get('/admin/tax-reviews', adminTaxReviews.list);
 router.post('/admin/tax-reviews/review', bodyParser.json(), adminTaxReviews.review);
+// XOLOLO #39: pre-clasificación con IA de la declaración fiscal.
+router.post('/admin/tax-reviews/ai-classify', bodyParser.json(), adminTaxReviews.aiClassify);
 
 // XOLOLO Track #27 Fase 2: cola de sellers con dinero retenido.
 router.get('/admin/payout-queue', adminPayoutQueue.list);

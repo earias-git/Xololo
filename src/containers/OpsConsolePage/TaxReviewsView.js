@@ -70,10 +70,18 @@ const STATUS_LABEL = {
   approved: '✅ Aprobado',
 };
 
+// XOLOLO #39: mapping del verdict de la IA a estilo visual (semáforo).
+const AI_VERDICT_META = {
+  likely_valid: { label: '✓ IA: probablemente válido', cls: 'aiVerdictGreen' },
+  needs_review: { label: '⚠ IA: necesita revisión', cls: 'aiVerdictYellow' },
+  likely_invalid: { label: '✗ IA: probablemente inválido', cls: 'aiVerdictRed' },
+};
+
 const TaxReviewsView = ({ onBack }) => {
   const [state, setState] = useState({ loading: true, items: [], error: null });
   const [reviewing, setReviewing] = useState({}); // {listingId: 'approve'|'reject'}
   const [note, setNote] = useState({}); // {listingId: '...'}
+  const [aiLoading, setAiLoading] = useState({}); // {listingId: true}
 
   const load = useCallback(async () => {
     setState(s => ({ ...s, loading: true }));
@@ -92,6 +100,31 @@ const TaxReviewsView = ({ onBack }) => {
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleAiClassify = async (listingId, force = false) => {
+    setAiLoading(prev => ({ ...prev, [listingId]: true }));
+    const r = await api('/api/admin/tax-reviews/ai-classify', {
+      method: 'POST',
+      body: { listingId, force },
+    });
+    setAiLoading(prev => {
+      const next = { ...prev };
+      delete next[listingId];
+      return next;
+    });
+    if (!r.ok) {
+      // eslint-disable-next-line no-alert
+      alert(`Error al clasificar: ${r.data?.error || 'desconocido'}`);
+      return;
+    }
+    // Actualiza sólo este item en el state local, sin reload de la lista.
+    setState(prev => ({
+      ...prev,
+      items: prev.items.map(it =>
+        it.listingId === listingId ? { ...it, aiReview: r.data.aiReview } : it
+      ),
+    }));
+  };
 
   const handleReview = async (listingId, status) => {
     setReviewing(prev => ({ ...prev, [listingId]: status }));
@@ -197,6 +230,18 @@ const TaxReviewsView = ({ onBack }) => {
                       <dt>Declarado</dt>
                       <dd>{formatDate(tc.declaredAt)}</dd>
                     </div>
+                    {item.condition ? (
+                      <div>
+                        <dt>Condición</dt>
+                        <dd>{item.condition}</dd>
+                      </div>
+                    ) : null}
+                    {item.personType ? (
+                      <div>
+                        <dt>Tipo persona</dt>
+                        <dd>{item.personType}</dd>
+                      </div>
+                    ) : null}
                     {tc.reviewedAt ? (
                       <div>
                         <dt>Revisión previa</dt>
@@ -213,6 +258,53 @@ const TaxReviewsView = ({ onBack }) => {
                       </div>
                     ) : null}
                   </dl>
+                </section>
+
+                {/* XOLOLO #39: pre-clasificación con IA. Contexto para el
+                    operador: verdict + reasoning + red flags detectadas.
+                    No sustituye su decisión — es ayuda, no autoridad. */}
+                <section className={css.aiReviewBlock}>
+                  {item.aiReview ? (
+                    <>
+                      <div
+                        className={`${css.aiVerdictPill} ${
+                          css[AI_VERDICT_META[item.aiReview.verdict]?.cls] || ''
+                        }`}
+                      >
+                        {AI_VERDICT_META[item.aiReview.verdict]?.label || item.aiReview.verdict}
+                        <span className={css.aiConfidence}>
+                          · confianza {item.aiReview.confidence}%
+                        </span>
+                      </div>
+                      {item.aiReview.reasoning ? (
+                        <p className={css.aiReasoning}>{item.aiReview.reasoning}</p>
+                      ) : null}
+                      {Array.isArray(item.aiReview.redFlags) && item.aiReview.redFlags.length > 0 ? (
+                        <ul className={css.aiRedFlags}>
+                          {item.aiReview.redFlags.map((f, i) => (
+                            <li key={i}>{f}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      <button
+                        type="button"
+                        className={css.linkBtn}
+                        disabled={!!aiLoading[item.listingId]}
+                        onClick={() => handleAiClassify(item.listingId, true)}
+                      >
+                        {aiLoading[item.listingId] ? 'Analizando…' : 'Re-analizar con IA'}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className={css.primaryBtnInline}
+                      disabled={!!aiLoading[item.listingId]}
+                      onClick={() => handleAiClassify(item.listingId, false)}
+                    >
+                      {aiLoading[item.listingId] ? 'Analizando…' : '🤖 Analizar con IA'}
+                    </button>
+                  )}
                 </section>
 
                 <section className={css.taxReviewActions}>
