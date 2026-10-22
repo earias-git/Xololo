@@ -20,7 +20,6 @@
 //     200 → { ok: true }
 //     400 → { error: 'invalid_request' }
 
-const { requireAdmin } = require('../api-util/adminGate');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { classifyTaxDeclaration } = require('../api-util/taxReviewAi');
 
@@ -34,9 +33,8 @@ const PER_PAGE = 100;
 const VALID_STATUSES = new Set(['approved', 'rejected']);
 
 const list = async (req, res) => {
-  const admin = await requireAdmin(req, res);
-  if (!admin.ok) return;
-
+  // Auth gating via adminAuth.requireOperator() middleware en apiRouter.
+  // req.operator está disponible aquí.
   if (cache && Date.now() - cacheAt < CACHE_TTL_MS) {
     return res.json({ ...cache, cached: true });
   }
@@ -161,9 +159,7 @@ const list = async (req, res) => {
 };
 
 const review = async (req, res) => {
-  const admin = await requireAdmin(req, res);
-  if (!admin.ok) return;
-
+  // Auth gating via middleware; req.operator disponible.
   const { listingId, status, reviewNote } = req.body || {};
   if (!listingId || typeof listingId !== 'string') {
     return res.status(400).json({ error: 'invalid_request', details: 'listingId requerido.' });
@@ -189,7 +185,7 @@ const review = async (req, res) => {
     const updated = {
       ...existing,
       reviewStatus: status,
-      reviewedBy: admin.email,
+      reviewedBy: req.operator?.email || null,
       reviewedAt: new Date().toISOString(),
       reviewNote: reviewNote || null,
     };
@@ -214,9 +210,7 @@ const review = async (req, res) => {
 // publicData.taxClassification.aiReview. El operador humano lo verá
 // como contexto al tomar su decisión.
 const aiClassify = async (req, res) => {
-  const admin = await requireAdmin(req, res);
-  if (!admin.ok) return;
-
+  // Auth gating via middleware; req.operator disponible.
   const { listingId, force } = req.body || {};
   if (!listingId || typeof listingId !== 'string') {
     return res.status(400).json({ error: 'invalid_request', details: 'listingId requerido.' });

@@ -30,7 +30,6 @@
 // Volumen esperado al inicio: decenas de sellers con pendientes. Cuando
 // crezca se agrega índice/materialized view.
 
-const { requireAdmin } = require('../api-util/adminGate');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { slotsForPersonType } = require('../api-util/legalDocSlots');
 const {
@@ -84,9 +83,7 @@ const MAX_PAGES = 20;
 const PER_PAGE = 100;
 
 const list = async (req, res) => {
-  const admin = await requireAdmin(req, res);
-  if (!admin.ok) return;
-
+  // Auth gating via adminAuth.requireOperator() middleware en apiRouter.
   if (cache && Date.now() - cacheAt < CACHE_TTL_MS) {
     return res.json({ ...cache, cached: true });
   }
@@ -228,9 +225,7 @@ const fetchTxForTransfer = async (isdk, txId) => {
 };
 
 const release = async (req, res) => {
-  const admin = await requireAdmin(req, res);
-  if (!admin.ok) return;
-
+  // Auth gating via middleware; req.operator disponible.
   const sellerId = String(req.body?.sellerId || '').trim();
   const txIds = Array.isArray(req.body?.txIds) ? req.body.txIds : [];
   const note = String(req.body?.note || '').slice(0, 500);
@@ -257,7 +252,7 @@ const release = async (req, res) => {
         metadata: {
           xololoPayoutReleased: true,
           xololoPayoutReleasedAt: new Date().toISOString(),
-          xololoPayoutReleasedBy: admin.operatorId || null,
+          xololoPayoutReleasedBy: req.operator?.id || req.operator?.email || null,
           xololoPayoutReleaseNote: note || null,
         },
       });
@@ -331,9 +326,7 @@ const release = async (req, res) => {
 // Reintenta el transfer para tx que ya están released=true pero el
 // transfer falló (xololoPayoutTransferError existe, transferId no).
 const retry = async (req, res) => {
-  const admin = await requireAdmin(req, res);
-  if (!admin.ok) return;
-
+  // Auth gating via middleware; req.operator disponible.
   const sellerId = String(req.body?.sellerId || '').trim();
   const txIds = Array.isArray(req.body?.txIds) ? req.body.txIds : [];
   if (!sellerId || !txIds.length) {

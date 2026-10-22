@@ -201,17 +201,46 @@ router.post('/admin/legal-docs/review', bodyParser.json(), adminLegalDocs.review
 // y si pasa el gate admin. No requiere ser admin. Útil para debug cuando
 // alguien recibe not_admin sin entender por qué.
 router.get('/admin-check', adminCheck);
-router.get('/admin/tax-reviews', adminTaxReviews.list);
-router.post('/admin/tax-reviews/review', bodyParser.json(), adminTaxReviews.review);
-// XOLOLO #39: pre-clasificación con IA de la declaración fiscal.
-router.post('/admin/tax-reviews/ai-classify', bodyParser.json(), adminTaxReviews.aiClassify);
+// XOLOLO: tax-reviews + ai-classify ahora autenticados vía
+// requireOperator (sistema moderno con MFA + roles), no requireAdmin
+// (env var legacy que no reconocía operators de la tabla).
+router.get(
+  '/admin/tax-reviews',
+  adminAuth.requireOperator({ requireMfa: false }),
+  adminTaxReviews.list
+);
+router.post(
+  '/admin/tax-reviews/review',
+  adminAuth.requireOperator({ requireMfa: false }),
+  bodyParser.json(),
+  adminTaxReviews.review
+);
+router.post(
+  '/admin/tax-reviews/ai-classify',
+  adminAuth.requireOperator({ requireMfa: false }),
+  bodyParser.json(),
+  adminTaxReviews.aiClassify
+);
 
-// XOLOLO Track #27 Fase 2: cola de sellers con dinero retenido.
-router.get('/admin/payout-queue', adminPayoutQueue.list);
-router.post('/admin/payout-queue/release', bodyParser.json(), adminPayoutQueue.release);
-// XOLOLO Track #27 Fase 3: reintentar transfer para tx liberadas pero
-// cuyo transfer real falló.
-router.post('/admin/payout-queue/retry', bodyParser.json(), adminPayoutQueue.retry);
+// XOLOLO Track #27 Fase 2+3: cola de sellers con dinero retenido +
+// transfers reales a Stripe Connect. Gated por requireOperator.
+router.get(
+  '/admin/payout-queue',
+  adminAuth.requireOperator({ requireMfa: false }),
+  adminPayoutQueue.list
+);
+router.post(
+  '/admin/payout-queue/release',
+  adminAuth.requireOperator({ requireMfa: false }),
+  bodyParser.json(),
+  adminPayoutQueue.release
+);
+router.post(
+  '/admin/payout-queue/retry',
+  adminAuth.requireOperator({ requireMfa: false }),
+  bodyParser.json(),
+  adminPayoutQueue.retry
+);
 
 // XOLOLO Fase 1C.3 — Autenticación de operadores Xololo (RBAC + MFA
 // futuro). Ver docs/ARQUITECTURA_PENALIDADES.md §6. Rutas:
