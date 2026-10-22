@@ -11,6 +11,7 @@ import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelp
 import { FIXED, isBookingProcess } from '../../../../transactions/transaction';
 import { getTaxProfile } from '../../../../util/xololoTaxProfile';
 import { SELLER_MODES, getSellerMode } from '../../../../util/xololoSellerMode';
+import { apiBaseUrl } from '../../../../util/api';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -347,7 +348,25 @@ const EditListingPricingPanel = props => {
                 listingTypes,
               }),
             });
-            onSubmit(updateValues);
+            const submitResult = onSubmit(updateValues);
+            // XOLOLO #39: fire-and-forget al endpoint de IA fiscal
+            // cuando el seller declaró clasificación especial. Precarga
+            // aiReview para Ops. Idéntico al PricingAndStockPanel.
+            const taxUpdatePayload = taxUpdate?.taxClassification;
+            if (taxUpdatePayload?.code && listing?.id?.uuid && submitResult?.then) {
+              submitResult
+                .then(() => {
+                  setTimeout(() => {
+                    fetch(`${apiBaseUrl()}/api/seller-tax-ai-classify`, {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ listingId: listing.id.uuid }),
+                    }).catch(() => {});
+                  }, 1500);
+                })
+                .catch(() => {});
+            }
           }}
           marketplaceCurrency={marketplaceCurrency}
           unitType={unitType}

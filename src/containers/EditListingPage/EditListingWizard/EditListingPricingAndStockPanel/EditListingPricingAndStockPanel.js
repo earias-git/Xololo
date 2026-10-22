@@ -9,6 +9,7 @@ import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
 import { getTaxProfile } from '../../../../util/xololoTaxProfile';
 import { SELLER_MODES, getSellerMode } from '../../../../util/xololoSellerMode';
+import { apiBaseUrl } from '../../../../util/api';
 // Note: SELLER_MODES used by the Form for isCasual check downstream.
 
 // Import shared components
@@ -306,7 +307,35 @@ const EditListingPricingAndStockPanel = props => {
                 stockTypeInfinity,
               },
             });
-            onSubmit(updateValues);
+            const submitResult = onSubmit(updateValues);
+            // XOLOLO #39: si el seller declaró clasificación especial,
+            // disparamos el análisis de IA en background apenas el
+            // update propague en Sharetribe. Precarga el aiReview para
+            // que Ops lo vea sin esperar al botón manual.
+            // Fire-and-forget: fallos de la IA no bloquean el flujo del
+            // seller — Ops siempre puede re-correrla desde /ops.
+            const payloadTax = publicDataPayload.taxClassification;
+            if (payloadTax?.code && listing?.id?.uuid && submitResult?.then) {
+              submitResult
+                .then(() => {
+                  // Pequeño delay para dar tiempo a Sharetribe de
+                  // persistir el update antes de que el server lea el
+                  // listing.
+                  setTimeout(() => {
+                    fetch(`${apiBaseUrl()}/api/seller-tax-ai-classify`, {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ listingId: listing.id.uuid }),
+                    }).catch(() => {
+                      // Silencioso — es background, el user no espera.
+                    });
+                  }, 1500);
+                })
+                .catch(() => {
+                  /* ignore */
+                });
+            }
           }}
           listingMinimumPriceSubUnits={listingMinimumPriceSubUnits}
           marketplaceCurrency={marketplaceCurrency}
