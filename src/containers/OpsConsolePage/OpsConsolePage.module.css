@@ -1051,3 +1051,11 @@
 .aiRedFlags li {
   margin: 2px 0;
 }
+
+/* XOLOLO — LegalModerationView: columna de badges verdict + decisión Ops */
+.cardStatuses {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}

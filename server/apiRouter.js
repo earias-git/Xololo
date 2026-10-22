@@ -39,6 +39,7 @@ const adminLegalDocs = require('./api/admin-legal-docs');
 const adminTaxReviews = require('./api/admin-tax-reviews');
 const adminCheck = require('./api/admin-check');
 const adminPayoutQueue = require('./api/admin-payout-queue');
+const adminLegalModeration = require('./api/admin-legal-moderation');
 const adminAuth = require('./api/admin-auth');
 const adminOperators = require('./api/admin-operators');
 const createSubscriptionCheckout = require('./api/create-subscription-checkout');
@@ -242,6 +243,20 @@ router.post(
   adminAuth.requireOperator({ requireMfa: false }),
   bodyParser.json(),
   adminPayoutQueue.retry
+);
+
+// XOLOLO: moderación de legalidad — cola Ops de listings bloqueados o
+// marcados dual-use por la IA.
+router.get(
+  '/admin/legal-moderation',
+  adminAuth.requireOperator({ requireMfa: false }),
+  adminLegalModeration.list
+);
+router.post(
+  '/admin/legal-moderation/decide',
+  adminAuth.requireOperator({ requireMfa: false }),
+  bodyParser.json(),
+  adminLegalModeration.decide
 );
 
 // XOLOLO Fase 1C.3 — Autenticación de operadores Xololo (RBAC + MFA

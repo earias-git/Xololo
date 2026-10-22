@@ -385,6 +385,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: OpsConsolePage,
     },
     {
+      // XOLOLO: cola de moderación de legalidad — listings bloqueados
+      // por IA (ilegales) o flagueados como dual-use.
+      path: '/ops/legal-moderation',
+      name: 'OpsLegalModerationPage',
+      component: OpsConsolePage,
+    },
+    {
       // XOLOLO: puente para que un buyer logueado se convierta en
       // vendedor casual con 1 click + aceptación de T&C. Después de
       // activar, redirige a /l/new.
