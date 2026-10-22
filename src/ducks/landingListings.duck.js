@@ -168,32 +168,51 @@ const listingToFeaturedItem = (kind, listing, included, idx) => {
 // XOLOLO: `pub_condition=used` del SDK NO filtra correctamente porque
 // `condition` no está registrado como listing field en Sharetribe
 // Console (Build → Listings → Listing fields). Como consecuencia la
-// query trae todos los productos y hay que filtrar en memoria por
-// `publicData.condition === 'used'`. Cuando se registre el campo en
-// Console, el filtro server-side empezará a funcionar y este filtro
-// en memoria queda como seguro redundante.
+// query trae todos los productos y hay que filtrar en memoria.
 //
-// Detectamos "usado" por 2 señales (OR):
+// Detectamos "usado" por 3 señales (OR):
 //  a) publicData.condition === 'used' — el pricing panel lo persiste.
-//  b) publicData.taxClassification.code === 'exento_9_iv' — Art. 9 IV LIVA
-//     SÓLO aplica a bienes usados vendidos por particular ocasional.
-//     Es señal equivalente y captura listings viejos donde `condition`
-//     no quedó persistido por bugs del wizard previo al fix de casual.
-const isUsedListing = listing => {
+//  b) publicData.taxClassification.code === 'exento_9_iv' — Art. 9 IV
+//     LIVA SÓLO aplica a bienes usados por particular ocasional.
+//  c) El author del listing es sellerMode='casual_reseller' — el casual
+//     SÓLO puede publicar usado por definición (único modo que tiene).
+//     Captura listings viejos donde ni condition ni taxClassification
+//     quedaron persistidos (bugs del wizard previo al fix de casual).
+//
+// Cuando se registre `condition` en Console, el filtro server-side
+// empezará a funcionar y este filtro en memoria queda como seguro
+// redundante.
+const buildAuthorIndex = included => {
+  const idx = new Map();
+  (included || []).forEach(inc => {
+    if (inc.type === 'user') idx.set(inc.id.uuid, inc);
+  });
+  return idx;
+};
+
+const isUsedListing = (listing, authorsById) => {
   const pd = listing.attributes?.publicData || {};
   if (pd.condition === 'used') return true;
   if (pd.taxClassification?.code === 'exento_9_iv') return true;
+  // Señal (c): el seller es casual_reseller — todos sus listings son usados.
+  if (authorsById) {
+    const authorId = listing.relationships?.author?.data?.id?.uuid;
+    const author = authorId ? authorsById.get(authorId) : null;
+    const sellerMode = author?.attributes?.profile?.publicData?.sellerMode;
+    if (sellerMode === 'casual_reseller') return true;
+  }
   return false;
 };
 
 export const selectFeaturedProducts = state => {
   const products = state.landingListings.products;
   if (!products?.data?.length) return [];
-  // "Productos destacados" sólo muestra nuevos o sin condición declarada
-  // (legacy). Excluye los usados por publicData.condition — fuente única
-  // de verdad hasta que el campo exista en Console.
+  // "Productos destacados" sólo muestra nuevos o sin condición declarada.
+  // Excluye los usados por las 3 señales de isUsedListing — fuente única
+  // de verdad hasta que `condition` exista como field en Console.
+  const authorsById = buildAuthorIndex(products.included);
   return products.data
-    .filter(l => !isUsedListing(l))
+    .filter(l => !isUsedListing(l, authorsById))
     .map((l, i) => listingToFeaturedItem('product', l, products.included, i));
 };
 
@@ -209,8 +228,9 @@ export const selectFeaturedUsed = state => {
   // Mismo motivo que arriba: el SDK no filtra `pub_condition=used`
   // porque el campo no está registrado en Console. Filtramos en
   // memoria para que la sección sea realmente exclusiva de usados.
+  const authorsById = buildAuthorIndex(used.included);
   return used.data
-    .filter(isUsedListing)
+    .filter(l => isUsedListing(l, authorsById))
     .map((l, i) => listingToFeaturedItem('used', l, used.included, i));
 };
 
