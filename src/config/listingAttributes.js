@@ -184,6 +184,21 @@ export const CATEGORY_TREE = {
       belleza_srv: 'Belleza (estilismo, maquillaje)',
     },
   },
+  wellness: {
+    label: 'Wellness / Salud',
+    subcategories: {
+      suplementos: 'Suplementos y vitaminas',
+      yoga_pilates: 'Yoga y pilates',
+      meditacion: 'Meditación y mindfulness',
+      fitness: 'Fitness y entrenamiento',
+      nutricion: 'Nutrición y planes alimenticios',
+      masajes: 'Masajes y terapias corporales',
+      medicina_alternativa: 'Medicina alternativa',
+      dispositivos_wellness: 'Dispositivos de bienestar',
+      aromaterapia: 'Aromaterapia y esenciales',
+      retiros: 'Retiros y experiencias wellness',
+    },
+  },
 };
 
 // Atributos por path "categoria.subcategoria".
@@ -577,6 +592,229 @@ export const ATTRIBUTES_BY_PATH = {
     materia: { type: 'text', label: 'Materia', placeholder: 'ej. matemáticas, inglés' },
     certificacion: { type: 'text', label: 'Cédula profesional / certificación' },
     duracion_sesion: { type: 'text', label: 'Duración de clase', placeholder: 'ej. 60 min' },
+  },
+
+  // WELLNESS / SALUD
+  // Comunes a toda la categoría (productos genéricos de wellness).
+  'wellness': {
+    marca: MARCA,
+    enfoque: {
+      type: 'multiselect', label: 'Enfoque de bienestar',
+      options: ['Físico', 'Mental', 'Emocional', 'Espiritual', 'Nutricional',
+        'Relajación', 'Energía', 'Sueño', 'Postural'],
+    },
+  },
+  'wellness.suplementos': {
+    marca: { ...MARCA, required: true },
+    tipo_suplemento: {
+      type: 'select', label: 'Tipo', required: true,
+      options: ['Vitamina', 'Mineral', 'Multivitamínico', 'Proteína', 'Aminoácido',
+        'Omega-3 / Aceites', 'Pre-entreno', 'Post-entreno', 'Colágeno',
+        'Herbolario / Fitoterápico', 'Probiótico', 'Fibra', 'Adaptógeno',
+        'Quemador', 'Otro'],
+    },
+    presentacion: {
+      type: 'select', label: 'Presentación',
+      options: ['Cápsulas', 'Tabletas', 'Polvo', 'Líquido', 'Gomitas', 'Barras', 'Sobres'],
+    },
+    tamano_pack: { type: 'number', label: 'Cantidad', unit: 'unidades' },
+    tamano_ml_g: { type: 'number', label: 'Tamaño por unidad', unit: 'ml / g' },
+    apto_para: {
+      type: 'multiselect', label: 'Apto para',
+      options: ['Vegano', 'Vegetariano', 'Sin gluten', 'Sin lactosa', 'Sin azúcar',
+        'Keto', 'Kosher', 'Halal'],
+    },
+    caducidad: { type: 'text', label: 'Caducidad', placeholder: 'ej. 24 meses' },
+    requiere_receta: { type: 'boolean', label: 'Requiere receta médica' },
+    cofepris: { type: 'text', label: 'Registro COFEPRIS', placeholder: 'opcional, si aplica' },
+  },
+  'wellness.yoga_pilates': {
+    modalidad: {
+      type: 'select', label: 'Modalidad', required: true,
+      options: ['Presencial', 'En línea', 'Mixto'],
+    },
+    disciplina: {
+      type: 'select', label: 'Disciplina',
+      options: ['Hatha Yoga', 'Vinyasa', 'Ashtanga', 'Yin Yoga', 'Kundalini',
+        'Yoga Restaurativo', 'Yoga Aéreo', 'Pilates Mat', 'Pilates Reformer',
+        'Pilates Clínico', 'Barre', 'Otro'],
+    },
+    nivel: {
+      type: 'select', label: 'Nivel',
+      options: ['Principiante', 'Intermedio', 'Avanzado', 'Todos los niveles'],
+    },
+    duracion_sesion: { type: 'text', label: 'Duración de sesión', placeholder: 'ej. 60 min' },
+    personas_max: { type: 'number', label: 'Personas máximo (clase grupal)', unit: 'pers' },
+    certificacion_instructor: {
+      type: 'text', label: 'Certificación del instructor',
+      placeholder: 'ej. RYT-200, Yoga Alliance',
+    },
+    incluye_equipo: { type: 'boolean', label: 'Incluye tapete/equipo' },
+  },
+  'wellness.meditacion': {
+    modalidad: {
+      type: 'select', label: 'Modalidad', required: true,
+      options: ['Presencial', 'En línea', 'Mixto', 'Grabación / audio'],
+    },
+    tipo_meditacion: {
+      type: 'select', label: 'Tipo',
+      options: ['Mindfulness', 'Guiada', 'Silenciosa', 'Trascendental',
+        'Metta (compasión)', 'Visualización', 'Chakra', 'Vipassana',
+        'Zen', 'Respiración consciente'],
+    },
+    duracion_sesion: { type: 'text', label: 'Duración', placeholder: 'ej. 20 min' },
+    nivel: {
+      type: 'select', label: 'Nivel',
+      options: ['Principiante', 'Intermedio', 'Avanzado', 'Todos'],
+    },
+    idioma: {
+      type: 'multiselect', label: 'Idioma',
+      options: ['Español', 'Inglés'],
+    },
+  },
+  'wellness.fitness': {
+    modalidad: {
+      type: 'select', label: 'Modalidad', required: true,
+      options: ['Presencial', 'En línea', 'Mixto', 'Plan escrito (sin sesiones)'],
+    },
+    disciplina_fitness: {
+      type: 'select', label: 'Disciplina',
+      options: ['Funcional', 'HIIT', 'CrossFit', 'Pesas / Fuerza', 'Cardio',
+        'Spinning', 'Boxeo', 'Kickboxing', 'MMA', 'Calistenia', 'Running',
+        'Natación', 'Ciclismo', 'Entrenamiento en casa', 'Otro'],
+    },
+    nivel: {
+      type: 'select', label: 'Nivel',
+      options: ['Principiante', 'Intermedio', 'Avanzado', 'Atleta'],
+    },
+    objetivo: {
+      type: 'multiselect', label: 'Objetivo',
+      options: ['Pérdida de peso', 'Ganancia muscular', 'Tonificación',
+        'Resistencia', 'Flexibilidad', 'Rehabilitación', 'Rendimiento deportivo'],
+    },
+    duracion_sesion: { type: 'text', label: 'Duración por sesión', placeholder: 'ej. 60 min' },
+    certificacion_instructor: {
+      type: 'text', label: 'Certificación del entrenador',
+      placeholder: 'ej. NSCA, ACSM, CEFO',
+    },
+    incluye_plan: { type: 'boolean', label: 'Incluye plan escrito personalizado' },
+  },
+  'wellness.nutricion': {
+    modalidad: {
+      type: 'select', label: 'Modalidad', required: true,
+      options: ['Presencial', 'En línea', 'Mixto'],
+    },
+    enfoque_nutricional: {
+      type: 'select', label: 'Enfoque',
+      options: ['Control de peso', 'Deportivo', 'Clínico (diabetes, hipertensión)',
+        'Vegetariano / vegano', 'Keto / baja en carbs', 'Infantil',
+        'Materno-infantil', 'Trastornos alimentarios', 'Longevidad / anti-aging',
+        'General / bienestar'],
+    },
+    cedula_profesional: {
+      type: 'text', label: 'Cédula profesional de Nutriólogo', required: true,
+      placeholder: 'número de cédula SEP',
+      helpText: 'Obligatorio para legalidad del servicio en MX',
+    },
+    incluye_plan: { type: 'boolean', label: 'Incluye plan alimenticio escrito' },
+    incluye_seguimiento: { type: 'boolean', label: 'Incluye seguimiento semanal' },
+    duracion_programa: { type: 'text', label: 'Duración del programa', placeholder: 'ej. 1 sesión, 4 semanas, 3 meses' },
+  },
+  'wellness.masajes': {
+    modalidad: {
+      type: 'select', label: 'Modalidad', required: true,
+      options: ['Presencial en spa / consultorio', 'A domicilio', 'Mixto'],
+    },
+    tipo_masaje: {
+      type: 'select', label: 'Tipo de masaje',
+      options: ['Relajante', 'Sueco', 'Deportivo', 'Descontracturante',
+        'Tailandés', 'Shiatsu', 'Reflexología', 'Piedras calientes',
+        'Linfático', 'Tejido profundo', 'Prenatal', 'Antiestrés'],
+    },
+    duracion_sesion: { type: 'text', label: 'Duración', placeholder: 'ej. 60 min, 90 min' },
+    area_cobertura: {
+      type: 'multiselect', label: 'Zona de cobertura (si domicilio)',
+      options: ESTADOS_MX,
+    },
+    incluye_aceites: { type: 'boolean', label: 'Incluye aceites y materiales' },
+    certificacion: { type: 'text', label: 'Certificación', placeholder: 'ej. Diplomado masaje terapéutico' },
+  },
+  'wellness.medicina_alternativa': {
+    modalidad: {
+      type: 'select', label: 'Modalidad', required: true,
+      options: ['Presencial', 'En línea', 'Mixto'],
+    },
+    tipo_terapia: {
+      type: 'select', label: 'Tipo de terapia',
+      options: ['Acupuntura', 'Homeopatía', 'Herbolaria', 'Reiki', 'Osteopatía',
+        'Quiropráctica', 'Flores de Bach', 'Terapia floral', 'Aromaterapia',
+        'Terapia energética', 'Biodescodificación', 'Hipnosis',
+        'Constelaciones familiares', 'Otro'],
+    },
+    duracion_sesion: { type: 'text', label: 'Duración de sesión', placeholder: 'ej. 60 min' },
+    certificacion: {
+      type: 'text', label: 'Certificación / cédula',
+      placeholder: 'ej. acupuntor certificado, cédula médica',
+      helpText: 'Importante: ciertas terapias requieren título médico (acupuntura, osteopatía)',
+    },
+  },
+  'wellness.dispositivos_wellness': {
+    marca: { ...MARCA, required: true },
+    modelo: MODELO,
+    tipo_dispositivo: {
+      type: 'select', label: 'Tipo de dispositivo',
+      options: ['Báscula inteligente', 'Oxímetro', 'Termómetro digital',
+        'Baumanómetro / presión', 'Glucómetro', 'Smartband / smartwatch',
+        'Pulsómetro', 'Masajeador eléctrico', 'Fascia gun / pistola masaje',
+        'Rodillo de foam', 'Difusor de aromas', 'Lámpara de sal',
+        'Esterilla de acupresión', 'Otro'],
+    },
+    conectividad: {
+      type: 'multiselect', label: 'Conectividad',
+      options: ['Bluetooth', 'Wi-Fi', 'USB', 'App móvil', 'Sin conectividad'],
+    },
+    requiere_calibracion: { type: 'boolean', label: 'Requiere calibración médica' },
+    cofepris: { type: 'text', label: 'Registro COFEPRIS (si médico)', placeholder: 'opcional' },
+  },
+  'wellness.aromaterapia': {
+    marca: MARCA,
+    tipo_producto: {
+      type: 'select', label: 'Tipo',
+      options: ['Aceite esencial puro', 'Mezcla de aceites', 'Difusor',
+        'Vela aromática', 'Spray aromático', 'Roll-on', 'Jabón aromático',
+        'Incienso', 'Set'],
+    },
+    aroma: {
+      type: 'multiselect', label: 'Aroma / propósito',
+      options: ['Lavanda', 'Eucalipto', 'Menta', 'Romero', 'Naranja',
+        'Limón', 'Ylang ylang', 'Árbol del té', 'Rosa', 'Jazmín', 'Sándalo',
+        'Mirra', 'Incienso', 'Mezcla relajante', 'Mezcla energizante',
+        'Mezcla para sueño', 'Mezcla para concentración'],
+    },
+    tamano_ml: { type: 'number', label: 'Tamaño', unit: 'ml' },
+    organico: { type: 'boolean', label: '100% natural / orgánico' },
+    uso: {
+      type: 'select', label: 'Modo de uso recomendado',
+      options: ['Difusor', 'Aplicación tópica', 'Baño', 'Inhalación directa', 'Múltiple'],
+    },
+  },
+  'wellness.retiros': {
+    modalidad: {
+      type: 'select', label: 'Modalidad', required: true,
+      options: ['Retiro presencial', 'Retiro online', 'Experiencia de un día'],
+    },
+    enfoque_retiro: {
+      type: 'multiselect', label: 'Enfoque',
+      options: ['Yoga', 'Meditación', 'Detox', 'Silencio', 'Mujeres',
+        'Hombres', 'Parejas', 'Familiar', 'Ayuno', 'Breathwork',
+        'Temazcal', 'Ceremonial / plantas sagradas', 'Deportivo'],
+    },
+    duracion: { type: 'text', label: 'Duración', placeholder: 'ej. 3 días 2 noches' },
+    personas_max: { type: 'number', label: 'Personas máximo', unit: 'pers' },
+    incluye_alojamiento: { type: 'boolean', label: 'Incluye alojamiento' },
+    incluye_comida: { type: 'boolean', label: 'Incluye alimentos' },
+    incluye_transporte: { type: 'boolean', label: 'Incluye transporte' },
+    region: { type: 'select', label: 'Ubicación', options: ESTADOS_MX },
   },
 };
 
