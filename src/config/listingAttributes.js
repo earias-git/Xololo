@@ -818,6 +818,75 @@ export const ATTRIBUTES_BY_PATH = {
   },
 };
 
+// XOLOLO: atributos TRANSVERSALES del tipo "Evento" (listingType pseudo
+// 'event-ticket' que se mapea a product + publicData.isEvent=true).
+// Se SOBREESCRIBEN sobre los atributos de categoría cuando el seller
+// marca "Evento con fecha fija". Un taller de wellness.yoga, un
+// concierto en artesanias, un tour en turismo — todos usan estos
+// mismos campos de evento. Persisten en publicData.event = {...}.
+export const EVENT_ATTRIBUTES = {
+  event_date_start: {
+    type: 'text', // sin tipo date aún — placeholder YYYY-MM-DD
+    label: 'Fecha de inicio',
+    placeholder: '2026-10-30',
+    required: true,
+    helpText: 'Formato YYYY-MM-DD',
+  },
+  event_time_start: {
+    type: 'text',
+    label: 'Hora de inicio',
+    placeholder: '11:00',
+    required: true,
+    helpText: 'Formato HH:MM (24h)',
+  },
+  event_date_end: {
+    type: 'text',
+    label: 'Fecha de fin',
+    placeholder: '2026-10-30',
+    helpText: 'Si es el mismo día, repite la fecha de inicio',
+  },
+  event_time_end: {
+    type: 'text',
+    label: 'Hora de fin',
+    placeholder: '14:00',
+    required: true,
+  },
+  event_location: {
+    type: 'text',
+    label: 'Lugar / dirección exacta',
+    placeholder: 'Starbucks, Plaza de Armas, Centro de Cuernavaca',
+    required: true,
+  },
+  event_modality: {
+    type: 'select',
+    label: 'Modalidad',
+    options: ['Presencial', 'En línea', 'Mixto'],
+    required: true,
+  },
+  event_capacity: {
+    type: 'number',
+    label: 'Cupo total',
+    unit: 'personas',
+    required: true,
+    helpText: 'Se usa como stock del listing — se descuenta por cada reserva',
+  },
+  event_includes: {
+    type: 'text',
+    label: 'Qué incluye',
+    placeholder: 'ej. materiales, alimentos, bebida de bienvenida',
+  },
+  event_min_age: {
+    type: 'number',
+    label: 'Edad mínima (opcional)',
+    unit: 'años',
+  },
+  event_ticket_qr: {
+    type: 'boolean',
+    label: 'Enviar boleto con QR por email (además de la lista de nombres)',
+    helpText: 'Si lo activas, el buyer recibe un PDF con QR escaneable en la puerta. Por default sólo se usa lista de nombres.',
+  },
+};
+
 /* ----- Helpers de lectura ----- */
 
 export const getSubcategories = categoryId => {
@@ -832,20 +901,29 @@ export const getSubcategories = categoryId => {
  *   1. Si existe `categoryId.subcategoryId` → ese set.
  *   2. Si no, cae a `categoryId` (atributos comunes de la categoría).
  *   3. Si no hay nada, {} (listing sin atributos — legacy OK).
+ *
+ * Si `isEvent=true`, los EVENT_ATTRIBUTES se MERGEAN encima del set
+ * de la categoría. Prioridad al evento (fecha/hora/lugar son más
+ * importantes que atributos genéricos de la categoría).
  */
-export const getAttributesForListing = (categoryId, subcategoryId) => {
-  if (!categoryId) return {};
-  const specific = subcategoryId ? ATTRIBUTES_BY_PATH[`${categoryId}.${subcategoryId}`] : null;
-  if (specific) return specific;
-  return ATTRIBUTES_BY_PATH[categoryId] || {};
+export const getAttributesForListing = (categoryId, subcategoryId, isEvent = false) => {
+  let base = {};
+  if (categoryId) {
+    const specific = subcategoryId ? ATTRIBUTES_BY_PATH[`${categoryId}.${subcategoryId}`] : null;
+    base = specific || ATTRIBUTES_BY_PATH[categoryId] || {};
+  }
+  if (isEvent) {
+    return { ...base, ...EVENT_ATTRIBUTES };
+  }
+  return base;
 };
 
 /**
  * Lista plana (ordenada) para iterar en forms. Preserva el orden del
  * objeto (ES2015+ garantiza orden de inserción para keys string).
  */
-export const listAttributes = (categoryId, subcategoryId) => {
-  const attrs = getAttributesForListing(categoryId, subcategoryId);
+export const listAttributes = (categoryId, subcategoryId, isEvent = false) => {
+  const attrs = getAttributesForListing(categoryId, subcategoryId, isEvent);
   return Object.entries(attrs).map(([key, def]) => ({ key, ...def }));
 };
 
@@ -854,8 +932,8 @@ export const listAttributes = (categoryId, subcategoryId) => {
  * (categoría, sub). Devuelve array de keys faltantes, o [] si todo OK.
  * Útil para validación de form en PR 2.
  */
-export const getMissingRequiredAttributes = (categoryId, subcategoryId, values = {}) => {
-  const attrs = getAttributesForListing(categoryId, subcategoryId);
+export const getMissingRequiredAttributes = (categoryId, subcategoryId, values = {}, isEvent = false) => {
+  const attrs = getAttributesForListing(categoryId, subcategoryId, isEvent);
   const missing = [];
   for (const [key, def] of Object.entries(attrs)) {
     if (!def.required) continue;

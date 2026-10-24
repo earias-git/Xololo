@@ -173,12 +173,13 @@ const EditListingAttributesForm = props => {
           saveActionMsg,
           values,
           categoryId,
+          isEvent,
         } = formRenderProps;
 
         // Si cambia la sub-categoría, los atributos cambian — se re-renderiza
-        // esta lista.
+        // esta lista. Para evento, se mergean EVENT_ATTRIBUTES.
         const effectiveSub = values.subcategory || '';
-        const attrs = listAttributes(categoryId, effectiveSub);
+        const attrs = listAttributes(categoryId, effectiveSub, isEvent);
         const subOptions = getSubcategories(categoryId);
         const hasSubcategories = subOptions.length > 0;
 
@@ -189,7 +190,7 @@ const EditListingAttributesForm = props => {
             .filter(([k]) => k.startsWith('attr_'))
             .map(([k, v]) => [k.replace(/^attr_/, ''), v])
         );
-        const missing = getMissingRequiredAttributes(categoryId, effectiveSub, attrValues);
+        const missing = getMissingRequiredAttributes(categoryId, effectiveSub, attrValues, isEvent);
 
         const submitInProgress = updateInProgress;
         const submitReady = (updated && !invalid) || ready;
@@ -218,9 +219,20 @@ const EditListingAttributesForm = props => {
               </p>
             )}
 
+            {isEvent ? (
+              <div className={css.eventNotice}>
+                <strong>🎫 Este anuncio es un Evento con fecha fija.</strong>{' '}
+                Llena los campos de fecha, hora y lugar — se usan para mostrar el
+                banner del evento en la ficha y para el boleto que recibe el buyer.
+                El cupo total se persiste como stock del listing.
+              </div>
+            ) : null}
+
             {attrs.length > 0 ? (
               <div className={css.attributesSection}>
-                <h3 className={css.sectionTitle}>Características del producto / servicio</h3>
+                <h3 className={css.sectionTitle}>
+                  {isEvent ? 'Datos del evento' : 'Características del producto / servicio'}
+                </h3>
                 <p className={css.sectionLead}>
                   Entre más datos nos des, mejor te sugerirá la IA el título y
                   descripción. Los campos marcados con * son recomendados para que

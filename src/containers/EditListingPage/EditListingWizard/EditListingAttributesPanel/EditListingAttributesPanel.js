@@ -38,11 +38,14 @@ const findCategoryLevel1 = publicData => {
   return null;
 };
 
-// Hidrata los valores del form desde publicData.attributes.
+// Hidrata los valores del form desde publicData.attributes + event.
 // Para dimensiones (objeto {h, w, d}), expande a 3 campos _h _w _d.
+// Para evento (publicData.event = {date_start, time_start, ...}),
+// expande cada campo como attr_event_date_start, etc.
 const buildInitialValues = publicData => {
   const subcategory = publicData?.subcategory || '';
   const persisted = publicData?.attributes || {};
+  const event = publicData?.event || {};
   const flat = { subcategory };
   for (const [k, v] of Object.entries(persisted)) {
     if (v && typeof v === 'object' && !Array.isArray(v) && ('h' in v || 'w' in v || 'd' in v)) {
@@ -53,15 +56,25 @@ const buildInitialValues = publicData => {
       flat[`attr_${k}`] = v;
     }
   }
+  // Hidrata campos de evento (persistidos en publicData.event, pero
+  // viven como attr_event_* en el form para que el renderer dinámico
+  // los pinte igual que cualquier otro atributo).
+  for (const [k, v] of Object.entries(event)) {
+    flat[`attr_event_${k}`] = v;
+  }
   return flat;
 };
 
 // Convierte los valores planos del form (attr_marca, attr_dimensiones_h,
-// etc) al shape persistido publicData.attributes = {marca, dimensiones:{h,w,d}, ...}
+// attr_event_date_start, etc) al shape persistido:
+//   publicData.attributes = {marca, dimensiones:{h,w,d}, ...}
+//   publicData.event     = {date_start, time_start, location, ...}
+// Los campos event_* se separan y persisten en el namespace `event`.
 // Sólo persiste los que tienen valor — los vacíos se omiten (legacy OK).
-const buildPersistedAttributes = (values, categoryId, subcategoryId) => {
-  const schema = getAttributesForListing(categoryId, subcategoryId);
+const buildPersistedAttributes = (values, categoryId, subcategoryId, isEvent) => {
+  const schema = getAttributesForListing(categoryId, subcategoryId, isEvent);
   const out = {};
+  const event = {};
   for (const [key, def] of Object.entries(schema)) {
     const prefix = `attr_${key}`;
     if (def.type === 'dimensions') {
@@ -85,15 +98,18 @@ const buildPersistedAttributes = (values, categoryId, subcategoryId) => {
       v === '' ||
       (Array.isArray(v) && v.length === 0);
     if (isEmpty) continue;
-    if (def.type === 'number') {
-      out[key] = Number(v);
-    } else if (def.type === 'boolean') {
-      out[key] = v === true || v === 'true';
+    let normalized;
+    if (def.type === 'number') normalized = Number(v);
+    else if (def.type === 'boolean') normalized = v === true || v === 'true';
+    else normalized = v;
+    // Separa los campos de evento al namespace `event`.
+    if (key.startsWith('event_')) {
+      event[key.replace(/^event_/, '')] = normalized;
     } else {
-      out[key] = v;
+      out[key] = normalized;
     }
   }
-  return out;
+  return { attributes: out, event };
 };
 
 const getInitialValues = props => {
@@ -123,6 +139,7 @@ const EditListingAttributesPanel = props => {
   const classes = classNames(rootClassName || css.root, className);
   const publicData = listing?.attributes?.publicData || {};
   const categoryId = findCategoryLevel1(publicData);
+  const isEvent = publicData?.isEvent === true;
   const isPublished = listing?.id && listing?.attributes?.state !== LISTING_STATE_DRAFT;
 
   if (!categoryId) {
@@ -164,18 +181,23 @@ const EditListingAttributesPanel = props => {
         formId="EditListingAttributesForm"
         initialValues={initialValues}
         categoryId={categoryId}
+        isEvent={isEvent}
         onSubmit={values => {
           const subcategoryId = values.subcategory || null;
-          const persistedAttributes = buildPersistedAttributes(
+          const { attributes, event } = buildPersistedAttributes(
             values,
             categoryId,
-            subcategoryId
+            subcategoryId,
+            isEvent
           );
           const updateValues = {
             publicData: {
               subcategory: subcategoryId,
-              attributes: persistedAttributes,
+              attributes,
               attributesVersion: 1,
+              // Si es evento, persiste el objeto event (al menos vacío
+              // para no dejar basura previa).
+              ...(isEvent ? { event } : {}),
             },
           };
           // Preserva initialValues ante re-renders durante el submit XHR.

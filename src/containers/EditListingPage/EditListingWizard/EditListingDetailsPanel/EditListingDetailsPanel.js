@@ -263,9 +263,16 @@ const getInitialValues = (
   });
   const shouldHydrateAsUsed =
     publicData?.condition === 'used' && txInfo?.listingType === 'product';
-  const txInfoHydrated = shouldHydrateAsUsed
-    ? { ...txInfo, listingType: 'product-used' }
-    : txInfo;
+  // XOLOLO: pseudo-tipo "Evento" — un listing marcado isEvent se persiste
+  // como listingType='product' con metadata publicData.event={...}. Al
+  // hidratar, mostramos "Evento" en el selector.
+  const shouldHydrateAsEvent =
+    publicData?.isEvent === true && txInfo?.listingType === 'product';
+  const txInfoHydrated = shouldHydrateAsEvent
+    ? { ...txInfo, listingType: 'event-ticket' }
+    : shouldHydrateAsUsed
+      ? { ...txInfo, listingType: 'product-used' }
+      : txInfo;
 
   // Initial values for the form
   return {
@@ -340,14 +347,18 @@ const EditListingDetailsPanel = props => {
   const isCasual = getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
   const allListingTypes = config.listing.listingTypes;
 
-  // XOLOLO: pseudo-tipo "Producto usado". No existe en el catálogo real
-  // de Sharetribe — es un atajo visual. Se construye clonando el tipo
-  // 'product' con label y listingType distintos. Al submit, se mapea
-  // de vuelta a 'product' + publicData.condition='used' (ver abajo).
+  // XOLOLO: pseudo-tipos. No existen en el catálogo real de Sharetribe —
+  // son atajos visuales que se clonan del tipo 'product' con label y
+  // listingType distintos. Al submit se mapean de vuelta a 'product' +
+  // flags en publicData (condition='used' / isEvent=true).
   const PRODUCT_USED_PSEUDO_TYPE = 'product-used';
+  const EVENT_TICKET_PSEUDO_TYPE = 'event-ticket';
   const productType = allListingTypes.find(t => t.listingType === 'product');
   const virtualUsedType = productType
     ? { ...productType, listingType: PRODUCT_USED_PSEUDO_TYPE, label: 'Producto usado' }
+    : null;
+  const virtualEventType = productType
+    ? { ...productType, listingType: EVENT_TICKET_PSEUDO_TYPE, label: 'Evento con fecha fija' }
     : null;
 
   const listingTypes = (() => {
@@ -355,9 +366,10 @@ const EditListingDetailsPanel = props => {
     if (isCasual) {
       return virtualUsedType ? [virtualUsedType] : [];
     }
-    // Store: catálogo completo + "Producto usado" como opción adicional.
+    // Store: catálogo completo + "Producto usado" + "Evento" como opciones adicionales.
     const nonBooking = allListingTypes;
-    return virtualUsedType ? [...nonBooking, virtualUsedType] : nonBooking;
+    const extras = [virtualUsedType, virtualEventType].filter(Boolean);
+    return extras.length ? [...nonBooking, ...extras] : nonBooking;
   })();
 
   // XOLOLO: para la VALIDACIÓN del tipo persistido (hasValidExistingListing
@@ -454,13 +466,15 @@ const EditListingDetailsPanel = props => {
               ...rest
             } = values;
 
-            // XOLOLO: el pseudo-tipo 'product-used' se mapea a 'product'
-            // real + marca el flag publicData.condition='used' para que
-            // el panel de Pricing hidrate la condición preseleccionada.
-            // Nunca se persiste 'product-used' en el storage (sería un
-            // listingType inexistente en Sharetribe).
+            // XOLOLO: pseudo-tipos se mapean a 'product' real + flags
+            // en publicData. Nunca se persisten los IDs pseudo porque
+            // Sharetribe no los reconoce.
+            //   product-used  → product + condition='used'
+            //   event-ticket  → product + isEvent=true (atributos de
+            //                   evento se capturan en el panel Atributos)
             const isVirtualUsed = listingType === PRODUCT_USED_PSEUDO_TYPE;
-            const realListingType = isVirtualUsed ? 'product' : listingType;
+            const isVirtualEvent = listingType === EVENT_TICKET_PSEUDO_TYPE;
+            const realListingType = isVirtualUsed || isVirtualEvent ? 'product' : listingType;
 
             const nestedCategories = pickCategoryFields(rest, categoryKey, 1, listingCategories);
             // Remove old categories by explicitly saving null for them.
@@ -493,6 +507,10 @@ const EditListingDetailsPanel = props => {
                 ...cleanedNestedCategories,
                 ...publicListingFields,
                 ...(isVirtualUsed ? { condition: 'used' } : {}),
+                // Marca el flag isEvent al elegir "Evento". Los atributos
+                // específicos (fecha, hora, lugar, cupo) se capturan en
+                // el paso Atributos vía ATTRIBUTES_BY_PATH.event.
+                ...(isVirtualEvent ? { isEvent: true } : {}),
               },
               privateData: privateListingFields,
               ...setNoAvailabilityForUnbookableListings(transactionProcessAlias),
