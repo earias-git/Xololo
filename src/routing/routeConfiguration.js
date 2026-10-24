@@ -392,6 +392,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: OpsConsolePage,
     },
     {
+      // XOLOLO Task #22: backfill del badge Xololo Verified para
+      // sellers activos (re-sincroniza publicData.xololoVerified).
+      path: '/ops/backfill-verified',
+      name: 'OpsBackfillVerifiedPage',
+      component: OpsConsolePage,
+    },
+    {
       // XOLOLO: puente para que un buyer logueado se convierta en
       // vendedor casual con 1 click + aceptación de T&C. Después de
       // activar, redirige a /l/new.

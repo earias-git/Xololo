@@ -1059,3 +1059,31 @@
   gap: 6px;
   align-items: flex-end;
 }
+
+/* XOLOLO Task #22 — BackfillVerifiedView */
+.lead {
+  margin: 8px 0 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--colorGrey700, #555);
+}
+
+.lead code {
+  background: var(--colorGrey100, #eee);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 12.5px;
+}
+
+.sectionTitle {
+  margin: 24px 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ctaRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}

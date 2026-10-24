@@ -40,6 +40,7 @@ const adminTaxReviews = require('./api/admin-tax-reviews');
 const adminCheck = require('./api/admin-check');
 const adminPayoutQueue = require('./api/admin-payout-queue');
 const adminLegalModeration = require('./api/admin-legal-moderation');
+const adminBackfillVerified = require('./api/admin-backfill-verified');
 const adminAuth = require('./api/admin-auth');
 const adminOperators = require('./api/admin-operators');
 const createSubscriptionCheckout = require('./api/create-subscription-checkout');
@@ -257,6 +258,20 @@ router.post(
   adminAuth.requireOperator({ requireMfa: false }),
   bodyParser.json(),
   adminLegalModeration.decide
+);
+
+// XOLOLO Task #22: backfill del badge Xololo Verified. Dry-run cuenta
+// cuántos sellers cambiarían, run ejecuta la sincronización masiva.
+router.get(
+  '/admin/backfill-verified-badge/dry-run',
+  adminAuth.requireOperator({ requireMfa: false }),
+  adminBackfillVerified.dryRun
+);
+router.post(
+  '/admin/backfill-verified-badge/run',
+  adminAuth.requireOperator({ requireMfa: false }),
+  bodyParser.json(),
+  adminBackfillVerified.run
 );
 
 // XOLOLO Fase 1C.3 — Autenticación de operadores Xololo (RBAC + MFA

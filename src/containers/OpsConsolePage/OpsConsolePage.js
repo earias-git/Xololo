@@ -11,6 +11,7 @@ import OperatorsView from './OperatorsView';
 import TaxReviewsView from './TaxReviewsView';
 import PayoutQueueView from './PayoutQueueView';
 import LegalModerationView from './LegalModerationView';
+import BackfillVerifiedView from './BackfillVerifiedView';
 
 import css from './OpsConsolePage.module.css';
 
@@ -263,6 +264,7 @@ const MODULE_CARDS = [
   { key: 'tax_reviews', label: 'Revisión fiscal', emoji: '🧾', hint: 'Clasificaciones fiscales declaradas por sellers (exento, tasa 0%, actividad distinta)', route: '/ops/tax-reviews' },
   { key: 'payout_queue', label: 'Payouts retenidos', emoji: '💰', hint: 'Sellers con ventas cerradas sin payout liberado (Stripe + docs pendientes)', route: '/ops/payout-queue' },
   { key: 'legal_moderation', label: 'Moderación legal', emoji: '🛑', hint: 'Listings bloqueados por IA (ilícitos) o flagueados como dual-use. Revisa falsos positivos.', route: '/ops/legal-moderation' },
+  { key: 'backfill_verified', label: 'Backfill Verified', emoji: '✅', hint: 'Re-evalúa a todos los sellers y sincroniza el badge Xololo Verified. Idempotente.', route: '/ops/backfill-verified' },
   { key: 'audit_log', label: 'Audit log', emoji: '📋', hint: 'Registro de todas las acciones', route: null },
 ];
 
@@ -505,6 +507,8 @@ const OpsConsolePage = () => {
     content = <PayoutQueueView onBack={backToDashboard} />;
   } else if (location.pathname === '/ops/legal-moderation') {
     content = <LegalModerationView onBack={backToDashboard} />;
+  } else if (location.pathname === '/ops/backfill-verified') {
+    content = <BackfillVerifiedView onBack={backToDashboard} />;
   } else {
     content = (
       <Dashboard
