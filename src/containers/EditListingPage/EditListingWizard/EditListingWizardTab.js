@@ -13,6 +13,7 @@ import { createResourceLocatorString } from '../../../util/routes';
 import EditListingAvailabilityPanel from './EditListingAvailabilityPanel/EditListingAvailabilityPanel';
 import EditListingDetailsPanel from './EditListingDetailsPanel/EditListingDetailsPanel';
 import EditListingDeliveryPanel from './EditListingDeliveryPanel/EditListingDeliveryPanel';
+import EditListingAttributesPanel from './EditListingAttributesPanel/EditListingAttributesPanel';
 import EditListingLocationPanel from './EditListingLocationPanel/EditListingLocationPanel';
 import EditListingPhotosPanel from './EditListingPhotosPanel/EditListingPhotosPanel';
 import EditListingPricingPanel from './EditListingPricingPanel/EditListingPricingPanel';
@@ -22,6 +23,7 @@ import EditListingStylePanel from './EditListingStylePanel/EditListingStylePanel
 import css from './EditListingWizardTab.module.css';
 
 export const DETAILS = 'details';
+export const ATTRIBUTES = 'attributes';
 export const PRICING = 'pricing';
 export const PRICING_AND_STOCK = 'pricing-and-stock';
 export const DELIVERY = 'delivery';
@@ -33,6 +35,7 @@ export const STYLE = 'style';
 // EditListingWizardTab component supports these tabs
 export const SUPPORTED_TABS = [
   DETAILS,
+  ATTRIBUTES,
   PRICING,
   PRICING_AND_STOCK,
   DELIVERY,
@@ -203,6 +206,9 @@ const EditListingWizardTab = props => {
           config={config}
         />
       );
+    }
+    case ATTRIBUTES: {
+      return <EditListingAttributesPanel {...panelProps(ATTRIBUTES)} />;
     }
     case PRICING_AND_STOCK: {
       return (

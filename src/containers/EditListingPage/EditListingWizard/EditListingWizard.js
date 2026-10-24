@@ -51,6 +51,7 @@ import {
 // Import modules from this directory
 import EditListingWizardTab, {
   DETAILS,
+  ATTRIBUTES,
   PRICING,
   PRICING_AND_STOCK,
   DELIVERY,
@@ -97,11 +98,16 @@ const tabsForListingType = (processName, listingTypeConfig) => {
   //         and listing publishing happens after last panel.
   // Note 3: The first tab creates a draft listing and title is mandatory attribute for it.
   //         Details tab asks for "title" and is therefore the first tab in the wizard flow.
+  // XOLOLO: ATTRIBUTES se inserta en TODOS los procesos justo después de
+  // DETAILS. El seller eligió categoría en Details; aquí profundiza con
+  // sub-categoría + atributos específicos (talla, color, marca, etc.).
+  // Si la categoría no tiene atributos definidos en src/config/listingAttributes.js,
+  // el panel muestra un mensaje "sin atributos — continuar" y pasa de largo.
   const tabs = {
-    ['default-booking']: [DETAILS, ...locationMaybe, PRICING, AVAILABILITY, ...styleOrPhotosTab],
-    ['default-purchase']: [DETAILS, PRICING_AND_STOCK, ...deliveryMaybe, ...styleOrPhotosTab],
-    ['default-negotiation']: [DETAILS, ...locationMaybe, ...pricingMaybe, ...styleOrPhotosTab],
-    ['default-inquiry']: [DETAILS, ...locationMaybe, ...pricingMaybe, ...styleOrPhotosTab],
+    ['default-booking']: [DETAILS, ATTRIBUTES, ...locationMaybe, PRICING, AVAILABILITY, ...styleOrPhotosTab],
+    ['default-purchase']: [DETAILS, ATTRIBUTES, PRICING_AND_STOCK, ...deliveryMaybe, ...styleOrPhotosTab],
+    ['default-negotiation']: [DETAILS, ATTRIBUTES, ...locationMaybe, ...pricingMaybe, ...styleOrPhotosTab],
+    ['default-inquiry']: [DETAILS, ATTRIBUTES, ...locationMaybe, ...pricingMaybe, ...styleOrPhotosTab],
   };
 
   return tabs[processName] || tabs['default-inquiry'];
@@ -124,6 +130,9 @@ const tabLabelAndSubmit = (intl, tab, isNewListingFlow, isPriceDisabled, process
   if (tab === DETAILS) {
     labelKey = 'EditListingWizard.tabLabelDetails';
     submitButtonKey = `EditListingWizard.${processNameString}${newOrEdit}.saveDetails`;
+  } else if (tab === ATTRIBUTES) {
+    labelKey = 'EditListingWizard.tabLabelAttributes';
+    submitButtonKey = `EditListingWizard.${processNameString}${newOrEdit}.saveAttributes`;
   } else if (tab === PRICING) {
     labelKey = 'EditListingWizard.tabLabelPricing';
     submitButtonKey = `EditListingWizard.${processNameString}${newOrEdit}.savePricing`;
@@ -256,6 +265,12 @@ const tabCompleted = (tab, listing, config) => {
         unitType &&
         hasValidListingFieldsInExtendedData(publicData, privateData, config)
       );
+    case ATTRIBUTES:
+      // XOLOLO: el paso Atributos es OPCIONAL — ningún atributo es
+      // bloqueante. Si el seller lo guarda (aunque sea sin cambios),
+      // queda completable. En flow nuevo, se considera completable
+      // apenas DETAILS está listo (el panel permite guardar vacío).
+      return true;
     case PRICING:
       return !!price;
     case PRICING_AND_STOCK:
