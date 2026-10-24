@@ -14,6 +14,7 @@ import EditListingAvailabilityPanel from './EditListingAvailabilityPanel/EditLis
 import EditListingDetailsPanel from './EditListingDetailsPanel/EditListingDetailsPanel';
 import EditListingDeliveryPanel from './EditListingDeliveryPanel/EditListingDeliveryPanel';
 import EditListingAttributesPanel from './EditListingAttributesPanel/EditListingAttributesPanel';
+import EditListingTextPanel from './EditListingTextPanel/EditListingTextPanel';
 import EditListingLocationPanel from './EditListingLocationPanel/EditListingLocationPanel';
 import EditListingPhotosPanel from './EditListingPhotosPanel/EditListingPhotosPanel';
 import EditListingPricingPanel from './EditListingPricingPanel/EditListingPricingPanel';
@@ -31,6 +32,7 @@ export const LOCATION = 'location';
 export const AVAILABILITY = 'availability';
 export const PHOTOS = 'photos';
 export const STYLE = 'style';
+export const TEXT = 'text';
 
 // EditListingWizardTab component supports these tabs
 export const SUPPORTED_TABS = [
@@ -43,6 +45,7 @@ export const SUPPORTED_TABS = [
   AVAILABILITY,
   PHOTOS,
   STYLE,
+  TEXT,
 ];
 
 const pathParamsToNextTab = (params, tab, marketplaceTabs) => {
@@ -281,6 +284,9 @@ const EditListingWizardTab = props => {
           images={images}
         />
       );
+    }
+    case TEXT: {
+      return <EditListingTextPanel {...panelProps(TEXT)} />;
     }
     default:
       return null;

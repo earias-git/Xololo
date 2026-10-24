@@ -59,6 +59,7 @@ import EditListingWizardTab, {
   AVAILABILITY,
   PHOTOS,
   STYLE,
+  TEXT,
 } from './EditListingWizardTab';
 import css from './EditListingWizard.module.css';
 
@@ -98,16 +99,24 @@ const tabsForListingType = (processName, listingTypeConfig) => {
   //         and listing publishing happens after last panel.
   // Note 3: The first tab creates a draft listing and title is mandatory attribute for it.
   //         Details tab asks for "title" and is therefore the first tab in the wizard flow.
-  // XOLOLO: ATTRIBUTES se inserta en TODOS los procesos justo después de
-  // DETAILS. El seller eligió categoría en Details; aquí profundiza con
-  // sub-categoría + atributos específicos (talla, color, marca, etc.).
-  // Si la categoría no tiene atributos definidos en src/config/listingAttributes.js,
-  // el panel muestra un mensaje "sin atributos — continuar" y pasa de largo.
+  // XOLOLO (PR 3): orden ML-style para que la IA del paso TEXT (PR 4)
+  // tenga TODO el contexto cuando genere título + descripción.
+  // Flow:
+  //   DETAILS → PHOTOS → ATTRIBUTES → PRICING(/STOCK) → DELIVERY → TEXT
+  //
+  // Rationale:
+  //   - DETAILS primero porque Sharetribe REQUIERE title para crear el
+  //     draft; el seller pone algo mínimo que después se re-escribe en TEXT.
+  //   - PHOTOS antes de ATTRIBUTES: tener fotos ayuda al seller a recordar
+  //     características que de otro modo olvidaría declarar.
+  //   - TEXT al final: ahí la IA (PR 4) auto-genera con el contexto completo.
+  //   - PHOTOS puede caer a STYLE para listingTypes que no requieren imagen
+  //     (ej. inquiry puro).
   const tabs = {
-    ['default-booking']: [DETAILS, ATTRIBUTES, ...locationMaybe, PRICING, AVAILABILITY, ...styleOrPhotosTab],
-    ['default-purchase']: [DETAILS, ATTRIBUTES, PRICING_AND_STOCK, ...deliveryMaybe, ...styleOrPhotosTab],
-    ['default-negotiation']: [DETAILS, ATTRIBUTES, ...locationMaybe, ...pricingMaybe, ...styleOrPhotosTab],
-    ['default-inquiry']: [DETAILS, ATTRIBUTES, ...locationMaybe, ...pricingMaybe, ...styleOrPhotosTab],
+    ['default-booking']: [DETAILS, ...styleOrPhotosTab, ATTRIBUTES, ...locationMaybe, PRICING, AVAILABILITY, TEXT],
+    ['default-purchase']: [DETAILS, ...styleOrPhotosTab, ATTRIBUTES, PRICING_AND_STOCK, ...deliveryMaybe, TEXT],
+    ['default-negotiation']: [DETAILS, ...styleOrPhotosTab, ATTRIBUTES, ...locationMaybe, ...pricingMaybe, TEXT],
+    ['default-inquiry']: [DETAILS, ...styleOrPhotosTab, ATTRIBUTES, ...locationMaybe, ...pricingMaybe, TEXT],
   };
 
   return tabs[processName] || tabs['default-inquiry'];
@@ -157,6 +166,9 @@ const tabLabelAndSubmit = (intl, tab, isNewListingFlow, isPriceDisabled, process
   } else if (tab === STYLE) {
     labelKey = 'EditListingWizard.tabLabelStyle';
     submitButtonKey = `EditListingWizard.${processNameString}${newOrEdit}.saveStyle`;
+  } else if (tab === TEXT) {
+    labelKey = 'EditListingWizard.tabLabelText';
+    submitButtonKey = `EditListingWizard.${processNameString}${newOrEdit}.saveText`;
   }
 
   return {
@@ -285,6 +297,11 @@ const tabCompleted = (tab, listing, config) => {
       return images && images.length > 0;
     case STYLE:
       return !!cardStyle;
+    case TEXT:
+      // XOLOLO (PR 3): paso final — exige title Y description.
+      // Una descripción mínima da contexto al buyer; sin ella no vale
+      // publicar.
+      return !!title && !!description && description.trim().length >= 10;
     default:
       return false;
   }

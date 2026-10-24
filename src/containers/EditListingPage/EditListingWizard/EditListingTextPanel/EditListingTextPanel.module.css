@@ -1,0 +1,58 @@
+@import '../../../../styles/customMediaQueries.css';
+
+.root {
+  padding: 0 24px 48px;
+
+  @media (--viewportMedium) {
+    padding: 0 32px 64px;
+  }
+}
+
+.lead {
+  margin: 8px 0 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--colorGrey700, #555);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  margin: 0;
+}
+
+.contextBox {
+  padding: 14px 16px;
+  background: #eef5ee;
+  border-left: 3px solid #286a3a;
+  border-radius: 6px;
+}
+
+.contextTitle {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contextList {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--colorGrey800, #333);
+}
+
+.contextList li {
+  margin: 2px 0;
+}
+
+.submitButton {
+  margin-top: 8px;
+}
