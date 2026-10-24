@@ -117,40 +117,50 @@ const EditListingPhotosPanel = props => {
         listingImageConfig={listingImageConfig}
       />
 
-      {/* XOLOLO Fase 2 — CTA al terminar de subir fotos para que la IA
-          sugiera título/descripción basados en lo que las cámaras ven.
-          Visible sólo si el listing ya tiene al menos una imagen
-          commiteada (relaciones) y se identifica por su listingId. */}
-      {listing?.id && (listing?.images?.length > 0 ||
-        listing?.relationships?.images?.data?.length > 0) ? (
-        <aside className={css.aiCta}>
-          <div className={css.aiCtaLeft}>
-            <span className={css.aiCtaSparkle} aria-hidden="true">✨</span>
-            <div>
-              <h4 className={css.aiCtaTitle}>¿Quieres mejorar tu texto con IA?</h4>
-              <p className={css.aiCtaDesc}>
-                Nuestra IA ya puede analizar tus fotos y sugerirte un título y
-                descripción más atractivos. Toma ~20 segundos.
-              </p>
+      {/* XOLOLO Fase 2 — CTA para que la IA sugiera título/descripción
+          basados en las fotos del listing. Visible SIEMPRE que el seller
+          esté en Photos (tiene listing.id creado desde el paso Details),
+          no sólo después del submit. Antes el CTA aparecía ~500ms antes
+          del redirect de publicación — no era usable. Ahora persiste
+          durante toda la edición y el seller decide si va a Detalles
+          antes o después de guardar. Si aún no subió fotos, el CTA
+          cambia copy a "Primero sube tus fotos" (ir a Detalles sin fotos
+          no sirve a la IA, que analiza visualmente). */}
+      {listing?.id ? (() => {
+        const hasImages =
+          (listing?.images?.length || 0) > 0 ||
+          (listing?.relationships?.images?.data?.length || 0) > 0;
+        return (
+          <aside className={css.aiCta}>
+            <div className={css.aiCtaLeft}>
+              <span className={css.aiCtaSparkle} aria-hidden="true">✨</span>
+              <div>
+                <h4 className={css.aiCtaTitle}>¿Quieres mejorar tu texto con IA?</h4>
+                <p className={css.aiCtaDesc}>
+                  {hasImages
+                    ? 'Nuestra IA analiza tus fotos y te sugiere un título y descripción más atractivos. Toma ~20 segundos.'
+                    : 'Sube al menos una foto arriba y guarda, después vuelve a Detalles y nuestra IA te sugerirá título y descripción basados en lo que ve.'}
+                </p>
+              </div>
             </div>
-          </div>
-          <NamedLink
-            name="EditListingPage"
-            params={{
-              id: listing.id.uuid,
-              slug: listing.attributes.title
-                ? listing.attributes.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-                : 'draft',
-              type: isPublished ? 'edit' : 'draft',
-              tab: DETAILS_TAB,
-            }}
-            to={{ search: '?autoSuggest=1' }}
-            className={css.aiCtaBtn}
-          >
-            Mejorar en Detalles →
-          </NamedLink>
-        </aside>
-      ) : null}
+            <NamedLink
+              name="EditListingPage"
+              params={{
+                id: listing.id.uuid,
+                slug: listing.attributes.title
+                  ? listing.attributes.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+                  : 'draft',
+                type: isPublished ? 'edit' : 'draft',
+                tab: DETAILS_TAB,
+              }}
+              to={{ search: '?autoSuggest=1' }}
+              className={css.aiCtaBtn}
+            >
+              {hasImages ? 'Mejorar en Detalles →' : 'Ir a Detalles →'}
+            </NamedLink>
+          </aside>
+        );
+      })() : null}
     </main>
   );
 };
