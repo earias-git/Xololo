@@ -12,6 +12,97 @@ import {
 
 import css from './EditListingTextPanel.module.css';
 
+// XOLOLO (PR 4): bloque de sugerencias IA. Si está cargando muestra
+// spinner; si hay resultados muestra 3 opciones de título + 3 de
+// descripción con botones "Usar este". Al click, llama a form.change
+// para hidratar el input correspondiente.
+const AiSuggestionsBlock = ({ aiState, onRegenerate, formApi }) => {
+  if (!aiState) return null;
+  const { loading, suggestions, error } = aiState;
+  if (loading) {
+    return (
+      <div className={css.aiBox}>
+        <div className={css.aiHeader}>
+          <span className={css.aiSparkle} aria-hidden="true">✨</span>
+          <span>La IA está escribiendo tu anuncio…</span>
+        </div>
+        <p className={css.aiHint}>
+          Usa tus características declaradas, categoría y fotos. Tarda ~5-15 segundos.
+        </p>
+      </div>
+    );
+  }
+  if (error && !suggestions) {
+    return (
+      <div className={classNames(css.aiBox, css.aiBoxError)}>
+        <p className={css.aiError}>
+          <strong>No pudimos generar sugerencias:</strong> {error}
+        </p>
+        <button type="button" className={css.aiRetryBtn} onClick={onRegenerate}>
+          🔄 Reintentar
+        </button>
+      </div>
+    );
+  }
+  if (!suggestions) return null;
+  const titles = suggestions.titleSuggestions || [];
+  const descriptions = suggestions.descriptionSuggestions || [];
+  const applyTitle = text => formApi.change('title', text);
+  const applyDescription = text => formApi.change('description', text);
+  return (
+    <div className={css.aiBox}>
+      <div className={css.aiHeader}>
+        <span className={css.aiSparkle} aria-hidden="true">✨</span>
+        <span>Sugerencias de la IA — click en una para usarla</span>
+      </div>
+
+      {titles.length > 0 ? (
+        <div className={css.aiGroup}>
+          <p className={css.aiGroupTitle}>Opciones de título</p>
+          <ul className={css.aiOptionList}>
+            {titles.map((t, i) => (
+              <li key={`t-${i}`} className={css.aiOption}>
+                <span className={css.aiOptionText}>{t}</span>
+                <button
+                  type="button"
+                  className={css.aiOptionBtn}
+                  onClick={() => applyTitle(t)}
+                >
+                  Usar este
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {descriptions.length > 0 ? (
+        <div className={css.aiGroup}>
+          <p className={css.aiGroupTitle}>Opciones de descripción</p>
+          <ul className={css.aiOptionList}>
+            {descriptions.map((d, i) => (
+              <li key={`d-${i}`} className={css.aiOption}>
+                <span className={css.aiOptionText}>{d}</span>
+                <button
+                  type="button"
+                  className={css.aiOptionBtn}
+                  onClick={() => applyDescription(d)}
+                >
+                  Usar esta
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <button type="button" className={css.aiRetryBtn} onClick={onRegenerate}>
+        🔄 Re-generar con IA
+      </button>
+    </div>
+  );
+};
+
 const TITLE_MAX = 60;
 const DESCRIPTION_MAX = 1500;
 
@@ -52,6 +143,7 @@ const EditListingTextForm = props => {
       render={formRenderProps => {
         const {
           formId,
+          form,
           className,
           handleSubmit,
           invalid,
@@ -61,6 +153,8 @@ const EditListingTextForm = props => {
           updateInProgress,
           saveActionMsg,
           contextSummary,
+          aiState,
+          onRegenerateAi,
         } = formRenderProps;
 
         const submitInProgress = updateInProgress;
@@ -82,7 +176,14 @@ const EditListingTextForm = props => {
               </div>
             ) : null}
 
-            {/* PR 4 agrega aquí el botón "🤖 Generar con IA" + nota opcional */}
+            {/* XOLOLO (PR 4): bloque de sugerencias IA. Auto-corre al mount
+                del panel. El seller elige una opción con "Usar este" y
+                el input de abajo se hidrata. */}
+            <AiSuggestionsBlock
+              aiState={aiState}
+              onRegenerate={onRegenerateAi}
+              formApi={form}
+            />
 
             <FieldTextInput
               id={`${formId}.title`}

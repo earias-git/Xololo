@@ -66,15 +66,25 @@ module.exports = async (req, res) => {
 
     const pd = listing.attributes.publicData || {};
     const aiAnalysis = pd.aiAnalysis;
-    if (!aiAnalysis?.aggregated?.tags) {
-      // El listing todavía no fue analizado. El frontend puede decidir si
-      // dispara el análisis primero (POST /api/ai/analyze-listing) y
-      // reintenta, o si pide al seller que suba fotos primero.
-      return res.status(409).json({ error: 'needs_analysis_first' });
-    }
+    // XOLOLO (PR 4): tras el reorden del wizard, el seller llega al step
+    // Text con atributos + categoría ricos pero puede no haber
+    // análisis-visión de fotos aún. Antes rechazábamos (409
+    // needs_analysis_first); ahora degradamos: pasamos tags=null a la IA
+    // y le avisamos. La IA genera basándose en atributos + categoría +
+    // sub-categoría + condición, que es contexto suficiente ML-style.
+    const aiAnalysisTags = aiAnalysis?.aggregated?.tags || null;
 
     const category = pd.categoryLevel1 || pd.category || null;
+    const subcategory = pd.subcategory || null;
+    const condition = pd.condition || null;
     const listingType = pd.listingType || null;
+    const attributes = pd.attributes || {};
+
+    // XOLOLO (PR 4): el cliente envía attributesSchema (resuelto desde
+    // src/config/listingAttributes.js) en el body. No lo re-resolvemos
+    // en server porque src/ es ESM y server/ es CommonJS.
+    // Shape esperado: { marca: {label: 'Marca'}, talla_mx: {label: 'Talla (MX)'}, ... }
+    const attributesSchema = req.body?.attributesSchema || {};
 
     // 3. Llamar a Claude Haiku (solo texto, barato).
     const result = await chatJson({
@@ -85,10 +95,14 @@ module.exports = async (req, res) => {
           content: PROMPT.instruction({
             listingType,
             category,
+            subcategory,
+            condition,
             currentTitle: currentTitle || listing.attributes.title || '',
             currentDescription:
               currentDescription || listing.attributes.description || '',
-            aiAnalysisTags: aiAnalysis.aggregated.tags,
+            aiAnalysisTags,
+            attributes,
+            attributesSchema,
           }),
         },
       ],

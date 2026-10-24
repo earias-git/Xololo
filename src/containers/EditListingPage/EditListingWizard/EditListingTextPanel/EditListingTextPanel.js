@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 
 import { FormattedMessage } from '../../../../util/reactIntl';
@@ -7,6 +7,7 @@ import {
   getAttributesForListing,
   CATEGORY_TREE,
 } from '../../../../config/listingAttributes';
+import { apiBaseUrl } from '../../../../util/api';
 
 import { H3, ListingLink } from '../../../../components';
 
@@ -67,6 +68,27 @@ const getInitialValues = props => {
   };
 };
 
+// XOLOLO: llama al endpoint de sugerencias y devuelve
+// {titleSuggestions, descriptionSuggestions, seo} o null si falla.
+const fetchAiSuggestions = async ({ listingId, currentTitle, currentDescription, attributesSchema }) => {
+  try {
+    const res = await fetch(`${apiBaseUrl()}/api/ai/suggest-listing-text`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId, currentTitle, currentDescription, attributesSchema }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { ok: false, error: err?.error || `http_${res.status}` };
+    }
+    const data = await res.json();
+    return { ok: true, data };
+  } catch (e) {
+    return { ok: false, error: e?.message || 'network' };
+  }
+};
+
 const EditListingTextPanel = props => {
   const {
     className,
@@ -84,10 +106,57 @@ const EditListingTextPanel = props => {
   const [state, setState] = useState({
     initialValues: getInitialValues(props),
   });
+  const [ai, setAi] = useState({
+    loading: false,
+    settled: false,
+    suggestions: null,
+    error: null,
+  });
+  // Guard contra doble-dispatch del auto-trigger al mount (ej. strict mode).
+  const autoTriggeredRef = useRef(false);
+
   const classes = classNames(rootClassName || css.root, className);
   const publicData = listing?.attributes?.publicData || {};
   const isPublished = listing?.id && listing?.attributes?.state !== LISTING_STATE_DRAFT;
   const contextSummary = buildContextSummary(publicData);
+
+  // Schema de atributos — se pasa al endpoint para que la IA sepa el label
+  // humano de cada key.
+  const attributesSchema = getAttributesForListing(
+    publicData.categoryLevel1,
+    publicData.subcategory
+  );
+
+  const runAi = useCallback(async () => {
+    if (!listing?.id?.uuid) return;
+    setAi({ loading: true, settled: false, suggestions: null, error: null });
+    const result = await fetchAiSuggestions({
+      listingId: listing.id.uuid,
+      currentTitle: state.initialValues.title,
+      currentDescription: state.initialValues.description,
+      attributesSchema,
+    });
+    if (result.ok) {
+      setAi({ loading: false, settled: true, suggestions: result.data, error: null });
+    } else {
+      setAi({ loading: false, settled: true, suggestions: null, error: result.error });
+    }
+  }, [listing?.id?.uuid, state.initialValues.title, state.initialValues.description, attributesSchema]);
+
+  // XOLOLO: auto-trigger al mount SI (a) hay listing, (b) la descripción
+  // está vacía o es muy corta (<30 chars = probablemente placeholder de
+  // Details). Esto es el core del PR 4 — el seller llega al step Text y
+  // en 2-3s ve 3 opciones listas. Si prefiere escribir él, ignora.
+  useEffect(() => {
+    if (autoTriggeredRef.current) return;
+    const d = state.initialValues.description || '';
+    const isEmptyOrShort = d.trim().length < 30;
+    if (listing?.id?.uuid && isEmptyOrShort) {
+      autoTriggeredRef.current = true;
+      runAi();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listing?.id?.uuid]);
 
   return (
     <main className={classes}>
@@ -117,6 +186,8 @@ const EditListingTextPanel = props => {
         formId="EditListingTextForm"
         initialValues={state.initialValues}
         contextSummary={contextSummary}
+        aiState={ai}
+        onRegenerateAi={runAi}
         onSubmit={values => {
           const updateValues = {
             title: (values.title || '').trim(),
