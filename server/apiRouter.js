@@ -49,6 +49,7 @@ const sellerPayoutGate = require('./api/seller-payout-gate');
 const sellerPendingPayouts = require('./api/seller-pending-payouts');
 const sellerTaxAiClassify = require('./api/seller-tax-ai-classify');
 const sellerListingLegalityCheck = require('./api/seller-listing-legality-check');
+const sellerEventAttendees = require('./api/seller-event-attendees');
 const sellerHasListings = require('./api/seller-has-listings');
 const stripeBillingWebhook = require('./api/webhooks/stripe-billing');
 const skydropxWebhook = require('./api/webhooks/skydropx');
@@ -340,6 +341,8 @@ router.post('/seller-tax-ai-classify', bodyParser.json(), sellerTaxAiClassify);
 // publicar/editar. Si la IA detecta ilícito, cierra el listing y
 // notifica al seller + Ops.
 router.post('/seller-listing-legality-check', bodyParser.json(), sellerListingLegalityCheck);
+// XOLOLO: lista de asistentes confirmados a un evento (sólo seller dueño).
+router.get('/seller-event-attendees', sellerEventAttendees);
 
 // XOLOLO: ¿este seller ya tiene alguna listing publicada? Usado por
 // RequireSellerOnboarding para distinguir seller nuevo vs establecido.

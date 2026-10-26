@@ -54,6 +54,7 @@ import SectionHero from './SectionHero';
 import SectionReviews from './SectionReviews';
 import SectionAuthorMaybe from './SectionAuthorMaybe';
 import SectionEventMaybe from './SectionEventMaybe';
+import SectionEventAttendeesMaybe from './SectionEventAttendeesMaybe';
 import SectionMapMaybe from './SectionMapMaybe';
 import CustomListingFields from './CustomListingFields';
 import Notifications from './Notifications/Notifications';
@@ -317,6 +318,11 @@ export const ListingPageComponent = props => {
             <SectionEventMaybe
               publicData={publicData}
               currentStock={currentListing?.currentStock?.attributes?.quantity}
+            />
+            {/* XOLOLO: panel asistentes (solo visible al owner). */}
+            <SectionEventAttendeesMaybe
+              listing={currentListing}
+              isOwner={isOwnListing}
             />
             {showDescription && <SectionText text={description} showAsIngress />}
 
