@@ -116,7 +116,12 @@ module.exports = async (req, res) => {
       purpose: 'listing-text-suggest',
       // 3 títulos + 3 descripciones + bloque SEO con keywords suele dar
       // ~2500-3500 tokens de output. 4000 deja margen cómodo.
-      maxTokens: 4000,
+      // XOLOLO: subido de 4000 a 6000 porque v2 del prompt agrega el
+      // eventBlock + attributesBlock + reglas largas, que hace el input
+      // más grande y, con 3 títulos + 3 descripciones + bloque SEO,
+      // el output pasa de 3500 tokens cómodo. Antes cortaba y daba
+      // ai_invalid_json porque el modelo no cerraba el JSON.
+      maxTokens: 6000,
       recordMetric: usage => recordAiCall({ purpose: 'textSuggest', usage }),
     });
 

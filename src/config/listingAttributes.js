@@ -902,20 +902,18 @@ export const getSubcategories = categoryId => {
  *   2. Si no, cae a `categoryId` (atributos comunes de la categoría).
  *   3. Si no hay nada, {} (listing sin atributos — legacy OK).
  *
- * Si `isEvent=true`, los EVENT_ATTRIBUTES se MERGEAN encima del set
- * de la categoría. Prioridad al evento (fecha/hora/lugar son más
- * importantes que atributos genéricos de la categoría).
+ * Si `isEvent=true`, devuelve ÚNICAMENTE EVENT_ATTRIBUTES — no mergea
+ * con los de la categoría. Rationale: un taller de orquídeas en
+ * Hogar.jardin no necesita color/estilo/dimensiones (son de muebles),
+ * sólo fecha/hora/lugar/cupo/modalidad. Un evento es un servicio
+ * temporal, no un objeto físico que herede atributos materiales.
  */
 export const getAttributesForListing = (categoryId, subcategoryId, isEvent = false) => {
-  let base = {};
-  if (categoryId) {
-    const specific = subcategoryId ? ATTRIBUTES_BY_PATH[`${categoryId}.${subcategoryId}`] : null;
-    base = specific || ATTRIBUTES_BY_PATH[categoryId] || {};
-  }
-  if (isEvent) {
-    return { ...base, ...EVENT_ATTRIBUTES };
-  }
-  return base;
+  if (isEvent) return { ...EVENT_ATTRIBUTES };
+  if (!categoryId) return {};
+  const specific = subcategoryId ? ATTRIBUTES_BY_PATH[`${categoryId}.${subcategoryId}`] : null;
+  if (specific) return specific;
+  return ATTRIBUTES_BY_PATH[categoryId] || {};
 };
 
 /**

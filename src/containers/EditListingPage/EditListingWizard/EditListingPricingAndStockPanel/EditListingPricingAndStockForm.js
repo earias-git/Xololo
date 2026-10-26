@@ -280,19 +280,17 @@ export const EditListingPricingAndStockForm = props => (
               el componente auto-selecciona Art. 9 IV + checkbox de
               manifiesto bajo protesta cuando condition='used' (siempre
               para casual). Para store funciona igual con used y, si new,
-              muestra el dropdown filtrado (sin Art. 9 IV). Sin este bloque
-              el casual quedaría pagando IVA 16% default por falta de
-              clasificación persistida.
-              Para eventos aplica siempre IVA 16% (servicio ordinario) —
-              no se ofrece clasificación especial. */}
-          {!isEvent ? (
-            <TaxClassificationField
-              formId={formId}
-              values={values}
-              condition={effectiveCondition}
-              personType={sellerTaxProfile?.personType}
-            />
-          ) : null}
+              muestra el dropdown filtrado (sin Art. 9 IV).
+              Para eventos aplica igual — un evento educativo con RVOE
+              puede marcar exento_15_iv, un retiro espiritual puede
+              marcar enajenación distinta, etc. La IA de /ops/tax-reviews
+              revisa cada declaración con el mismo gate antifraude. */}
+          <TaxClassificationField
+            formId={formId}
+            values={values}
+            condition={effectiveCondition}
+            personType={sellerTaxProfile?.personType}
+          />
 
           {/* XOLOLO: preview del payout del seller. Client-only,
               se auto-oculta hasta que hay precio. categoryId resuelve

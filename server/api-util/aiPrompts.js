@@ -196,6 +196,12 @@ Devuelve este JSON (sin texto extra, primera palabra "{", última "}"):
   }
 }
 
+CRÍTICO — formato de salida:
+- Primera palabra de tu respuesta debe ser "{" y la última "}". NADA antes, NADA después.
+- NO uses triple backticks ni \`\`\`json ni prefacios tipo "Aquí tienes:".
+- Mantén la respuesta compacta — JSON válido es más importante que elaborar descripciones largas.
+- Si estás por quedarte sin tokens, acorta las descripciones antes que dejar el JSON incompleto.
+
 Reglas estrictas:
 - NUNCA inventes marca, modelo, talla, color u otro atributo que no esté en "Características declaradas". Esos son los únicos datos confiables.
 - Si el seller marcó "USADO", el título DEBE mencionar "usado" o "segunda mano" (honestidad para el buyer).
