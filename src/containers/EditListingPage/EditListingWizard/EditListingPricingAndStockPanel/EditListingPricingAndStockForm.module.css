@@ -76,3 +76,14 @@
   line-height: 1.45;
   color: var(--colorGrey700);
 }
+
+/* XOLOLO: notice de cupo para eventos (reutiliza el stock del listing) */
+.eventStockNotice {
+  margin: 16px 0;
+  padding: 14px 16px;
+  background: #e7f3ff;
+  border-left: 3px solid #1a73e8;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}

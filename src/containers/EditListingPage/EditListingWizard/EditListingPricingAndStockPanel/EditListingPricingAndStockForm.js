@@ -158,6 +158,8 @@ export const EditListingPricingAndStockForm = props => (
         categoryId,
         sellerTaxProfile,
         sellerMode,
+        isEvent,
+        eventCapacity,
       } = formRenderProps;
 
       const isCasual = sellerMode === SELLER_MODES.CASUAL_RESELLER;
@@ -166,7 +168,12 @@ export const EditListingPricingAndStockForm = props => (
       // auto-selección (Art. 9 IV + manifiesto) y el payout funcionen
       // incluso si publicData.condition no está persistido (listings
       // viejos) o si react-final-form aún no hidrató values.condition.
-      const effectiveCondition = isCasual ? 'used' : values?.condition;
+      // Para eventos, la condición no aplica — es ticket a una fecha.
+      const effectiveCondition = isEvent
+        ? null
+        : isCasual
+          ? 'used'
+          : values?.condition;
 
       const intl = useIntl();
       const priceValidators = getPriceValidators(
@@ -226,8 +233,10 @@ export const EditListingPricingAndStockForm = props => (
               es siempre 'usado' (se persiste en el panel) y no se muestra
               el selector para no confundir. Para store, se puede alternar
               nuevo/usado y, si usado + personType=individual, auto-aplica
-              Art. 9 IV LIVA sin revisión manual. */}
-          {!isCasual ? (
+              Art. 9 IV LIVA sin revisión manual.
+              Para eventos (boletos a fecha fija) NO aplica — no hay
+              estado "nuevo/usado". Se oculta. */}
+          {!isCasual && !isEvent ? (
             <fieldset className={css.conditionFieldset}>
               <legend className={css.conditionLegend}>Condición del artículo</legend>
               <div className={css.conditionRow}>
@@ -273,13 +282,17 @@ export const EditListingPricingAndStockForm = props => (
               para casual). Para store funciona igual con used y, si new,
               muestra el dropdown filtrado (sin Art. 9 IV). Sin este bloque
               el casual quedaría pagando IVA 16% default por falta de
-              clasificación persistida. */}
-          <TaxClassificationField
-            formId={formId}
-            values={values}
-            condition={effectiveCondition}
-            personType={sellerTaxProfile?.personType}
-          />
+              clasificación persistida.
+              Para eventos aplica siempre IVA 16% (servicio ordinario) —
+              no se ofrece clasificación especial. */}
+          {!isEvent ? (
+            <TaxClassificationField
+              formId={formId}
+              values={values}
+              condition={effectiveCondition}
+              personType={sellerTaxProfile?.personType}
+            />
+          ) : null}
 
           {/* XOLOLO: preview del payout del seller. Client-only,
               se auto-oculta hasta que hay precio. categoryId resuelve
@@ -320,14 +333,32 @@ export const EditListingPricingAndStockForm = props => (
             );
           })()}
 
-          <UpdateStockToInfinityCheckboxMaybe
-            formId={formId}
-            hasInfiniteStock={hasInfiniteStock}
-            currentStock={currentStock}
-            intl={intl}
-          />
+          {/* XOLOLO: para eventos, el "cupo" ya se declaró en Características
+              (publicData.event.capacity). Mostramos un notice visible y
+              seteamos el stock del listing a ese valor automáticamente al
+              submit (ver EditListingPricingAndStockPanel). El seller NO
+              re-captura inventario aquí para evitar divergencia. */}
+          {isEvent ? (
+            <div className={css.eventStockNotice}>
+              🎫 Cupo del evento: <strong>{eventCapacity || '—'} personas</strong>
+              <br />
+              <small>
+                Lo declaraste en Características. Se usa automáticamente como
+                cantidad de boletos a la venta — no necesitas registrarlo aquí.
+              </small>
+            </div>
+          ) : null}
 
-          {hasStockManagement ? (
+          {!isEvent ? (
+            <UpdateStockToInfinityCheckboxMaybe
+              formId={formId}
+              hasInfiniteStock={hasInfiniteStock}
+              currentStock={currentStock}
+              intl={intl}
+            />
+          ) : null}
+
+          {hasStockManagement && !isEvent ? (
             <FieldTextInput
               className={css.input}
               id={`${formId}.stock`}

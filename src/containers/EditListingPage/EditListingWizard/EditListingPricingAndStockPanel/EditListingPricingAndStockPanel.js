@@ -234,8 +234,19 @@ const EditListingPricingAndStockPanel = props => {
           categoryId={listing?.attributes?.publicData?.categoryLevel1}
           sellerTaxProfile={sellerTaxProfile}
           sellerMode={getSellerMode(currentUser)}
+          isEvent={publicData?.isEvent === true}
+          eventCapacity={publicData?.event?.capacity || null}
           onSubmit={values => {
-            const { price, stock, stockTypeInfinity } = values;
+            const { price, stockTypeInfinity } = values;
+
+            // XOLOLO: para eventos usamos event.capacity como stock automático
+            // (declarado en Características). El seller no lo re-captura en
+            // este panel — evita divergencia entre cupo del evento y stock
+            // del listing.
+            const isEventListing = publicData?.isEvent === true;
+            const stock = isEventListing
+              ? Number(publicData?.event?.capacity) || Number(values.stock) || 0
+              : values.stock;
 
             // Update stock only if the value has changed, or stock is infinity in stockType,
             // but not current stock is a small number (might happen with old listings)

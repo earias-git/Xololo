@@ -84,11 +84,16 @@ const STRIPE_ONBOARDING_RETURN_URL_FAILURE = 'failure';
  * @param {Object} listingTypeConfig - The listing type configuration
  * @returns {Array<string>} - The allowed tabs for the given process and listing type configuration
  */
-const tabsForListingType = (processName, listingTypeConfig) => {
-  const locationMaybe = displayLocation(listingTypeConfig) ? [LOCATION] : [];
+const tabsForListingType = (processName, listingTypeConfig, isEvent = false) => {
+  // XOLOLO (eventos): eventos son productos vendidos como boletos; NO
+  // tienen envío ni ubicación "entregable" — el lugar + fecha viven en
+  // publicData.event. Saltamos DELIVERY (y LOCATION si procediera)
+  // para no confundir al seller con pasos irrelevantes.
+  const locationMaybe = !isEvent && displayLocation(listingTypeConfig) ? [LOCATION] : [];
   const pricingMaybe = displayPrice(listingTypeConfig) ? [PRICING] : [];
   const deliveryMaybe =
-    displayDeliveryPickup(listingTypeConfig) || displayDeliveryShipping(listingTypeConfig)
+    !isEvent &&
+    (displayDeliveryPickup(listingTypeConfig) || displayDeliveryShipping(listingTypeConfig))
       ? [DELIVERY]
       : [];
   const styleOrPhotosTab = requireListingImage(listingTypeConfig) ? [PHOTOS] : [STYLE];
@@ -576,10 +581,12 @@ class EditListingWizard extends Component {
       existingListingType || this.state.selectedListingType || validListingTypes.length === 1;
 
     // For oudated draft listing, we don't show other tabs but the "details"
+    const isEventListing =
+      currentListing?.attributes?.publicData?.isEvent === true;
     const tabs =
       isNewListingFlow && (invalidExistingListingType || !hasListingTypeSelected)
         ? TABS_DETAILS_ONLY
-        : tabsForListingType(processName, listingTypeConfig);
+        : tabsForListingType(processName, listingTypeConfig, isEventListing);
 
     // Check if wizard tab is active / linkable.
     // When creating a new listing, we don't allow users to access next tab until the current one is completed.
