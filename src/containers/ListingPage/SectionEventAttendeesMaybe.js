@@ -79,11 +79,17 @@ const SectionEventAttendeesMaybe = props => {
       );
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setState({ loading: false, settled: true, data: null, error: data?.error || `http_${res.status}` });
+        setState({
+          loading: false,
+          settled: true,
+          data: null,
+          error: data?.error || `http_${res.status}`,
+          errorHint: data?.hint || null,
+        });
         return;
       }
       const data = await res.json();
-      setState({ loading: false, settled: true, data, error: null });
+      setState({ loading: false, settled: true, data, error: null, errorHint: null });
     } catch (e) {
       setState({ loading: false, settled: true, data: null, error: e?.message || 'network' });
     }
@@ -169,9 +175,14 @@ const SectionEventAttendeesMaybe = props => {
       {state.loading ? (
         <p className={css.attendeesStatus}>Cargando asistentes…</p>
       ) : state.error ? (
-        <p className={css.attendeesStatus}>
-          Error al cargar: {state.error}
-        </p>
+        <div className={css.attendeesStatus}>
+          <p style={{ margin: 0 }}>Error al cargar: {state.error}</p>
+          {state.errorHint ? (
+            <p style={{ margin: '6px 0 0', fontSize: '12.5px', color: '#777' }}>
+              {state.errorHint}
+            </p>
+          ) : null}
+        </div>
       ) : attendees.length === 0 ? (
         <p className={css.attendeesEmpty}>
           Aún no hay boletos vendidos. Cuando alguien compre, aparecerá aquí

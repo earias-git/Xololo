@@ -13,6 +13,7 @@
 
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { getAdminEmails } = require('../api-util/adminGate');
 const { sendEventNotifications } = require('../api-util/notifications');
 const {
   signTicketToken,
@@ -27,14 +28,18 @@ module.exports = async (req, res) => {
   if (!txId) return res.status(400).json({ error: 'invalid_request' });
 
   let userId;
+  let userEmail;
   try {
     const sdk = getSdk(req, res);
     const uResp = await sdk.currentUser.show();
     userId = uResp.data.data?.id?.uuid;
+    userEmail = String(uResp.data.data?.attributes?.email || '').toLowerCase();
   } catch (e) {
     return res.status(401).json({ error: 'unauthorized' });
   }
   if (!userId) return res.status(401).json({ error: 'unauthorized' });
+  const adminEmails = getAdminEmails();
+  const isAdmin = !!userEmail && adminEmails.has(userEmail);
 
   const isdk = getIntegrationSdk();
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
@@ -48,8 +53,18 @@ module.exports = async (req, res) => {
     const tx = txResp.data.data;
     if (!tx) return res.status(404).json({ error: 'tx_not_found' });
     const providerId = tx.relationships?.provider?.data?.id?.uuid;
-    if (providerId !== userId) {
-      return res.status(403).json({ error: 'not_owner' });
+    if (providerId !== userId && !isAdmin) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[seller-event-ticket-send] not_owner — user',
+        userId?.slice(0, 8) + '…',
+        'vs provider',
+        providerId?.slice(0, 8) + '…'
+      );
+      return res.status(403).json({
+        error: 'not_owner',
+        hint: 'Debes estar logueado como el organizador del evento.',
+      });
     }
     const included = txResp.data.included || [];
     const listing = included.find(i => i.type === 'listing');

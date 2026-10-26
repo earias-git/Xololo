@@ -29,6 +29,7 @@
 
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { getAdminEmails } = require('../api-util/adminGate');
 const { verifyTicketToken } = require('../api-util/eventTicket');
 
 module.exports = async (req, res) => {
@@ -66,8 +67,20 @@ module.exports = async (req, res) => {
     if (!tx) return res.status(404).json({ error: 'tx_not_found' });
 
     const providerId = tx.relationships?.provider?.data?.id?.uuid;
-    if (providerId !== userId) {
-      return res.status(403).json({ error: 'not_owner' });
+    const adminEmails = getAdminEmails();
+    const isAdmin = !!userEmail && adminEmails.has(String(userEmail).toLowerCase());
+    if (providerId !== userId && !isAdmin) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[event-check-in] not_owner — user',
+        userId?.slice(0, 8) + '…',
+        'vs provider',
+        providerId?.slice(0, 8) + '…'
+      );
+      return res.status(403).json({
+        error: 'not_owner',
+        hint: 'El QR es de un evento de otro organizador. Debes estar logueado con la cuenta correcta para registrar check-ins.',
+      });
     }
 
     const included = txResp.data.included || [];

@@ -19,8 +19,9 @@
 //   }
 //   401 → unauthorized · 403 → not_owner · 400 → not_an_event
 
-const { getSdk } = require('../api-util/sdk');
+const { getSdk, getTrustedSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { getAdminEmails } = require('../api-util/adminGate');
 
 const CANCELED_STATES = new Set(['canceled', 'refunded', 'disputed']);
 const PER_PAGE = 100;
@@ -32,13 +33,26 @@ module.exports = async (req, res) => {
   const listingId = String(req.query?.listingId || '').trim();
   if (!listingId) return res.status(400).json({ error: 'invalid_request' });
 
+  // XOLOLO: usamos getTrustedSdk (JWT) — es más confiable que getSdk que
+  // puede fallar silenciosamente si falta refresh del access token.
   let userId;
+  let userEmail;
   try {
-    const sdk = getSdk(req, res);
-    const uResp = await sdk.currentUser.show();
+    const trustedSdk = await getTrustedSdk(req);
+    const uResp = await trustedSdk.currentUser.show();
     userId = uResp.data.data?.id?.uuid;
+    userEmail = String(uResp.data.data?.attributes?.email || '').toLowerCase();
   } catch (e) {
-    return res.status(401).json({ error: 'unauthorized' });
+    // Fallback: intenta con getSdk clásico por si el browser no tiene JWT
+    // (p.ej. caches viejos).
+    try {
+      const sdk = getSdk(req, res);
+      const uResp = await sdk.currentUser.show();
+      userId = uResp.data.data?.id?.uuid;
+      userEmail = String(uResp.data.data?.attributes?.email || '').toLowerCase();
+    } catch (_) {
+      return res.status(401).json({ error: 'unauthorized' });
+    }
   }
   if (!userId) return res.status(401).json({ error: 'unauthorized' });
 
@@ -50,8 +64,28 @@ module.exports = async (req, res) => {
     const lResp = await isdk.listings.show({ id: listingId });
     const listing = lResp.data.data;
     const authorId = listing.relationships?.author?.data?.id?.uuid;
-    if (authorId !== userId) {
-      return res.status(403).json({ error: 'not_owner' });
+    // XOLOLO: permite acceso también a admins (XOLOLO_ADMIN_EMAILS) para
+    // dar soporte/moderar un evento ajeno. Mismo patrón que otros endpoints
+    // seller-only con escape hatch admin.
+    const adminEmails = getAdminEmails();
+    const isAdmin = !!userEmail && adminEmails.has(userEmail);
+    if (authorId !== userId && !isAdmin) {
+      // Log detallado para diagnóstico sin filtrar IDs completos al cliente.
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[seller-event-attendees] not_owner — user',
+        userId?.slice(0, 8) + '…',
+        'vs author',
+        authorId?.slice(0, 8) + '…',
+        'listing',
+        listingId?.slice(0, 8) + '…'
+      );
+      return res.status(403).json({
+        error: 'not_owner',
+        hint:
+          'Debes estar logueado con la cuenta del organizador del evento. ' +
+          'Si eres el dueño, revisa que no estés en otra sesión.',
+      });
     }
     const pd = listing.attributes?.publicData || {};
     if (!pd.isEvent) {
