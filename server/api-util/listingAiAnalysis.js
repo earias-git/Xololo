@@ -82,10 +82,14 @@ const analyzeImage = async ({ imageUrl, listingTitle, listingType, category }) =
     recordMetric: usage => recordAiCall({ purpose: 'imageAnalysis', usage }),
   });
   // Normaliza campos opcionales ausentes del output del modelo.
+  // XOLOLO: v2 agrega moderation.category (slug) + recommendations
+  // {quality, composition, trust} para dar al seller sugerencias
+  // accionables sobre la foto.
   return {
     tags: result.tags || {},
     moderation: {
       status: result.moderation?.status || 'safe',
+      category: result.moderation?.category || null,
       reasons: Array.isArray(result.moderation?.reasons) ? result.moderation.reasons : [],
       confidence: typeof result.moderation?.confidence === 'number'
         ? result.moderation.confidence
@@ -93,6 +97,13 @@ const analyzeImage = async ({ imageUrl, listingTitle, listingType, category }) =
       notes: result.moderation?.notes || '',
     },
     autoDescription: result.autoDescription || '',
+    recommendations: {
+      quality: Array.isArray(result.recommendations?.quality) ? result.recommendations.quality : [],
+      composition: Array.isArray(result.recommendations?.composition)
+        ? result.recommendations.composition
+        : [],
+      trust: Array.isArray(result.recommendations?.trust) ? result.recommendations.trust : [],
+    },
     notes: result.notes || '',
   };
 };
@@ -144,6 +155,15 @@ const aggregatePerImage = perImage => {
   let hasBlock = false;
   let hasWarn = false;
 
+  // XOLOLO: también agregamos category del moderation (de la primera
+  // imagen bloqueada, para que /ops sepa qué tipo de ilícito) +
+  // recomendaciones de todas las imágenes para que el seller tenga
+  // consejos accionables.
+  const allRecQuality = [];
+  const allRecComposition = [];
+  const allRecTrust = [];
+  let blockCategory = null;
+
   for (const [imageId, data] of entries) {
     const t = data.tags || {};
     if (Array.isArray(t.objects)) allObjects.push(...t.objects);
@@ -151,13 +171,20 @@ const aggregatePerImage = perImage => {
     if (Array.isArray(t.materials)) allMaterials.push(...t.materials);
     if (Array.isArray(t.keywords)) allKeywords.push(...t.keywords);
 
+    const r = data.recommendations || {};
+    if (Array.isArray(r.quality)) allRecQuality.push(...r.quality);
+    if (Array.isArray(r.composition)) allRecComposition.push(...r.composition);
+    if (Array.isArray(r.trust)) allRecTrust.push(...r.trust);
+
     const mod = data.moderation || {};
     if (mod.status === 'block') {
       hasBlock = true;
       blockReasons.push(...(mod.reasons || []));
+      if (!blockCategory && mod.category) blockCategory = mod.category;
       flaggedImages.push({
         imageId,
         status: 'block',
+        category: mod.category || null,
         reasons: mod.reasons || [],
         notes: mod.notes || '',
       });
@@ -167,6 +194,7 @@ const aggregatePerImage = perImage => {
       flaggedImages.push({
         imageId,
         status: 'warn',
+        category: mod.category || null,
         reasons: mod.reasons || [],
         notes: mod.notes || '',
       });
@@ -186,11 +214,17 @@ const aggregatePerImage = perImage => {
     },
     moderation: {
       status: hasBlock ? 'block' : hasWarn ? 'warn' : 'safe',
+      category: blockCategory,
       blockReasons: dedupLower(blockReasons),
       warnReasons: dedupLower(warnReasons),
       flaggedImages,
     },
     autoDescription: first.autoDescription || '',
+    recommendations: {
+      quality: dedupLower(allRecQuality),
+      composition: dedupLower(allRecComposition),
+      trust: dedupLower(allRecTrust),
+    },
   };
 };
 
@@ -324,14 +358,41 @@ const analyzeListing = async ({ listingId, force = false } = {}) => {
     perImage: mergedPerImage,
   };
 
+  // XOLOLO: persistir TAMBIÉN publicData.xololoLegalModeration para que
+  // los flags visuales aparezcan en /ops/legal-moderation (misma cola que
+  // los flags de texto). Shape idéntico al de listingLegalityAi para
+  // consistencia.
+  const nowIso = new Date().toISOString();
+  const modStatus = aggregated.moderation.status;
+  const asLegalMod =
+    modStatus === 'block' || modStatus === 'warn'
+      ? {
+          verdict: modStatus === 'block' ? 'illegal' : 'needs_review',
+          category: aggregated.moderation.category || 'image_moderation',
+          confidence: 75, // umbral mínimo para persistir block del prompt
+          reasoning:
+            modStatus === 'block'
+              ? `Imagen con contenido prohibido: ${aggregated.moderation.blockReasons.join(', ')}`
+              : `Imagen flagged para revisión: ${aggregated.moderation.warnReasons.join(', ')}`,
+          evidence: (aggregated.moderation.flaggedImages || []).flatMap(f =>
+            (f.reasons || []).slice(0, 3)
+          ),
+          source: 'image_analysis',
+          moderatedAt: nowIso,
+        }
+      : null;
+
+  const publicDataUpdate = { aiAnalysis };
+  if (asLegalMod) publicDataUpdate.xololoLegalModeration = asLegalMod;
+
   await sdk.listings.update({
     id: listingId,
-    publicData: { aiAnalysis },
+    publicData: publicDataUpdate,
   });
 
   // 7. Aplicar política de moderación.
   let moderationAction = 'none';
-  if (aggregated.moderation.status === 'block') {
+  if (modStatus === 'block') {
     try {
       await sdk.listings.close({ id: listingId });
       moderationAction = 'closed';
@@ -340,12 +401,58 @@ const analyzeListing = async ({ listingId, force = false } = {}) => {
         `[listingAiAnalysis] listing ${listingId} CLOSED by moderation. Reasons:`,
         aggregated.moderation.blockReasons.join(', ')
       );
+      // XOLOLO: notificar al seller con el mismo evento que usa el flujo
+      // de texto (listing.legality_blocked). Fire-and-forget — fallo no
+      // bloquea el pipeline.
+      try {
+        // eslint-disable-next-line global-require
+        const { sendEventNotifications } = require('./notifications');
+        // eslint-disable-next-line global-require
+        const { getIntegrationSdk } = require('./integrationSdk');
+        const isdk = getIntegrationSdk();
+        if (isdk) {
+          const freshResp = await isdk.listings.show({
+            id: listingId,
+            include: ['author'],
+          });
+          const fresh = freshResp.data.data;
+          const author = (freshResp.data.included || []).find(i => i.type === 'user');
+          const baseUrl = process.env.ROOT_URL || 'https://xololo.mx';
+          const slug = fresh?.attributes?.publicData?.slug || listingId;
+          sendEventNotifications('listing.legality_blocked', {
+            seller: {
+              id: author?.id?.uuid,
+              email: author?.attributes?.email,
+              name:
+                author?.attributes?.profile?.displayName ||
+                author?.attributes?.profile?.firstName ||
+                'vendedor',
+            },
+            listing: {
+              id: listingId,
+              title: fresh?.attributes?.title || '(sin título)',
+              url: `${baseUrl}/l/${slug}/${listingId}`,
+              editUrl: `${baseUrl}/l/${slug}/${listingId}/edit/photos`,
+            },
+            moderation: {
+              category: asLegalMod.category,
+              reasoning: asLegalMod.reasoning,
+            },
+          }).catch(e => {
+            // eslint-disable-next-line no-console
+            console.warn('[listingAiAnalysis] notify failed:', e?.message);
+          });
+        }
+      } catch (notifErr) {
+        // eslint-disable-next-line no-console
+        console.warn('[listingAiAnalysis] notify build failed:', notifErr?.message);
+      }
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('[listingAiAnalysis] closeListing failed:', err?.message);
       moderationAction = 'close_failed';
     }
-  } else if (aggregated.moderation.status === 'warn') {
+  } else if (modStatus === 'warn') {
     moderationAction = 'flagged';
   }
 

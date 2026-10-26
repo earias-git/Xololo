@@ -129,6 +129,12 @@ const EditListingTextPanel = props => {
     suggestions: null,
     error: null,
   });
+
+  // XOLOLO: recomendaciones sobre las fotos del listing. Vienen de la
+  // IA visual que ya corrió (publicData.aiAnalysis.aggregated.recommendations).
+  // Las mostramos al seller como consejos accionables antes de publicar.
+  const photoRecommendations =
+    listing?.attributes?.publicData?.aiAnalysis?.aggregated?.recommendations || null;
   // Guard contra doble-dispatch del auto-trigger al mount (ej. strict mode).
   const autoTriggeredRef = useRef(false);
 
@@ -216,6 +222,7 @@ const EditListingTextPanel = props => {
         formId="EditListingTextForm"
         initialValues={state.initialValues}
         contextSummary={contextSummary}
+        photoRecommendations={photoRecommendations}
         aiState={ai}
         onRegenerateAi={runAi}
         onSubmit={values => {

@@ -16,6 +16,17 @@ import css from './EditListingTextPanel.module.css';
 // spinner; si hay resultados muestra 3 opciones de título + 3 de
 // descripción con botones "Usar este". Al click, llama a form.change
 // para hidratar el input correspondiente.
+const RecoList = ({ label, items }) => (
+  <div className={css.recoGroup}>
+    <p className={css.recoGroupLabel}>{label}</p>
+    <ul className={css.recoListItems}>
+      {items.map((t, i) => (
+        <li key={i}>{t}</li>
+      ))}
+    </ul>
+  </div>
+);
+
 const AiSuggestionsBlock = ({ aiState, onRegenerate, formApi }) => {
   if (!aiState) return null;
   const { loading, suggestions, error } = aiState;
@@ -174,6 +185,7 @@ const EditListingTextForm = props => {
           updateInProgress,
           saveActionMsg,
           contextSummary,
+          photoRecommendations,
           aiState,
           onRegenerateAi,
         } = formRenderProps;
@@ -194,6 +206,41 @@ const EditListingTextForm = props => {
                     <li key={i}>{line}</li>
                   ))}
                 </ul>
+              </div>
+            ) : null}
+
+            {/* XOLOLO: recomendaciones sobre las fotos (de aiAnalysis.
+                recommendations). Consejos accionables para mejorar
+                calidad, encuadre y confianza antes de publicar. */}
+            {photoRecommendations &&
+            (photoRecommendations.quality?.length > 0 ||
+              photoRecommendations.composition?.length > 0 ||
+              photoRecommendations.trust?.length > 0) ? (
+              <div className={css.recoBox}>
+                <p className={css.recoTitle}>
+                  📸 Recomendaciones de la IA sobre tus fotos
+                </p>
+                {photoRecommendations.quality?.length > 0 ? (
+                  <RecoList
+                    label="Calidad"
+                    items={photoRecommendations.quality}
+                  />
+                ) : null}
+                {photoRecommendations.composition?.length > 0 ? (
+                  <RecoList
+                    label="Encuadre"
+                    items={photoRecommendations.composition}
+                  />
+                ) : null}
+                {photoRecommendations.trust?.length > 0 ? (
+                  <RecoList
+                    label="Confianza"
+                    items={photoRecommendations.trust}
+                  />
+                ) : null}
+                <p className={css.recoHint}>
+                  Puedes volver al paso Fotos para reemplazar o añadir imágenes.
+                </p>
               </div>
             ) : null}
 

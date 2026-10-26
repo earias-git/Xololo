@@ -172,3 +172,55 @@
 .aiRetryBtn:hover {
   background: #f0f3ff;
 }
+
+/* XOLOLO: recomendaciones de la IA sobre las fotos */
+.recoBox {
+  padding: 16px 18px;
+  background: #fff7e6;
+  border-left: 3px solid #d98f00;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recoTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--colorGrey900);
+}
+
+.recoGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recoGroupLabel {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--colorGrey700, #555);
+}
+
+.recoListItems {
+  margin: 2px 0 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--colorGrey800, #333);
+}
+
+.recoListItems li {
+  margin: 2px 0;
+}
+
+.recoHint {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--colorGrey600, #777);
+  font-style: italic;
+}
