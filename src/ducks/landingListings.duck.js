@@ -204,22 +204,48 @@ const isUsedListing = (listing, authorsById) => {
   return false;
 };
 
+// XOLOLO: un listing es "evento con fecha fija" si publicData.isEvent=true.
+// Se persiste como listingType='product' real (pseudo-tipo event-ticket se
+// mapea al submit), por eso vive en el fetch de products — pero NO debe
+// aparecer en el riel "Productos destacados" (es un servicio temporal,
+// no un objeto físico). Lo re-canalizamos a la sección Servicios.
+const isEventListing = listing =>
+  listing?.attributes?.publicData?.isEvent === true;
+
 export const selectFeaturedProducts = state => {
   const products = state.landingListings.products;
   if (!products?.data?.length) return [];
   // "Productos destacados" sólo muestra nuevos o sin condición declarada.
   // Excluye los usados por las 3 señales de isUsedListing — fuente única
   // de verdad hasta que `condition` exista como field en Console.
+  // También excluye eventos (van a la sección Servicios).
   const authorsById = buildAuthorIndex(products.included);
   return products.data
-    .filter(l => !isUsedListing(l, authorsById))
+    .filter(l => !isUsedListing(l, authorsById) && !isEventListing(l))
     .map((l, i) => listingToFeaturedItem('product', l, products.included, i));
 };
 
 export const selectFeaturedServices = state => {
   const services = state.landingListings.services;
-  if (!services?.data?.length) return [];
-  return services.data.map((l, i) => listingToFeaturedItem('service', l, services.included, i));
+  const products = state.landingListings.products;
+  const items = [];
+  // 1) Servicios "clásicos" (service / service-day) fetched directo.
+  if (services?.data?.length) {
+    services.data.forEach((l, i) => {
+      items.push(listingToFeaturedItem('service', l, services.included, i));
+    });
+  }
+  // 2) Eventos (publicData.isEvent) que viven en el fetch de products
+  //    pero conceptualmente son "servicios con fecha fija". Hasta que
+  //    tengamos volumen suficiente para abrir una sección "Eventos"
+  //    propia en el landing, los agrupamos acá.
+  if (products?.data?.length) {
+    products.data.forEach((l, i) => {
+      if (!isEventListing(l)) return;
+      items.push(listingToFeaturedItem('service', l, products.included, i));
+    });
+  }
+  return items;
 };
 
 export const selectFeaturedUsed = state => {
