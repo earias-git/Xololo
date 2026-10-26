@@ -181,5 +181,6 @@ export { default as XololoShippingMethodSelector } from './XololoShippingMethodS
 export { default as ShippingQuoteFreight } from './ShippingQuoteFreight/ShippingQuoteFreight';
 export { default as AddToCartCta } from './AddToCartCta/AddToCartCta';
 export { default as CartIndicator } from './CartIndicator/CartIndicator';
+export { default as LocationPill } from './LocationPill/LocationPill';
 export { default as VerifiedBadge } from './VerifiedBadge/VerifiedBadge';
 export { default as ModalMissingInformation } from './ModalMissingInformation/ModalMissingInformation';
