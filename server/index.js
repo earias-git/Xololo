@@ -396,6 +396,17 @@ const server = app.listen(PORT, () => {
     } catch (e) {
       console.error('[xololo] tacit-acceptance job failed to start:', e.message); // eslint-disable-line no-console
     }
+
+    // XOLOLO: auto-cierre de listings tipo evento cuando pasa la
+    // fecha+hora de fin (con 1h de gracia). Cada 30 min.
+    try {
+      // eslint-disable-next-line global-require
+      const eventAutoClose = require('./jobs/event-auto-close');
+      eventAutoClose.start();
+      console.log('[xololo] event-auto-close job scheduled'); // eslint-disable-line no-console
+    } catch (e) {
+      console.error('[xololo] event-auto-close job failed to start:', e.message); // eslint-disable-line no-console
+    }
   }
 
   // XOLOLO F3 Sprint 2: arranca el agregador de tracking. Corre en
