@@ -47,6 +47,7 @@ const SearchPageWithGrid = loadable(() => import(/* webpackChunkName: "SearchPag
 const StripePayoutPage = loadable(() => import(/* webpackChunkName: "StripePayoutPage" */ '../containers/StripePayoutPage/StripePayoutPage'));
 const ManageStorePage = loadable(() => import(/* webpackChunkName: "ManageStorePage" */ '../containers/ManageStorePage/ManageStorePage'));
 const PromoteToCasualPage = loadable(() => import(/* webpackChunkName: "PromoteToCasualPage" */ '../containers/PromoteToCasualPage/PromoteToCasualPage'));
+const EventCheckInPage = loadable(() => import(/* webpackChunkName: "EventCheckInPage" */ '../containers/EventCheckInPage/EventCheckInPage'));
 const TermsOfServicePage = loadable(() => import(/* webpackChunkName: "TermsOfServicePage" */ '../containers/TermsOfServicePage/TermsOfServicePage'));
 const TransactionPage = loadable(() => import(/* webpackChunkName: "TransactionPage" */ '../containers/TransactionPage/TransactionPage'));
 const NoAccessPage = loadable(() => import(/* webpackChunkName: "NoAccessPage" */ '../containers/NoAccessPage/NoAccessPage'));
@@ -406,6 +407,15 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       name: 'PromoteToCasualPage',
       auth: true,
       component: PromoteToCasualPage,
+    },
+    {
+      // XOLOLO: página de check-in de eventos. Seller logueado escanea
+      // QR del asistente con cámara nativa → se abre esta URL con
+      // ?token=JWT, el server verifica y marca xololoEventCheckedIn.
+      path: '/event-check-in',
+      name: 'EventCheckInPage',
+      auth: true,
+      component: EventCheckInPage,
     },
     {
       // XOLOLO Cart.4: página del carrito del seller identificado por

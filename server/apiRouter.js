@@ -51,6 +51,7 @@ const sellerTaxAiClassify = require('./api/seller-tax-ai-classify');
 const sellerListingLegalityCheck = require('./api/seller-listing-legality-check');
 const sellerEventAttendees = require('./api/seller-event-attendees');
 const sellerEventTicketSend = require('./api/seller-event-ticket-send');
+const eventCheckIn = require('./api/event-check-in');
 const sellerHasListings = require('./api/seller-has-listings');
 const stripeBillingWebhook = require('./api/webhooks/stripe-billing');
 const skydropxWebhook = require('./api/webhooks/skydropx');
@@ -346,6 +347,8 @@ router.post('/seller-listing-legality-check', bodyParser.json(), sellerListingLe
 router.get('/seller-event-attendees', sellerEventAttendees);
 // XOLOLO: envía/reenvía boleto digital con QR embedded al buyer.
 router.post('/seller-event-ticket-send', bodyParser.json(), sellerEventTicketSend);
+// XOLOLO: verifica un boleto QR en la puerta del evento. Seller logueado.
+router.post('/event-check-in', bodyParser.json(), eventCheckIn);
 
 // XOLOLO: ¿este seller ya tiene alguna listing publicada? Usado por
 // RequireSellerOnboarding para distinguir seller nuevo vs establecido.
