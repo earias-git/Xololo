@@ -124,6 +124,12 @@ const MATRIX = {
   'listing.legality_blocked': {
     seller: ['email', 'push'],
   },
+  // XOLOLO Eventos: boleto digital con QR enviado al buyer. El template
+  // de email toma ticketBodyHtml del context (ya pre-renderizado por
+  // seller-event-ticket-send.js con QR embedded data URL).
+  'event.ticket_issued': {
+    buyer: ['email'],
+  },
 };
 
 const CHANNELS = { email, push, whatsapp };

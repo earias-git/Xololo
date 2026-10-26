@@ -1034,3 +1034,25 @@
   font-size: 12.5px;
   color: var(--colorGrey600, #777);
 }
+
+.attendeesSendBtn {
+  padding: 5px 10px;
+  background: #fff;
+  color: #1a73e8;
+  border: 1px solid #1a73e8;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 32px;
+}
+
+.attendeesSendBtn:hover:not(:disabled) {
+  background: #f0f3ff;
+}
+
+.attendeesSendBtn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}

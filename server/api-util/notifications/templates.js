@@ -485,6 +485,23 @@ const TEMPLATES = {
       },
     },
   },
+  // XOLOLO Eventos: boleto digital con QR. El bodyHtml ya viene
+  // armado desde seller-event-ticket-send.js (con QR embedded) — el
+  // template sólo lo pasa through. bodyText es un fallback legible.
+  'event.ticket_issued': {
+    email: {
+      buyer: {
+        subject: '🎫 Tu boleto para {listing.title}',
+        bodyHtml: '{ticketBodyHtml}',
+        bodyText:
+          'Hola {buyer.name},\n\n' +
+          'Este es tu boleto digital para el evento "{listing.title}".\n\n' +
+          'Para abrirlo con el QR escaneable, ve este correo en un cliente que renderee HTML ' +
+          '(Gmail, Outlook, Apple Mail). Muestra el QR en la puerta del evento desde tu celular.\n\n' +
+          'Equipo Xololo',
+      },
+    },
+  },
   'listing.legality_blocked': {
     email: {
       seller: {

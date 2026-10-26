@@ -67,6 +67,7 @@ const SectionEventAttendeesMaybe = props => {
     data: null,
     error: null,
   });
+  const [sendingTxId, setSendingTxId] = useState(null);
 
   const load = useCallback(async () => {
     if (!listingId) return;
@@ -92,9 +93,34 @@ const SectionEventAttendeesMaybe = props => {
     if (isEvent && isOwner && listingId) load();
   }, [isEvent, isOwner, listingId, load]);
 
+  const sendTicket = async txId => {
+    setSendingTxId(txId);
+    try {
+      const res = await fetch(`${apiBaseUrl()}/api/seller-event-ticket-send`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ txId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(`No se pudo enviar: ${data?.error || res.status}${data?.details ? '\n' + data.details : ''}`);
+      } else {
+        alert(`Boleto enviado a ${data.sentTo}.`);
+      }
+    } catch (e) {
+      alert(`Error: ${e?.message || 'network'}`);
+    } finally {
+      setSendingTxId(null);
+    }
+  };
+
   // Guard: no renderiza nada si no es evento o no es el owner.
   if (!isEvent || !isOwner) return null;
 
+  // ticket_qr flag en publicData.event. Si está activo, mostramos botón
+  // "Enviar boleto" por fila; si no, el seller usa la lista de nombres.
+  const ticketQrEnabled = publicData.event?.ticket_qr === true;
   const d = state.data;
   const attendees = d?.attendees || [];
   const capacity = Number(d?.capacity || 0);
@@ -160,6 +186,7 @@ const SectionEventAttendeesMaybe = props => {
               <th>Boletos</th>
               <th>Pagó</th>
               <th>Compró</th>
+              {ticketQrEnabled ? <th>Boleto QR</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -170,6 +197,19 @@ const SectionEventAttendeesMaybe = props => {
                 <td>{a.quantity}</td>
                 <td>${a.totalPaidMxn} MXN</td>
                 <td>{formatDate(a.purchasedAt)}</td>
+                {ticketQrEnabled ? (
+                  <td>
+                    <button
+                      type="button"
+                      className={css.attendeesSendBtn}
+                      disabled={sendingTxId === a.txId || !a.buyerEmail}
+                      onClick={() => sendTicket(a.txId)}
+                      title={!a.buyerEmail ? 'Falta email del buyer' : ''}
+                    >
+                      {sendingTxId === a.txId ? 'Enviando…' : '📧 Enviar / reenviar'}
+                    </button>
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>
