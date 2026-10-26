@@ -68,6 +68,23 @@ const getInitialValues = props => {
   };
 };
 
+// XOLOLO: dispara análisis de imagen si aún no corrió (sincrono: false
+// para esperar los tags). Idempotente — el server devuelve lo cached si
+// ya existe aiAnalysis en el listing.
+const runImageAnalysis = async listingId => {
+  try {
+    await fetch(`${apiBaseUrl()}/api/ai/analyze-listing`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId, async: false }),
+    });
+  } catch (_) {
+    // Fail-open — si falla, la sugerencia de texto corre sin tags y
+    // genera con lo que haya (atributos + categoría).
+  }
+};
+
 // XOLOLO: llama al endpoint de sugerencias y devuelve
 // {titleSuggestions, descriptionSuggestions, seo} o null si falla.
 const fetchAiSuggestions = async ({ listingId, currentTitle, currentDescription, attributesSchema }) => {
@@ -127,9 +144,22 @@ const EditListingTextPanel = props => {
     publicData.subcategory
   );
 
+  // Chequea si el listing ya tiene aiAnalysis.aggregated.tags.
+  // El pipeline de visión corre al subir fotos pero no siempre está hidratado
+  // en este estado; para asegurar que la IA de texto tenga tags, lo
+  // disparamos on-demand sincrono si falta.
+  const hasVisualAnalysis =
+    !!listing?.attributes?.publicData?.aiAnalysis?.aggregated?.tags;
+
   const runAi = useCallback(async () => {
     if (!listing?.id?.uuid) return;
     setAi({ loading: true, settled: false, suggestions: null, error: null });
+    // Si no hay tags de visión, los generamos primero. Esto hace que la
+    // IA de texto pueda describir elementos VISUALES del flyer/foto que
+    // el seller no mencionó en atributos. ~5-10s extra.
+    if (!hasVisualAnalysis) {
+      await runImageAnalysis(listing.id.uuid);
+    }
     const result = await fetchAiSuggestions({
       listingId: listing.id.uuid,
       currentTitle: state.initialValues.title,
@@ -141,7 +171,7 @@ const EditListingTextPanel = props => {
     } else {
       setAi({ loading: false, settled: true, suggestions: null, error: result.error });
     }
-  }, [listing?.id?.uuid, state.initialValues.title, state.initialValues.description, attributesSchema]);
+  }, [listing?.id?.uuid, state.initialValues.title, state.initialValues.description, attributesSchema, hasVisualAnalysis]);
 
   // XOLOLO: auto-trigger al mount SI (a) hay listing, (b) la descripción
   // está vacía o es muy corta (<30 chars = probablemente placeholder de

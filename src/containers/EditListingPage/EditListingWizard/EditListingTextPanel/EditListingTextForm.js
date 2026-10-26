@@ -24,10 +24,12 @@ const AiSuggestionsBlock = ({ aiState, onRegenerate, formApi }) => {
       <div className={css.aiBox}>
         <div className={css.aiHeader}>
           <span className={css.aiSparkle} aria-hidden="true">✨</span>
-          <span>La IA está escribiendo tu anuncio…</span>
+          <span>La IA está analizando tus fotos y escribiendo tu anuncio…</span>
         </div>
         <p className={css.aiHint}>
-          Usa tus características declaradas, categoría y fotos. Tarda ~5-15 segundos.
+          Primero analiza las fotos (lo que las cámaras ven), después usa
+          tus características + categoría para armar título y descripción.
+          Tarda ~10-20 segundos.
         </p>
       </div>
     );
@@ -44,7 +46,26 @@ const AiSuggestionsBlock = ({ aiState, onRegenerate, formApi }) => {
       </div>
     );
   }
-  if (!suggestions) return null;
+  // XOLOLO: si aún no corrió, mostramos CTA explícito para iniciar.
+  // Antes esto no aparecía cuando description ya tenía texto → el seller
+  // no veía manera de disparar la IA desde esta pantalla.
+  if (!suggestions) {
+    return (
+      <div className={css.aiBox}>
+        <div className={css.aiHeader}>
+          <span className={css.aiSparkle} aria-hidden="true">✨</span>
+          <span>¿Quieres que la IA te sugiera título y descripción?</span>
+        </div>
+        <p className={css.aiHint}>
+          Analiza tus fotos + atributos declarados y propone 3 opciones
+          de cada uno. Puedes editar o aceptar con un click.
+        </p>
+        <button type="button" className={css.aiOptionBtn} onClick={onRegenerate}>
+          ✨ Generar con IA
+        </button>
+      </div>
+    );
+  }
   const titles = suggestions.titleSuggestions || [];
   const descriptions = suggestions.descriptionSuggestions || [];
   const applyTitle = text => formApi.change('title', text);
