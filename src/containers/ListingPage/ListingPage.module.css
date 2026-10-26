@@ -843,3 +843,76 @@
   width: 100%;
   height: 100%;
 }
+
+/* XOLOLO: banner de evento (publicData.isEvent) */
+.eventBanner {
+  margin: 16px 0 24px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, #e7f3ff 0%, #f3e8ff 100%);
+  border-radius: 12px;
+  border-left: 4px solid #1a73e8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eventBannerHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.eventBannerBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #1a73e8;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.eventBannerModality {
+  padding: 3px 10px;
+  background: rgba(26, 115, 232, 0.1);
+  color: #1a4bb8;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.eventBannerWhen {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.eventBannerWhen strong {
+  font-weight: 700;
+}
+
+.eventBannerWhere,
+.eventBannerIncludes,
+.eventBannerMinAge {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.eventBannerWhere a {
+  color: #1a4bb8;
+  text-decoration: underline;
+}
+
+.eventBannerSeats,
+.eventBannerSoldOut {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.eventBannerSoldOut {
+  color: #b00020;
+}

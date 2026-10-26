@@ -53,6 +53,7 @@ import {
 import SectionHero from './SectionHero';
 import SectionReviews from './SectionReviews';
 import SectionAuthorMaybe from './SectionAuthorMaybe';
+import SectionEventMaybe from './SectionEventMaybe';
 import SectionMapMaybe from './SectionMapMaybe';
 import CustomListingFields from './CustomListingFields';
 import Notifications from './Notifications/Notifications';
@@ -312,6 +313,11 @@ export const ListingPageComponent = props => {
                 </H3>
               )}
             </div>
+            {/* XOLOLO: banner evento. Ver SectionEventMaybe. */}
+            <SectionEventMaybe
+              publicData={publicData}
+              currentStock={currentListing?.currentStock?.attributes?.quantity}
+            />
             {showDescription && <SectionText text={description} showAsIngress />}
 
             <CustomListingFields

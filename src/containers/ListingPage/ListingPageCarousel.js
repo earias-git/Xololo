@@ -54,6 +54,7 @@ import Notifications from './Notifications/Notifications';
 import SectionReviews from './SectionReviews';
 import SectionAuthorMaybe from './SectionAuthorMaybe';
 import SectionMapMaybe from './SectionMapMaybe';
+import SectionEventMaybe from './SectionEventMaybe';
 import SectionGallery from './SectionGallery';
 import CustomListingFields from './CustomListingFields';
 import ListingPageAccessWrapper from './ListingPageAccessWrapper';
@@ -298,6 +299,13 @@ export const ListingPageComponent = props => {
                 />
               </div>
             ) : null}
+            {/* XOLOLO: banner prominente para listings tipo Evento. Aparece
+                ANTES de la descripción porque la fecha + lugar es lo primero
+                que el buyer necesita saber. Se auto-oculta si !isEvent. */}
+            <SectionEventMaybe
+              publicData={publicData}
+              currentStock={currentListing?.currentStock?.attributes?.quantity}
+            />
             {showDescription && <SectionText text={description} showAsIngress />}
 
             <CustomListingFields

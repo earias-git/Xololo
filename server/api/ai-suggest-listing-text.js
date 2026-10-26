@@ -79,6 +79,10 @@ module.exports = async (req, res) => {
     const condition = pd.condition || null;
     const listingType = pd.listingType || null;
     const attributes = pd.attributes || {};
+    // XOLOLO (evento): si publicData.isEvent, el prompt genera título
+    // ML-style con fecha + lugar (ver aiPrompts.js eventBlock).
+    const isEvent = pd.isEvent === true;
+    const event = isEvent ? pd.event || {} : null;
 
     // XOLOLO (PR 4): el cliente envía attributesSchema (resuelto desde
     // src/config/listingAttributes.js) en el body. No lo re-resolvemos
@@ -103,6 +107,8 @@ module.exports = async (req, res) => {
             aiAnalysisTags,
             attributes,
             attributesSchema,
+            isEvent,
+            event,
           }),
         },
       ],

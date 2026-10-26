@@ -75,6 +75,7 @@ const LISTING_TEXT_SUGGEST_V1 = {
     listingType, category, subcategory, condition,
     currentTitle, currentDescription,
     aiAnalysisTags, attributes, attributesSchema,
+    isEvent, event,
   }) => {
     // XOLOLO (PR 4): formatea atributos declarados por el seller como
     // "label: valor" para que la IA los use directo en título ML-style.
@@ -101,6 +102,32 @@ const LISTING_TEXT_SUGGEST_V1 = {
       ? `Tags detectados por IA en las fotos (contexto adicional, lo que la cámara ve):\n${JSON.stringify(aiAnalysisTags, null, 2)}`
       : '(No hay análisis de IA en las fotos aún — ignora esta sección.)';
 
+    // XOLOLO: contexto específico de evento. Si isEvent=true, el prompt
+    // debe generar título ML-style con fecha + lugar visible (patrón
+    // "Taller/Concierto X · DD mes · lugar"). Ejemplos reales de Eventbrite.
+    const eventBlock = isEvent && event
+      ? `
+IMPORTANTE — ESTE LISTING ES UN EVENTO CON FECHA FIJA:
+- Fecha: ${event.date_start || '(sin fecha)'}${event.time_start ? ` · ${event.time_start}` : ''}${event.date_end && event.date_end !== event.date_start ? ` – ${event.date_end}` : ''}${event.time_end ? ` – ${event.time_end}` : ''}
+- Lugar: ${event.location || '(sin lugar)'}
+- Modalidad: ${event.modality || 'presencial'}
+- Cupo: ${event.capacity || '(sin cupo)'} personas
+${event.includes ? `- Incluye: ${event.includes}` : ''}
+${event.min_age ? `- Edad mínima: ${event.min_age} años` : ''}
+
+Patrón de TÍTULO para eventos (ML/Eventbrite style, max 60 chars):
+"[Tipo evento] [Tema] · [Día abreviado] [DD mes] · [lugar corto]"
+Ejemplos:
+- "Taller Orquídeas en troncos · Vie 30 oct · Cuernavaca"
+- "Concierto jazz al atardecer · Sáb 15 nov · CDMX Roma Norte"
+- "Yoga aéreo nivel 1 · Dom 7 dic · Studio Zen Polanco"
+
+Patrón de DESCRIPCIÓN para eventos: 3-5 oraciones. Oración 1: qué es
+y qué aprenderán/vivirán. Oración 2: fecha + hora + ubicación clara.
+Oración 3: qué incluye. Oración 4: cupo limitado + call-to-action.
+`
+      : '(No es un evento con fecha fija — flow normal de producto/servicio.)';
+
     return `Un seller está editando un ${listingType === 'service' || listingType === 'service-day' ? 'servicio' : 'producto'} en Xololo. Quiere título + descripción que convierta en venta (estilo Mercado Libre: título compacto con marca+modelo+atributo clave).
 
 Contexto:
@@ -111,6 +138,8 @@ Contexto:
 ${attrsBlock}
 
 ${tagsBlock}
+
+${eventBlock}
 
 Devuelve este JSON (sin texto extra, primera palabra "{", última "}"):
 
