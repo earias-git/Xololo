@@ -6,6 +6,8 @@ import { FormattedMessage } from '../../util/reactIntl';
 import { parse } from '../../util/urlHelpers';
 import { makeGetListingsByIdSelector } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
+import { listingMatchesBuyerState } from '../../ducks/landingListings.duck';
+import { useBuyerLocation } from '../../hooks/useBuyerLocation';
 
 import { Page } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
@@ -48,6 +50,18 @@ const filterUsedListingsIfRequested = (listings, search) => {
     const pd = l?.attributes?.publicData || {};
     return pd.condition === 'used' || pd.taxClassification?.code === 'exento_9_iv';
   });
+};
+
+// XOLOLO Task #17: filtro client-side para `?nearYou=1`. El link
+// "Ver todo cerca" del landing llega acá y queremos restringir los
+// resultados a los que empatan con el estado del buyer. Usa la misma
+// lógica de parsing que el duck del landing para mantener coherencia.
+const filterNearYouIfRequested = (listings, search, buyerState) => {
+  if (!search || !search.includes('nearYou=1')) return listings;
+  if (!buyerState) return listings; // sin ubicación: no filtramos (muestra todo)
+  return (listings || []).filter(l =>
+    listingMatchesBuyerState(l, buyerState, null)
+  );
 };
 
 const MODAL_BREAKPOINT = 768; // Search is in modal on mobile layout
@@ -333,7 +347,11 @@ export class SearchPageComponent extends Component {
                 />
                 <SearchResultsPanel
                   className={css.searchListingsPanel}
-                  listings={filterUsedListingsIfRequested(listings, location.search)}
+                  listings={filterNearYouIfRequested(
+                    filterUsedListingsIfRequested(listings, location.search),
+                    location.search,
+                    this.props.buyerState
+                  )}
                   pagination={listingsAreLoaded ? pagination : null}
                   search={parse(location.search)}
                   isMapVariant={false}
@@ -370,6 +388,11 @@ const SearchPage = props => {
   );
   const scrollingDisabled = useSelector(state => isScrollingDisabled(state));
 
+  // XOLOLO Task #17: lee la ubicación del buyer para que, cuando la URL
+  // trae `?nearYou=1`, filtremos los listings al estado del buyer.
+  const { location: buyerLocation } = useBuyerLocation();
+  const buyerState = buyerLocation?.state || null;
+
   const onManageDisableScrolling = useCallback(
     (componentId, disableScrolling) =>
       dispatch(manageDisableScrolling(componentId, disableScrolling)),
@@ -387,6 +410,7 @@ const SearchPage = props => {
       searchInProgress={searchInProgress}
       searchListingsError={searchListingsError}
       searchParams={searchParams}
+      buyerState={buyerState}
       onManageDisableScrolling={onManageDisableScrolling}
     />
   );
