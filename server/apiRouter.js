@@ -47,6 +47,7 @@ const createSubscriptionCheckout = require('./api/create-subscription-checkout')
 const sellerSubscription = require('./api/seller-subscription');
 const sellerPayoutGate = require('./api/seller-payout-gate');
 const sellerPendingPayouts = require('./api/seller-pending-payouts');
+const geoip = require('./api/geoip');
 const sellerTaxAiClassify = require('./api/seller-tax-ai-classify');
 const sellerListingLegalityCheck = require('./api/seller-listing-legality-check');
 const sellerEventAttendees = require('./api/seller-event-attendees');
@@ -336,6 +337,9 @@ router.post('/seller-subscription', bodyParser.json(), sellerSubscription);
 router.get('/seller-payout-gate', sellerPayoutGate);
 // XOLOLO Track #27 Fase 2: lista de ventas con dinero retenido en Xololo.
 router.get('/seller-pending-payouts', sellerPendingPayouts);
+
+// XOLOLO Task #17: resuelve ubicación por IP del buyer (sin fricción).
+router.get('/geoip', geoip);
 // XOLOLO Track #39: el seller dispara el análisis de IA al declarar su
 // clasificación. Precarga aiReview para que Ops no lo haga manual.
 router.post('/seller-tax-ai-classify', bodyParser.json(), sellerTaxAiClassify);
