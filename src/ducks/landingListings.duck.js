@@ -204,6 +204,92 @@ const isUsedListing = (listing, authorsById) => {
   return false;
 };
 
+// XOLOLO Task #17: catálogo de estados MX con alias comunes.
+// Normalizador: minúsculas sin acentos, para comparar strings aunque la
+// fuente use "Michoacan" vs "Michoacán", "CDMX" vs "Ciudad de México", etc.
+const normalizeStr = s =>
+  String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim();
+
+// Mapa alias → nombre canónico. Las variantes que vemos en la vida real
+// vienen de ip-api.com (regionName) y de Google Places (address string).
+const STATE_ALIASES = {
+  'cdmx': 'ciudad de mexico',
+  'df': 'ciudad de mexico',
+  'd.f.': 'ciudad de mexico',
+  'distrito federal': 'ciudad de mexico',
+  'mexico city': 'ciudad de mexico',
+  'edomex': 'estado de mexico',
+  'estado de mexico': 'estado de mexico',
+  'estado de méxico': 'estado de mexico',
+  'edo. mex.': 'estado de mexico',
+  'edo mex': 'estado de mexico',
+  'baja california norte': 'baja california',
+  'bcs': 'baja california sur',
+  'bc': 'baja california',
+  'qroo': 'quintana roo',
+  'q. roo': 'quintana roo',
+  'nl': 'nuevo leon',
+  'slp': 'san luis potosi',
+};
+
+// Lista canónica normalizada — para substring match contra una dirección.
+const CANONICAL_STATES_NORM = [
+  'aguascalientes', 'baja california sur', 'baja california', 'campeche',
+  'chiapas', 'chihuahua', 'ciudad de mexico', 'coahuila', 'colima',
+  'durango', 'estado de mexico', 'guanajuato', 'guerrero', 'hidalgo',
+  'jalisco', 'michoacan', 'morelos', 'nayarit', 'nuevo leon', 'oaxaca',
+  'puebla', 'queretaro', 'quintana roo', 'san luis potosi', 'sinaloa',
+  'sonora', 'tabasco', 'tamaulipas', 'tlaxcala', 'veracruz', 'yucatan',
+  'zacatecas',
+];
+
+// XOLOLO: extrae el estado MX de un listing. Prioriza author.publicData.
+// sellerLocation.state (campo que el seller llenará en onboarding), y
+// como fallback parsea publicData.location.address del propio listing
+// (string tipo "Calle, Colonia, Cuernavaca, Morelos 62000, México").
+const extractListingState = (listing, authorsById) => {
+  // 1) author.publicData.sellerLocation.state
+  if (authorsById) {
+    const authorId = listing.relationships?.author?.data?.id?.uuid;
+    const author = authorId ? authorsById.get(authorId) : null;
+    const sellerState = author?.attributes?.profile?.publicData?.sellerLocation?.state;
+    if (sellerState) {
+      const norm = normalizeStr(sellerState);
+      return STATE_ALIASES[norm] || norm;
+    }
+  }
+  // 2) parse publicData.location.address
+  const addr = listing.attributes?.publicData?.location?.address;
+  if (!addr) return null;
+  const addrNorm = normalizeStr(addr);
+  // Ordenamos los nombres canónicos de más largo a más corto para que
+  // "baja california sur" matchee antes que "baja california".
+  const byLen = [...CANONICAL_STATES_NORM].sort((a, b) => b.length - a.length);
+  for (const st of byLen) {
+    if (addrNorm.includes(st)) return st;
+  }
+  // 3) intentar alias (ej. "CDMX")
+  for (const [alias, canonical] of Object.entries(STATE_ALIASES)) {
+    const re = new RegExp(`\\b${alias.replace(/\./g, '\\.')}\\b`);
+    if (re.test(addrNorm)) return canonical;
+  }
+  return null;
+};
+
+// XOLOLO: compara el estado de un listing con el estado del buyer (IP o
+// manual). Normaliza ambos y aplica aliases.
+export const listingMatchesBuyerState = (listing, buyerState, authorsById) => {
+  if (!buyerState) return false;
+  const buyerNorm = STATE_ALIASES[normalizeStr(buyerState)] || normalizeStr(buyerState);
+  const listingNorm = extractListingState(listing, authorsById);
+  if (!listingNorm) return false;
+  return listingNorm === buyerNorm;
+};
+
 // XOLOLO: un listing es "evento con fecha fija" si publicData.isEvent=true.
 // Se persiste como listingType='product' real (pseudo-tipo event-ticket se
 // mapea al submit), por eso vive en el fetch de products — pero NO debe
@@ -258,6 +344,41 @@ export const selectFeaturedUsed = state => {
   return used.data
     .filter(l => isUsedListing(l, authorsById))
     .map((l, i) => listingToFeaturedItem('used', l, used.included, i));
+};
+
+// XOLOLO Task #17: banda "Cerca de ti" en Landing.
+// Combina productos + servicios + usados cuyo estado coincide con el
+// del buyer (del hook useBuyerLocation). Devuelve [] si no hay match.
+// La UI muestra la banda sólo si length>0, así que es seguro llamarlo
+// aunque buyerState sea null.
+export const selectFeaturedNearYou = buyerState => state => {
+  if (!buyerState) return [];
+  const products = state.landingListings.products;
+  const services = state.landingListings.services;
+  const used = state.landingListings.used;
+  const items = [];
+  const seen = new Set();
+
+  const pushMatches = (bucket, kind) => {
+    if (!bucket?.data?.length) return;
+    const authorsById = buildAuthorIndex(bucket.included);
+    bucket.data.forEach((l, i) => {
+      if (seen.has(l.id.uuid)) return;
+      if (!listingMatchesBuyerState(l, buyerState, authorsById)) return;
+      // Si es evento o servicio real, usamos kind='service' para que
+      // el componente muestre "Reservar". Si es usado o producto, 'product'.
+      const resolvedKind = isEventListing(l) ? 'service' : kind;
+      items.push(listingToFeaturedItem(resolvedKind, l, bucket.included, i));
+      seen.add(l.id.uuid);
+    });
+  };
+
+  pushMatches(services, 'service');
+  pushMatches(products, 'product');
+  pushMatches(used, 'used');
+
+  // Máximo 12 ítems para no desbordar la banda.
+  return items.slice(0, 12);
 };
 
 // XOLOLO: expone el flag de loading para que la UI distinga "fetching"

@@ -3,7 +3,9 @@ import loadable from '@loadable/component';
 
 import { bool, object, array, func } from 'prop-types';
 import { compose } from 'redux';
-import { connect } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
+
+import { useBuyerLocation } from '../../hooks/useBuyerLocation';
 
 import { camelize } from '../../util/string';
 import { propTypes } from '../../util/types';
@@ -16,6 +18,7 @@ import {
   selectFeaturedProducts,
   selectFeaturedServices,
   selectFeaturedUsed,
+  selectFeaturedNearYou,
   selectLandingListingsLoading,
 } from '../../ducks/landingListings.duck';
 import { fetchLandingStores, selectLandingStores } from '../../ducks/landingStores.duck';
@@ -126,6 +129,18 @@ export const LandingPageComponent = props => {
   const usedToShow = featuredUsed?.length ? featuredUsed : null;
   const storesToShow = featuredStores?.length ? featuredStores : featuredStoresPlaceholder;
 
+  // XOLOLO Task #17: banda "Cerca de ti". Lee la ubicación del buyer
+  // (IP o CP manual) desde localStorage y filtra listings cuyo estado
+  // coincida. Si no hay match, nearYouItems=[] y la banda no se renderiza.
+  const { location: buyerLocation } = useBuyerLocation();
+  const nearYouItems = useSelector(selectFeaturedNearYou(buyerLocation?.state));
+  const nearYouCity = buyerLocation?.city;
+  const nearYouLabel = nearYouCity
+    ? `Cerca de ti · ${nearYouCity}`
+    : buyerLocation?.state
+      ? `Cerca de ti · ${buyerLocation.state}`
+      : 'Cerca de ti';
+
   return (
     <PageBuilder
       pageAssetsData={dataForBuilder}
@@ -149,6 +164,14 @@ export const LandingPageComponent = props => {
               7. PromoCards      → 8. Tiendas destacadas
               9. AppBand         → 10. Footer (lo pone PageBuilder) */}
           <XololearBand />
+          {nearYouItems?.length ? (
+            <FeaturedListings
+              title={nearYouLabel}
+              seeAllLabel="Ver todo cerca"
+              seeAllHref="/s?nearYou=1"
+              items={nearYouItems}
+            />
+          ) : null}
           <FeaturedListings
             title="Productos destacados"
             seeAllLabel="Ver todos los productos"
