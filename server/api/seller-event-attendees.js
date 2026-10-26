@@ -60,31 +60,46 @@ module.exports = async (req, res) => {
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
   try {
-    // 1) Trae listing + verifica ownership + que sea evento.
-    const lResp = await isdk.listings.show({ id: listingId });
+    // 1) Trae listing + include author para poder comparar email también.
+    const lResp = await isdk.listings.show({ id: listingId, include: ['author'] });
     const listing = lResp.data.data;
     const authorId = listing.relationships?.author?.data?.id?.uuid;
-    // XOLOLO: permite acceso también a admins (XOLOLO_ADMIN_EMAILS) para
-    // dar soporte/moderar un evento ajeno. Mismo patrón que otros endpoints
-    // seller-only con escape hatch admin.
+    const authorInc = (lResp.data.included || []).find(
+      i => i.type === 'user' && i.id?.uuid === authorId
+    );
+    const authorEmail = String(authorInc?.attributes?.email || '').toLowerCase();
+
     const adminEmails = getAdminEmails();
     const isAdmin = !!userEmail && adminEmails.has(userEmail);
-    if (authorId !== userId && !isAdmin) {
-      // Log detallado para diagnóstico sin filtrar IDs completos al cliente.
+    const uuidMatches = authorId === userId;
+    // XOLOLO: fallback adicional por email. Si por alguna razón los UUIDs
+    // no coinciden (ej. el user tiene 2 accounts Sharetribe con el mismo
+    // email, o hay desincronización entre JWT y Integration SDK), igual
+    // dejamos pasar si el email del user logueado coincide con el del author.
+    const emailMatches = !!userEmail && !!authorEmail && userEmail === authorEmail;
+
+    if (!uuidMatches && !emailMatches && !isAdmin) {
       // eslint-disable-next-line no-console
-      console.warn(
-        '[seller-event-attendees] not_owner — user',
-        userId?.slice(0, 8) + '…',
-        'vs author',
-        authorId?.slice(0, 8) + '…',
-        'listing',
-        listingId?.slice(0, 8) + '…'
-      );
+      console.warn('[seller-event-attendees] not_owner', {
+        listingId,
+        userId,
+        userEmail,
+        authorId,
+        authorEmail,
+      });
       return res.status(403).json({
         error: 'not_owner',
         hint:
           'Debes estar logueado con la cuenta del organizador del evento. ' +
           'Si eres el dueño, revisa que no estés en otra sesión.',
+      });
+    }
+    if (!uuidMatches && emailMatches) {
+      // eslint-disable-next-line no-console
+      console.info('[seller-event-attendees] matched by email, not uuid', {
+        listingId,
+        userId,
+        authorId,
       });
     }
     const pd = listing.attributes?.publicData || {};

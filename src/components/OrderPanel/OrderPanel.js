@@ -361,12 +361,18 @@ const OrderPanel = props => {
   const isKnownProcess = supportedProcessesInfo.map(info => info.name).includes(processName);
 
   const { pickupEnabled, shippingEnabled } = listing?.attributes?.publicData || {};
+  // XOLOLO: para eventos (publicData.isEvent) NO hay envío ni recolección
+  // — el buyer compra un boleto para presentarse en el lugar/fecha. Se
+  // elimina todo el bloque de delivery methods del formulario de compra.
+  const isEventListing = listing?.attributes?.publicData?.isEvent === true;
   // XOLOLO Envíos v2: computamos aquí los métodos v2 del listing para
   // pasarlos al ProductOrderForm. Si el listing tiene métodos v2, se
   // muestra el selector de 4 opciones AQUÍ (ListingPage) — el buyer
   // elige antes de "Comprar ahora". Si no, cae al selector legacy
-  // pickup/shipping.
-  const xoloShippingMethods = getShippingMethodsFromListing(listing);
+  // pickup/shipping. Para eventos se fuerza a null.
+  const xoloShippingMethods = isEventListing
+    ? null
+    : getShippingMethodsFromListing(listing);
   const xoloShippingMethodsEnabledCount = [
     xoloShippingMethods?.pickup?.enabled,
     xoloShippingMethods?.localDelivery?.enabled,
@@ -376,8 +382,10 @@ const OrderPanel = props => {
   const hasXoloShippingMethods = xoloShippingMethodsEnabledCount > 0;
 
   const listingTypeConfig = validListingTypes.find(conf => conf.listingType === listingType);
-  const displayShipping = displayDeliveryShipping(listingTypeConfig);
-  const displayPickup = displayDeliveryPickup(listingTypeConfig);
+  // XOLOLO: para eventos forzamos displayShipping/Pickup a false — ProductOrderForm
+  // deriva displayDeliveryMethod de estos flags para mostrar el selector legacy.
+  const displayShipping = isEventListing ? false : displayDeliveryShipping(listingTypeConfig);
+  const displayPickup = isEventListing ? false : displayDeliveryPickup(listingTypeConfig);
   const allowOrdersOfMultipleItems = [STOCK_MULTIPLE_ITEMS, STOCK_INFINITE_MULTIPLE_ITEMS].includes(
     listingTypeConfig?.stockType
   );
