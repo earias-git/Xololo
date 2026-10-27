@@ -32,6 +32,21 @@ const getJwtSecret = () => {
   return s;
 };
 
+// XOLOLO 2026-10-27: rotación de secreto sin invalidar sesiones vigentes.
+// Durante rotación:
+//   1. Setear XOLOLO_ADMIN_JWT_SECRET_PREV = valor viejo.
+//   2. Setear XOLOLO_ADMIN_JWT_SECRET = valor nuevo (openssl rand -hex 32).
+//   3. Deploy: sesiones nuevas firman con el nuevo; sesiones viejas (hasta
+//      8h) verifican con PREV.
+//   4. Tras 8h, eliminar XOLOLO_ADMIN_JWT_SECRET_PREV.
+const getJwtVerifySecrets = () => {
+  const current = getJwtSecret();
+  const prev = process.env.XOLOLO_ADMIN_JWT_SECRET_PREV;
+  const list = [current];
+  if (prev && prev.length >= 32 && prev !== current) list.push(prev);
+  return list.filter(Boolean);
+};
+
 // ============================================================
 // Password hashing
 // ============================================================
@@ -80,13 +95,16 @@ const signSession = operator => {
 };
 
 const verifySession = token => {
-  const secret = getJwtSecret();
-  if (!secret) return null;
-  try {
-    return jwt.verify(token, secret);
-  } catch (e) {
-    return null;
+  const secrets = getJwtVerifySecrets();
+  if (secrets.length === 0) return null;
+  for (const secret of secrets) {
+    try {
+      return jwt.verify(token, secret);
+    } catch (_) {
+      // Sigue con el siguiente secreto (soporte de rotación).
+    }
   }
+  return null;
 };
 
 /**

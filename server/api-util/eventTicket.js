@@ -14,17 +14,35 @@
 //   firma + marca metadata.xololoEventCheckedIn={at,txId} para evitar
 //   doble-uso.
 //
-// Secreto: reusamos EVENT_TICKET_SECRET (env) si existe, si no caemos
-// a OPERATOR_SESSION_SECRET como fallback (ya existe para JWT de Ops).
-// Si ninguna está, log warning y el feature se degrada (no se emite).
+// Secreto: EVENT_TICKET_SECRET (actual) para firmar; EVENT_TICKET_SECRET_PREV
+// (previo, si está) también se acepta al verificar — habilita rotación sin
+// invalidar los boletos ya emitidos.
+// Si ninguno de los _SECRET está, cae a OPERATOR_SESSION_SECRET como
+// fallback. Si no hay nada, el feature se degrada (no se emite ticket).
+//
+// Procedimiento de rotación (ver docs/SECURITY.md):
+//   1. Setear EVENT_TICKET_SECRET_PREV = valor actual de EVENT_TICKET_SECRET.
+//   2. Setear EVENT_TICKET_SECRET = nuevo valor random (openssl rand -hex 32).
+//   3. Deploy. Boletos nuevos firman con el nuevo; los viejos verifican con PREV.
+//   4. Tras TICKET_TTL_SECONDS (180 días), eliminar EVENT_TICKET_SECRET_PREV.
 
 const jwt = require('jsonwebtoken');
 const QRCode = require('qrcode');
 
+// Secreto para FIRMAR (siempre el actual).
 const TICKET_SECRET = () =>
   process.env.EVENT_TICKET_SECRET ||
   process.env.OPERATOR_SESSION_SECRET ||
   null;
+
+// Secretos para VERIFICAR (actual + previo si existe).
+const TICKET_VERIFY_SECRETS = () => {
+  const current = TICKET_SECRET();
+  const prev = process.env.EVENT_TICKET_SECRET_PREV;
+  const list = [current];
+  if (prev && prev !== current) list.push(prev);
+  return list.filter(Boolean);
+};
 
 const TICKET_TTL_SECONDS = 180 * 24 * 60 * 60; // 180 días desde emisión
 
@@ -44,17 +62,20 @@ const signTicketToken = ({ txId, listingId, buyerId }) => {
 
 /**
  * Verifica un token y devuelve el payload decodificado o null si falla.
+ * Durante rotación de secreto, acepta tanto el actual como el previo.
  */
 const verifyTicketToken = token => {
-  const secret = TICKET_SECRET();
-  if (!secret || !token) return null;
-  try {
-    const payload = jwt.verify(token, secret);
-    if (payload?.kind !== 'event_ticket') return null;
-    return payload;
-  } catch (_) {
-    return null;
+  if (!token) return null;
+  const secrets = TICKET_VERIFY_SECRETS();
+  for (const secret of secrets) {
+    try {
+      const payload = jwt.verify(token, secret);
+      if (payload?.kind === 'event_ticket') return payload;
+    } catch (_) {
+      // sigue intentando con el siguiente
+    }
   }
+  return null;
 };
 
 /**

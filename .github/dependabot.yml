@@ -1,0 +1,54 @@
+# XOLOLO 2026-10-27: Dependabot config.
+# Abre PRs automáticamente cuando hay actualizaciones de seguridad o
+# versiones nuevas de dependencias.
+#
+# Política:
+#   - Cada semana lunes 9am MX: PR con security updates abiertas en npm.
+#   - Agrupamos minor + patch en un solo PR por semana para no ruido.
+#   - Major updates: PRs individuales (necesitan review manual porque
+#     pueden romper APIs).
+#   - El repo es earias-git/Xololo (push a `xololo`, no al upstream
+#     del template Sharetribe).
+
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Mexico_City'
+    open-pull-requests-limit: 5
+    labels:
+      - 'dependencies'
+      - 'security'
+    reviewers:
+      - 'earias-git'
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+      include: 'scope'
+    groups:
+      # Minor + patch combinados por semana — menos ruido.
+      minor-and-patch:
+        update-types:
+          - 'minor'
+          - 'patch'
+    ignore:
+      # Sharetribe SDKs — upgradeamos a mano porque cambios en el shape
+      # del SDK afectan transaction processes.
+      - dependency-name: 'sharetribe-flex-sdk'
+      - dependency-name: 'sharetribe-flex-integration-sdk'
+
+  # GitHub Actions updates (si llegamos a tener workflows).
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Mexico_City'
+    labels:
+      - 'ci'
+      - 'dependencies'

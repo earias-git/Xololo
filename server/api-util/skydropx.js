@@ -71,6 +71,17 @@ const getRateSecret = () =>
   process.env.OPERATOR_SESSION_SECRET ||
   'xololo-dev-only-not-for-prod';
 
+// XOLOLO 2026-10-27: rotación. Durante el periodo de rotación, acepta
+// firmas hechas con el secreto previo (SHIPPING_RATE_SECRET_PREV) hasta
+// que caduquen por TTL (30 min).
+const getRateVerifySecrets = () => {
+  const current = getRateSecret();
+  const prev = process.env.SHIPPING_RATE_SECRET_PREV;
+  const list = [current];
+  if (prev && prev !== current) list.push(prev);
+  return list;
+};
+
 // Campos que el HMAC cubre. Si alguno cambia, la firma no coincide.
 // Timestamp evita replay con rate viejo (válido 30 min).
 const RATE_SIGNATURE_TTL_MS = 30 * 60 * 1000;
@@ -115,17 +126,16 @@ const verifyRateSignature = (rate, quotationId) => {
     rate.currency || 'MXN',
     Number(rate.signatureIssuedAt),
   ].join('|');
-  const expected = crypto.createHmac('sha256', getRateSecret())
-    .update(payload)
-    .digest('hex');
-  // timingSafeEqual exige que ambos buffers tengan la misma longitud.
+  // Prueba con cada secreto (actual + previo durante rotación).
   const a = Buffer.from(rate.signature, 'hex');
-  const b = Buffer.from(expected, 'hex');
-  if (a.length !== b.length) {
-    return { valid: false, reason: 'signature_mismatch' };
+  for (const secret of getRateVerifySecrets()) {
+    const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    const b = Buffer.from(expected, 'hex');
+    if (a.length === b.length && crypto.timingSafeEqual(a, b)) {
+      return { valid: true };
+    }
   }
-  const ok = crypto.timingSafeEqual(a, b);
-  return ok ? { valid: true } : { valid: false, reason: 'signature_mismatch' };
+  return { valid: false, reason: 'signature_mismatch' };
 };
 
 // XOLOLO Junta 2026-10-26 §5: carriers que NO recolectan en domicilio.
