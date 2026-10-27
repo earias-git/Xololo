@@ -95,7 +95,11 @@ const errorText = (err, defaultMsg) => {
 };
 
 const SosPhotoSlot = ({ slot, transactionId, currentUrl, onUploaded }) => {
-  const inputRef = useRef(null);
+  // XOLOLO Fase 2: dos inputs — uno libre (galería/archivo) y uno con
+  // `capture="environment"` para abrir la cámara trasera directo en
+  // mobile. En desktop, `capture` cae al picker normal; aceptable.
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [showTips, setShowTips] = useState(false);
@@ -150,24 +154,47 @@ const SosPhotoSlot = ({ slot, transactionId, currentUrl, onUploaded }) => {
       {currentUrl ? (
         <div className={css.preview}>
           <img src={currentUrl} alt={slot.title} className={css.previewImg} />
-          <button
-            type="button"
-            className={css.replaceBtn}
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? 'Subiendo…' : 'Reemplazar'}
-          </button>
+          <div className={css.actionButtons}>
+            <button
+              type="button"
+              className={css.replaceBtn}
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={uploading}
+            >
+              📷 Volver a tomar
+            </button>
+            <button
+              type="button"
+              className={css.replaceBtn}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              📁 Elegir otra
+            </button>
+          </div>
+          {uploading ? (
+            <p className={css.uploadingHint}>Subiendo…</p>
+          ) : null}
         </div>
       ) : (
-        <button
-          type="button"
-          className={css.uploadBtn}
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-        >
-          {uploading ? 'Subiendo…' : '📷 Subir foto'}
-        </button>
+        <div className={css.actionButtons}>
+          <button
+            type="button"
+            className={css.uploadBtn}
+            onClick={() => cameraInputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? 'Subiendo…' : '📷 Tomar foto'}
+          </button>
+          <button
+            type="button"
+            className={css.uploadBtnSecondary}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            📁 Subir desde galería
+          </button>
+        </div>
       )}
 
       <button
@@ -186,10 +213,22 @@ const SosPhotoSlot = ({ slot, transactionId, currentUrl, onUploaded }) => {
 
       {error ? <p className={css.error}>{error}</p> : null}
 
+      {/* Input "galería/archivo" — abre el picker normal del SO */}
       <input
-        ref={inputRef}
+        ref={fileInputRef}
         type="file"
         accept="image/png,image/jpeg,image/webp"
+        onChange={onFile}
+        className={css.hiddenInput}
+      />
+      {/* Input "cámara" — con capture="environment" iOS/Android abren
+          directo la cámara trasera. En desktop sin cámara, cae al
+          picker normal (comportamiento del navegador). */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        capture="environment"
         onChange={onFile}
         className={css.hiddenInput}
       />

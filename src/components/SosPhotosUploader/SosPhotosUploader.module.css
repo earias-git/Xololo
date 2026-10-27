@@ -266,3 +266,52 @@
   opacity: 0.5;
   pointer-events: none;
 }
+
+/* XOLOLO Fase 2: dos opciones de captura (cámara + archivo) */
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+@media (min-width: 768px) {
+  .actionButtons {
+    flex-direction: row;
+  }
+  .actionButtons > button {
+    flex: 1;
+  }
+}
+
+.uploadBtnSecondary {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--colorGrey100, #e5e5e5);
+  background: var(--colorWhite, #fff);
+  color: var(--colorGrey700, #444);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.uploadBtnSecondary:hover,
+.uploadBtnSecondary:focus-visible {
+  border-color: var(--marketplaceColor, #6938ef);
+  background: var(--colorGrey50, #f8f8f8);
+  outline: none;
+}
+
+.uploadBtnSecondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.uploadingHint {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--colorGrey500, #777);
+}
