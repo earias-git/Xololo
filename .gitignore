@@ -17,3 +17,9 @@ yarn-error.log
 
 # Claude Code local config (not committed)
 .claude/
+
+
+# XOLOLO 2026-10-27: backups de R2 (sensibles, nunca commitear)
+backups/
+backups/*
+

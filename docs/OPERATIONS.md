@@ -200,16 +200,90 @@ Cuándo rotar:
 
 ---
 
-## 9. Backups
+## 9. Backups y disaster recovery
 
-| Qué | Frecuencia | Dónde | Verificación |
+### 9.1 Qué respaldamos
+
+| Qué | Dónde vive | Frecuencia | Recuperación |
 |---|---|---|---|
-| **Postgres de operators** (propio) | Diario automático Render | Render Backups | Manual mensual |
-| **R2 bucket** | Snapshot opcional Cloudflare | Cloudflare | — |
-| **Sharetribe data** (listings, users, tx) | Sharetribe maneja | Export vía Console | — |
-| **Repo** | Push continuo | GitHub | Automático |
+| **Operators directory** | R2: `operators/directory.json` | Script semanal manual (ver abajo) | Reemplazar archivo en R2 desde backup. |
+| **AI metrics** | R2: `ai-metrics/YYYY-MM-DD.json` | Script semanal manual | Idem. |
+| **Legal docs sellers** | R2: `legal-docs/...` | Script semanal manual | Idem. |
+| **SOS photos** | R2: `sos-photos/...` | No se respalda (volumen alto, no crítico — se usan para reclamos del momento) | — |
+| **Sharetribe data** (listings, users, tx) | Sharetribe cloud | Sharetribe maneja + export manual Console | Export JSON desde Console → import. |
+| **Repo** | GitHub + mirror local | Push continuo | git clone. |
+| **Secretos** | Render env vars | No respaldados — vivir con la lista en 1Password | Re-generar y re-poner. |
 
-**Pendiente operacional:** verificar que los backups diarios de Postgres sean restaurables (correr `pg_restore` sobre una instancia de staging) al menos 1 vez al mes.
+### 9.2 Correr el backup R2
+
+```bash
+# Export env vars (KEY_ID, R_SECRET, R_ENDPOINT, R_BUCKET)
+source .env.production
+
+# Correr el backup
+node scripts/backup-r2-critical.js --out ~/backups/xololo
+
+# Verificar el manifest
+cat ~/backups/xololo/$(date +%Y-%m-%d)/manifest.json | jq '.summary'
+```
+
+El script:
+- Lista objetos bajo cada prefijo configurado (`operators/`, `ai-metrics/`, `legal-docs/`).
+- Descarga cada objeto a `~/backups/xololo/YYYY-MM-DD/<key>`.
+- Genera `manifest.json` con tamaño + sha256 por archivo.
+- Exit code 2 si hubo errores.
+
+**Cadencia recomendada:** semanal (lunes). Guardar en laptop del CEO + copia en Google Drive privado. **Nunca commitear** (`backups/` está en `.gitignore`).
+
+### 9.3 Restaurar
+
+Para restaurar un archivo específico (ej. operators/directory.json corrupto):
+
+```bash
+# Opción A — subir via AWS CLI compatible
+aws s3 cp ~/backups/xololo/2026-10-20/operators/directory.json \
+  s3://xololo-prod/operators/directory.json \
+  --endpoint-url=$R_ENDPOINT
+
+# Opción B — via Cloudflare dashboard: R2 → bucket → upload file.
+```
+
+### 9.4 Health check
+
+```bash
+# Desde el browser o curl (requiere operator session cookie)
+curl https://xololo.mx/api/admin/system-health | jq
+```
+
+Response:
+
+```json
+{
+  "status": "ok | degraded | down",
+  "checkedAt": "2026-10-27T...",
+  "checks": [
+    { "name": "sharetribe_integration", "status": "ok", "latencyMs": 240 },
+    { "name": "r2_operators_directory", "status": "ok", "latencyMs": 180 },
+    { "name": "stripe", "status": "ok", "latencyMs": 150 },
+    { "name": "skydropx", "status": "ok", "latencyMs": 420 },
+    { "name": "anthropic", "status": "ok", "latencyMs": 310 },
+    { "name": "algolia", "status": "ok", "latencyMs": 95 }
+  ]
+}
+```
+
+Correr en el health check diario (sección 3). Si cualquier dependencia reporta `fail`, investigar antes de 1h.
+
+### 9.5 Escenarios de desastre
+
+| Escenario | Impacto | Procedimiento |
+|---|---|---|
+| **R2 bucket corrupto** | operators/, legal-docs/, sos-photos/ perdidos | Restaurar desde último backup semanal. Legal-docs posiblemente irrecuperables si se perdieron >7 días. |
+| **Sharetribe account suspendido** | Marketplace down total | Contactar Sharetribe support inmediato. Mientras tanto, página "en mantenimiento" en Render. |
+| **Stripe account suspendido** | Pagos down | Contactar Stripe. Migrar a Conekta/PayPal tomaría ~2 semanas. |
+| **Render down** | App down | Deploy de emergencia en Railway/Fly (template similar). ~4-8h. |
+| **Dominio robado / DNS secuestrado** | Phishing + redirect | Contactar Cloudflare + registrador. Rotar OAuth secrets. Avisar a buyers. |
+| **Leak masivo de secretos** | Fraude en vuelo | Rotar TODOS los secretos siguiendo SECURITY.md §2. Pausar payouts hasta investigar. |
 
 ---
 

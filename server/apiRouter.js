@@ -26,6 +26,7 @@ const uploadStoreImage = require('./api/upload-store-image');
 const shippingQuote = require('./api/shipping-quote');
 const listingShippingFit = require('./api/listing-shipping-fit');
 const opsShippingLosses = require('./api/ops-shipping-losses');
+const opsSystemHealth = require('./api/ops-system-health');
 const publicShippingQuote = require('./api/public-shipping-quote');
 const publicShippingCreatePayment = require('./api/public-shipping-create-payment');
 const publicShippingStatus = require('./api/public-shipping-status');
@@ -269,6 +270,16 @@ router.get(
   '/admin/shipping-losses',
   adminAuth.requireOperator({ requireMfa: false }),
   opsShippingLosses
+);
+
+// XOLOLO 2026-10-27: health check de dependencias externas.
+// Verifica Sharetribe, R2, Stripe, Skydropx, Anthropic, Algolia en
+// paralelo con timeout de 5s por check. Siempre devuelve 200 con el
+// estado por dependencia.
+router.get(
+  '/admin/system-health',
+  adminAuth.requireOperator({ requireMfa: false }),
+  opsSystemHealth
 );
 
 // XOLOLO: moderación de legalidad — cola Ops de listings bloqueados o
