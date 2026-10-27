@@ -370,6 +370,43 @@ module.exports = async (req, res) => {
       })),
     };
 
+    // XOLOLO 2026-10-27: monitoreo de pérdidas. Comparamos lo que cobramos
+    // al buyer vs lo que Skydropx cobra realmente. Si difiere > 10% o
+    // > $50 MXN, lo persistimos para que /ops/shipping-losses lo liste.
+    let xololoShippingDiscrepancy = null;
+    try {
+      const {
+        detectShippingLoss,
+        extractActualCost,
+      } = require('../api-util/shippingLossMonitor');
+      const actualCost = extractActualCost(shipAttrs);
+      const discrepancy = detectShippingLoss({
+        expectedShippingFeePublic: Number(xShipping.rate?.shippingFeePublic),
+        actualSkydropxCostMxn: actualCost,
+        context: {
+          txId: transactionId,
+          carrier: shipAttrs.carrier_name,
+          service: shipAttrs.service_name,
+          rateId: xShipping.rate?.id,
+          quotationId: xShipping.quotationId,
+        },
+      });
+      if (discrepancy) {
+        xololoShippingDiscrepancy = discrepancy;
+        // eslint-disable-next-line no-console
+        console.error(
+          `[shipping-loss] tx=${transactionId} ` +
+            `expected=$${discrepancy.expected} actual=$${discrepancy.actual} ` +
+            `diff=$${discrepancy.diff} (${(discrepancy.diffPct * 100).toFixed(1)}%) ` +
+            `loss=$${discrepancy.lossMxn}`
+        );
+      }
+    } catch (e) {
+      // No bloquear la generación de guía por fallos en el monitor.
+      // eslint-disable-next-line no-console
+      console.warn('[shipping-loss] monitor failed:', e?.message);
+    }
+
     // Persistir en tx.metadata vía Integration SDK. updateMetadata NO
     // existe en el SDK marketplace (sólo en integration) — el
     // trustedSdk devolvería TypeError. Re-usamos la instancia isdk que
@@ -378,6 +415,9 @@ module.exports = async (req, res) => {
       id: transactionId,
       metadata: {
         xololoShippingGuide: guideData,
+        ...(xololoShippingDiscrepancy
+          ? { xololoShippingDiscrepancy }
+          : {}),
       },
     });
 

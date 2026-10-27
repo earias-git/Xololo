@@ -25,6 +25,7 @@ const featuredStores = require('./api/featured-stores');
 const uploadStoreImage = require('./api/upload-store-image');
 const shippingQuote = require('./api/shipping-quote');
 const listingShippingFit = require('./api/listing-shipping-fit');
+const opsShippingLosses = require('./api/ops-shipping-losses');
 const publicShippingQuote = require('./api/public-shipping-quote');
 const publicShippingCreatePayment = require('./api/public-shipping-create-payment');
 const publicShippingStatus = require('./api/public-shipping-status');
@@ -259,6 +260,15 @@ router.post(
   adminAuth.requireOperator({ requireMfa: false }),
   bodyParser.json(),
   adminPayoutQueue.retry
+);
+
+// XOLOLO 2026-10-27: monitoreo de pérdidas por envío. Lista las tx con
+// discrepancias detectadas (lo que Skydropx cobró > lo que cobramos al
+// buyer, umbral 10% o $50 MXN).
+router.get(
+  '/admin/shipping-losses',
+  adminAuth.requireOperator({ requireMfa: false }),
+  opsShippingLosses
 );
 
 // XOLOLO: moderación de legalidad — cola Ops de listings bloqueados o
