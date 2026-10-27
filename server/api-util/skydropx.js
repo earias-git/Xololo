@@ -149,6 +149,7 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
   console.log(
     `[skydropx.quote] parcel L=${parcel?.length}cm W=${parcel?.width}cm H=${parcel?.height}cm ` +
       `weight=${parcel?.weight}kg | ${from?.postal_code} → ${to?.postal_code}` +
+      (to?.street1 ? ` | street1="${String(to.street1).slice(0, 40)}"` : '') +
       (insurance ? ` | insurance=true declaredValue=${declaredValue}` : '')
   );
 

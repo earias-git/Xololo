@@ -40,7 +40,11 @@ const FREE_RATE = {
   isFreeShipping: true,
 };
 
-const QUOTE_DEBOUNCE_MS = 500;
+// XOLOLO Junta 2026-10-26: cotizamos con dirección completa (no solo
+// CP) para que Skydropx aplique zona extendida en el precio inicial.
+// Debounce más alto para no cotizar cada letra que tipea el buyer en
+// la calle o referencias.
+const QUOTE_DEBOUNCE_MS = 1000;
 
 // Construye la clave "signature" de un destino — usada para saber
 // si el buyer cambió algo desde la última cotización.
@@ -50,13 +54,19 @@ const signatureOf = destination =>
     (destination.area_level1 || '').trim().toLowerCase(),
     (destination.area_level2 || '').trim().toLowerCase(),
     (destination.area_level3 || '').trim().toLowerCase(),
+    (destination.street1 || '').trim().toLowerCase(),
+    (destination.street2 || '').trim().toLowerCase(),
+    (destination.reference || '').trim().toLowerCase(),
   ].join('|');
 
 const isValidDestination = d =>
   /^\d{5}$/.test(String(d.postal_code || '').trim()) &&
   String(d.area_level1 || '').trim().length > 0 &&
   String(d.area_level2 || '').trim().length > 0 &&
-  String(d.area_level3 || '').trim().length > 0;
+  String(d.area_level3 || '').trim().length > 0 &&
+  // XOLOLO Junta 2026-10-26: calle + número son requeridos para evitar
+  // zona extendida retroactiva. Mínimo 3 chars para filtrar "ab" o " ".
+  String(d.street1 || '').trim().length >= 3;
 
 const ShippingRateSelector = props => {
   const {
@@ -141,6 +151,9 @@ const ShippingRateSelector = props => {
     destination?.area_level1,
     destination?.area_level2,
     destination?.area_level3,
+    destination?.street1,
+    destination?.street2,
+    destination?.reference,
     shippingPricingMode,
     sellerCoversShipping,
     wantsInsurance,
@@ -239,8 +252,8 @@ const ShippingRateSelector = props => {
       <h3 className={css.title}>Opciones de envío</h3>
       {!destinationReady ? (
         <p className={css.hint}>
-          Completa la dirección de envío arriba (CP, estado, ciudad y colonia)
-          para ver las paqueterías disponibles.
+          Completa la dirección de envío arriba (CP, estado, ciudad, colonia
+          y calle con número) para ver las paqueterías disponibles.
         </p>
       ) : state.status === QuoteRequestState.LOADING ? (
         <p className={css.hint}>

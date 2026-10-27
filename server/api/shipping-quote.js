@@ -41,6 +41,12 @@ const validateDestination = dest => {
   if (!area_level1 || !area_level2 || !area_level3) {
     return 'destination.area_level1/2/3 son requeridos (estado, municipio, colonia).';
   }
+  // XOLOLO Junta 2026-10-26: street1 (calle+número) requerida para que
+  // Skydropx cotice con dirección completa y aplique zona extendida.
+  // Mínimo 3 chars para filtrar basura.
+  if (!dest.street1 || String(dest.street1).trim().length < 3) {
+    return 'destination.street1 (calle y número) requerida.';
+  }
   return null;
 };
 
@@ -211,6 +217,14 @@ module.exports = async (req, res) => {
         area_level1: String(destination.area_level1),
         area_level2: String(destination.area_level2),
         area_level3: String(destination.area_level3),
+        // XOLOLO Junta 2026-10-26: dirección completa para zona extendida.
+        street1: String(destination.street1 || '').trim(),
+        ...(destination.street2
+          ? { street2: String(destination.street2).trim() }
+          : {}),
+        ...(destination.reference
+          ? { reference: String(destination.reference).trim() }
+          : {}),
       },
       parcel,
       insurance,

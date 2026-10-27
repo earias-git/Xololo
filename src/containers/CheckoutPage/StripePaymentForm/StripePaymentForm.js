@@ -692,11 +692,19 @@ class StripePaymentForm extends Component {
     // MISMO dato que el buyer captura en el ShippingDetails de arriba.
     // Al leer del form values evitamos que el buyer teclee CP de un
     // lado y otro CP distinto del otro (bug 2026-09-21).
+    //
+    // Junta Xololo×Skydropx 2026-10-26: ahora enviamos dirección COMPLETA
+    // (street1 + street2 + reference) para que Skydropx aplique zona
+    // extendida en la cotización, no en la factura (evita cargos
+    // retroactivos).
     const rateSelectorDestination = {
       postal_code: values?.recipientPostal,
       area_level1: values?.recipientState,
       area_level2: values?.recipientCity,
       area_level3: values?.recipientNeighborhood || values?.recipientCity,
+      street1: values?.recipientAddressLine1,
+      street2: values?.recipientAddressLine2,
+      reference: values?.recipientReferences,
     };
 
     return hasStripeKey ? (
