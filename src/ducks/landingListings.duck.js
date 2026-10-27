@@ -304,16 +304,20 @@ export const listingMatchesBuyerState = (listing, buyerState, authorsById) => {
 const isEventListing = listing =>
   listing?.attributes?.publicData?.isEvent === true;
 
-// XOLOLO Task #17: filtra listings al estado del buyer. Si !buyerState,
-// devuelve la lista tal cual (sin ubicación → oferta global). Si hay
-// buyerState, SÓLO devuelve los que coinciden — nada de completar con
-// listings de otros estados. Si no hay ofertas locales, el riel se
-// muestra con menos ítems (o se oculta si queda vacío).
+// XOLOLO Task #17: filtra listings al estado del buyer con fallback.
+// Si !buyerState, devuelve la lista tal cual (sin ubicación → oferta
+// global). Si hay buyerState Y hay matches → devuelve sólo los locales.
+// Si hay buyerState pero NO hay matches → cae a la lista completa en
+// vez de vaciar el riel (bug detectado 2026-10-27: el riel se vaciaba
+// y el landing mostraba placeholders).
 const filterByBuyerState = (listingsArr, buyerState, authorsById) => {
   if (!buyerState || !listingsArr?.length) return listingsArr || [];
-  return listingsArr.filter(l =>
+  const filtered = listingsArr.filter(l =>
     listingMatchesBuyerState(l, buyerState, authorsById)
   );
+  // Fallback: si no hay locales, muestra la oferta global en vez de
+  // dejar el riel vacío (que cae a placeholders).
+  return filtered.length > 0 ? filtered : listingsArr;
 };
 
 // XOLOLO: factory selector. Cuando buyerState está presente, los
