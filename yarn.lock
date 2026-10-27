@@ -6806,6 +6806,11 @@ express-enforces-ssl@^1.1.0:
   resolved "https://registry.npmjs.org/express-enforces-ssl/-/express-enforces-ssl-1.1.0.tgz"
   integrity sha512-s2p9nh2Q2++9XAqZqyCORk7KQTfrfKqB/Y5A4VfyRnwMQ2D6cHdDrZhvvGOV3FURTPuO3a6f9AD2Eso1pIo6CA==
 
+express-rate-limit@^7:
+  version "7.5.1"
+  resolved "https://registry.yarnpkg.com/express-rate-limit/-/express-rate-limit-7.5.1.tgz#8c3a42f69209a3a1c969890070ece9e20a879dec"
+  integrity sha512-7iN8iPMDzOMHPUYllBEsQdWVB6fPDMPqwjBaFrgr4Jgr/+okjvzAy+UHlYYL/Vs0OsOrMkwS6PJDkFlJwoxUnw==
+
 express@^4.22.1:
   version "4.22.2"
   resolved "https://registry.npmjs.org/express/-/express-4.22.2.tgz"

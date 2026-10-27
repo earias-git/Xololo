@@ -8,6 +8,10 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
+
+// XOLOLO 2026-10-27: rate limiting por tipo de endpoint. Ver
+// server/api-util/rateLimits.js para la configuración de cada bucket.
+const limits = require('./api-util/rateLimits');
 const { deserialize } = require('./api-util/sdk');
 
 const initiateLoginAs = require('./api/initiate-login-as');
@@ -110,8 +114,8 @@ router.use((req, res, next) => {
 router.get('/initiate-login-as', initiateLoginAs);
 router.get('/login-as', loginAs);
 router.post('/transaction-line-items', transactionLineItems);
-router.post('/initiate-privileged', initiatePrivileged);
-router.post('/transition-privileged', transitionPrivileged);
+router.post('/initiate-privileged', limits.payment, initiatePrivileged);
+router.post('/transition-privileged', limits.payment, transitionPrivileged);
 router.post('/delete-account', deleteAccount);
 
 // XOLOLO: resolver slug de tienda a datos del seller. Usa Integration API.
@@ -130,11 +134,11 @@ router.post('/upload-store-image', uploadStoreImage);
 // Requiere que el listing tenga shippingPricingMode:'carrier' + peso/dim,
 // y que el seller haya configurado originPostalCode en /account/store.
 // body-parser JSON explícito porque el cliente manda application/json.
-router.post('/shipping-quote', bodyParser.json(), shippingQuote);
+router.post('/shipping-quote', limits.shippingQuote, bodyParser.json(), shippingQuote);
 // XOLOLO Junta 2026-10-26 §13: evaluación de aptitud para paquetería.
 router.post('/listing-shipping-fit', bodyParser.json(), listingShippingFit);
 // XOLOLO feature #28: cotizador PÚBLICO (sin login) de guías de paquetería.
-router.post('/public-shipping-quote', bodyParser.json(), publicShippingQuote);
+router.post('/public-shipping-quote', limits.shippingQuote, bodyParser.json(), publicShippingQuote);
 // XOLOLO feature #28 · F2b: Stripe Payment Intent de la compra pública.
 router.post('/public-shipping-create-payment', bodyParser.json(), publicShippingCreatePayment);
 // XOLOLO feature #28 · F2c: polling de estado post-pago para obtener
@@ -203,6 +207,10 @@ router.post('/upload-legal-doc', uploadLegalDoc);
 router.get('/seller-legal-docs', sellerLegalDocs);
 router.post('/seller-legal-docs', bodyParser.json(), sellerLegalDocs);
 // Admin: cola de revisión + aprobar/rechazar un documento.
+// XOLOLO 2026-10-27: todo /admin/* comparte rate-limit ops. Login y
+// bootstrap tienen el bucket auth adicional (más estricto).
+router.use('/admin', limits.ops);
+
 router.get('/admin/legal-docs', adminLegalDocs.list);
 router.post('/admin/legal-docs/review', bodyParser.json(), adminLegalDocs.review);
 
@@ -287,8 +295,8 @@ router.post(
 //   POST /api/admin/auth/login
 //   POST /api/admin/auth/logout
 //   GET  /api/admin/auth/me         (requiere sesión activa)
-router.post('/admin/auth/bootstrap', bodyParser.json(), adminAuth.bootstrap);
-router.post('/admin/auth/login', bodyParser.json(), adminAuth.login);
+router.post('/admin/auth/bootstrap', limits.auth, bodyParser.json(), adminAuth.bootstrap);
+router.post('/admin/auth/login', limits.auth, bodyParser.json(), adminAuth.login);
 router.post('/admin/auth/logout', adminAuth.logout);
 router.get('/admin/auth/me', adminAuth.requireOperator({ requireMfa: false }), adminAuth.me);
 // MFA (Fase 1C.4):
@@ -345,11 +353,11 @@ router.get('/seller-pending-payouts', sellerPendingPayouts);
 router.get('/geoip', geoip);
 // XOLOLO Track #39: el seller dispara el análisis de IA al declarar su
 // clasificación. Precarga aiReview para que Ops no lo haga manual.
-router.post('/seller-tax-ai-classify', bodyParser.json(), sellerTaxAiClassify);
+router.post('/seller-tax-ai-classify', limits.ai, bodyParser.json(), sellerTaxAiClassify);
 // XOLOLO: moderación de legalidad del listing. Fire-and-forget al
 // publicar/editar. Si la IA detecta ilícito, cierra el listing y
 // notifica al seller + Ops.
-router.post('/seller-listing-legality-check', bodyParser.json(), sellerListingLegalityCheck);
+router.post('/seller-listing-legality-check', limits.ai, bodyParser.json(), sellerListingLegalityCheck);
 // XOLOLO: lista de asistentes confirmados a un evento (sólo seller dueño).
 router.get('/seller-event-attendees', sellerEventAttendees);
 // XOLOLO: envía/reenvía boleto digital con QR embedded al buyer.
@@ -436,8 +444,8 @@ router.post('/track/event', bodyParser.json(), trackEvent);
 
 // XOLOLO Fase 2 — Análisis IA de listings (image enrichment + moderación).
 // Se llama fire-and-forget desde el frontend tras publish/update.
-router.post('/ai/analyze-listing', bodyParser.json(), aiAnalyzeListing);
-router.post('/ai/suggest-listing-text', bodyParser.json(), aiSuggestListingText);
+router.post('/ai/analyze-listing', limits.ai, bodyParser.json(), aiAnalyzeListing);
+router.post('/ai/suggest-listing-text', limits.ai, bodyParser.json(), aiSuggestListingText);
 router.get('/smart-search', smartSearch); // deprecated — mantener temporal
 router.get('/search', searchHandler);
 
