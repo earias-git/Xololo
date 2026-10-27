@@ -351,6 +351,14 @@ const ShippingRateSelector = props => {
                     {rate.days ? `${rate.days} día${rate.days > 1 ? 's' : ''} estimados` : '—'}
                   </span>
                 </div>
+                {/* XOLOLO Junta 2026-10-26: badge para carriers sin
+                    recolección — el seller tendrá que llevar el paquete
+                    a sucursal. */}
+                {rate.dropoffOnly ? (
+                  <div className={css.rateDropoffBadge}>
+                    📍 Entrega en sucursal (sin recolección)
+                  </div>
+                ) : null}
                 {isSelected ? <div className={css.rateCheck}>✓ Seleccionado</div> : null}
               </button>
             );

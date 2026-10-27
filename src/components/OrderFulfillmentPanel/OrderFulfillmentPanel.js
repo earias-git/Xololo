@@ -159,6 +159,7 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
   }
 
   // ---------- Vista de flujo activo ----------
+  const dropoffOnly = xShipping.rate?.dropoffOnly === true;
   return (
     <section className={classNames(css.root, className)}>
       <div className={css.header}>
@@ -168,6 +169,25 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
           los pasos para generar la guía.
         </p>
       </div>
+
+      {/* XOLOLO Junta 2026-10-26: aviso para carriers sin recolección */}
+      {dropoffOnly ? (
+        <div
+          style={{
+            margin: '12px 0',
+            padding: '12px 14px',
+            background: '#fef3c7',
+            border: '1px solid #fcd34d',
+            borderRadius: 8,
+            color: '#78350f',
+            fontSize: 13,
+          }}
+        >
+          <strong>📍 Entrega en sucursal</strong> — {xShipping.rate.carrier} no
+          hace recolección en domicilio. Deberás llevar el paquete con la guía
+          pegada a una sucursal del carrier.
+        </div>
+      ) : null}
 
       {/* Paso 1: Confirmar inicio */}
       <div

@@ -164,6 +164,8 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
           insuranceCost: Number(rate.insuranceCostReal) || 0,
           noInsuranceConsent: !!rate.noInsuranceConsent,
           sosDecisionAt: new Date().toISOString(),
+          // XOLOLO Junta 2026-10-26: carrier sin recolección en domicilio.
+          dropoffOnly: !!rate.dropoffOnly,
         }
       : null;
     return {
@@ -230,6 +232,7 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
           insuranceCost: Number(rate.insuranceCostReal) || 0,
           noInsuranceConsent: !!rate.noInsuranceConsent,
           sosDecisionAt: new Date().toISOString(),
+          dropoffOnly: !!rate.dropoffOnly,
         }
       : null;
     return {

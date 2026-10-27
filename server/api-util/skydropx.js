@@ -55,6 +55,25 @@ const POLL_INTERVAL_MS = 1000;
 // el total final cotizado.
 const XOLOLO_MARGIN_PCT = 0.125;
 
+// XOLOLO Junta 2026-10-26 §5: carriers que NO recolectan en domicilio.
+// Skydropx confirmó que estos son "sólo drop-off en sucursal" — no
+// agendan pickup aunque el seller lo pida.
+// Match case-insensitive contra provider_name o provider_display_name.
+const CARRIERS_WITHOUT_PICKUP = new Set([
+  'jt_express', 'jyt', 'j&t', 'jt express',
+  '99min', '99minutos', '99_min', '99 minutos',
+]);
+
+const isDropoffOnlyCarrier = rate => {
+  const code = String(rate?.provider_name || '').toLowerCase().replace(/[\s_-]/g, '');
+  const name = String(rate?.provider_display_name || '').toLowerCase().replace(/[\s_-]/g, '');
+  for (const needle of CARRIERS_WITHOUT_PICKUP) {
+    const n = needle.toLowerCase().replace(/[\s_-]/g, '');
+    if (code === n || name === n || code.includes(n) || name.includes(n)) return true;
+  }
+  return false;
+};
+
 const applyPricingPolicy = (skydropxTotalMXN, sosCostMXN = 0) => {
   const base = Number(skydropxTotalMXN) || 0;
   const sos = Number(sosCostMXN) || 0;
@@ -289,8 +308,12 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
         total: pricing.totalPublico,
         currency: r.currency_code || 'MXN',
         days: r.days,
-        pickup: r.pickup,
+        pickup: r.pickup && !isDropoffOnlyCarrier(r),
         officeDelivery: r.office_delivery,
+        // XOLOLO Junta 2026-10-26: true si el carrier sólo acepta
+        // drop-off en sucursal (no agenda recolección). El UI muestra
+        // un badge y oculta la opción de pickup para estos.
+        dropoffOnly: isDropoffOnlyCarrier(r),
         pricing,
         // Para el flujo de guías públicas (#28): costo real del seguro
         // que devolvió Skydropx. Null si no pedimos seguro o si la API
