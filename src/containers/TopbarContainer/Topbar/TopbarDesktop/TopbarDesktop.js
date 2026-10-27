@@ -8,7 +8,6 @@ import {
   CartIndicator,
   InlineTextButton,
   LinkedLogo,
-  LocationPill,
   Menu,
   MenuLabel,
   MenuContent,
@@ -276,10 +275,6 @@ const TopbarDesktop = props => {
         hasClientSideContentReady={authenticatedOnClientSide || !isAuthenticatedOrJustHydrated}
         showCreateListingsLink={showCreateListingsLink}
       />
-
-      {/* XOLOLO Task #17: pill de ubicación. Autodetecta por IP y
-          permite ajustar el CP manualmente. */}
-      <LocationPill />
 
       {/* XOLOLO C1: indicador de carrito. Se auto-oculta si no hay items. */}
       <CartIndicator />
