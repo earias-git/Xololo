@@ -434,6 +434,19 @@ const server = app.listen(PORT, () => {
     } catch (e) {
       console.error('[xololo] monthly-report job failed to start:', e.message); // eslint-disable-line no-console
     }
+
+    // XOLOLO Task #22: cron que re-sincroniza el badge Xololo Verified
+    // una vez por mes (día 1 UTC). Idempotente. Alternativa manual:
+    // /ops/backfill-verified. En dev no arranca para evitar escribir
+    // metadata de prueba en loops.
+    try {
+      // eslint-disable-next-line global-require
+      const verifiedBadgeSync = require('./jobs/verified-badge-sync');
+      verifiedBadgeSync.start();
+      console.log('[xololo] verified-badge-sync job scheduled'); // eslint-disable-line no-console
+    } catch (e) {
+      console.error('[xololo] verified-badge-sync job failed to start:', e.message); // eslint-disable-line no-console
+    }
   }
 });
 
