@@ -61,9 +61,19 @@ const sanitizeAdditionalCartItems = (raw, primaryListingId) => {
   return cleaned;
 };
 
+// XOLOLO Fase 2: umbral mínimo del valor declarado para habilitar la
+// opción de SOS Protección. Debajo de esto no vale la pena cotizar el
+// seguro (1% de poco es poco y suma UI noise).
+const INSURANCE_MIN_DECLARED_VALUE_MXN = 500;
+
 module.exports = async (req, res) => {
   try {
-    const { listingId, destination, additionalCartItems: rawAdditional } = req.body || {};
+    const {
+      listingId,
+      destination,
+      additionalCartItems: rawAdditional,
+      insurance: insuranceFromBody,
+    } = req.body || {};
 
     if (!listingId || typeof listingId !== 'string') {
       return res.status(400).json({ error: 'invalid_request', details: 'listingId requerido.' });
@@ -166,7 +176,25 @@ module.exports = async (req, res) => {
       });
     }
 
-    // 6) Cotizar en Skydropx.
+    // 6) XOLOLO Fase 2: calcular valor declarado para seguro.
+    // Suma precios de todos los items (primary × qty + adicionales × qty).
+    const primaryUnitPrice = Number(listing.attributes?.price?.amount || 0) / 100;
+    const additionalDeclared = additionalListings.reduce((acc, l, i) => {
+      const price = Number(l.attributes?.price?.amount || 0) / 100;
+      const qty = additionalCartRaw[i]?.quantity || 1;
+      return acc + price * qty;
+    }, 0);
+    const declaredValue = Math.round(primaryUnitPrice * primaryQty + additionalDeclared);
+
+    // XOLOLO Fase 2: decidimos si cotizamos con seguro. Default = false
+    // (opt-in del buyer). Si lo pidió pero el valor declarado es muy
+    // bajo, downgrade silencioso a false — no vale la pena ofrecer SOS
+    // de pesos sueltos.
+    const insurance =
+      Boolean(insuranceFromBody) &&
+      declaredValue >= INSURANCE_MIN_DECLARED_VALUE_MXN;
+
+    // 7) Cotizar en Skydropx.
     // Skydropx requiere area_level1/2/3 en el origen también; usamos placeholders
     // razonables por ahora (el nombre del seller / storefront). En una futura
     // iteración pedimos al seller estos datos en el form del store para más
@@ -185,9 +213,20 @@ module.exports = async (req, res) => {
         area_level3: String(destination.area_level3),
       },
       parcel,
+      insurance,
+      declaredValue,
     });
 
-    return res.json({ quotationId, rates, parcel });
+    return res.json({
+      quotationId,
+      rates,
+      parcel,
+      // XOLOLO Fase 2: devolvemos al UI el input para que pueda
+      // mostrarle al buyer el umbral y el valor declarado usado.
+      declaredValue,
+      insurance,
+      insuranceMinDeclaredValue: INSURANCE_MIN_DECLARED_VALUE_MXN,
+    });
   } catch (e) {
     if (e instanceof SkydropxAuthError) {
       // eslint-disable-next-line no-console

@@ -41,15 +41,19 @@ const MAX_POLL_MS = 40000;
 const POLL_INTERVAL_MS = 1000;
 
 // XOLOLO: política de pricing (ver docs/LOGISTICS_V1.md §5).
-// - SOS Protección Skydropx: 1% del valor declarado (+ $70 si ≥ $5,000).
-//   Confirmado por Skydropx en la 2ª reunión (13 oct 2026). Ya NO es
-//   $25 flat como asumíamos antes.
-// - Utilidad Xololo: 14% sobre el bruto Skydropx (guía + SOS si lo hay).
-// Fórmula: precio_público = (rate_skydropx + sos_real) × 1.14
+// - SOS Protección Skydropx: SIEMPRE lo cotiza Skydropx y lo expone
+//   en el rate (total_value_with_protection / protection_value_total).
+//   Nunca inventamos la fórmula localmente. Si Skydropx no expuso el
+//   costo, el rate se marca como no asegurable (insurable=false al UI).
+// - Utilidad Xololo: 12.5% sobre el bruto Skydropx (guía + SOS si lo
+//   hay). Unificado con el flujo público de venta de guías.
+// Fórmula: precio_público = (rate_skydropx + sos_real) × 1.125
 //          · sos_real = 0 si el buyer no contrató seguro.
-//          · sos_real = costo que Skydropx devuelve en el rate cuando
-//            se cotizó con package_protected=true + declared_value.
-const XOLOLO_MARGIN_PCT = 0.14;
+//          · sos_real = costo que Skydropx devuelve cuando cotizamos
+//            con package_protected=true + declared_value.
+// Nota UI: nunca mostrar al buyer el "+12.5%" ni el breakdown. Sólo
+// el total final cotizado.
+const XOLOLO_MARGIN_PCT = 0.125;
 
 const applyPricingPolicy = (skydropxTotalMXN, sosCostMXN = 0) => {
   const base = Number(skydropxTotalMXN) || 0;
@@ -241,17 +245,25 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
       const protectionTotal =
         Number(r.protection_value_total) || Number(r.protection_total) || null;
       let insuranceCostReal = 0;
+      let insuranceAvailable = false;
       if (insurance) {
         if (totalWithProtection && totalWithProtection > Number(r.total)) {
           insuranceCostReal = Number((totalWithProtection - Number(r.total)).toFixed(2));
+          insuranceAvailable = true;
         } else if (protectionTotal) {
           insuranceCostReal = Number(protectionTotal.toFixed(2));
+          insuranceAvailable = true;
         }
-        // Si pedimos seguro pero Skydropx no lo expuso en los campos
-        // conocidos, calculamos la fórmula pública: 1% + $70 si ≥5000.
-        if (!insuranceCostReal && Number(declaredValue) >= 500) {
-          const dv = Number(declaredValue);
-          insuranceCostReal = Number((dv * 0.01 + (dv >= 5000 ? 70 : 0)).toFixed(2));
+        // XOLOLO Fase 2: NO calculamos fórmula local. Si Skydropx no
+        // devolvió el costo del seguro para este rate, lo marcamos como
+        // no asegurable y la UI lo oculta como opción con seguro. Esto
+        // evita cobrarle al buyer un seguro que no vamos a contratar.
+        if (!insuranceAvailable) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[skydropx.quote] rate ${r.provider_display_name} ${r.provider_service_name}: ` +
+              `pedimos seguro pero Skydropx no expuso costo (insurable=${r.insurable})`
+          );
         }
       }
 
@@ -284,6 +296,10 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
         // no expuso el campo (caso edge, caemos a hardcoded).
         insurable: r.insurable,
         insuranceCostReal,
+        // XOLOLO Fase 2: true cuando pedimos seguro Y Skydropx devolvió
+        // el costo real. Si false y pedimos seguro, el UI debe caer a
+        // "sin seguro" y avisar al buyer que no se puede asegurar.
+        insuranceAvailable,
       };
     })
     .sort((a, b) => a.total - b.total);
