@@ -289,6 +289,17 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
 
       // XOLOLO: pricing con SOS real (0 si el buyer no contrató seguro).
       const pricing = applyPricingPolicy(Number(r.total), insuranceCostReal);
+      // XOLOLO Junta 2026-10-26: expone el total POST-margen Xololo del
+      // seguro para que el breakdown pueda renderizarlo como línea
+      // separada "shipping-insurance". Si no hay seguro = 0.
+      const insuranceTotalPublic = Number(
+        (insuranceCostReal * (1 + XOLOLO_MARGIN_PCT)).toFixed(2)
+      );
+      // Y el total de envío sin seguro (ya con margen) para la línea
+      // "shipping-fee". shippingFee + insuranceTotal = totalPublico.
+      const shippingFeePublic = Number(
+        (pricing.totalPublico - insuranceTotalPublic).toFixed(2)
+      );
 
       // XOLOLO Bug 2a: log del breakdown por rate para poder rastrear
       // "por qué salió $X" — Skydropx neto + SOS + margen = precio público.
@@ -324,6 +335,12 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
         // el costo real. Si false y pedimos seguro, el UI debe caer a
         // "sin seguro" y avisar al buyer que no se puede asegurar.
         insuranceAvailable,
+        // XOLOLO Junta 2026-10-26: desglose público para que lineItems
+        // emita 2 líneas separadas en el breakdown (shipping-fee +
+        // shipping-insurance). Siempre: shippingFeePublic +
+        // insuranceTotalPublic = total.
+        insuranceTotalPublic,
+        shippingFeePublic,
       };
     })
     .sort((a, b) => a.total - b.total);

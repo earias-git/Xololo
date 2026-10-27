@@ -166,6 +166,10 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
           sosDecisionAt: new Date().toISOString(),
           // XOLOLO Junta 2026-10-26: carrier sin recolección en domicilio.
           dropoffOnly: !!rate.dropoffOnly,
+          // Desglose público (post-margen) para 2 líneas en breakdown.
+          insuranceTotalPublic: Number(rate.insuranceTotalPublic) || 0,
+          shippingFeePublic:
+            Number(rate.shippingFeePublic) || Number(rate.total) || 0,
         }
       : null;
     return {
@@ -233,6 +237,9 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
           noInsuranceConsent: !!rate.noInsuranceConsent,
           sosDecisionAt: new Date().toISOString(),
           dropoffOnly: !!rate.dropoffOnly,
+          insuranceTotalPublic: Number(rate.insuranceTotalPublic) || 0,
+          shippingFeePublic:
+            Number(rate.shippingFeePublic) || Number(rate.total) || 0,
         }
       : null;
     return {

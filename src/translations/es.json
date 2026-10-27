@@ -733,6 +733,7 @@
   "OrderBreakdown.refundCustomerFee": "Reembolso de la tarifa de {marketplaceName}",
   "OrderBreakdown.refundProviderFee": "Reembolso de la tarifa de {marketplaceName}",
   "OrderBreakdown.shippingFee": "Envío",
+  "OrderBreakdown.shippingInsurance": "Protección SOS",
   "OrderBreakdown.subTotal": "Subtotal",
   "OrderBreakdown.total": "Costo total",
   "OrderPanel.author": "{name}",

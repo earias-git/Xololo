@@ -23,6 +23,7 @@ import LineItemBasePriceMaybe from './LineItemBasePriceMaybe';
 import LineItemAdditionalItemsMaybe from './LineItemAdditionalItemsMaybe';
 import LineItemSubTotalMaybe from './LineItemSubTotalMaybe';
 import LineItemShippingFeeMaybe from './LineItemShippingFeeMaybe';
+import LineItemShippingInsuranceMaybe from './LineItemShippingInsuranceMaybe';
 import LineItemPickupFeeMaybe from './LineItemPickupFeeMaybe';
 import LineItemCustomerCommissionMaybe from './LineItemCustomerCommissionMaybe';
 import LineItemCustomerCommissionRefundMaybe from './LineItemCustomerCommissionRefundMaybe';
@@ -130,6 +131,7 @@ export const OrderBreakdownComponent = props => {
         titles={itemTitles?.slice(1)}
       />
       <LineItemShippingFeeMaybe lineItems={lineItems} intl={intl} />
+      <LineItemShippingInsuranceMaybe lineItems={lineItems} intl={intl} />
       <LineItemPickupFeeMaybe lineItems={lineItems} intl={intl} />
       <LineItemUnknownItemsMaybe lineItems={lineItems} isProvider={isProvider} intl={intl} />
 

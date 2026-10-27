@@ -114,13 +114,37 @@ const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
       const shouldAddLine =
         freeShipping || (rate && Number.isFinite(rateTotal) && rateTotal >= 0);
       if (shouldAddLine) {
-        const subunits = Math.round(rateTotal * 100);
-        extraLineItems.push({
-          code: 'line-item/shipping-fee',
-          unitPrice: new Money(subunits, currency),
-          quantity: 1,
-          includeFor: ['customer', 'provider'],
-        });
+        // XOLOLO Junta 2026-10-26: cuando el buyer contrató SOS, separamos
+        // en 2 líneas: shipping-fee (paquetería) + shipping-insurance
+        // (seguro). Así el buyer ve en qué pagó. Si no hay seguro, una
+        // sola línea con el total como antes.
+        const insuranceTotal = freeShipping
+          ? 0
+          : Number(rate?.insuranceTotalPublic) || 0;
+        const feeTotal = freeShipping
+          ? 0
+          : Number(rate?.shippingFeePublic) || rateTotal;
+        if (insuranceTotal > 0) {
+          extraLineItems.push({
+            code: 'line-item/shipping-fee',
+            unitPrice: new Money(Math.round(feeTotal * 100), currency),
+            quantity: 1,
+            includeFor: ['customer', 'provider'],
+          });
+          extraLineItems.push({
+            code: 'line-item/shipping-insurance',
+            unitPrice: new Money(Math.round(insuranceTotal * 100), currency),
+            quantity: 1,
+            includeFor: ['customer', 'provider'],
+          });
+        } else {
+          extraLineItems.push({
+            code: 'line-item/shipping-fee',
+            unitPrice: new Money(Math.round(rateTotal * 100), currency),
+            quantity: 1,
+            includeFor: ['customer', 'provider'],
+          });
+        }
       }
       return { quantity, extraLineItems };
     }
@@ -149,15 +173,37 @@ const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
       const shouldAddLine = freeShipping || (rate && Number.isFinite(rateTotal) && rateTotal >= 0);
 
       if (shouldAddLine) {
-        // Reusamos el code 'line-item/shipping-fee' incluso para $0 — así
-        // el OrderBreakdown existente lo renderiza sin cambios de UI.
-        const subunits = Math.round(rateTotal * 100);
-        extraLineItems.push({
-          code: 'line-item/shipping-fee',
-          unitPrice: new Money(subunits, currency),
-          quantity: 1,
-          includeFor: ['customer', 'provider'],
-        });
+        // XOLOLO Junta 2026-10-26: desglose seguro aparte si lo contrató.
+        const insuranceTotal = freeShipping
+          ? 0
+          : Number(rate?.insuranceTotalPublic) || 0;
+        const feeTotal = freeShipping
+          ? 0
+          : Number(rate?.shippingFeePublic) || rateTotal;
+        if (insuranceTotal > 0) {
+          extraLineItems.push({
+            code: 'line-item/shipping-fee',
+            unitPrice: new Money(Math.round(feeTotal * 100), currency),
+            quantity: 1,
+            includeFor: ['customer', 'provider'],
+          });
+          extraLineItems.push({
+            code: 'line-item/shipping-insurance',
+            unitPrice: new Money(Math.round(insuranceTotal * 100), currency),
+            quantity: 1,
+            includeFor: ['customer', 'provider'],
+          });
+        } else {
+          // Reusamos code 'line-item/shipping-fee' incluso para $0 — así
+          // el OrderBreakdown existente lo renderiza sin cambios de UI.
+          const subunits = Math.round(rateTotal * 100);
+          extraLineItems.push({
+            code: 'line-item/shipping-fee',
+            unitPrice: new Money(subunits, currency),
+            quantity: 1,
+            includeFor: ['customer', 'provider'],
+          });
+        }
       }
     } else {
       // Modo flat (default Sharetribe): precio fijo del listing.
