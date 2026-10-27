@@ -21,6 +21,8 @@
 //   - SkydropxQuoteError: cotización rechazada (schema, geografía, etc).
 //   - SkydropxTimeoutError: polling excedió MAX_POLL_MS.
 
+const crypto = require('crypto');
+
 const HOST = process.env.SKYDROPX_HOST || 'sb-pro.skydropx.com';
 const CLIENT_ID = process.env.SKYDROPX_CLIENT_ID;
 const CLIENT_SECRET = process.env.SKYDROPX_CLIENT_SECRET;
@@ -54,6 +56,77 @@ const POLL_INTERVAL_MS = 1000;
 // Nota UI: nunca mostrar al buyer el "+12.5%" ni el breakdown. Sólo
 // el total final cotizado.
 const XOLOLO_MARGIN_PCT = 0.125;
+
+// XOLOLO 2026-10-27: HMAC para firmar los rates que mandamos al cliente.
+// Al momento del initiate, el server re-firma los campos recibidos y
+// compara. Si el cliente alteró rate.total (o cualquier otro) en
+// devtools, el HMAC no coincide y rechazamos la transacción.
+// Costo: 0 (solo crypto local). Beneficio: cierra money-leak directo.
+//
+// Secret: usa SHIPPING_RATE_SECRET si está, con fallback a
+// OPERATOR_SESSION_SECRET. En desarrollo cae a un valor por defecto
+// solo para no romper el servidor local.
+const getRateSecret = () =>
+  process.env.SHIPPING_RATE_SECRET ||
+  process.env.OPERATOR_SESSION_SECRET ||
+  'xololo-dev-only-not-for-prod';
+
+// Campos que el HMAC cubre. Si alguno cambia, la firma no coincide.
+// Timestamp evita replay con rate viejo (válido 30 min).
+const RATE_SIGNATURE_TTL_MS = 30 * 60 * 1000;
+
+const signRate = (rate, quotationId) => {
+  const issuedAt = Date.now();
+  const payload = [
+    rate.id,
+    quotationId,
+    Number(rate.total).toFixed(2),
+    Number(rate.insuranceCostReal || 0).toFixed(2),
+    Number(rate.shippingFeePublic || rate.total).toFixed(2),
+    Number(rate.insuranceTotalPublic || 0).toFixed(2),
+    rate.currency || 'MXN',
+    issuedAt,
+  ].join('|');
+  const hmac = crypto.createHmac('sha256', getRateSecret())
+    .update(payload)
+    .digest('hex');
+  return { signature: hmac, issuedAt };
+};
+
+// Verifica la firma de un rate recibido del cliente. Devuelve
+// { valid: boolean, reason?: string }. El cliente debe enviar
+// rate.signature + rate.signatureIssuedAt tal y como el server se los
+// dio al cotizar.
+const verifyRateSignature = (rate, quotationId) => {
+  if (!rate?.signature || !rate?.signatureIssuedAt) {
+    return { valid: false, reason: 'missing_signature' };
+  }
+  const age = Date.now() - Number(rate.signatureIssuedAt);
+  if (!Number.isFinite(age) || age < 0 || age > RATE_SIGNATURE_TTL_MS) {
+    return { valid: false, reason: 'signature_expired' };
+  }
+  const payload = [
+    rate.id,
+    quotationId,
+    Number(rate.total).toFixed(2),
+    Number(rate.insuranceCostReal || 0).toFixed(2),
+    Number(rate.shippingFeePublic || rate.total).toFixed(2),
+    Number(rate.insuranceTotalPublic || 0).toFixed(2),
+    rate.currency || 'MXN',
+    Number(rate.signatureIssuedAt),
+  ].join('|');
+  const expected = crypto.createHmac('sha256', getRateSecret())
+    .update(payload)
+    .digest('hex');
+  // timingSafeEqual exige que ambos buffers tengan la misma longitud.
+  const a = Buffer.from(rate.signature, 'hex');
+  const b = Buffer.from(expected, 'hex');
+  if (a.length !== b.length) {
+    return { valid: false, reason: 'signature_mismatch' };
+  }
+  const ok = crypto.timingSafeEqual(a, b);
+  return ok ? { valid: true } : { valid: false, reason: 'signature_mismatch' };
+};
 
 // XOLOLO Junta 2026-10-26 §5: carriers que NO recolectan en domicilio.
 // Skydropx confirmó que estos son "sólo drop-off en sucursal" — no
@@ -343,6 +416,12 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
         shippingFeePublic,
       };
     })
+    .map(r => {
+      // XOLOLO 2026-10-27: firma HMAC para evitar manipulación del
+      // precio en el cliente (devtools).
+      const { signature, issuedAt } = signRate(r, quotationId);
+      return { ...r, signature, signatureIssuedAt: issuedAt };
+    })
     .sort((a, b) => a.total - b.total);
 
   return {
@@ -568,4 +647,5 @@ module.exports = {
   SkydropxQuoteError,
   SkydropxTimeoutError,
   XOLOLO_MARGIN_PCT,
+  verifyRateSignature,
 };

@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const sharetribeSdk = require('sharetribe-flex-sdk');
 const { transactionLineItems } = require('../api-util/lineItems');
+const { verifyRateSignature } = require('../api-util/skydropx');
 
 // XOLOLO: código de entrega de 6 dígitos.
 // Se genera al momento del initiate REAL de una transacción cuyo
@@ -149,6 +150,29 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
     // en el ShippingRateSelector). Fulfillment (generate-shipping-guide)
     // usa esta info para generar la etiqueta.
     const rate = orderData?.selectedShippingRate;
+    // XOLOLO 2026-10-27: HMAC guard contra manipulación del total en
+    // devtools. Si el rate llega con signature, DEBE validar; si no,
+    // dejamos pasar (clientes viejos sin firmar) pero logueamos.
+    if (rate?.signature) {
+      const quotationId = orderData?.shippingQuotationId;
+      const check = verifyRateSignature(rate, quotationId);
+      if (!check.valid) {
+        const err = new Error('invalid_shipping_rate_signature');
+        err.statusCode = 400;
+        err.reason = check.reason;
+        // eslint-disable-next-line no-console
+        console.warn('[initiate-privileged] rate signature rejected:', check.reason, {
+          rateId: rate.id,
+          quotationId,
+        });
+        throw err;
+      }
+    } else if (rate) {
+      // eslint-disable-next-line no-console
+      console.warn('[initiate-privileged] rate sin firma HMAC — cliente viejo?', {
+        rateId: rate.id,
+      });
+    }
     const persistedRate = rate
       ? {
           id: rate.id,
@@ -221,6 +245,25 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
   }
   if (shippingPricingMode === 'carrier') {
     const rate = orderData?.selectedShippingRate;
+    // XOLOLO 2026-10-27: HMAC guard (legacy carrier flow).
+    if (rate?.signature) {
+      const quotationId = orderData?.shippingQuotationId;
+      const check = verifyRateSignature(rate, quotationId);
+      if (!check.valid) {
+        const err = new Error('invalid_shipping_rate_signature');
+        err.statusCode = 400;
+        err.reason = check.reason;
+        // eslint-disable-next-line no-console
+        console.warn('[initiate-privileged] rate signature rejected (legacy):', check.reason, {
+          rateId: rate.id,
+          quotationId,
+        });
+        throw err;
+      }
+    } else if (rate) {
+      // eslint-disable-next-line no-console
+      console.warn('[initiate-privileged] rate legacy sin firma HMAC', { rateId: rate.id });
+    }
     const persistedRate = rate
       ? {
           id: rate.id,
