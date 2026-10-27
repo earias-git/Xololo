@@ -12,9 +12,15 @@ import { storableError } from '../util/errors';
 // a loadData en una iteración futura. Pero visualmente el usuario ve las
 // listings reales apenas hidrata.
 
-// XOLOLO: 12 listings por sección (antes 6) para que el landing tenga
-// más densidad de catálogo visible sin scrollear al rail siguiente.
-const RECENT_LISTINGS_LIMIT = 12;
+// XOLOLO: 24 listings crudos por bucket. Después del filtro cliente
+// (quitar eventos/usados en productos, parear ubicación, etc.) nos
+// quedamos con suficiente material para llenar 12 slots por riel aunque
+// se caiga la mitad al filtro.
+const RECENT_LISTINGS_LIMIT = 24;
+
+// XOLOLO: tope visible por riel. Se aplica en los selectores después
+// de filtrar y reordenar, para que la UI siempre vea un número parejo.
+const VISIBLE_PER_RAIL = 12;
 
 // Paleta de tonos para el thumbnail placeholder cuando no hay imagen.
 // El componente FeaturedListings usa `tone` para pintar el gradiente.
@@ -328,7 +334,9 @@ export const selectFeaturedProducts = (buyerState = null) => state => {
     l => !isUsedListing(l, authorsById) && !isEventListing(l)
   );
   const ordered = reorderByBuyerState(base, buyerState, authorsById);
-  return ordered.map((l, i) => listingToFeaturedItem('product', l, products.included, i));
+  return ordered
+    .slice(0, VISIBLE_PER_RAIL)
+    .map((l, i) => listingToFeaturedItem('product', l, products.included, i));
 };
 
 export const selectFeaturedServices = (buyerState = null) => state => {
@@ -364,9 +372,11 @@ export const selectFeaturedServices = (buyerState = null) => state => {
   });
 
   const ordered = reorderByBuyerState(combined, buyerState, authorsById);
-  return ordered.map((l, i) =>
-    listingToFeaturedItem('service', l, includedByListingId.get(l.id.uuid) || [], i)
-  );
+  return ordered
+    .slice(0, VISIBLE_PER_RAIL)
+    .map((l, i) =>
+      listingToFeaturedItem('service', l, includedByListingId.get(l.id.uuid) || [], i)
+    );
 };
 
 export const selectFeaturedUsed = (buyerState = null) => state => {
@@ -378,7 +388,9 @@ export const selectFeaturedUsed = (buyerState = null) => state => {
   const authorsById = buildAuthorIndex(used.included);
   const base = used.data.filter(l => isUsedListing(l, authorsById));
   const ordered = reorderByBuyerState(base, buyerState, authorsById);
-  return ordered.map((l, i) => listingToFeaturedItem('used', l, used.included, i));
+  return ordered
+    .slice(0, VISIBLE_PER_RAIL)
+    .map((l, i) => listingToFeaturedItem('used', l, used.included, i));
 };
 
 // XOLOLO: expone el flag de loading para que la UI distinga "fetching"
