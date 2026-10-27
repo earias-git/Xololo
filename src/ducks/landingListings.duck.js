@@ -304,18 +304,16 @@ export const listingMatchesBuyerState = (listing, buyerState, authorsById) => {
 const isEventListing = listing =>
   listing?.attributes?.publicData?.isEvent === true;
 
-// XOLOLO Task #17: reordena listings crudos → primero los que matchean
-// el estado del buyer, después el resto. Preserva el orden original dentro
-// de cada grupo. Si !buyerState, devuelve la lista tal cual.
-const reorderByBuyerState = (listingsArr, buyerState, authorsById) => {
+// XOLOLO Task #17: filtra listings al estado del buyer. Si !buyerState,
+// devuelve la lista tal cual (sin ubicación → oferta global). Si hay
+// buyerState, SÓLO devuelve los que coinciden — nada de completar con
+// listings de otros estados. Si no hay ofertas locales, el riel se
+// muestra con menos ítems (o se oculta si queda vacío).
+const filterByBuyerState = (listingsArr, buyerState, authorsById) => {
   if (!buyerState || !listingsArr?.length) return listingsArr || [];
-  const near = [];
-  const rest = [];
-  listingsArr.forEach(l => {
-    if (listingMatchesBuyerState(l, buyerState, authorsById)) near.push(l);
-    else rest.push(l);
-  });
-  return [...near, ...rest];
+  return listingsArr.filter(l =>
+    listingMatchesBuyerState(l, buyerState, authorsById)
+  );
 };
 
 // XOLOLO: factory selector. Cuando buyerState está presente, los
@@ -333,7 +331,7 @@ export const selectFeaturedProducts = (buyerState = null) => state => {
   const base = products.data.filter(
     l => !isUsedListing(l, authorsById) && !isEventListing(l)
   );
-  const ordered = reorderByBuyerState(base, buyerState, authorsById);
+  const ordered = filterByBuyerState(base, buyerState, authorsById);
   return ordered
     .slice(0, VISIBLE_PER_RAIL)
     .map((l, i) => listingToFeaturedItem('product', l, products.included, i));
@@ -371,7 +369,7 @@ export const selectFeaturedServices = (buyerState = null) => state => {
     if (i.type === 'user') authorsById.set(i.id.uuid, i);
   });
 
-  const ordered = reorderByBuyerState(combined, buyerState, authorsById);
+  const ordered = filterByBuyerState(combined, buyerState, authorsById);
   return ordered
     .slice(0, VISIBLE_PER_RAIL)
     .map((l, i) =>
@@ -387,7 +385,7 @@ export const selectFeaturedUsed = (buyerState = null) => state => {
   // memoria para que la sección sea realmente exclusiva de usados.
   const authorsById = buildAuthorIndex(used.included);
   const base = used.data.filter(l => isUsedListing(l, authorsById));
-  const ordered = reorderByBuyerState(base, buyerState, authorsById);
+  const ordered = filterByBuyerState(base, buyerState, authorsById);
   return ordered
     .slice(0, VISIBLE_PER_RAIL)
     .map((l, i) => listingToFeaturedItem('used', l, used.included, i));

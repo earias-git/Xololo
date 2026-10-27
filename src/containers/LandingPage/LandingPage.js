@@ -135,12 +135,12 @@ export const LandingPageComponent = props => {
   const usedToShow = featuredUsed?.length ? featuredUsed : null;
   const storesToShow = featuredStores?.length ? featuredStores : featuredStoresPlaceholder;
 
-  // XOLOLO Task #17: títulos dinámicos de los rieles. Cuando hay
-  // ubicación, cada riel comunica "estás viendo primero lo cercano".
-  const localTag = buyerCity || buyerState;
-  const productsTitle = localTag ? `Productos cerca de ti · ${localTag}` : 'Productos destacados';
-  const servicesTitle = localTag ? `Servicios cerca de ti · ${localTag}` : 'Servicios populares';
-  const usedTitle = localTag ? `Segunda mano cerca de ti · ${localTag}` : 'Segunda mano destacada';
+  // XOLOLO Task #17: títulos fijos. El reordenamiento por ubicación
+  // ocurre en silencio dentro de los selectores — el buyer ve primero
+  // lo cercano sin que el UI anuncie nada.
+  const productsTitle = 'Productos destacados';
+  const servicesTitle = 'Servicios populares';
+  const usedTitle = 'Segunda mano destacada';
 
   return (
     <PageBuilder
