@@ -298,7 +298,25 @@ export const listingMatchesBuyerState = (listing, buyerState, authorsById) => {
 const isEventListing = listing =>
   listing?.attributes?.publicData?.isEvent === true;
 
-export const selectFeaturedProducts = state => {
+// XOLOLO Task #17: reordena listings crudos → primero los que matchean
+// el estado del buyer, después el resto. Preserva el orden original dentro
+// de cada grupo. Si !buyerState, devuelve la lista tal cual.
+const reorderByBuyerState = (listingsArr, buyerState, authorsById) => {
+  if (!buyerState || !listingsArr?.length) return listingsArr || [];
+  const near = [];
+  const rest = [];
+  listingsArr.forEach(l => {
+    if (listingMatchesBuyerState(l, buyerState, authorsById)) near.push(l);
+    else rest.push(l);
+  });
+  return [...near, ...rest];
+};
+
+// XOLOLO: factory selector. Cuando buyerState está presente, los
+// matches del estado del buyer salen primero en el riel; el resto
+// completa hasta llenar la vista. Si no hay buyerState: comportamiento
+// original (orden del server por fecha).
+export const selectFeaturedProducts = (buyerState = null) => state => {
   const products = state.landingListings.products;
   if (!products?.data?.length) return [];
   // "Productos destacados" sólo muestra nuevos o sin condición declarada.
@@ -306,79 +324,61 @@ export const selectFeaturedProducts = state => {
   // de verdad hasta que `condition` exista como field en Console.
   // También excluye eventos (van a la sección Servicios).
   const authorsById = buildAuthorIndex(products.included);
-  return products.data
-    .filter(l => !isUsedListing(l, authorsById) && !isEventListing(l))
-    .map((l, i) => listingToFeaturedItem('product', l, products.included, i));
+  const base = products.data.filter(
+    l => !isUsedListing(l, authorsById) && !isEventListing(l)
+  );
+  const ordered = reorderByBuyerState(base, buyerState, authorsById);
+  return ordered.map((l, i) => listingToFeaturedItem('product', l, products.included, i));
 };
 
-export const selectFeaturedServices = state => {
+export const selectFeaturedServices = (buyerState = null) => state => {
   const services = state.landingListings.services;
   const products = state.landingListings.products;
-  const items = [];
-  // 1) Servicios "clásicos" (service / service-day) fetched directo.
+
+  // Combina servicios clásicos + eventos (publicData.isEvent) en una
+  // sola lista cruda para reordenar coherentemente por ubicación.
+  const combined = [];
+  const includedByListingId = new Map();
   if (services?.data?.length) {
-    services.data.forEach((l, i) => {
-      items.push(listingToFeaturedItem('service', l, services.included, i));
+    services.data.forEach(l => {
+      combined.push(l);
+      includedByListingId.set(l.id.uuid, services.included);
     });
   }
-  // 2) Eventos (publicData.isEvent) que viven en el fetch de products
-  //    pero conceptualmente son "servicios con fecha fija". Hasta que
-  //    tengamos volumen suficiente para abrir una sección "Eventos"
-  //    propia en el landing, los agrupamos acá.
   if (products?.data?.length) {
-    products.data.forEach((l, i) => {
+    products.data.forEach(l => {
       if (!isEventListing(l)) return;
-      items.push(listingToFeaturedItem('service', l, products.included, i));
+      combined.push(l);
+      includedByListingId.set(l.id.uuid, products.included);
     });
   }
-  return items;
+
+  // Author index desde ambos buckets para resolver sellerLocation.state
+  // sin importar de dónde vino el listing.
+  const authorsById = new Map();
+  (services?.included || []).forEach(i => {
+    if (i.type === 'user') authorsById.set(i.id.uuid, i);
+  });
+  (products?.included || []).forEach(i => {
+    if (i.type === 'user') authorsById.set(i.id.uuid, i);
+  });
+
+  const ordered = reorderByBuyerState(combined, buyerState, authorsById);
+  return ordered.map((l, i) =>
+    listingToFeaturedItem('service', l, includedByListingId.get(l.id.uuid) || [], i)
+  );
 };
 
-export const selectFeaturedUsed = state => {
+export const selectFeaturedUsed = (buyerState = null) => state => {
   const used = state.landingListings.used;
   if (!used?.data?.length) return [];
   // Mismo motivo que arriba: el SDK no filtra `pub_condition=used`
   // porque el campo no está registrado en Console. Filtramos en
   // memoria para que la sección sea realmente exclusiva de usados.
   const authorsById = buildAuthorIndex(used.included);
-  return used.data
-    .filter(l => isUsedListing(l, authorsById))
-    .map((l, i) => listingToFeaturedItem('used', l, used.included, i));
-};
-
-// XOLOLO Task #17: banda "Cerca de ti" en Landing.
-// Combina productos + servicios + usados cuyo estado coincide con el
-// del buyer (del hook useBuyerLocation). Devuelve [] si no hay match.
-// La UI muestra la banda sólo si length>0, así que es seguro llamarlo
-// aunque buyerState sea null.
-export const selectFeaturedNearYou = buyerState => state => {
-  if (!buyerState) return [];
-  const products = state.landingListings.products;
-  const services = state.landingListings.services;
-  const used = state.landingListings.used;
-  const items = [];
-  const seen = new Set();
-
-  const pushMatches = (bucket, kind) => {
-    if (!bucket?.data?.length) return;
-    const authorsById = buildAuthorIndex(bucket.included);
-    bucket.data.forEach((l, i) => {
-      if (seen.has(l.id.uuid)) return;
-      if (!listingMatchesBuyerState(l, buyerState, authorsById)) return;
-      // Si es evento o servicio real, usamos kind='service' para que
-      // el componente muestre "Reservar". Si es usado o producto, 'product'.
-      const resolvedKind = isEventListing(l) ? 'service' : kind;
-      items.push(listingToFeaturedItem(resolvedKind, l, bucket.included, i));
-      seen.add(l.id.uuid);
-    });
-  };
-
-  pushMatches(services, 'service');
-  pushMatches(products, 'product');
-  pushMatches(used, 'used');
-
-  // Máximo 12 ítems para no desbordar la banda.
-  return items.slice(0, 12);
+  const base = used.data.filter(l => isUsedListing(l, authorsById));
+  const ordered = reorderByBuyerState(base, buyerState, authorsById);
+  return ordered.map((l, i) => listingToFeaturedItem('used', l, used.included, i));
 };
 
 // XOLOLO: expone el flag de loading para que la UI distinga "fetching"

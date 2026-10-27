@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import loadable from '@loadable/component';
 
-import { bool, object, array, func } from 'prop-types';
+import { bool, object, func } from 'prop-types';
 import { compose } from 'redux';
 import { connect, useSelector } from 'react-redux';
 
@@ -18,7 +18,6 @@ import {
   selectFeaturedProducts,
   selectFeaturedServices,
   selectFeaturedUsed,
-  selectFeaturedNearYou,
   selectLandingListingsLoading,
 } from '../../ducks/landingListings.duck';
 import { fetchLandingStores, selectLandingStores } from '../../ducks/landingStores.duck';
@@ -79,13 +78,20 @@ export const LandingPageComponent = props => {
     error,
     onFetchLandingListings,
     onFetchLandingStores,
-    featuredProducts,
-    featuredServices,
-    featuredUsed,
     featuredStores,
     featuredLoading,
     storefrontSlug,
   } = props;
+
+  // XOLOLO Task #17: lee ubicación del buyer y la pasa a los selectores,
+  // que reordenan cada riel para poner primero lo que coincide con el
+  // estado del buyer. Sin ubicación → orden global por fecha (default).
+  const { location: buyerLocation } = useBuyerLocation();
+  const buyerState = buyerLocation?.state || null;
+  const buyerCity = buyerLocation?.city || null;
+  const featuredProducts = useSelector(selectFeaturedProducts(buyerState));
+  const featuredServices = useSelector(selectFeaturedServices(buyerState));
+  const featuredUsed = useSelector(selectFeaturedUsed(buyerState));
 
   // XOLOLO: si el server detectó un subdominio de storefront, saltamos el
   // marketplace general y renderizamos la tienda del seller.
@@ -129,17 +135,12 @@ export const LandingPageComponent = props => {
   const usedToShow = featuredUsed?.length ? featuredUsed : null;
   const storesToShow = featuredStores?.length ? featuredStores : featuredStoresPlaceholder;
 
-  // XOLOLO Task #17: banda "Cerca de ti". Lee la ubicación del buyer
-  // (IP o CP manual) desde localStorage y filtra listings cuyo estado
-  // coincida. Si no hay match, nearYouItems=[] y la banda no se renderiza.
-  const { location: buyerLocation } = useBuyerLocation();
-  const nearYouItems = useSelector(selectFeaturedNearYou(buyerLocation?.state));
-  const nearYouCity = buyerLocation?.city;
-  const nearYouLabel = nearYouCity
-    ? `Cerca de ti · ${nearYouCity}`
-    : buyerLocation?.state
-      ? `Cerca de ti · ${buyerLocation.state}`
-      : 'Cerca de ti';
+  // XOLOLO Task #17: títulos dinámicos de los rieles. Cuando hay
+  // ubicación, cada riel comunica "estás viendo primero lo cercano".
+  const localTag = buyerCity || buyerState;
+  const productsTitle = localTag ? `Productos cerca de ti · ${localTag}` : 'Productos destacados';
+  const servicesTitle = localTag ? `Servicios cerca de ti · ${localTag}` : 'Servicios populares';
+  const usedTitle = localTag ? `Segunda mano cerca de ti · ${localTag}` : 'Segunda mano destacada';
 
   return (
     <PageBuilder
@@ -164,23 +165,15 @@ export const LandingPageComponent = props => {
               7. PromoCards      → 8. Tiendas destacadas
               9. AppBand         → 10. Footer (lo pone PageBuilder) */}
           <XololearBand />
-          {nearYouItems?.length ? (
-            <FeaturedListings
-              title={nearYouLabel}
-              seeAllLabel="Ver todo cerca"
-              seeAllHref="/s?nearYou=1"
-              items={nearYouItems}
-            />
-          ) : null}
           <FeaturedListings
-            title="Productos destacados"
+            title={productsTitle}
             seeAllLabel="Ver todos los productos"
             seeAllHref="/s?pub_listingType=product"
             items={productsToShow}
           />
           <VerifiedBand />
           <FeaturedListings
-            title="Servicios populares"
+            title={servicesTitle}
             seeAllLabel="Ver todos los servicios"
             seeAllHref="/s?pub_listingType=service,service-day"
             items={servicesToShow}
@@ -188,7 +181,7 @@ export const LandingPageComponent = props => {
           <UsedGoodsBand />
           {usedToShow ? (
             <FeaturedListings
-              title="Segunda mano destacada"
+              title={usedTitle}
               seeAllLabel="Ver todo lo usado"
               seeAllHref="/s?pub_condition=used"
               items={usedToShow}
@@ -207,8 +200,6 @@ LandingPageComponent.propTypes = {
   pageAssetsData: object,
   inProgress: bool,
   error: propTypes.error,
-  featuredProducts: array,
-  featuredServices: array,
   onFetchLandingListings: func,
 };
 
@@ -224,9 +215,6 @@ const mapStateToProps = state => {
     getListingEntitiesById,
     inProgress,
     error,
-    featuredProducts: selectFeaturedProducts(state),
-    featuredServices: selectFeaturedServices(state),
-    featuredUsed: selectFeaturedUsed(state),
     featuredStores: selectLandingStores(state),
     featuredLoading: selectLandingListingsLoading(state),
     storefrontSlug: selectStorefrontSlug(state),
