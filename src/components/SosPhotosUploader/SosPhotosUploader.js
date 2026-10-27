@@ -17,7 +17,11 @@ import css from './SosPhotosUploader.module.css';
 // SOS para reclamos por sobrepesos/daños. Los slots 4 (medidas) y 5
 // (peso) son los CRÍTICOS.
 
-const SLOTS = [
+// XOLOLO Fase 2: slots divididos en 2 etapas.
+// PRE_SLOTS (4): antes de generar la guía.
+// POST_SLOTS (1): foto de guía pegada — después de generar la guía
+//   (antes se pedía como requisito pre-guía, lo cual era imposible).
+const PRE_SLOTS = [
   {
     key: 'producto',
     title: '1. Producto sin embalar',
@@ -36,15 +40,8 @@ const SLOTS = [
     badTip: 'Embalaje abierto o incompleto.',
   },
   {
-    key: 'guia',
-    title: '3. Guía adherida al paquete',
-    hint: 'La etiqueta Skydropx pegada al paquete, con el tracking legible.',
-    goodTip: 'Se lee claramente el tracking number.',
-    badTip: 'Guía borrosa, doblada o sin pegar todavía.',
-  },
-  {
     key: 'medidas',
-    title: '4. Paquete con regla o flexómetro',
+    title: '3. Paquete con regla o flexómetro',
     hint:
       'Muestra ancho, alto y largo del paquete cerrado. La regla o ' +
       'flexómetro debe salir en la MISMA toma que el paquete. ' +
@@ -56,7 +53,7 @@ const SLOTS = [
   },
   {
     key: 'peso',
-    title: '5. Paquete en báscula',
+    title: '4. Paquete en báscula',
     hint:
       'El paquete final sobre una báscula con el peso legible en pantalla. ' +
       '⚠️ Sin esta foto NO se paga reclamo por sobrepesos.',
@@ -65,6 +62,20 @@ const SLOTS = [
     critical: true,
   },
 ];
+
+const POST_SLOTS = [
+  {
+    key: 'guia',
+    title: '5. Guía adherida al paquete',
+    hint:
+      'Imprime la guía generada arriba, pégala al paquete y toma esta foto ' +
+      'con el tracking legible.',
+    goodTip: 'Se lee claramente el tracking number.',
+    badTip: 'Guía borrosa, doblada o sin pegar todavía.',
+  },
+];
+
+const SLOTS = [...PRE_SLOTS, ...POST_SLOTS];
 
 const MAX_SIZE = 8 * 1024 * 1024; // 8 MB
 
@@ -186,7 +197,15 @@ const SosPhotoSlot = ({ slot, transactionId, currentUrl, onUploaded }) => {
   );
 };
 
-const SosPhotosUploader = ({ transactionId, initialUrls, onChange, className }) => {
+const SosPhotosUploader = ({
+  transactionId,
+  initialUrls,
+  onChange,
+  className,
+  // XOLOLO Fase 2:
+  insuranceAccepted = false, // ¿el buyer contrató SOS?
+  labelGenerated = false, // ¿ya se generó la guía?
+}) => {
   const [urls, setUrls] = useState(initialUrls || {});
 
   const handleSlotUploaded = (slotKey, url) => {
@@ -197,35 +216,49 @@ const SosPhotosUploader = ({ transactionId, initialUrls, onChange, className }) 
     });
   };
 
-  const completedCount = SLOTS.filter(s => urls[s.key]).length;
-  const allDone = completedCount === SLOTS.length;
+  const preCompleted = PRE_SLOTS.filter(s => urls[s.key]).length;
+  const postCompleted = POST_SLOTS.filter(s => urls[s.key]).length;
+  const allDone = preCompleted + postCompleted === SLOTS.length;
+
+  const subtitle = insuranceAccepted ? (
+    <>
+      El buyer contrató Protección SOS. Estas fotos son <strong>requisito</strong>{' '}
+      para generar la guía y para que Skydropx pague cualquier reclamo.
+    </>
+  ) : (
+    <>
+      El buyer <strong>no</strong> contrató Protección SOS, así que estas fotos son{' '}
+      <strong>opcionales</strong>. Pero las recomendamos: te sirven de evidencia
+      si hay disputa con la paquetería o un contracargo bancario.
+    </>
+  );
 
   return (
     <div className={classNames(css.root, className)}>
       <div className={css.summary}>
         <div>
           <h4 className={css.summaryTitle}>Fotos de evidencia SOS</h4>
-          <p className={css.summarySubtitle}>
-            Skydropx exige estas 5 fotos para que el seguro pague reclamos.{' '}
-            <strong>Sin las 5, no podrás generar la guía.</strong>
-          </p>
+          <p className={css.summarySubtitle}>{subtitle}</p>
         </div>
         <div className={css.progress}>
           <span className={css.progressCount}>
-            {completedCount} / {SLOTS.length}
+            {preCompleted + postCompleted} / {SLOTS.length}
           </span>
           <div className={css.progressBar}>
             <div
               className={css.progressFill}
-              style={{ width: `${(completedCount / SLOTS.length) * 100}%` }}
+              style={{
+                width: `${((preCompleted + postCompleted) / SLOTS.length) * 100}%`,
+              }}
             />
           </div>
           {allDone ? <span className={css.progressDone}>✓ Completo</span> : null}
         </div>
       </div>
 
+      <h5 className={css.stageHeader}>Antes de generar la guía</h5>
       <div className={css.slotsGrid}>
-        {SLOTS.map(slot => (
+        {PRE_SLOTS.map(slot => (
           <SosPhotoSlot
             key={slot.key}
             slot={slot}
@@ -233,6 +266,31 @@ const SosPhotosUploader = ({ transactionId, initialUrls, onChange, className }) 
             currentUrl={urls[slot.key]}
             onUploaded={url => handleSlotUploaded(slot.key, url)}
           />
+        ))}
+      </div>
+
+      <h5 className={css.stageHeader}>
+        Después de generar e imprimir la guía
+        {!labelGenerated ? (
+          <span className={css.stageHint}>
+            {' '}
+            — habilitado una vez que generes la guía
+          </span>
+        ) : null}
+      </h5>
+      <div className={css.slotsGrid}>
+        {POST_SLOTS.map(slot => (
+          <div
+            key={slot.key}
+            className={classNames({ [css.slotLocked]: !labelGenerated })}
+          >
+            <SosPhotoSlot
+              slot={slot}
+              transactionId={transactionId}
+              currentUrl={urls[slot.key]}
+              onUploaded={url => handleSlotUploaded(slot.key, url)}
+            />
+          </div>
         ))}
       </div>
     </div>

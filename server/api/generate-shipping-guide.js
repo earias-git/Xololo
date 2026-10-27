@@ -119,22 +119,44 @@ module.exports = async (req, res) => {
       });
     }
     let sosPhotos = {};
+    let txShippingRate = {};
     try {
       const opTxResp = await isdk.transactions.show({ id: transactionId });
-      sosPhotos = opTxResp.data.data.attributes.metadata?.xololoShippingSosPhotos || {};
+      const txAttrs = opTxResp.data.data.attributes;
+      sosPhotos = txAttrs.metadata?.xololoShippingSosPhotos || {};
+      // XOLOLO Fase 2: necesitamos saber si el buyer contrató SOS para
+      // decidir si el gate de fotos aplica como bloqueante o no.
+      txShippingRate =
+        txAttrs.protectedData?.xololoShipping?.rate ||
+        txAttrs.protectedData?.xololoShipping?.v2?.rate ||
+        {};
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('[generate-shipping-guide] integration tx.show falló', e?.message);
       return res.status(500).json({ error: 'internal' });
     }
-    const requiredSlots = [
-      'producto', 'embalado', 'guia', 'medidas', 'peso',
-    ];
+
+    // XOLOLO Fase 2 — bug "foto de guía antes de generar la guía":
+    // Antes se pedían 5 fotos, incluyendo 'guia' (etiqueta pegada), pero
+    // la etiqueta no existe hasta que se genera la guía. Ahora el gate
+    // pide SOLO las 4 fotos previas; la foto de guía se solicita en un
+    // paso posterior (pre-pickup).
+    //
+    // Además, el gate es BLOQUEANTE sólo cuando el buyer contrató SOS
+    // (insuranceAccepted=true). Sin SOS, las fotos son recomendadas pero
+    // no obligatorias para generar la guía — el seller puede continuar
+    // y se le avisa que las fotos le sirven para disputas de paquetería
+    // y chargeback bancario.
+    const insuranceAccepted = txShippingRate.insuranceAccepted === true;
+    const requiredSlots = ['producto', 'embalado', 'medidas', 'peso'];
     const missingPhotos = requiredSlots.filter(k => !sosPhotos[k]);
-    if (missingPhotos.length > 0) {
+    if (insuranceAccepted && missingPhotos.length > 0) {
       return res.status(409).json({
         error: 'sos_photos_missing',
-        details: 'Debes subir las 5 fotos SOS antes de generar la guía.',
+        details:
+          'Debes subir las 4 fotos SOS (producto, embalado, medidas, peso) ' +
+          'antes de generar la guía. El buyer contrató Protección SOS y las ' +
+          'fotos son requisito para reclamar.',
         missing: missingPhotos,
       });
     }

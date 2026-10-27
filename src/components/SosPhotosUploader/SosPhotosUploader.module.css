@@ -236,3 +236,33 @@
   font-size: 12.5px;
   color: #991b1b;
 }
+
+/* XOLOLO Fase 2: separación visual pre-guía / post-guía */
+.stageHeader {
+  margin: 18px 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--colorGrey500, #777);
+  border-top: 1px solid var(--colorGrey100, #eee);
+  padding-top: 14px;
+}
+
+.stageHeader:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.stageHint {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--colorGrey400, #999);
+}
+
+.slotLocked {
+  opacity: 0.5;
+  pointer-events: none;
+}

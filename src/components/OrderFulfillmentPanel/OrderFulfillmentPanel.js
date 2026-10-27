@@ -43,9 +43,16 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
     return null;
   }
 
-  const requiredSlots = ['producto', 'embalado', 'guia', 'medidas', 'peso'];
-  const completedPhotos = requiredSlots.filter(k => sosPhotos[k]).length;
-  const allPhotosDone = completedPhotos === requiredSlots.length;
+  // XOLOLO Fase 2: gate pre-guía = 4 fotos (sin 'guia' que se pide
+  // después de generar la etiqueta). El gate es BLOQUEANTE sólo cuando
+  // el buyer contrató SOS; sin SOS, las fotos son recomendadas y el
+  // seller puede generar la guía sin ellas.
+  const insuranceAccepted = xShipping.rate?.insuranceAccepted === true;
+  const preGuideSlots = ['producto', 'embalado', 'medidas', 'peso'];
+  const completedPreGuide = preGuideSlots.filter(k => sosPhotos[k]).length;
+  const preGuideComplete = completedPreGuide === preGuideSlots.length;
+  // Si no hay seguro, el "gate" se considera listo aunque falten fotos.
+  const allPhotosDone = insuranceAccepted ? preGuideComplete : true;
 
   const handleGenerate = async () => {
     setGenerationError(null);
@@ -208,6 +215,8 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
             transactionId={transaction.id.uuid}
             initialUrls={sosPhotos}
             onChange={setSosPhotos}
+            insuranceAccepted={insuranceAccepted}
+            labelGenerated={!!guide?.labelUrl}
           />
         </div>
       ) : null}
