@@ -20,6 +20,7 @@ const sellerBySlug = require('./api/seller-by-slug');
 const featuredStores = require('./api/featured-stores');
 const uploadStoreImage = require('./api/upload-store-image');
 const shippingQuote = require('./api/shipping-quote');
+const listingShippingFit = require('./api/listing-shipping-fit');
 const publicShippingQuote = require('./api/public-shipping-quote');
 const publicShippingCreatePayment = require('./api/public-shipping-create-payment');
 const publicShippingStatus = require('./api/public-shipping-status');
@@ -130,6 +131,8 @@ router.post('/upload-store-image', uploadStoreImage);
 // y que el seller haya configurado originPostalCode en /account/store.
 // body-parser JSON explícito porque el cliente manda application/json.
 router.post('/shipping-quote', bodyParser.json(), shippingQuote);
+// XOLOLO Junta 2026-10-26 §13: evaluación de aptitud para paquetería.
+router.post('/listing-shipping-fit', bodyParser.json(), listingShippingFit);
 // XOLOLO feature #28: cotizador PÚBLICO (sin login) de guías de paquetería.
 router.post('/public-shipping-quote', bodyParser.json(), publicShippingQuote);
 // XOLOLO feature #28 · F2b: Stripe Payment Intent de la compra pública.

@@ -11,6 +11,7 @@ import {
 } from '../../../../util/types';
 import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { getShippingMethodsFromListing } from '../../../../util/xololoShippingMethods';
+import { evaluateShippingFit } from '../../../../util/carrierProhibitedCatalog';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -146,6 +147,18 @@ const EditListingDeliveryPanel = props => {
           className={css.form}
           initialValues={state.initialValues}
           categoryId={listing?.attributes?.publicData?.categoryLevel1}
+          // XOLOLO Junta 2026-10-26 §13: evalúa si el producto es apto
+          // para paquetería estándar. El form bloquea el checkbox de
+          // Skydropx si verdict==='prohibited' y muestra warning si
+          // ==='restricted'.
+          shippingFit={evaluateShippingFit({
+            title: listing?.attributes?.title,
+            description: listing?.attributes?.description,
+            aiAnalysis:
+              listing?.attributes?.publicData?.aiAnalysis?.aggregated ||
+              listing?.attributes?.publicData?.aiAnalysis ||
+              null,
+          })}
           onSubmit={values => {
             const { xololoMethods } = values;
 

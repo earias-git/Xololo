@@ -62,6 +62,7 @@ export const EditListingDeliveryForm = props => (
         updateInProgress,
         values,
         categoryId,
+        shippingFit,
       } = formRenderProps;
 
       // This is a bug fix for Final Form.
@@ -258,6 +259,48 @@ export const EditListingDeliveryForm = props => (
               </div>
             ) : null}
 
+            {/* XOLOLO Junta 2026-10-26 §13: aviso de aptitud para paquetería */}
+            {shippingFit?.verdict === 'prohibited' ? (
+              <div
+                style={{
+                  margin: '8px 0 4px',
+                  padding: '10px 12px',
+                  background: '#fef2f2',
+                  border: '1px solid #fca5a5',
+                  borderRadius: 8,
+                  color: '#991b1b',
+                  fontSize: 13,
+                }}
+              >
+                <strong>🚫 No apto para paquetería estándar</strong>
+                <p style={{ margin: '4px 0 0', fontSize: 12, lineHeight: 1.4 }}>
+                  Detectamos: {shippingFit.matched?.[0]?.label}. {' '}
+                  {shippingFit.matched?.[0]?.advice}
+                </p>
+                <p style={{ margin: '6px 0 0', fontSize: 12, lineHeight: 1.4 }}>
+                  <strong>Usa en su lugar</strong> pickup, entrega local o flete especializado.
+                </p>
+              </div>
+            ) : shippingFit?.verdict === 'restricted' ? (
+              <div
+                style={{
+                  margin: '8px 0 4px',
+                  padding: '10px 12px',
+                  background: '#fef3c7',
+                  border: '1px solid #fcd34d',
+                  borderRadius: 8,
+                  color: '#78350f',
+                  fontSize: 13,
+                }}
+              >
+                <strong>⚠️ Paquetería con condiciones</strong>
+                <p style={{ margin: '4px 0 0', fontSize: 12, lineHeight: 1.4 }}>
+                  Detectamos: {shippingFit.matched?.[0]?.label}. {' '}
+                  {shippingFit.matched?.[0]?.advice}
+                </p>
+              </div>
+            ) : null}
+
             {/* Método 3: Skydropx (cotización con paquetería al momento del checkout) */}
             <FieldCheckbox
               id={`${formId}.xoloSkydropx`}
@@ -265,6 +308,7 @@ export const EditListingDeliveryForm = props => (
               name="xololoMethods.skydropxCarrier.enabled"
               label="Cotizar con paquetería (Skydropx)"
               value="true"
+              disabled={shippingFit?.verdict === 'prohibited'}
             />
             {xoloSkydropxOn ? (
               <div style={{ marginLeft: 28, marginBottom: 12 }}>
