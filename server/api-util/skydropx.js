@@ -41,20 +41,24 @@ const MAX_POLL_MS = 40000;
 const POLL_INTERVAL_MS = 1000;
 
 // XOLOLO: política de pricing (ver docs/LOGISTICS_V1.md §5).
-// - SOS Protección Skydropx: $25 MXN fijo por envío, obligatorio siempre.
-// - Utilidad Xololo: 14% sobre el bruto Skydropx (guía + SOS).
-// Fórmula: precio_público = (rate_skydropx + 25) × 1.14
-// Constantes exportadas para poder usarlas también al crear la guía y
-// facturar/desglosar en el ledger interno.
-const SOS_INSURANCE_MXN = 25;
+// - SOS Protección Skydropx: 1% del valor declarado (+ $70 si ≥ $5,000).
+//   Confirmado por Skydropx en la 2ª reunión (13 oct 2026). Ya NO es
+//   $25 flat como asumíamos antes.
+// - Utilidad Xololo: 14% sobre el bruto Skydropx (guía + SOS si lo hay).
+// Fórmula: precio_público = (rate_skydropx + sos_real) × 1.14
+//          · sos_real = 0 si el buyer no contrató seguro.
+//          · sos_real = costo que Skydropx devuelve en el rate cuando
+//            se cotizó con package_protected=true + declared_value.
 const XOLOLO_MARGIN_PCT = 0.14;
 
-const applyPricingPolicy = skydropxTotalMXN => {
-  const bruto = Number(skydropxTotalMXN) + SOS_INSURANCE_MXN;
+const applyPricingPolicy = (skydropxTotalMXN, sosCostMXN = 0) => {
+  const base = Number(skydropxTotalMXN) || 0;
+  const sos = Number(sosCostMXN) || 0;
+  const bruto = base + sos;
   const totalPublico = bruto * (1 + XOLOLO_MARGIN_PCT);
   return {
-    skydropxTotal: Number(skydropxTotalMXN),
-    sosInsurance: SOS_INSURANCE_MXN,
+    skydropxTotal: base,
+    sosInsurance: Number(sos.toFixed(2)),
     skydropxBruto: Number(bruto.toFixed(2)),
     xololoMargin: Number((bruto * XOLOLO_MARGIN_PCT).toFixed(2)),
     totalPublico: Number(totalPublico.toFixed(2)),
@@ -228,27 +232,31 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
   const successRates = (last.rates || [])
     .filter(r => r.success)
     .map(r => {
-      // XOLOLO: aplicamos la política de pricing (SOS obligatorio + margen).
-      // El cliente y checkout ven `total` = precio público final.
-      // `pricing` desglosa por si se necesita auditar o mostrar en el UI.
-      const pricing = applyPricingPolicy(Number(r.total));
-
       // XOLOLO: Skydropx devuelve el costo real del seguro en varios
-      // campos posibles según versión de API. Lo preferimos sobre el
-      // hardcoded. Si vino total_value_with_protection usamos la
-      // diferencia; si no, caemos a lo que indique el campo directo.
+      // campos posibles según versión de API. Si vino
+      // total_value_with_protection usamos la diferencia; si no, caemos
+      // al campo directo. Si no se pidió seguro → 0.
       const totalWithProtection =
         Number(r.total_value_with_protection) || Number(r.total_with_protection) || null;
       const protectionTotal =
         Number(r.protection_value_total) || Number(r.protection_total) || null;
-      let insuranceCostReal = null;
+      let insuranceCostReal = 0;
       if (insurance) {
         if (totalWithProtection && totalWithProtection > Number(r.total)) {
           insuranceCostReal = Number((totalWithProtection - Number(r.total)).toFixed(2));
         } else if (protectionTotal) {
           insuranceCostReal = Number(protectionTotal.toFixed(2));
         }
+        // Si pedimos seguro pero Skydropx no lo expuso en los campos
+        // conocidos, calculamos la fórmula pública: 1% + $70 si ≥5000.
+        if (!insuranceCostReal && Number(declaredValue) >= 500) {
+          const dv = Number(declaredValue);
+          insuranceCostReal = Number((dv * 0.01 + (dv >= 5000 ? 70 : 0)).toFixed(2));
+        }
       }
+
+      // XOLOLO: pricing con SOS real (0 si el buyer no contrató seguro).
+      const pricing = applyPricingPolicy(Number(r.total), insuranceCostReal);
 
       // XOLOLO Bug 2a: log del breakdown por rate para poder rastrear
       // "por qué salió $X" — Skydropx neto + SOS + margen = precio público.
@@ -257,9 +265,7 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
         `[skydropx.rate] ${r.provider_display_name} ${r.provider_service_name}: ` +
           `skydropx=$${pricing.skydropxTotal} +SOS=$${pricing.sosInsurance} ` +
           `+margin=$${pricing.xololoMargin} → público=$${pricing.totalPublico}` +
-          (insurance
-            ? ` | insurable=${r.insurable} insuranceReal=${insuranceCostReal ?? 'n/a'}`
-            : '')
+          (insurance ? ` | insurable=${r.insurable}` : ' | sin seguro')
       );
       return {
         id: r.id,
@@ -504,6 +510,5 @@ module.exports = {
   SkydropxAuthError,
   SkydropxQuoteError,
   SkydropxTimeoutError,
-  SOS_INSURANCE_MXN,
   XOLOLO_MARGIN_PCT,
 };
