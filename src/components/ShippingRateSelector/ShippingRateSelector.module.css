@@ -206,3 +206,77 @@
   font-size: 13px;
   color: #15803d;
 }
+
+/* XOLOLO Fase 2: bloque de SOS Protección */
+.insuranceBlock {
+  margin: 12px 0;
+  padding: 14px;
+  border-radius: 10px;
+  background: #f8f7ff;
+  border: 1px solid #e4defa;
+}
+
+.insuranceToggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 4px 0;
+  min-height: 44px;
+}
+
+.insuranceToggle input[type='checkbox'] {
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--marketplaceColor, #6938ef);
+  flex-shrink: 0;
+}
+
+.insuranceToggle strong {
+  display: block;
+  font-size: 14px;
+  color: var(--colorGrey900, #1a1a1a);
+  margin-bottom: 2px;
+}
+
+.insuranceHelp {
+  display: block;
+  font-size: 12px;
+  color: var(--colorGrey500, #777);
+  line-height: 1.4;
+  font-weight: normal;
+}
+
+.consentCheckbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  min-height: 44px;
+}
+
+.consentCheckbox input[type='checkbox'] {
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  accent-color: #d97706;
+  flex-shrink: 0;
+}
+
+.consentCheckbox small {
+  font-size: 12px;
+  color: #78350f;
+  line-height: 1.45;
+}
+
+.rateCardDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}

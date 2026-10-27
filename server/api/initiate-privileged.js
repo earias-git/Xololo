@@ -159,6 +159,11 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
           total: Number(rate.total),
           currency: rate.currency || 'MXN',
           days: rate.days ?? null,
+          // XOLOLO Fase 2: decisión SOS del buyer.
+          insuranceAccepted: !!rate.insuranceAccepted,
+          insuranceCost: Number(rate.insuranceCostReal) || 0,
+          noInsuranceConsent: !!rate.noInsuranceConsent,
+          sosDecisionAt: new Date().toISOString(),
         }
       : null;
     return {
@@ -220,6 +225,11 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
           total: Number(rate.total),
           currency: rate.currency || 'MXN',
           days: rate.days ?? null,
+          // XOLOLO Fase 2: decisión SOS del buyer (misma forma que v2).
+          insuranceAccepted: !!rate.insuranceAccepted,
+          insuranceCost: Number(rate.insuranceCostReal) || 0,
+          noInsuranceConsent: !!rate.noInsuranceConsent,
+          sosDecisionAt: new Date().toISOString(),
         }
       : null;
     return {

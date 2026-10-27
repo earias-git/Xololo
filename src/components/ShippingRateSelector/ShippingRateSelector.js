@@ -74,8 +74,24 @@ const ShippingRateSelector = props => {
     destination,
   } = props;
 
-  const [state, setState] = useState({ status: QuoteRequestState.IDLE, rates: [], error: null });
+  const [state, setState] = useState({
+    status: QuoteRequestState.IDLE,
+    rates: [],
+    error: null,
+    // XOLOLO Fase 2: metadata del server para decidir si mostramos el
+    // toggle de SOS y qué texto mostrar.
+    declaredValue: 0,
+    insuranceMinDeclaredValue: 500,
+  });
   const [selectedRateId, setSelectedRateId] = useState(null);
+  // XOLOLO Fase 2: toggle "Protección SOS". Default OFF (opt-in).
+  // Al activarlo, re-cotizamos con insurance=true y los totales se
+  // actualizan automáticamente.
+  const [wantsInsurance, setWantsInsurance] = useState(false);
+  // Consentimiento explícito "entiendo que renuncio al seguro" — hay
+  // que marcarlo para poder avanzar sin SOS. Si el buyer activa el
+  // toggle, el consentimiento se reinicia (no aplica).
+  const [acceptsNoInsurance, setAcceptsNoInsurance] = useState(false);
   const lastSigRef = useRef(null);
   const debounceRef = useRef(null);
   const abortRef = useRef(null);
@@ -113,7 +129,7 @@ const ShippingRateSelector = props => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       lastSigRef.current = sig;
-      fetchRatesFor(destination);
+      fetchRatesFor(destination, wantsInsurance);
     }, QUOTE_DEBOUNCE_MS);
 
     return () => {
@@ -127,9 +143,10 @@ const ShippingRateSelector = props => {
     destination?.area_level3,
     shippingPricingMode,
     sellerCoversShipping,
+    wantsInsurance,
   ]);
 
-  const fetchRatesFor = async dest => {
+  const fetchRatesFor = async (dest, insurance = false) => {
     // Cancela request previo si hay uno en vuelo.
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
@@ -147,6 +164,7 @@ const ShippingRateSelector = props => {
           destination: dest,
           ...(primaryQuantity ? { quantity: primaryQuantity } : {}),
           ...(hasCart ? { additionalCartItems } : {}),
+          insurance: Boolean(insurance),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -165,7 +183,16 @@ const ShippingRateSelector = props => {
       if (!data.rates || data.rates.length === 0) {
         throw new Error('Ninguna paquetería tiene cobertura para esta dirección.');
       }
-      setState({ status: QuoteRequestState.SUCCESS, rates: data.rates, error: null });
+      // XOLOLO Fase 2: al re-cotizar los totales cambian — invalidar la
+      // selección previa para que el buyer confirme la nueva.
+      setSelectedRateId(null);
+      setState({
+        status: QuoteRequestState.SUCCESS,
+        rates: data.rates,
+        error: null,
+        declaredValue: Number(data.declaredValue) || 0,
+        insuranceMinDeclaredValue: Number(data.insuranceMinDeclaredValue) || 500,
+      });
     } catch (e) {
       if (e.name === 'AbortError') return; // request cancelado por cambio de dirección
       setState({ status: QuoteRequestState.ERROR, rates: [], error: e.message });
@@ -174,7 +201,15 @@ const ShippingRateSelector = props => {
 
   const selectRate = rate => {
     setSelectedRateId(rate.id);
-    if (typeof onRateSelected === 'function') onRateSelected(rate);
+    if (typeof onRateSelected === 'function') {
+      // XOLOLO Fase 2: pasamos la elección de seguro para que el
+      // checkout la persista en metadata de la tx.
+      onRateSelected({
+        ...rate,
+        insuranceAccepted: wantsInsurance,
+        noInsuranceConsent: !wantsInsurance ? acceptsNoInsurance : false,
+      });
+    }
   };
 
   if (shippingPricingMode !== 'carrier') return null;
@@ -222,16 +257,73 @@ const ShippingRateSelector = props => {
         <p className={css.error}>{state.error}</p>
       ) : null}
 
+      {/* XOLOLO Fase 2: toggle SOS Protección. Visible sólo cuando el
+          valor declarado supera el umbral mínimo (default $500). */}
+      {state.status === QuoteRequestState.SUCCESS &&
+      state.declaredValue >= state.insuranceMinDeclaredValue ? (
+        <div className={css.insuranceBlock}>
+          <label className={css.insuranceToggle}>
+            <input
+              type="checkbox"
+              checked={wantsInsurance}
+              onChange={e => {
+                setWantsInsurance(e.target.checked);
+                if (e.target.checked) setAcceptsNoInsurance(false);
+              }}
+            />
+            <span>
+              <strong>Agregar Protección SOS</strong>
+              <small className={css.insuranceHelp}>
+                Si el paquete se extravía o llega dañado por la paquetería,
+                puedes solicitar el reembolso del valor declarado (
+                ${state.declaredValue.toLocaleString('es-MX')} MXN).
+              </small>
+            </span>
+          </label>
+          {!wantsInsurance ? (
+            <label className={css.consentCheckbox}>
+              <input
+                type="checkbox"
+                checked={acceptsNoInsurance}
+                onChange={e => setAcceptsNoInsurance(e.target.checked)}
+              />
+              <small>
+                Entiendo que al no contratar la Protección SOS, Xololo y
+                el vendedor no se hacen responsables por daño, robo o
+                extravío del paquete durante el envío. Si esto ocurre,
+                deberé gestionar el reclamo directamente con la paquetería.
+              </small>
+            </label>
+          ) : null}
+        </div>
+      ) : null}
+
       {state.status === QuoteRequestState.SUCCESS ? (
         <div className={css.ratesGrid}>
           {state.rates.map(rate => {
             const isSelected = selectedRateId === rate.id;
+            // XOLOLO Fase 2: si el valor declarado está arriba del
+            // umbral y el buyer rechazó el seguro, exigimos el
+            // consentimiento explícito antes de dejar seleccionar.
+            const needsConsent =
+              state.declaredValue >= state.insuranceMinDeclaredValue &&
+              !wantsInsurance &&
+              !acceptsNoInsurance;
             return (
               <button
                 key={rate.id}
                 type="button"
-                className={classNames(css.rateCard, { [css.rateCardSelected]: isSelected })}
-                onClick={() => selectRate(rate)}
+                className={classNames(css.rateCard, {
+                  [css.rateCardSelected]: isSelected,
+                  [css.rateCardDisabled]: needsConsent,
+                })}
+                onClick={() => !needsConsent && selectRate(rate)}
+                disabled={needsConsent}
+                title={
+                  needsConsent
+                    ? 'Marca la casilla de arriba para poder elegir sin Protección SOS.'
+                    : undefined
+                }
                 aria-pressed={isSelected}
               >
                 <div className={css.rateCardHeader}>
