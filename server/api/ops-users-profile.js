@@ -274,6 +274,7 @@ module.exports = async (req, res) => {
       slug: user.attributes?.profile?.publicData?.slug || null,
       sellerMode: user.attributes?.profile?.publicData?.sellerMode || null,
       lastSeenAt: user.attributes?.profile?.metadata?.xololoActivity?.lastSeenAt || null,
+      suspension: user.attributes?.profile?.metadata?.xololoSuspension || null,
     };
 
     const subMeta = user.attributes?.profile?.metadata?.xololoSubscription || null;

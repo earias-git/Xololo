@@ -51,6 +51,9 @@ const opsUsersProfile = require('./api/ops-users-profile');
 const opsUsersLive = require('./api/ops-users-live');
 const opsUsersNotes = require('./api/ops-users-notes');
 const opsUsersExport = require('./api/ops-users-export');
+const opsUsersActions = require('./api/ops-users-actions');
+const opsUsersBulk = require('./api/ops-users-bulk');
+const opsAuditLog = require('./api/ops-audit-log');
 const adminPayoutQueue = require('./api/admin-payout-queue');
 const adminLegalModeration = require('./api/admin-legal-moderation');
 const adminBackfillVerified = require('./api/admin-backfill-verified');
@@ -266,6 +269,48 @@ router.get(
   limits.ops,
   adminAuth.requireOperator(),
   opsUsersExport
+);
+// Fase C: acciones destructivas + impersonate + bulk + audit log global.
+router.post(
+  '/admin/ops/users/:userId/impersonate',
+  limits.ops,
+  adminAuth.requireOperator(),
+  bodyParser.json(),
+  opsUsersActions.impersonate
+);
+router.post(
+  '/admin/ops/users/:userId/suspend',
+  limits.ops,
+  adminAuth.requireOperator(),
+  bodyParser.json(),
+  opsUsersActions.suspend
+);
+router.post(
+  '/admin/ops/users/:userId/unsuspend',
+  limits.ops,
+  adminAuth.requireOperator(),
+  bodyParser.json(),
+  opsUsersActions.unsuspend
+);
+router.post(
+  '/admin/ops/users/:userId/resync-badge',
+  limits.ops,
+  adminAuth.requireOperator(),
+  bodyParser.json(),
+  opsUsersActions.resyncBadge
+);
+router.post(
+  '/admin/ops/users/bulk-note',
+  limits.ops,
+  adminAuth.requireOperator(),
+  bodyParser.json(),
+  opsUsersBulk.bulkNote
+);
+router.get(
+  '/admin/ops/audit-log',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsAuditLog
 );
 
 // XOLOLO: tax-reviews + ai-classify ahora autenticados vía
