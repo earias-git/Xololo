@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { apiBaseUrl } from '../../util/api';
 
@@ -102,27 +102,37 @@ const UserDrawer = ({ userId, onClose, onReload }) => {
         </header>
 
         <nav className={css.drawerTabs}>
-          <button
-            type="button"
-            className={tab === 'summary' ? css.tabActive : css.tab}
-            onClick={() => setTab('summary')}
-          >
-            Resumen
-          </button>
-          <button
-            type="button"
-            className={tab === 'catalog' ? css.tabActive : css.tab}
+          <TabBtn active={tab === 'summary'} onClick={() => setTab('summary')} label="Resumen" />
+          <TabBtn
+            active={tab === 'membership'}
+            onClick={() => setTab('membership')}
+            label="Membresía"
+          />
+          <TabBtn
+            active={tab === 'catalog'}
             onClick={() => setTab('catalog')}
-          >
-            Catálogo {d?.listings?.length ? `(${d.listings.length})` : ''}
-          </button>
-          <button
-            type="button"
-            className={tab === 'moderation' ? css.tabActive : css.tab}
+            label="Catálogo"
+            count={d?.listings?.length}
+          />
+          <TabBtn
+            active={tab === 'transactions'}
+            onClick={() => setTab('transactions')}
+            label="Transacciones"
+            count={d?.transactions?.length}
+          />
+          <TabBtn active={tab === 'activity'} onClick={() => setTab('activity')} label="Actividad" />
+          <TabBtn
+            active={tab === 'moderation'}
             onClick={() => setTab('moderation')}
-          >
-            Moderación {d?.flags?.length ? `(${d.flags.length})` : ''}
-          </button>
+            label="Moderación"
+            count={d?.flags?.length}
+          />
+          <TabBtn
+            active={tab === 'notes'}
+            onClick={() => setTab('notes')}
+            label="Notas"
+            count={d?.notes?.length}
+          />
         </nav>
 
         <div className={css.drawerBody}>
@@ -132,12 +142,21 @@ const UserDrawer = ({ userId, onClose, onReload }) => {
             <p className={css.error}>Error: {state.error}</p>
           ) : tab === 'summary' ? (
             <SummaryTab data={d} />
+          ) : tab === 'membership' ? (
+            <MembershipTab data={d} />
           ) : tab === 'catalog' ? (
             <CatalogTab listings={d.listings} />
+          ) : tab === 'transactions' ? (
+            <TransactionsTab transactions={d.transactions} />
+          ) : tab === 'activity' ? (
+            <ActivityTab data={d} />
+          ) : tab === 'notes' ? (
+            <NotesTab userId={userId} initialNotes={d.notes || []} onChange={load} />
           ) : (
             <ModerationTab
               userId={userId}
               flags={d.flags}
+              auditLog={d.auditLog || []}
               onActionDone={() => {
                 load();
                 onReload?.();
@@ -335,10 +354,303 @@ const CatalogTab = ({ listings }) => {
 };
 
 // ============================================================
+// Tab: Membresía
+// ============================================================
+
+const MembershipTab = ({ data }) => {
+  const sub = data.subscription;
+  const legal = data.legalDocs;
+  const s = data.summary;
+  return (
+    <>
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>Suscripción</h3>
+        {sub ? (
+          <dl className={css.dl}>
+            <dt>Status</dt>
+            <dd>
+              <span className={`${css.badge} ${css[`sub_${sub.status}`]}`}>{sub.status}</span>
+            </dd>
+            <dt>Plan</dt>
+            <dd>{sub.plan || '—'}</dd>
+            <dt>Próxima renovación</dt>
+            <dd>{sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).toLocaleString('es-MX') : '—'}</dd>
+            <dt>Cancelación programada</dt>
+            <dd>{sub.cancelAt ? new Date(sub.cancelAt).toLocaleString('es-MX') : '—'}</dd>
+            <dt>Última factura</dt>
+            <dd>{sub.lastInvoiceAt ? new Date(sub.lastInvoiceAt).toLocaleString('es-MX') : '—'}</dd>
+          </dl>
+        ) : (
+          <p className={css.muted}>
+            Sin suscripción activa.{' '}
+            {s.sellerMode === 'casual_reseller'
+              ? '(casual reseller — no paga suscripción por diseño)'
+              : null}
+          </p>
+        )}
+      </section>
+
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>Stripe Connect</h3>
+        <dl className={css.dl}>
+          <dt>Cuenta conectada</dt>
+          <dd>{s.stripeConnected ? '✓ Sí' : '✗ No'}</dd>
+        </dl>
+      </section>
+
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>
+          Documentos legales ({legal?.summary?.approved || 0}/{legal?.summary?.total || 0})
+        </h3>
+        {legal?.slots?.length ? (
+          <ul className={css.legalList}>
+            {legal.slots.map(slot => (
+              <li key={slot.key}>
+                <span className={`${css.legalBadge} ${css[`legal_${slot.status}`]}`}>
+                  {slot.status}
+                </span>
+                <strong>{slot.key}</strong>
+                {slot.approvedAt ? (
+                  <small className={css.muted}>· aprobado {new Date(slot.approvedAt).toLocaleDateString('es-MX')}</small>
+                ) : slot.rejectionReason ? (
+                  <small className={css.muted}>· {slot.rejectionReason}</small>
+                ) : slot.uploadedAt ? (
+                  <small className={css.muted}>· subido {new Date(slot.uploadedAt).toLocaleDateString('es-MX')}</small>
+                ) : null}
+                {slot.url ? (
+                  <a href={slot.url} target="_blank" rel="noreferrer" className={css.docLink}>
+                    ver →
+                  </a>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={css.muted}>Este user no ha subido documentos.</p>
+        )}
+      </section>
+    </>
+  );
+};
+
+// ============================================================
+// Tab: Transacciones
+// ============================================================
+
+const TransactionsTab = ({ transactions }) => {
+  const [role, setRole] = useState('all');
+  const filtered = transactions.filter(t => role === 'all' || t.role === role);
+  const sales = transactions.filter(t => t.role === 'sold');
+  const bought = transactions.filter(t => t.role === 'bought');
+  const avg = sales.length ? sales.reduce((s, t) => s + (t.amount || 0), 0) / sales.length : 0;
+
+  if (!transactions.length) {
+    return <p className={css.muted}>Sin transacciones.</p>;
+  }
+
+  return (
+    <>
+      <div className={css.kpiGrid}>
+        <div className={css.kpi}>
+          <div className={css.kpiLabel}>Ventas</div>
+          <div className={css.kpiValue}>{sales.length}</div>
+        </div>
+        <div className={css.kpi}>
+          <div className={css.kpiLabel}>Compras</div>
+          <div className={css.kpiValue}>{bought.length}</div>
+        </div>
+        <div className={css.kpi}>
+          <div className={css.kpiLabel}>Ticket prom. venta</div>
+          <div className={css.kpiValue}>{avg ? `$${avg.toFixed(2)}` : '—'}</div>
+        </div>
+      </div>
+
+      <div className={css.catalogFilters}>
+        <select value={role} onChange={e => setRole(e.target.value)} className={css.select}>
+          <option value="all">Todas ({transactions.length})</option>
+          <option value="sold">Ventas ({sales.length})</option>
+          <option value="bought">Compras ({bought.length})</option>
+        </select>
+      </div>
+
+      <table className={css.innerTable}>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Rol</th>
+            <th>Contraparte</th>
+            <th>Listing</th>
+            <th>Monto</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filtered.map(t => (
+            <tr key={t.id}>
+              <td>{t.createdAt ? new Date(t.createdAt).toLocaleDateString('es-MX') : '—'}</td>
+              <td>
+                <span className={`${css.badge} ${t.role === 'sold' ? css.sub_active : css.type_buyer_only}`}>
+                  {t.role === 'sold' ? 'vendió' : 'compró'}
+                </span>
+              </td>
+              <td>{t.counterpartyName || '—'}</td>
+              <td>{t.listingTitle || '—'}</td>
+              <td className={css.numeric}>{t.amount != null ? `$${t.amount.toFixed(2)}` : '—'}</td>
+              <td>{t.state || '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
+  );
+};
+
+// ============================================================
+// Tab: Actividad
+// ============================================================
+
+const ActivityTab = ({ data }) => {
+  const s = data.summary;
+  const audit = data.auditLog || [];
+  return (
+    <>
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>Últimas señales</h3>
+        <dl className={css.dl}>
+          <dt>Last seen (heartbeat)</dt>
+          <dd>{s.lastSeenAt ? `${timeAgo(s.lastSeenAt)} · ${new Date(s.lastSeenAt).toLocaleString('es-MX')}` : '—'}</dd>
+          <dt>Alta</dt>
+          <dd>{s.createdAt ? `${timeAgo(s.createdAt)} · ${new Date(s.createdAt).toLocaleString('es-MX')}` : '—'}</dd>
+        </dl>
+        <p className={css.muted}>
+          El heartbeat se dispara cada vez que el user carga la app + cada 5 min + al focus de la
+          pestaña. Dedupe server-side a 60s. Si lastSeenAt está muy atrás, probablemente el user
+          no entra desde entonces.
+        </p>
+      </section>
+
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>Audit log ({audit.length})</h3>
+        {audit.length ? (
+          <ul className={css.flagList}>
+            {audit.slice(0, 50).map(a => (
+              <li key={a.id} className={css.auditEntry}>
+                <div className={css.auditHead}>
+                  <strong>{a.action}</strong>
+                  <small>{a.at ? new Date(a.at).toLocaleString('es-MX') : ''}</small>
+                </div>
+                <small className={css.muted}>
+                  por {a.by?.name || a.by?.email || 'operator'}
+                  {a.result ? ` · ${a.result}` : ''}
+                </small>
+                {a.payload ? (
+                  <pre className={css.auditPayload}>{JSON.stringify(a.payload, null, 2)}</pre>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={css.muted}>Aún no hay acciones ops registradas en este user.</p>
+        )}
+      </section>
+    </>
+  );
+};
+
+// ============================================================
+// Tab: Notas internas
+// ============================================================
+
+const NotesTab = ({ userId, initialNotes, onChange }) => {
+  const [notes, setNotes] = useState(initialNotes);
+  const [draft, setDraft] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const textareaRef = useRef(null);
+
+  const submit = async e => {
+    e.preventDefault();
+    if (!draft.trim() || saving) return;
+    setSaving(true);
+    setError(null);
+    const r = await api(`/api/admin/ops/users/${userId}/notes`, {
+      method: 'POST',
+      body: { text: draft },
+    });
+    setSaving(false);
+    if (!r.ok) {
+      setError(r.data?.error || 'error_al_guardar');
+      return;
+    }
+    setNotes([r.data.note, ...notes]);
+    setDraft('');
+    onChange?.();
+    textareaRef.current?.focus();
+  };
+
+  const remove = async noteId => {
+    if (!window.confirm('¿Eliminar esta nota? Solo tú o un super_admin pueden hacerlo.')) return;
+    const r = await api(`/api/admin/ops/users/${userId}/notes/${noteId}`, { method: 'DELETE' });
+    if (r.ok) {
+      setNotes(notes.filter(n => n.id !== noteId));
+      onChange?.();
+    } else {
+      alert(`Error: ${r.data?.error || 'no_se_pudo'}`);
+    }
+  };
+
+  return (
+    <>
+      <form onSubmit={submit} className={css.noteForm}>
+        <textarea
+          ref={textareaRef}
+          className={css.noteTextarea}
+          placeholder="Agregar nota interna (ej. 'llamada 2026-10-28: pidió prórroga de pago')"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          rows={3}
+          maxLength={5000}
+        />
+        <div className={css.noteFormBar}>
+          <small className={css.muted}>{draft.length}/5000 · Solo visible para operators</small>
+          <button
+            type="submit"
+            disabled={!draft.trim() || saving}
+            className={css.notePrimaryBtn}
+          >
+            {saving ? 'Guardando…' : 'Agregar nota'}
+          </button>
+        </div>
+        {error ? <p className={css.error}>Error: {error}</p> : null}
+      </form>
+
+      {notes.length === 0 ? (
+        <p className={css.muted}>Aún no hay notas sobre este user.</p>
+      ) : (
+        <ul className={css.notesList}>
+          {notes.map(n => (
+            <li key={n.id} className={css.note}>
+              <div className={css.noteHead}>
+                <strong>{n.by?.name || n.by?.email || 'operator'}</strong>
+                <small>{timeAgo(n.at)}</small>
+              </div>
+              <p className={css.noteText}>{n.text}</p>
+              <button type="button" className={css.noteDelete} onClick={() => remove(n.id)}>
+                Eliminar
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+};
+
+// ============================================================
 // Tab: Moderación
 // ============================================================
 
-const ModerationTab = ({ userId, flags, onActionDone }) => (
+const ModerationTab = ({ userId, flags, auditLog, onActionDone }) => (
   <>
     <section className={css.section}>
       <h3 className={css.sectionTitle}>Flags activos</h3>
@@ -358,15 +670,41 @@ const ModerationTab = ({ userId, flags, onActionDone }) => (
     </section>
 
     <section className={css.section}>
-      <h3 className={css.sectionTitle}>Acciones</h3>
+      <h3 className={css.sectionTitle}>Acciones ops recientes</h3>
+      {auditLog?.length ? (
+        <ul className={css.auditSummaryList}>
+          {auditLog.slice(0, 5).map(a => (
+            <li key={a.id}>
+              <strong>{a.action}</strong>
+              <small> por {a.by?.name || a.by?.email || '—'}, {timeAgo(a.at)}</small>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className={css.muted}>Sin acciones ops registradas aún.</p>
+      )}
+    </section>
+
+    <section className={css.section}>
+      <h3 className={css.sectionTitle}>Acciones destructivas</h3>
       <p className={css.muted}>
-        Las acciones destructivas (suspender, forzar re-sync del badge, impersonar) llegan en Fase
-        C. Por ahora los flags son read-only y los procesas desde los módulos existentes de OPS
-        (Backfill Verified, Tax Reviews, Payout Queue).
+        Suspender, forzar re-sync del badge, impersonar — llegan en Fase C. Por ahora los procesas
+        desde los módulos existentes de OPS (Backfill Verified, Tax Reviews, Payout Queue).
       </p>
       <code className={css.codeHint}>userId: {userId}</code>
     </section>
   </>
+);
+
+// ============================================================
+// Helpers
+// ============================================================
+
+const TabBtn = ({ active, onClick, label, count }) => (
+  <button type="button" className={active ? css.tabActive : css.tab} onClick={onClick}>
+    {label}
+    {count != null ? ` (${count})` : ''}
+  </button>
 );
 
 export default UserDrawer;

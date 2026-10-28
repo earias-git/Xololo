@@ -201,11 +201,30 @@ const UsersView = ({ onBack }) => {
           <button type="button" className={css.secondaryBtn} onClick={load}>
             🔄 Refrescar
           </button>
+          <button
+            type="button"
+            className={css.secondaryBtn}
+            onClick={() => {
+              const qs = new URLSearchParams(
+                Object.fromEntries(
+                  Object.entries(filters).filter(
+                    ([k, v]) => !['page', 'pageSize'].includes(k) && v !== '' && v != null
+                  )
+                )
+              ).toString();
+              const url = `${apiBaseUrl()}/api/admin/ops/users-roster.csv${qs ? `?${qs}` : ''}`;
+              window.open(url, '_blank', 'noopener');
+            }}
+          >
+            ⬇ Export CSV
+          </button>
           <button type="button" className={css.secondaryBtn} onClick={onBack}>
             ← Volver
           </button>
         </div>
       </header>
+
+      <LiveBanner onPickUser={onRowClick} />
 
       <div className={css.layout}>
         <aside className={css.filters}>
@@ -537,6 +556,67 @@ const FilterRadio = ({ name, currentValue, value, label, onPick }) => (
     <span>{label}</span>
   </label>
 );
+
+const LiveBanner = ({ onPickUser }) => {
+  const [state, setState] = useState({ loading: true, data: null, error: null });
+  const [expanded, setExpanded] = useState(false);
+
+  const load = useCallback(() => {
+    setState(s => ({ ...s, loading: true }));
+    api('/api/admin/ops/users/live?windowMinutes=60').then(
+      r => {
+        if (!r.ok) {
+          setState({ loading: false, data: null, error: r.data?.error || 'load_failed' });
+          return;
+        }
+        setState({ loading: false, data: r.data, error: null });
+      },
+      e => setState({ loading: false, data: null, error: e.message })
+    );
+  }, []);
+
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 60_000);
+    return () => clearInterval(interval);
+  }, [load]);
+
+  if (state.loading && !state.data) return null;
+  if (state.error) return null;
+  const n = state.data?.totalOnline || 0;
+
+  return (
+    <div className={css.liveBanner}>
+      <button
+        type="button"
+        className={css.liveBannerTitle}
+        onClick={() => setExpanded(x => !x)}
+      >
+        <span className={css.liveDot} aria-hidden="true" />
+        {n === 0
+          ? 'Sin actividad en la última hora'
+          : `${n} user${n === 1 ? '' : 's'} online en la última hora`}
+        <span className={css.liveToggle}>{expanded ? '▲ ocultar' : '▼ ver'}</span>
+      </button>
+      {expanded && state.data?.users?.length ? (
+        <ul className={css.liveList}>
+          {state.data.users.map(u => (
+            <li key={u.id} className={css.liveItem}>
+              <button type="button" className={css.liveLink} onClick={() => onPickUser(u.id)}>
+                <strong>{u.displayName || u.email || '(sin nombre)'}</strong>
+                <span className={css.muted}> · {u.type}</span>
+                <span className={css.muted}>
+                  {' '}
+                  · {new Date(u.lastSeenAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+};
 
 const SortableTh = ({ label, current, dir, value, onSort }) => {
   const active = current === value;
