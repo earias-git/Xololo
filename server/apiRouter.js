@@ -46,6 +46,8 @@ const adminLegalDocs = require('./api/admin-legal-docs');
 const adminTaxReviews = require('./api/admin-tax-reviews');
 const adminCheck = require('./api/admin-check');
 const meHeartbeat = require('./api/me-heartbeat');
+const opsUsersRoster = require('./api/ops-users-roster');
+const opsUsersProfile = require('./api/ops-users-profile');
 const adminPayoutQueue = require('./api/admin-payout-queue');
 const adminLegalModeration = require('./api/admin-legal-moderation');
 const adminBackfillVerified = require('./api/admin-backfill-verified');
@@ -227,6 +229,21 @@ router.get('/admin-check', adminCheck);
 // "última actividad". El propio endpoint maneja la auth con el SDK del
 // marketplace y hace el bump async (fire-and-forget).
 router.post('/me/heartbeat', limits.generic, meHeartbeat);
+// XOLOLO OPS Users 360 · Fase A: roster + perfil 360 de users. Gated por
+// requireOperator (MFA requerida — info sensible: email, verified, legal).
+router.get(
+  '/admin/ops/users-roster',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsUsersRoster
+);
+router.get(
+  '/admin/ops/users/:userId/profile',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsUsersProfile
+);
+
 // XOLOLO: tax-reviews + ai-classify ahora autenticados vía
 // requireOperator (sistema moderno con MFA + roles), no requireAdmin
 // (env var legacy que no reconocía operators de la tabla).
