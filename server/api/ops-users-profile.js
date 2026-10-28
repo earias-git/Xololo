@@ -64,12 +64,8 @@ const buildTxSummary = (tx, userId, included = []) => {
   const listingId = rel.listing?.data?.id?.uuid || null;
   const role = providerId === userId ? 'sold' : customerId === userId ? 'bought' : 'other';
   const counterpartyId = role === 'sold' ? customerId : providerId;
-  const counterpartyEntity = included.find(
-    i => i.type === 'user' && i.id?.uuid === counterpartyId
-  );
-  const listingEntity = included.find(
-    i => i.type === 'listing' && i.id?.uuid === listingId
-  );
+  const counterpartyEntity = included.find(i => i.type === 'user' && i.id?.uuid === counterpartyId);
+  const listingEntity = included.find(i => i.type === 'listing' && i.id?.uuid === listingId);
   const payin = attrs.payinTotal;
   return {
     id: tx.id?.uuid || null,
@@ -213,14 +209,26 @@ module.exports = async (req, res) => {
         page: 1,
         perPage: MAX_TX_LISTED,
         include: ['listing', 'customer', 'provider'],
-        'fields.transaction': ['state', 'lastTransition', 'createdAt', 'lastTransitionedAt', 'payinTotal'],
+        'fields.transaction': [
+          'state',
+          'lastTransition',
+          'createdAt',
+          'lastTransitionedAt',
+          'payinTotal',
+        ],
       }),
       isdk.transactions.query({
         providerId: userId,
         page: 1,
         perPage: MAX_TX_LISTED,
         include: ['listing', 'customer', 'provider'],
-        'fields.transaction': ['state', 'lastTransition', 'createdAt', 'lastTransitionedAt', 'payinTotal'],
+        'fields.transaction': [
+          'state',
+          'lastTransition',
+          'createdAt',
+          'lastTransitionedAt',
+          'payinTotal',
+        ],
       }),
     ]);
 
@@ -243,12 +251,10 @@ module.exports = async (req, res) => {
     const included = [...incMap.values()];
 
     // 4) armar entry resumen tipo roster (reusable en el header del drawer)
-    const salesCount = txs.filter(
-      tx => tx.relationships?.provider?.data?.id?.uuid === userId
-    ).length;
-    const purchasesCount = txs.filter(
-      tx => tx.relationships?.customer?.data?.id?.uuid === userId
-    ).length;
+    const salesCount = txs.filter(tx => tx.relationships?.provider?.data?.id?.uuid === userId)
+      .length;
+    const purchasesCount = txs.filter(tx => tx.relationships?.customer?.data?.id?.uuid === userId)
+      .length;
     const summary = {
       id: userId,
       email: user.attributes?.email || null,

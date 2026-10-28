@@ -63,10 +63,7 @@ const readStorage = userId => {
 const writeStorage = (bySellerId, userId) => {
   if (!isBrowser()) return;
   try {
-    window.localStorage.setItem(
-      storageKeyFor(userId),
-      JSON.stringify({ bySellerId })
-    );
+    window.localStorage.setItem(storageKeyFor(userId), JSON.stringify({ bySellerId }));
   } catch (e) {
     // storage full o disabled — no rompe la app
   }
@@ -219,8 +216,7 @@ export const {
 
 export const selectCartHydrated = state => state.cart?.hydrated || false;
 
-export const selectCartForSeller = sellerId => state =>
-  state.cart?.bySellerId?.[sellerId] || null;
+export const selectCartForSeller = sellerId => state => state.cart?.bySellerId?.[sellerId] || null;
 
 export const selectCartItemCount = sellerId => state => {
   const cart = state.cart?.bySellerId?.[sellerId];
@@ -240,7 +236,6 @@ export const selectCartSubtotal = sellerId => state => {
   );
 };
 
-export const selectAllCarts = state =>
-  Object.values(state.cart?.bySellerId || {});
+export const selectAllCarts = state => Object.values(state.cart?.bySellerId || {});
 
 export default cartSlice.reducer;

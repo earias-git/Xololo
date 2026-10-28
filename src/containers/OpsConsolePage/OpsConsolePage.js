@@ -12,6 +12,7 @@ import TaxReviewsView from './TaxReviewsView';
 import PayoutQueueView from './PayoutQueueView';
 import LegalModerationView from './LegalModerationView';
 import BackfillVerifiedView from './BackfillVerifiedView';
+import UsersView from './UsersView';
 
 import css from './OpsConsolePage.module.css';
 
@@ -182,7 +183,8 @@ const MfaVerifyForm = ({ onSuccess, onCancel }) => {
     <form className={css.card} onSubmit={handleSubmit}>
       <h1 className={css.title}>Verificación 2FA</h1>
       <p className={css.subtitle}>
-        Ingresa el código de 6 dígitos de tu app Authenticator (Google Authenticator, Authy, 1Password).
+        Ingresa el código de 6 dígitos de tu app Authenticator (Google Authenticator, Authy,
+        1Password).
       </p>
 
       {mode === 'totp' ? (
@@ -254,18 +256,93 @@ const ROLE_LABELS = {
 };
 
 const MODULE_CARDS = [
-  { key: 'penalties', label: 'Cola de penalidades', emoji: '⚖️', hint: 'Aprueba/rechaza penalidades propuestas por el sistema', route: null },
-  { key: 'disputes', label: 'Disputes', emoji: '🤝', hint: 'Mediación de disputes entre buyer y seller', route: null },
-  { key: 'appeals', label: 'Apelaciones', emoji: '📩', hint: 'Apelaciones de sellers a penalidades aplicadas', route: null },
-  { key: 'logistics', label: 'Logística', emoji: '📦', hint: 'Guías, fletes, entregas', route: null },
-  { key: 'accounting', label: 'Contabilidad', emoji: '🧾', hint: 'Facturama, Stripe balance, CxC/CxP', route: null },
-  { key: 'users', label: 'Usuarios', emoji: '👤', hint: 'Historial de sellers y buyers', route: null },
-  { key: 'operators', label: 'Operadores', emoji: '🔐', hint: 'CRUD de operadores (super admin)', route: '/ops/operators', roles: ['super_admin'] },
-  { key: 'tax_reviews', label: 'Revisión fiscal', emoji: '🧾', hint: 'Clasificaciones fiscales declaradas por sellers (exento, tasa 0%, actividad distinta)', route: '/ops/tax-reviews' },
-  { key: 'payout_queue', label: 'Payouts retenidos', emoji: '💰', hint: 'Sellers con ventas cerradas sin payout liberado (Stripe + docs pendientes)', route: '/ops/payout-queue' },
-  { key: 'legal_moderation', label: 'Moderación legal', emoji: '🛑', hint: 'Listings bloqueados por IA (ilícitos) o flagueados como dual-use. Revisa falsos positivos.', route: '/ops/legal-moderation' },
-  { key: 'backfill_verified', label: 'Backfill Verified', emoji: '✅', hint: 'Re-evalúa a todos los sellers y sincroniza el badge Xololo Verified. Idempotente.', route: '/ops/backfill-verified' },
-  { key: 'audit_log', label: 'Audit log', emoji: '📋', hint: 'Registro de todas las acciones', route: null },
+  {
+    key: 'penalties',
+    label: 'Cola de penalidades',
+    emoji: '⚖️',
+    hint: 'Aprueba/rechaza penalidades propuestas por el sistema',
+    route: null,
+  },
+  {
+    key: 'disputes',
+    label: 'Disputes',
+    emoji: '🤝',
+    hint: 'Mediación de disputes entre buyer y seller',
+    route: null,
+  },
+  {
+    key: 'appeals',
+    label: 'Apelaciones',
+    emoji: '📩',
+    hint: 'Apelaciones de sellers a penalidades aplicadas',
+    route: null,
+  },
+  {
+    key: 'logistics',
+    label: 'Logística',
+    emoji: '📦',
+    hint: 'Guías, fletes, entregas',
+    route: null,
+  },
+  {
+    key: 'accounting',
+    label: 'Contabilidad',
+    emoji: '🧾',
+    hint: 'Facturama, Stripe balance, CxC/CxP',
+    route: null,
+  },
+  {
+    key: 'users',
+    label: 'Usuarios 360',
+    emoji: '👤',
+    hint:
+      'Vista maestra de todos los users: membresía, listings, verified, última actividad, ubicación. Con drilldown 360.',
+    route: '/ops/users',
+  },
+  {
+    key: 'operators',
+    label: 'Operadores',
+    emoji: '🔐',
+    hint: 'CRUD de operadores (super admin)',
+    route: '/ops/operators',
+    roles: ['super_admin'],
+  },
+  {
+    key: 'tax_reviews',
+    label: 'Revisión fiscal',
+    emoji: '🧾',
+    hint: 'Clasificaciones fiscales declaradas por sellers (exento, tasa 0%, actividad distinta)',
+    route: '/ops/tax-reviews',
+  },
+  {
+    key: 'payout_queue',
+    label: 'Payouts retenidos',
+    emoji: '💰',
+    hint: 'Sellers con ventas cerradas sin payout liberado (Stripe + docs pendientes)',
+    route: '/ops/payout-queue',
+  },
+  {
+    key: 'legal_moderation',
+    label: 'Moderación legal',
+    emoji: '🛑',
+    hint:
+      'Listings bloqueados por IA (ilícitos) o flagueados como dual-use. Revisa falsos positivos.',
+    route: '/ops/legal-moderation',
+  },
+  {
+    key: 'backfill_verified',
+    label: 'Backfill Verified',
+    emoji: '✅',
+    hint: 'Re-evalúa a todos los sellers y sincroniza el badge Xololo Verified. Idempotente.',
+    route: '/ops/backfill-verified',
+  },
+  {
+    key: 'audit_log',
+    label: 'Audit log',
+    emoji: '📋',
+    hint: 'Registro de todas las acciones',
+    route: null,
+  },
 ];
 
 const AiMetricsPanel = () => {
@@ -325,18 +402,14 @@ const AiMetricsPanel = () => {
               <span className={css.aiMetricValueBig}>
                 ${d.totals.estimatedCostUsd.toFixed(2)} USD
               </span>
-              <small className={css.aiMetricHint}>
-                ~${d.averages.dailyCost.toFixed(3)} / día
-              </small>
+              <small className={css.aiMetricHint}>~${d.averages.dailyCost.toFixed(3)} / día</small>
             </div>
             <div className={css.aiMetricCard}>
               <span className={css.aiMetricLabel}>Llamadas totales</span>
               <span className={css.aiMetricValueBig}>
                 {d.totals.totalCalls.toLocaleString('es-MX')}
               </span>
-              <small className={css.aiMetricHint}>
-                ~{d.averages.dailyCalls} / día
-              </small>
+              <small className={css.aiMetricHint}>~{d.averages.dailyCalls} / día</small>
             </div>
             <div className={css.aiMetricCard}>
               <span className={css.aiMetricLabel}>Search (query → IA)</span>
@@ -344,8 +417,8 @@ const AiMetricsPanel = () => {
                 {(d.totals.calls.search || 0).toLocaleString('es-MX')}
               </span>
               <small className={css.aiMetricHint}>
-                in {(d.totals.tokens.search?.in || 0).toLocaleString('es-MX')} /
-                out {(d.totals.tokens.search?.out || 0).toLocaleString('es-MX')}
+                in {(d.totals.tokens.search?.in || 0).toLocaleString('es-MX')} / out{' '}
+                {(d.totals.tokens.search?.out || 0).toLocaleString('es-MX')}
               </small>
             </div>
             <div className={css.aiMetricCard}>
@@ -354,8 +427,8 @@ const AiMetricsPanel = () => {
                 {(d.totals.calls.imageAnalysis || 0).toLocaleString('es-MX')}
               </span>
               <small className={css.aiMetricHint}>
-                in {(d.totals.tokens.imageAnalysis?.in || 0).toLocaleString('es-MX')} /
-                out {(d.totals.tokens.imageAnalysis?.out || 0).toLocaleString('es-MX')}
+                in {(d.totals.tokens.imageAnalysis?.in || 0).toLocaleString('es-MX')} / out{' '}
+                {(d.totals.tokens.imageAnalysis?.out || 0).toLocaleString('es-MX')}
               </small>
             </div>
             <div className={css.aiMetricCard}>
@@ -364,16 +437,15 @@ const AiMetricsPanel = () => {
                 {(d.totals.calls.textSuggest || 0).toLocaleString('es-MX')}
               </span>
               <small className={css.aiMetricHint}>
-                in {(d.totals.tokens.textSuggest?.in || 0).toLocaleString('es-MX')} /
-                out {(d.totals.tokens.textSuggest?.out || 0).toLocaleString('es-MX')}
+                in {(d.totals.tokens.textSuggest?.in || 0).toLocaleString('es-MX')} / out{' '}
+                {(d.totals.tokens.textSuggest?.out || 0).toLocaleString('es-MX')}
               </small>
             </div>
           </div>
 
           <p className={css.aiMetricsFootnote}>
-            Precios de referencia: Claude Haiku 5.5 · input $
-            {d.pricingReference.inputUsdPer1M}/1M tokens · output $
-            {d.pricingReference.outputUsdPer1M}/1M tokens.
+            Precios de referencia: Claude Haiku 5.5 · input ${d.pricingReference.inputUsdPer1M}/1M
+            tokens · output ${d.pricingReference.outputUsdPer1M}/1M tokens.
           </p>
         </>
       ) : null}
@@ -439,9 +511,7 @@ const Dashboard = ({ operator, onLogout, onNavigate }) => {
       </div>
 
       <footer className={css.footer}>
-        <small>
-          Sesión expira en 8h. Último login: {operator.lastLoginAt || '—'}
-        </small>
+        <small>Sesión expira en 8h. Último login: {operator.lastLoginAt || '—'}</small>
       </footer>
     </div>
   );
@@ -473,9 +543,7 @@ const OpsConsolePage = () => {
   } else if (session.operator.mfaEnabled && session.operator.mfaVerified === false) {
     // mfaVerified viene del JWT. Si mfaEnabled=true y no verificado
     // todavía, mostramos el gate 2FA — independiente del path pedido.
-    content = (
-      <MfaVerifyForm onSuccess={() => session.refresh()} onCancel={session.logout} />
-    );
+    content = <MfaVerifyForm onSuccess={() => session.refresh()} onCancel={session.logout} />;
   } else if (location.pathname === '/ops/mfa-enroll') {
     content = (
       <MfaEnrollView
@@ -509,13 +577,11 @@ const OpsConsolePage = () => {
     content = <LegalModerationView onBack={backToDashboard} />;
   } else if (location.pathname === '/ops/backfill-verified') {
     content = <BackfillVerifiedView onBack={backToDashboard} />;
+  } else if (location.pathname === '/ops/users') {
+    content = <UsersView onBack={backToDashboard} />;
   } else {
     content = (
-      <Dashboard
-        operator={session.operator}
-        onLogout={session.logout}
-        onNavigate={navigate}
-      />
+      <Dashboard operator={session.operator} onLogout={session.logout} onNavigate={navigate} />
     );
   }
 

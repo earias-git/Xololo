@@ -400,6 +400,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: OpsConsolePage,
     },
     {
+      // XOLOLO Task #40: Users 360 — vista maestra de todos los users con
+      // filtros, drawer drilldown, membresía/catálogo/moderación.
+      path: '/ops/users',
+      name: 'OpsUsersPage',
+      component: OpsConsolePage,
+    },
+    {
       // XOLOLO: puente para que un buyer logueado se convierta en
       // vendedor casual con 1 click + aceptación de T&C. Después de
       // activar, redirige a /l/new.

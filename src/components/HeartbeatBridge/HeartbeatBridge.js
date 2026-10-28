@@ -12,9 +12,7 @@ import { useHeartbeat } from '../../util/useHeartbeat';
 // No renderiza nada.
 
 const HeartbeatBridge = () => {
-  const currentUserId = useSelector(
-    state => state.user?.currentUser?.id?.uuid || null
-  );
+  const currentUserId = useSelector(state => state.user?.currentUser?.id?.uuid || null);
   useHeartbeat(currentUserId);
   return null;
 };

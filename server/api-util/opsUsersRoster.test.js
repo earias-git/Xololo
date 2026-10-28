@@ -38,11 +38,17 @@ const makeUser = (overrides = {}) => ({
 
 describe('classifyListingSegment', () => {
   it('unitType service → service', () => {
-    expect(classifyListingSegment(makeListing({ publicData: { unitType: 'hour' } }))).toBe('service');
-    expect(classifyListingSegment(makeListing({ publicData: { unitType: 'fixed' } }))).toBe('service');
+    expect(classifyListingSegment(makeListing({ publicData: { unitType: 'hour' } }))).toBe(
+      'service'
+    );
+    expect(classifyListingSegment(makeListing({ publicData: { unitType: 'fixed' } }))).toBe(
+      'service'
+    );
   });
   it('condition used → used', () => {
-    expect(classifyListingSegment(makeListing({ publicData: { unitType: 'item', condition: 'used' } }))).toBe('used');
+    expect(
+      classifyListingSegment(makeListing({ publicData: { unitType: 'item', condition: 'used' } }))
+    ).toBe('used');
   });
   it('default → new', () => {
     expect(classifyListingSegment(makeListing({ publicData: { unitType: 'item' } }))).toBe('new');
@@ -55,27 +61,37 @@ describe('classifyUserType', () => {
 
   it('email en adminEmails → admin', () => {
     const u = makeUser({ email: 'admin@xololo.mx' });
-    expect(classifyUserType(u, { adminEmails, listingCount: 0, hasPurchases: false })).toBe('admin');
+    expect(classifyUserType(u, { adminEmails, listingCount: 0, hasPurchases: false })).toBe(
+      'admin'
+    );
   });
 
   it('sellerMode=casual_reseller → casual_reseller', () => {
     const u = makeUser({ publicData: { sellerMode: 'casual_reseller' } });
-    expect(classifyUserType(u, { adminEmails, listingCount: 0, hasPurchases: false })).toBe('casual_reseller');
+    expect(classifyUserType(u, { adminEmails, listingCount: 0, hasPurchases: false })).toBe(
+      'casual_reseller'
+    );
   });
 
   it('sellerMode=store → store', () => {
     const u = makeUser({ publicData: { sellerMode: 'store' } });
-    expect(classifyUserType(u, { adminEmails, listingCount: 0, hasPurchases: false })).toBe('store');
+    expect(classifyUserType(u, { adminEmails, listingCount: 0, hasPurchases: false })).toBe(
+      'store'
+    );
   });
 
   it('sin sellerMode pero con listings → store (inferido)', () => {
     const u = makeUser();
-    expect(classifyUserType(u, { adminEmails, listingCount: 2, hasPurchases: false })).toBe('store');
+    expect(classifyUserType(u, { adminEmails, listingCount: 2, hasPurchases: false })).toBe(
+      'store'
+    );
   });
 
   it('sin listings pero con compras → buyer_only', () => {
     const u = makeUser();
-    expect(classifyUserType(u, { adminEmails, listingCount: 0, hasPurchases: true })).toBe('buyer_only');
+    expect(classifyUserType(u, { adminEmails, listingCount: 0, hasPurchases: true })).toBe(
+      'buyer_only'
+    );
   });
 
   it('sin nada → lead', () => {
@@ -162,7 +178,9 @@ describe('buildUserRosterEntry', () => {
     });
     const ctx = {
       ...baseCtx,
-      salesByProvider: new Map([['user-1', { count: 1, gmvYTD: 100, lastAt: '2026-10-25T00:00:00.000Z' }]]),
+      salesByProvider: new Map([
+        ['user-1', { count: 1, gmvYTD: 100, lastAt: '2026-10-25T00:00:00.000Z' }],
+      ]),
     };
     const entry = buildUserRosterEntry(u, ctx);
     expect(entry.lastActivityAt).toBe('2026-10-25T00:00:00.000Z');
@@ -297,7 +315,11 @@ describe('computeFacets', () => {
       buildUserRosterEntry(
         makeUser({
           id: 'a',
-          publicData: { sellerMode: 'store', xololoVerified: true, pickupAddress: { area_level1: 'MX-MOR' } },
+          publicData: {
+            sellerMode: 'store',
+            xololoVerified: true,
+            pickupAddress: { area_level1: 'MX-MOR' },
+          },
           metadata: { xololoSubscription: { status: 'active' } },
           stripeConnected: true,
         }),

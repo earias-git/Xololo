@@ -29,12 +29,7 @@ export const METHOD_LOCAL_DELIVERY = 'localDelivery';
 export const METHOD_FREIGHT = 'freight';
 export const METHOD_SKYDROPX = 'skydropxCarrier';
 
-export const ALL_METHODS = [
-  METHOD_PICKUP,
-  METHOD_LOCAL_DELIVERY,
-  METHOD_SKYDROPX,
-  METHOD_FREIGHT,
-];
+export const ALL_METHODS = [METHOD_PICKUP, METHOD_LOCAL_DELIVERY, METHOD_SKYDROPX, METHOD_FREIGHT];
 
 const emptyConfig = () => ({
   pickup: { enabled: false, instructions: '' },
@@ -76,8 +71,7 @@ export const deriveFromLegacy = publicData => {
   // Pickup viejo → pickup nuevo. Aceptamos legacy vía deliveryOptions
   // O vía el flag pickupEnabled directo (algunos listings guardaron
   // uno pero no el otro).
-  const pickupLegacy =
-    deliveryOptions.includes('pickup') || publicData.pickupEnabled === true;
+  const pickupLegacy = deliveryOptions.includes('pickup') || publicData.pickupEnabled === true;
   if (pickupLegacy) {
     cfg.pickup.enabled = true;
   }
@@ -159,8 +153,7 @@ export const enabledMethodsList = methods => {
     out.push({ key: METHOD_LOCAL_DELIVERY, config: methods.localDelivery });
   if (methods?.skydropxCarrier?.enabled)
     out.push({ key: METHOD_SKYDROPX, config: methods.skydropxCarrier });
-  if (methods?.freight?.enabled)
-    out.push({ key: METHOD_FREIGHT, config: methods.freight });
+  if (methods?.freight?.enabled) out.push({ key: METHOD_FREIGHT, config: methods.freight });
   return out;
 };
 
@@ -182,7 +175,12 @@ export const intersectShippingMethods = listings => {
   }
   const perListing = listings.map(l => getShippingMethodsFromListing(l));
   const allKeys = [METHOD_PICKUP, METHOD_LOCAL_DELIVERY, METHOD_SKYDROPX, METHOD_FREIGHT];
-  const cfgKey = { pickup: 'pickup', localDelivery: 'localDelivery', skydropxCarrier: 'skydropxCarrier', freight: 'freight' };
+  const cfgKey = {
+    pickup: 'pickup',
+    localDelivery: 'localDelivery',
+    skydropxCarrier: 'skydropxCarrier',
+    freight: 'freight',
+  };
 
   const intersectionKeys = allKeys.filter(key => {
     const k = cfgKey[key];

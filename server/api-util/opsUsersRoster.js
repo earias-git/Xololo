@@ -149,7 +149,10 @@ const extractAddress = publicData => {
 /**
  * Construye el shape de un user tal como se expone al cliente del roster.
  */
-const buildUserRosterEntry = (user, { listingsByAuthor, salesByProvider, purchasesByCustomer, adminEmails }) => {
+const buildUserRosterEntry = (
+  user,
+  { listingsByAuthor, salesByProvider, purchasesByCustomer, adminEmails }
+) => {
   const id = user.id?.uuid;
   const attrs = user.attributes || {};
   const profile = attrs.profile || {};
@@ -303,11 +306,39 @@ const invalidateSnapshot = () => {
 // --------------------- filters ----------------------
 
 const MX_STATE_WHITELIST = new Set([
-  'MX-AGU', 'MX-BCN', 'MX-BCS', 'MX-CAM', 'MX-CHP', 'MX-CHH', 'MX-COA',
-  'MX-COL', 'MX-CMX', 'MX-CDMX', 'MX-DUR', 'MX-GUA', 'MX-GRO', 'MX-HID',
-  'MX-JAL', 'MX-MEX', 'MX-MIC', 'MX-MOR', 'MX-NAY', 'MX-NLE', 'MX-OAX',
-  'MX-PUE', 'MX-QUE', 'MX-ROO', 'MX-SLP', 'MX-SIN', 'MX-SON', 'MX-TAB',
-  'MX-TAM', 'MX-TLA', 'MX-VER', 'MX-YUC', 'MX-ZAC',
+  'MX-AGU',
+  'MX-BCN',
+  'MX-BCS',
+  'MX-CAM',
+  'MX-CHP',
+  'MX-CHH',
+  'MX-COA',
+  'MX-COL',
+  'MX-CMX',
+  'MX-CDMX',
+  'MX-DUR',
+  'MX-GUA',
+  'MX-GRO',
+  'MX-HID',
+  'MX-JAL',
+  'MX-MEX',
+  'MX-MIC',
+  'MX-MOR',
+  'MX-NAY',
+  'MX-NLE',
+  'MX-OAX',
+  'MX-PUE',
+  'MX-QUE',
+  'MX-ROO',
+  'MX-SLP',
+  'MX-SIN',
+  'MX-SON',
+  'MX-TAB',
+  'MX-TAM',
+  'MX-TLA',
+  'MX-VER',
+  'MX-YUC',
+  'MX-ZAC',
 ]);
 
 const ACTIVITY_BUCKETS = {
@@ -340,7 +371,8 @@ const applyFilters = (entries, filters = {}) => {
 
   return entries.filter(e => {
     if (q) {
-      const hay = `${e.email || ''} ${e.displayName || ''} ${e.firstName || ''} ${e.lastName || ''} ${e.slug || ''}`.toLowerCase();
+      const hay = `${e.email || ''} ${e.displayName || ''} ${e.firstName || ''} ${e.lastName ||
+        ''} ${e.slug || ''}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     if (type && !type.has(e.type)) return false;
@@ -371,7 +403,10 @@ const SORT_KEYS = {
   listings: e => e.listings.total,
 };
 
-const applySortAndPagination = (entries, { sort = 'lastActivity', dir = 'desc', page = 1, pageSize = 50 }) => {
+const applySortAndPagination = (
+  entries,
+  { sort = 'lastActivity', dir = 'desc', page = 1, pageSize = 50 }
+) => {
   const keyFn = SORT_KEYS[sort] || SORT_KEYS.lastActivity;
   const multiplier = dir === 'asc' ? 1 : -1;
   const sorted = [...entries].sort((a, b) => (keyFn(a) - keyFn(b)) * multiplier);

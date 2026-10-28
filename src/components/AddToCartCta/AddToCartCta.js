@@ -41,16 +41,15 @@ const AddToCartCta = ({ listing, author, imageUrl, className, rootClassName }) =
   const sellerSlug = author?.attributes?.profile?.publicData?.slug;
   const currentCount = useSelector(sellerId ? selectCartItemCount(sellerId) : () => 0);
   const currentCart = useSelector(sellerId ? selectCartForSeller(sellerId) : () => null);
-  const alreadyInCart = currentCart?.items?.some(
-    i => i.listingId === listing?.id?.uuid
-  );
+  const alreadyInCart = currentCart?.items?.some(i => i.listingId === listing?.id?.uuid);
 
   if (!listing || !sellerId) return null;
 
   const price = listing.attributes?.price;
-  const priceMoney = price?.amount != null
-    ? { amount: Number(price.amount), currency: price.currency || 'MXN' }
-    : null;
+  const priceMoney =
+    price?.amount != null
+      ? { amount: Number(price.amount), currency: price.currency || 'MXN' }
+      : null;
 
   // XOLOLO Cart #21: snapshot de métodos del listing para guardar en el
   // cart item y para comparar contra lo que ya está en el carrito.
@@ -110,8 +109,7 @@ const AddToCartCta = ({ listing, author, imageUrl, className, rootClassName }) =
       <div className={css.header}>
         <h4 className={css.title}>¿Quieres agregarlo al carrito?</h4>
         <p className={css.subtitle}>
-          Consolida varios productos de esta tienda en un solo envío para
-          ahorrar en paquetería.
+          Consolida varios productos de esta tienda en un solo envío para ahorrar en paquetería.
         </p>
       </div>
 
@@ -153,13 +151,12 @@ const AddToCartCta = ({ listing, author, imageUrl, className, rootClassName }) =
 
       {alreadyInCart ? (
         <p className={css.hint}>
-          Este producto ya está en tu carrito ({currentCount} items en total). Al
-          agregar otra vez, aumentaremos la cantidad.
+          Este producto ya está en tu carrito ({currentCount} items en total). Al agregar otra vez,
+          aumentaremos la cantidad.
         </p>
       ) : currentCount > 0 ? (
         <p className={css.hint}>
-          Ya tienes <strong>{currentCount}</strong> items de esta tienda en tu
-          carrito.
+          Ya tienes <strong>{currentCount}</strong> items de esta tienda en tu carrito.
         </p>
       ) : null}
 

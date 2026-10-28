@@ -1,10 +1,6 @@
 // XOLOLO OPS Users 360 · Fase A — tests del dedupe/bump de user activity.
 
-const {
-  recordUserActivity,
-  _resetActivityCache,
-  DEDUPE_WINDOW_MS,
-} = require('./userActivity');
+const { recordUserActivity, _resetActivityCache, DEDUPE_WINDOW_MS } = require('./userActivity');
 
 const makeMockIsdk = (overrides = {}) => {
   const calls = { show: [], updateProfile: [] };
@@ -78,7 +74,9 @@ describe('recordUserActivity', () => {
 
   it('seenCount se incrementa sobre el valor previo del metadata', async () => {
     const isdk = makeMockIsdk({
-      initialMetadata: { xololoActivity: { seenCount: 42, lastSeenAt: '2026-01-01T00:00:00.000Z' } },
+      initialMetadata: {
+        xololoActivity: { seenCount: 42, lastSeenAt: '2026-01-01T00:00:00.000Z' },
+      },
     });
     recordUserActivity({ isdk, userId: 'user-1' });
     await new Promise(r => setTimeout(r, 10));

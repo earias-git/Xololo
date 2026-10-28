@@ -51,10 +51,7 @@ module.exports = async (req, res) => {
     const sort = req.query.sort || 'lastActivity';
     const dir = req.query.dir === 'asc' ? 'asc' : 'desc';
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const pageSize = Math.min(
-      MAX_PAGE_SIZE,
-      Math.max(1, parseInt(req.query.pageSize, 10) || 50)
-    );
+    const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, parseInt(req.query.pageSize, 10) || 50));
 
     const filtered = applyFilters(snapshot.entries, filters);
     const pageEntries = applySortAndPagination(filtered, { sort, dir, page, pageSize });

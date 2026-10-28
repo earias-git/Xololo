@@ -231,12 +231,7 @@ router.get('/admin-check', adminCheck);
 router.post('/me/heartbeat', limits.generic, meHeartbeat);
 // XOLOLO OPS Users 360 · Fase A: roster + perfil 360 de users. Gated por
 // requireOperator (MFA requerida — info sensible: email, verified, legal).
-router.get(
-  '/admin/ops/users-roster',
-  limits.ops,
-  adminAuth.requireOperator(),
-  opsUsersRoster
-);
+router.get('/admin/ops/users-roster', limits.ops, adminAuth.requireOperator(), opsUsersRoster);
 router.get(
   '/admin/ops/users/:userId/profile',
   limits.ops,
@@ -360,11 +355,7 @@ router.post(
   adminAuth.requireOperator({ requireMfa: false }),
   adminAuth.mfaVerify
 );
-router.post(
-  '/admin/auth/mfa/disable',
-  adminAuth.requireOperator(),
-  adminAuth.mfaDisable
-);
+router.post('/admin/auth/mfa/disable', adminAuth.requireOperator(), adminAuth.mfaDisable);
 
 // XOLOLO Fase 1C.5b — CRUD de operators (solo super_admin).
 const { ROLES: OP_ROLES } = require('./api-util/operatorRoles');
@@ -372,9 +363,19 @@ const requireSuperAdmin = adminAuth.requireOperator({ roles: [OP_ROLES.SUPER_ADM
 router.get('/admin/operators', requireSuperAdmin, adminOperators.list);
 router.post('/admin/operators', requireSuperAdmin, bodyParser.json(), adminOperators.create);
 router.patch('/admin/operators/:id', requireSuperAdmin, bodyParser.json(), adminOperators.update);
-router.post('/admin/operators/:id/suspend', requireSuperAdmin, bodyParser.json(), adminOperators.suspend);
+router.post(
+  '/admin/operators/:id/suspend',
+  requireSuperAdmin,
+  bodyParser.json(),
+  adminOperators.suspend
+);
 router.post('/admin/operators/:id/reinstate', requireSuperAdmin, adminOperators.reinstate);
-router.post('/admin/operators/:id/set-password', requireSuperAdmin, bodyParser.json(), adminOperators.setPassword);
+router.post(
+  '/admin/operators/:id/set-password',
+  requireSuperAdmin,
+  bodyParser.json(),
+  adminOperators.setPassword
+);
 
 // XOLOLO Fase 2 — métricas de uso IA. Protegido con sesión de operator.
 router.get('/admin/ai-metrics', adminAuth.requireOperator(), adminAiMetrics);
@@ -400,7 +401,12 @@ router.post('/seller-tax-ai-classify', limits.ai, bodyParser.json(), sellerTaxAi
 // XOLOLO: moderación de legalidad del listing. Fire-and-forget al
 // publicar/editar. Si la IA detecta ilícito, cierra el listing y
 // notifica al seller + Ops.
-router.post('/seller-listing-legality-check', limits.ai, bodyParser.json(), sellerListingLegalityCheck);
+router.post(
+  '/seller-listing-legality-check',
+  limits.ai,
+  bodyParser.json(),
+  sellerListingLegalityCheck
+);
 // XOLOLO: lista de asistentes confirmados a un evento (sólo seller dueño).
 router.get('/seller-event-attendees', sellerEventAttendees);
 // XOLOLO: envía/reenvía boleto digital con QR embedded al buyer.
@@ -479,7 +485,6 @@ router.get('/public-store-stats', publicStoreStats);
 // XOLOLO F3 Fase 2: dashboard del buyer (en-tránsito, reviews
 // pendientes, buy again). Auth required — devuelve sólo SUS pedidos.
 router.get('/buyer-dashboard', buyerDashboard);
-
 
 // XOLOLO F3 Sprint 2: recibe eventos de tracking del cliente.
 // Público, rate-limited por IP. Encola y responde 200 inmediato.

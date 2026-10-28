@@ -59,56 +59,42 @@ const IncompatibleShippingModal = ({
       <div className={css.root}>
         <h2 className={css.title}>Habrá 2 pagos separados</h2>
         <p className={css.lede}>
-          <strong>{newItemTitle}</strong> no comparte método de envío con
-          los productos que ya tienes en tu carrito
+          <strong>{newItemTitle}</strong> no comparte método de envío con los productos que ya
+          tienes en tu carrito
           {sellerDisplayName ? (
             <>
-              {' '}de <strong>{sellerDisplayName}</strong>
+              {' '}
+              de <strong>{sellerDisplayName}</strong>
             </>
           ) : null}
-          . Si lo agregas, tendrás que completar <strong>2 checkouts</strong>:
-          uno por cada grupo de productos.
+          . Si lo agregas, tendrás que completar <strong>2 checkouts</strong>: uno por cada grupo de
+          productos.
         </p>
 
         <div className={css.compare}>
           <div className={css.col}>
             <div className={css.colHeader}>En tu carrito</div>
-            <MethodChips
-              keys={currentGroupKeys}
-              emptyLabel="Sin método compartido"
-            />
+            <MethodChips keys={currentGroupKeys} emptyLabel="Sin método compartido" />
           </div>
           <div className={css.divider} aria-hidden="true">
             ⇆
           </div>
           <div className={css.col}>
             <div className={css.colHeader}>{newItemTitle}</div>
-            <MethodChips
-              keys={newItemKeys}
-              emptyLabel="Sin métodos habilitados"
-            />
+            <MethodChips keys={newItemKeys} emptyLabel="Sin métodos habilitados" />
           </div>
         </div>
 
         <p className={css.hint}>
-          Cada pago tiene su propio envío, cobro y confirmación. Puedes
-          seguir con los dos, o cancelar y quitar algo del carrito para
-          que todo salga en un solo pago.
+          Cada pago tiene su propio envío, cobro y confirmación. Puedes seguir con los dos, o
+          cancelar y quitar algo del carrito para que todo salga en un solo pago.
         </p>
 
         <div className={css.actions}>
-          <button
-            type="button"
-            className={classNames(css.btn, css.btnSecondary)}
-            onClick={onClose}
-          >
+          <button type="button" className={classNames(css.btn, css.btnSecondary)} onClick={onClose}>
             Cancelar
           </button>
-          <button
-            type="button"
-            className={classNames(css.btn, css.btnPrimary)}
-            onClick={onConfirm}
-          >
+          <button type="button" className={classNames(css.btn, css.btnPrimary)} onClick={onConfirm}>
             Agregar de todas formas (2 pagos)
           </button>
         </div>

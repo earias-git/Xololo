@@ -20,9 +20,7 @@ import { setCartUser } from '../../ducks/cart.duck';
 
 const CartUserSync = () => {
   const dispatch = useDispatch();
-  const currentUserId = useSelector(state =>
-    state.user?.currentUser?.id?.uuid || null
-  );
+  const currentUserId = useSelector(state => state.user?.currentUser?.id?.uuid || null);
 
   useEffect(() => {
     dispatch(setCartUser({ userId: currentUserId }));
