@@ -28,6 +28,7 @@ const { verifyToken } = require('../api-util/operatorMfa');
 const { getOperatorById } = require('../api-util/operatorDirectory');
 const { syncVerifiedBadge } = require('../api-util/sellerVerified');
 const { invalidateSnapshot } = require('../api-util/opsUsersRoster');
+const { markSuspended, markUnsuspended } = require('../api-util/userSuspension');
 
 const MAX_REASON = 500;
 const MIN_REASON = 10;
@@ -83,27 +84,11 @@ const suspend = async (req, res) => {
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
   try {
-    const now = new Date().toISOString();
-    const prev = await isdk.users.show({ id: userId });
-    const prevMd = prev.data.data?.attributes?.profile?.metadata || {};
-    await isdk.users.updateProfile({
-      id: userId,
-      metadata: {
-        xololoSuspension: {
-          suspended: true,
-          reason,
-          by: {
-            operatorId: req.operator.id,
-            email: req.operator.email,
-            name: req.operator.name,
-          },
-          at: now,
-          history: [
-            ...(prevMd.xololoSuspension?.history || []),
-            { action: 'suspend', reason, at: now, by: req.operator.email },
-          ].slice(-20),
-        },
-      },
+    const { suspendedAt } = await markSuspended({
+      isdk,
+      userId,
+      reason,
+      operator: req.operator,
     });
     recordAudit({
       isdk,
@@ -113,7 +98,7 @@ const suspend = async (req, res) => {
       payload: { reason },
     });
     invalidateSnapshot();
-    return res.json({ suspended: true, suspendedAt: now });
+    return res.json({ suspended: true, suspendedAt });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[ops-users-actions.suspend] error:', e?.message || e);
@@ -132,29 +117,11 @@ const unsuspend = async (req, res) => {
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
   try {
-    const now = new Date().toISOString();
-    const prev = await isdk.users.show({ id: userId });
-    const prevMd = prev.data.data?.attributes?.profile?.metadata || {};
-    const prevSus = prevMd.xololoSuspension || {};
-    await isdk.users.updateProfile({
-      id: userId,
-      metadata: {
-        xololoSuspension: {
-          ...prevSus,
-          suspended: false,
-          unsuspendedAt: now,
-          unsuspendedReason: reason,
-          unsuspendedBy: {
-            operatorId: req.operator.id,
-            email: req.operator.email,
-            name: req.operator.name,
-          },
-          history: [
-            ...(prevSus.history || []),
-            { action: 'unsuspend', reason, at: now, by: req.operator.email },
-          ].slice(-20),
-        },
-      },
+    const { unsuspendedAt } = await markUnsuspended({
+      isdk,
+      userId,
+      reason,
+      operator: req.operator,
     });
     recordAudit({
       isdk,
@@ -164,7 +131,7 @@ const unsuspend = async (req, res) => {
       payload: { reason },
     });
     invalidateSnapshot();
-    return res.json({ suspended: false, unsuspendedAt: now });
+    return res.json({ suspended: false, unsuspendedAt });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[ops-users-actions.unsuspend] error:', e?.message || e);

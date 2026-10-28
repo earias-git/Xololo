@@ -28,6 +28,7 @@ import { IncludeScripts } from './util/includeScripts';
 import { MaintenanceMode, WhatsAppButton } from './components';
 import CartUserSync from './components/CartUserSync/CartUserSync';
 import HeartbeatBridge from './components/HeartbeatBridge/HeartbeatBridge';
+import SuspensionBanner from './components/SuspensionBanner/SuspensionBanner';
 
 // routing
 import routeConfiguration from './routing/routeConfiguration';
@@ -295,6 +296,10 @@ export const ClientApp = props => {
             {/* XOLOLO OPS Users 360 · Fase A: dispara /api/me/heartbeat
                 para medir última actividad del user con dedupe 60s. */}
             <HeartbeatBridge />
+            {/* XOLOLO task #42: banner global si el user está suspendido
+                por OPS. Visible en todas las páginas; las acciones críticas
+                (publicar / pagar) rechazan server-side. */}
+            <SuspensionBanner />
           </HelmetProvider>
         </Provider>
       </IntlProvider>

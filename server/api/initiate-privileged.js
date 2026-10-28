@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const sharetribeSdk = require('sharetribe-flex-sdk');
 const { transactionLineItems } = require('../api-util/lineItems');
 const { verifyRateSignature } = require('../api-util/skydropx');
+const { isUserSuspended, getSuspensionSummary } = require('../api-util/userSuspension');
 
 // XOLOLO: código de entrega de 6 dígitos.
 // Se genera al momento del initiate REAL de una transacción cuyo
@@ -35,7 +36,16 @@ const { Money } = sharetribeSdk.types;
 // undefined, tirando cart_cross_seller aunque en realidad ambos
 // listings son del mismo seller. Bug real encontrado en producción
 // con 2 productos del mismo seller.
-const listingPromise = (sdk, id) => sdk.listings.show({ id, include: ['author'] });
+const listingPromise = (sdk, id) =>
+  sdk.listings.show({
+    id,
+    include: ['author'],
+    // XOLOLO task #42: traer publicData del author para gate de suspensión.
+    // El SDK normal no expone metadata, pero sí publicData — por eso
+    // la suspensión se espeja a publicData.xololoSuspended (ver
+    // server/api-util/userSuspension.js).
+    'fields.user': ['profile.publicData', 'profile.displayName'],
+  });
 
 const getFullOrderData = (orderData, bodyParams, currency) => {
   const { offerInSubunits } = orderData || {};
@@ -328,16 +338,58 @@ module.exports = (req, res) => {
     listingPromise(sdk, primaryListingId),
     ...additionalCartRaw.map(x => listingPromise(sdk, x.listingId)),
     fetchCommission(sdk),
+    // XOLOLO task #42: necesitamos el currentUser para el gate de
+    // suspensión del buyer. publicData.xololoSuspended es visible al
+    // propio user vía el SDK normal.
+    sdk.currentUser
+      .show({ 'fields.user': ['profile.publicData'] })
+      .catch(() => null),
   ])
     .then(responses => {
       const nExtra = additionalCartRaw.length;
       const showListingResponse = responses[0];
       const additionalResponses = responses.slice(1, 1 + nExtra);
       const fetchAssetsResponse = responses[1 + nExtra];
+      const currentUserResponse = responses[2 + nExtra];
+      const currentUser = currentUserResponse?.data?.data || null;
+
+      // XOLOLO task #42: gate de suspensión del BUYER.
+      if (currentUser && isUserSuspended(currentUser)) {
+        const sum = getSuspensionSummary(currentUser);
+        const err = new Error('buyer_suspended');
+        err.status = 403;
+        err.statusText = 'Your account is temporarily suspended';
+        err.data = { reason: sum?.reason || null, since: sum?.at || null };
+        throw err;
+      }
 
       const listing = showListingResponse.data.data;
       const additionalListings = additionalResponses.map(r => r.data.data);
       const commissionAsset = fetchAssetsResponse.data.data[0];
+
+      // XOLOLO task #42: gate de suspensión del seller. El `included`
+      // trae al author (user entity) con publicData — si el flag
+      // publicData.xololoSuspended.active=true, bloqueamos la
+      // transacción con 403. OPS puede levantar la suspensión y la
+      // compra fluye en el siguiente intento.
+      const includedUsers = [
+        ...(showListingResponse.data.included || []),
+        ...additionalResponses.flatMap(r => r.data.included || []),
+      ].filter(i => i.type === 'user');
+      const primaryAuthorIdForGate = listing.relationships?.author?.data?.id?.uuid;
+      const authorEntity = includedUsers.find(u => u.id?.uuid === primaryAuthorIdForGate);
+      if (authorEntity && isUserSuspended(authorEntity)) {
+        const sum = getSuspensionSummary(authorEntity);
+        const err = new Error('seller_suspended');
+        err.status = 403;
+        err.statusText = 'Seller is temporarily unavailable';
+        err.data = {
+          sellerId: primaryAuthorIdForGate,
+          reason: sum?.reason || null,
+          since: sum?.at || null,
+        };
+        throw err;
+      }
 
       // XOLOLO Cart.5: validar que todos los items adicionales sean del
       // mismo seller que el primario. Multi-seller cart NO se soporta
