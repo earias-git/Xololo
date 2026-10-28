@@ -23,6 +23,7 @@ const {
   legalDocsSummary,
 } = require('../api-util/opsUsersRoster');
 const { getAdminEmails } = require('../api-util/adminGate');
+const { readOpsBlock } = require('../api-util/opsAudit');
 
 const MAX_LISTINGS = 200;
 const MAX_TX_LISTED = 100;
@@ -301,6 +302,7 @@ module.exports = async (req, res) => {
       })),
     };
 
+    const ops = readOpsBlock(user);
     return res.json({
       summary,
       listings: listings.map(buildListingSummary),
@@ -308,7 +310,8 @@ module.exports = async (req, res) => {
       subscription,
       legalDocs,
       flags: buildFlags(user),
-      actionsHistory: [],
+      notes: ops.notes || [],
+      auditLog: ops.audit || [],
     });
   } catch (e) {
     // eslint-disable-next-line no-console

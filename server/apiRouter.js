@@ -48,6 +48,9 @@ const adminCheck = require('./api/admin-check');
 const meHeartbeat = require('./api/me-heartbeat');
 const opsUsersRoster = require('./api/ops-users-roster');
 const opsUsersProfile = require('./api/ops-users-profile');
+const opsUsersLive = require('./api/ops-users-live');
+const opsUsersNotes = require('./api/ops-users-notes');
+const opsUsersExport = require('./api/ops-users-export');
 const adminPayoutQueue = require('./api/admin-payout-queue');
 const adminLegalModeration = require('./api/admin-legal-moderation');
 const adminBackfillVerified = require('./api/admin-backfill-verified');
@@ -237,6 +240,32 @@ router.get(
   limits.ops,
   adminAuth.requireOperator(),
   opsUsersProfile
+);
+// Fase B: banner "online ahora", notas CRM, export CSV.
+router.get(
+  '/admin/ops/users/live',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsUsersLive
+);
+router.post(
+  '/admin/ops/users/:userId/notes',
+  limits.ops,
+  adminAuth.requireOperator(),
+  bodyParser.json(),
+  opsUsersNotes.create
+);
+router.delete(
+  '/admin/ops/users/:userId/notes/:noteId',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsUsersNotes.remove
+);
+router.get(
+  '/admin/ops/users-roster.csv',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsUsersExport
 );
 
 // XOLOLO: tax-reviews + ai-classify ahora autenticados vía
