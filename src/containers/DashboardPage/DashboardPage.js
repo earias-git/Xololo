@@ -12,6 +12,7 @@ import DashboardSalesView from './DashboardSalesView';
 import DashboardProductsView from './DashboardProductsView';
 import DashboardReportsView from './DashboardReportsView';
 import DashboardPromoteView from './DashboardPromoteView';
+import DashboardTeamView from './DashboardTeamView';
 
 import css from './DashboardPage.module.css';
 
@@ -28,6 +29,10 @@ const SECTIONS = [
   { key: 'productos', label: 'Productos' },
   { key: 'promote', label: 'Xololear' },
   { key: 'reportes', label: 'Reportes' },
+  // XOLOLO Tier Empresarial · E3: tab "Equipo" visible siempre; el
+  // propio view decide si mostrar la CTA de upgrade (Starter) o la
+  // tabla real (Enterprise).
+  { key: 'equipo', label: 'Equipo' },
 ];
 
 const DEFAULT_SECTION = 'ventas';
@@ -91,6 +96,8 @@ const DashboardPage = () => {
             <DashboardPromoteView />
           ) : activeSection === 'reportes' ? (
             <DashboardReportsView />
+          ) : activeSection === 'equipo' ? (
+            <DashboardTeamView />
           ) : (
             <DashboardSalesView />
           )}

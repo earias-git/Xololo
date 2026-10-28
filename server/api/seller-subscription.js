@@ -52,9 +52,20 @@ const getStatus = async (req, res) => {
   try {
     const resp = await isdk.users.show({ id: sellerId });
     const sub = resp.data.data.attributes?.profile?.metadata?.xololoSubscription || {};
+    // XOLOLO Tier Empresarial · E3: exponer `tier` para que el UI
+    // sepa si mostrar la tab "Equipo". Default 'starter' si hay
+    // suscripción activa, null si not. 'enterprise' lo setea E6.
+    const status = sub.status || 'none';
+    const explicitTier = sub.tier;
+    const tier = explicitTier
+      ? explicitTier
+      : status === 'active'
+      ? 'starter'
+      : null;
     return res.json({
       plan: sub.plan || null,
-      status: sub.status || 'none',
+      status,
+      tier,
       currentPeriodEnd: sub.currentPeriodEnd || null,
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd === true,
       onboardingFeePaid: sub.onboardingFeePaid === true,

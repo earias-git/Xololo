@@ -1,0 +1,426 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 0 32px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+@media (--viewportMedium) {
+  .header {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--colorGrey600);
+}
+
+.headerActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.loadingBlock {
+  padding: 40px;
+  text-align: center;
+}
+
+.error {
+  padding: 14px 18px;
+  background: #fef2f2;
+  color: #991b1b;
+  border-radius: 10px;
+}
+
+.muted {
+  color: var(--colorGrey500);
+  font-size: 13px;
+}
+
+/* ------------- Upgrade card (starter sellers) ------------- */
+
+.upgradeCard {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 16px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 760px;
+}
+
+.upgradeTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #78350f;
+}
+
+@media (--viewportMedium) {
+  .upgradeTitle {
+    font-size: 26px;
+  }
+}
+
+.upgradeLead {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #78350f;
+}
+
+.upgradePricing {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (--viewportMedium) {
+  .upgradePricing {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.upgradeCol {
+  background: #fff;
+  padding: 14px 16px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.upgradeTag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #92400e;
+}
+
+.upgradePrice {
+  font-size: 22px;
+  color: #1f2937;
+}
+
+.upgradeCol small {
+  font-size: 12px;
+  color: var(--colorGrey600);
+}
+
+.upgradeBenefits {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #78350f;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.upgradeBtn {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 12px 20px;
+  background: #78350f;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 10px;
+}
+
+.upgradeBtn:hover {
+  background: #92400e;
+}
+
+/* ------------- Empty state ------------- */
+
+.emptyState {
+  padding: 48px 20px;
+  text-align: center;
+  background: var(--colorGrey50);
+  border-radius: 12px;
+}
+
+.emptyState h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--colorGrey600);
+}
+
+/* ------------- Table ------------- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  background: #fff;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table th,
+.table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--colorGrey50);
+  vertical-align: middle;
+}
+
+.table th {
+  background: var(--colorGrey50);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--colorGrey700);
+}
+
+.permsCell {
+  white-space: nowrap;
+}
+
+.permsCount {
+  padding: 3px 8px;
+  background: var(--colorGrey100);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge, .statusBadge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.role_admin { background: #fef3c7; color: #78350f; }
+.role_manager { background: #dbeafe; color: #1e3a8a; }
+.role_catalog { background: #e0e7ff; color: #312e81; }
+.role_logistics { background: #d1fae5; color: #065f46; }
+.role_finance { background: #fce7f3; color: #831843; }
+.role_custom { background: var(--colorGrey100); color: var(--colorGrey700); }
+
+.status_active { background: #d1fae5; color: #065f46; }
+.status_invited { background: #fef3c7; color: #78350f; }
+.status_paused { background: #fee2e2; color: #991b1b; }
+.status_removed { background: var(--colorGrey100); color: var(--colorGrey600); }
+
+.rowActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.linkBtn, .dangerLinkBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--marketplaceColor);
+  padding: 4px 2px;
+}
+
+.linkBtn:hover { text-decoration: underline; }
+
+.dangerLinkBtn {
+  color: #991b1b;
+}
+
+.dangerLinkBtn:hover { text-decoration: underline; }
+
+/* ------------- Buttons ------------- */
+
+.primaryBtn {
+  min-height: 36px;
+  padding: 8px 16px;
+  background: var(--marketplaceColor);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primaryBtn:hover {
+  background: var(--marketplaceColorDark);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.secondaryBtn {
+  min-height: 36px;
+  padding: 8px 14px;
+  background: #fff;
+  border: 1px solid var(--colorGrey200);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.secondaryBtn:hover {
+  background: var(--colorGrey50);
+}
+
+/* ------------- Modal ------------- */
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 120;
+  padding: 20px;
+}
+
+.modalCard {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 580px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.modalLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--colorGrey700);
+}
+
+.modalInput {
+  padding: 10px 12px;
+  border: 1px solid var(--colorGrey200);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* ------------- Perms selector ------------- */
+
+.permsBox {
+  border: 1px solid var(--colorGrey100);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.permsLegend {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--colorGrey700);
+  padding: 0 4px;
+}
+
+.permCheck {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 4px 2px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.permCheck input {
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.permPreview {
+  background: var(--colorGrey50);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.permPreview ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+/* ------------- Actions log ------------- */
+
+.actionsPanel {
+  background: #fff;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.actionsTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.actionsFilters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
