@@ -143,6 +143,35 @@ const invite = async (req, res) => {
     return res.status(400).json({ error: 'cannot_invite_self' });
   }
 
+  // XOLOLO Tier Empresarial · E6: enforcement de seats. Si el seller
+  // ya está en el límite (used === included + extraPaid), bloqueamos
+  // la invitación con 402 payment_required. El UI maneja esto
+  // ofreciendo buy-seat antes de reintentar.
+  try {
+    const adminResp = await isdk.users.show({ id: adminId });
+    const adminTeam = adminResp.data.data?.attributes?.profile?.metadata?.xololoTeam || {
+      collaborators: [],
+      seats: { used: 0, included: 2, extraPaid: 0 },
+    };
+    const activeSeats = (adminTeam.collaborators || []).filter(c =>
+      ['invited', 'active', 'paused'].includes(c.status)
+    ).length;
+    const cap =
+      (Number(adminTeam.seats?.included) || 2) + (Number(adminTeam.seats?.extraPaid) || 0);
+    if (activeSeats >= cap) {
+      return res.status(402).json({
+        error: 'seat_limit_reached',
+        current: activeSeats,
+        cap,
+        hint: 'Compra un asiento adicional antes de invitar a más colaboradores.',
+      });
+    }
+  } catch (_e) {
+    // Si el read falla, seguimos — addInvite abajo también validará
+    // internamente (y el peor caso es que inviten uno más de la cuenta;
+    // el próximo tick lo detectará).
+  }
+
   // Añade al store (lanza si ya existe).
   let collaborator;
   try {

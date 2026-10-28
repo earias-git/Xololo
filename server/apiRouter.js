@@ -56,6 +56,7 @@ const opsUsersBulk = require('./api/ops-users-bulk');
 const opsAuditLog = require('./api/ops-audit-log');
 const team = require('./api/team');
 const teamAs = require('./api/team-as');
+const teamSeats = require('./api/team-seats');
 const { requirePermission, requireAnyWorkspace } = require('./api-util/teamAuth');
 const adminPayoutQueue = require('./api/admin-payout-queue');
 const adminLegalModeration = require('./api/admin-legal-moderation');
@@ -421,6 +422,21 @@ router.post(
   bodyParser.json(),
   requirePermission('store.settings'),
   teamAs.updateStoreSettings
+);
+// XOLOLO Tier Empresarial · E6: seats + downgrade. Gate 'team'.
+router.post(
+  '/team/buy-seat',
+  limits.payment,
+  bodyParser.json(),
+  requirePermission('team'),
+  teamSeats.buySeat
+);
+router.post(
+  '/team/downgrade',
+  limits.payment,
+  bodyParser.json(),
+  requirePermission('team'),
+  teamSeats.downgrade
 );
 
 // XOLOLO: tax-reviews + ai-classify ahora autenticados vía

@@ -20,7 +20,12 @@ const { configureEnv } = require('../env');
 configureEnv();
 
 const { getStripeBilling } = require('../api-util/stripeBilling');
-const { PLANS, ONBOARDING_FEE } = require('../api-util/billingPlans');
+const {
+  PLANS,
+  ONBOARDING_FEE,
+  ENTERPRISE_PLANS,
+  ENTERPRISE_SEATS,
+} = require('../api-util/billingPlans');
 
 const ensurePrice = async (stripe, def) => {
   const existing = await stripe.prices.list({
@@ -73,6 +78,11 @@ const run = async () => {
   await ensurePrice(stripe, PLANS.annual);
   await ensurePrice(stripe, PLANS.monthly);
   await ensurePrice(stripe, ONBOARDING_FEE);
+  // XOLOLO Tier Empresarial · E6
+  await ensurePrice(stripe, ENTERPRISE_PLANS.enterprise_annual);
+  await ensurePrice(stripe, ENTERPRISE_PLANS.enterprise_monthly);
+  await ensurePrice(stripe, ENTERPRISE_SEATS.enterprise_annual);
+  await ensurePrice(stripe, ENTERPRISE_SEATS.enterprise_monthly);
 
   console.log(
     '\nListo. El checkout de suscripción resuelve el Price vigente por lookup_key en tiempo real — no hace falta guardar IDs en env vars.'

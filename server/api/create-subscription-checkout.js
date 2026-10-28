@@ -27,13 +27,25 @@ const {
   resolvePricesByLookupKeys,
   getOrCreateStripeCustomer,
 } = require('../api-util/stripeBilling');
-const { PLANS, ONBOARDING_FEE } = require('../api-util/billingPlans');
+const {
+  PLANS,
+  ONBOARDING_FEE,
+  ENTERPRISE_PLANS,
+  ENTERPRISE_SEATS,
+} = require('../api-util/billingPlans');
 
 const getMarketplaceRootUrl = () =>
   (process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx').replace(/\/$/, '');
 
 module.exports = async (req, res) => {
   const plan = String(req.body?.plan || '').trim();
+  // XOLOLO Tier Empresarial · E6: tier opcional. Default 'starter' para
+  // backwards-compat (seller elige annual|monthly como siempre). Si
+  // tier='enterprise', resolvemos los Prices del plan Empresarial.
+  const tier = String(req.body?.tier || 'starter').trim();
+  if (!['starter', 'enterprise'].includes(tier)) {
+    return res.status(400).json({ error: 'invalid_tier' });
+  }
   if (!PLANS[plan]) {
     return res.status(400).json({ error: 'invalid_plan' });
   }
@@ -59,17 +71,44 @@ module.exports = async (req, res) => {
     const existingResp = await isdk.users.show({ id: sellerId });
     const existingSub =
       existingResp.data.data.attributes?.profile?.metadata?.xololoSubscription || {};
-    if (existingSub.status === 'active') {
+    if (existingSub.status === 'active' && existingSub.tier !== 'enterprise') {
+      // Starter activo → upgrade a Enterprise se maneja aquí reemplazando
+      // la sub. Para v1 pragmático: rechazamos y el seller debe pausar
+      // su starter antes de upgradear (evita manejar prorated/switch).
+      if (tier === 'enterprise') {
+        return res.status(409).json({
+          error: 'cancel_starter_first',
+          hint: 'Pausa tu suscripción Starter en /account/subscription antes de hacer upgrade a Empresarial.',
+        });
+      }
+      return res.status(409).json({ error: 'already_subscribed' });
+    }
+    if (existingSub.status === 'active' && existingSub.tier === 'enterprise') {
       return res.status(409).json({ error: 'already_subscribed' });
     }
 
-    const prices = await resolvePricesByLookupKeys(stripe, [
-      PLANS[plan].lookupKey,
-      ONBOARDING_FEE.lookupKey,
-    ]);
-    const planPrice = prices[PLANS[plan].lookupKey];
+    // Resolución de Prices según tier.
+    const planKey =
+      tier === 'enterprise'
+        ? plan === 'annual'
+          ? ENTERPRISE_PLANS.enterprise_annual.lookupKey
+          : ENTERPRISE_PLANS.enterprise_monthly.lookupKey
+        : PLANS[plan].lookupKey;
+    const seatKey =
+      tier === 'enterprise'
+        ? plan === 'annual'
+          ? ENTERPRISE_SEATS.enterprise_annual.lookupKey
+          : ENTERPRISE_SEATS.enterprise_monthly.lookupKey
+        : null;
+
+    const lookupKeysToFetch = [planKey, ONBOARDING_FEE.lookupKey];
+    if (seatKey) lookupKeysToFetch.push(seatKey);
+
+    const prices = await resolvePricesByLookupKeys(stripe, lookupKeysToFetch);
+    const planPrice = prices[planKey];
     const onboardingPrice = prices[ONBOARDING_FEE.lookupKey];
-    if (!planPrice || !onboardingPrice) {
+    const seatPrice = seatKey ? prices[seatKey] : null;
+    if (!planPrice || !onboardingPrice || (seatKey && !seatPrice)) {
       // eslint-disable-next-line no-console
       console.error(
         '[create-subscription-checkout] Prices no encontrados en Stripe — ¿corriste yarn setup-stripe-billing?'
@@ -96,6 +135,14 @@ module.exports = async (req, res) => {
 
     const rootUrl = getMarketplaceRootUrl();
     const lineItems = [{ price: planPrice.id, quantity: 1 }];
+    if (seatPrice) {
+      // Enterprise: seat Price con quantity=0 inicialmente. Se bumpea
+      // con /api/team/buy-seat cuando el admin invita más allá de los
+      // 2 incluidos. Stripe acepta quantity=0 en Checkout line_items
+      // via `adjustable_quantity.minimum=0` — simplificamos: lo omitimos
+      // del Checkout y lo agregamos a la sub con subscriptions.update
+      // después. (Checkout no permite line_item con qty=0 directo).
+    }
     if (!onboardingAlreadyPaid) {
       lineItems.push({ price: onboardingPrice.id, quantity: 1 });
     }
@@ -110,18 +157,16 @@ module.exports = async (req, res) => {
         metadata: {
           xololoSellerId: sellerId,
           xololoPlan: plan,
+          xololoTier: tier,
+          xololoSeatPriceId: seatPrice?.id || '',
           xololoOnboardingIncluded: String(!onboardingAlreadyPaid),
         },
       },
       metadata: {
         xololoSellerId: sellerId,
         xololoPlan: plan,
-        // XOLOLO: única fuente de verdad de "¿este checkout cobró el
-        // onboarding?" — la lee la confirmación (webhook + manual) para
-        // decidir si marca onboardingFeePaid, en vez de asumirlo siempre
-        // true (bug real: eso re-cobraba de más a nadie, pero SÍ podía
-        // marcar como "ya pagado" a un seller que nunca lo pagó si su
-        // suscripción se creó fuera de este checkout).
+        xololoTier: tier,
+        xololoSeatPriceId: seatPrice?.id || '',
         xololoOnboardingIncluded: String(!onboardingAlreadyPaid),
       },
     });
