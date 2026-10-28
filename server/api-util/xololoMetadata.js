@@ -68,13 +68,7 @@ const getPenalties = tx => {
  * Construye un objeto Penalty para persistir. No lo guarda —
  * eso lo hace el caller con Integration SDK sobre la tx.
  */
-const buildPenalty = ({
-  level,
-  amountSubunits,
-  reason,
-  appliedBy,
-  status = 'pending',
-}) => {
+const buildPenalty = ({ level, amountSubunits, reason, appliedBy, status = 'pending' }) => {
   if (![1, 2, 3].includes(level)) {
     throw new Error('penalty_level_invalid');
   }
@@ -96,9 +90,7 @@ const buildPenalty = ({
  * Devuelve el array nuevo (no muta el original).
  */
 const updatePenalty = (penalties, penaltyId, patch) => {
-  return penalties.map(p =>
-    p.id === penaltyId ? { ...p, ...patch } : p
-  );
+  return penalties.map(p => (p.id === penaltyId ? { ...p, ...patch } : p));
 };
 
 // ============================================================

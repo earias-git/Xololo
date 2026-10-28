@@ -290,13 +290,8 @@ const ShippingDetails = props => {
         label={intl.formatMessage({ id: 'ShippingDetails.referencesLabel' })}
         placeholder={intl.formatMessage({ id: 'ShippingDetails.referencesPlaceholder' })}
         validate={validators.composeValidators(
-          validators.required(
-            intl.formatMessage({ id: 'ShippingDetails.referencesRequired' })
-          ),
-          validators.minLength(
-            intl.formatMessage({ id: 'ShippingDetails.referencesTooShort' }),
-            10
-          )
+          validators.required(intl.formatMessage({ id: 'ShippingDetails.referencesRequired' })),
+          validators.minLength(intl.formatMessage({ id: 'ShippingDetails.referencesTooShort' }), 10)
         )}
         onUnmount={() => formApi.change('recipientReferences', undefined)}
       />

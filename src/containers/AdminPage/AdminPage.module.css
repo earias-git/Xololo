@@ -176,10 +176,19 @@
   text-overflow: ellipsis;
 }
 
-.kpi--revenue { border-left: 3px solid #232d40; }
-.kpi--active { border-left: 3px solid #378ADD; }
-.kpi--alert { border-left: 3px solid #E24B4A; background-color: #fef2f2; }
-.kpi--ok { border-left: 3px solid #5DCAA5; }
+.kpi--revenue {
+  border-left: 3px solid #232d40;
+}
+.kpi--active {
+  border-left: 3px solid #378add;
+}
+.kpi--alert {
+  border-left: 3px solid #e24b4a;
+  background-color: #fef2f2;
+}
+.kpi--ok {
+  border-left: 3px solid #5dcaa5;
+}
 
 /* ---------- Disputes ---------- */
 .disputeList {

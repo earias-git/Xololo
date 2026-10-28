@@ -25,11 +25,7 @@ const { Money } = sdkTypes;
 // Sharetribe) desde el método v2 elegido.
 export const deriveLegacyDeliveryMethod = xoloKey => {
   if (xoloKey === 'pickup') return 'pickup';
-  if (
-    xoloKey === 'localDelivery' ||
-    xoloKey === 'skydropxCarrier' ||
-    xoloKey === 'freight'
-  ) {
+  if (xoloKey === 'localDelivery' || xoloKey === 'skydropxCarrier' || xoloKey === 'freight') {
     return 'shipping';
   }
   return null;
@@ -102,7 +98,9 @@ const computeCoverageWarning = (methods, geo) => {
   if (!geo?.state) return null; // sin geo, no advertimos
   const normalized = normalizeMxState(geo.state) || geo.state;
   if (covStates.includes(normalized)) return null; // en zona
-  return `Detectamos que estás en ${normalized}; el vendedor entrega en ${covStates.join(', ')}. Verifica tu dirección en el checkout.`;
+  return `Detectamos que estás en ${normalized}; el vendedor entrega en ${covStates.join(
+    ', '
+  )}. Verifica tu dirección en el checkout.`;
 };
 
 const XololoShippingMethodField = ({ methods, intl, currency, formId, formApi, value }) => {
@@ -119,10 +117,7 @@ const XololoShippingMethodField = ({ methods, intl, currency, formId, formApi, v
         const checked = value === opt.key;
         const warning = opt.key === 'localDelivery' ? coverageWarning : null;
         return (
-          <label
-            key={opt.key}
-            className={classNames(css.option, { [css.optionChecked]: checked })}
-          >
+          <label key={opt.key} className={classNames(css.option, { [css.optionChecked]: checked })}>
             <input
               type="radio"
               name={`${formId}.xoloShippingMethod`}

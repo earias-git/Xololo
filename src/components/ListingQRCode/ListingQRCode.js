@@ -30,13 +30,15 @@ const buildListingUrl = listing => {
 };
 
 const slugifyFilename = s => {
-  return String(s || 'xololo-qr')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '')
-    .slice(0, 60) || 'xololo-qr';
+  return (
+    String(s || 'xololo-qr')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '')
+      .slice(0, 60) || 'xololo-qr'
+  );
 };
 
 const ListingQRCode = ({ listing }) => {

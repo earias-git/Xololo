@@ -51,8 +51,7 @@ const getR2 = () => {
   return r2Client;
 };
 
-const PUBLIC_BASE_URL = () =>
-  process.env.R2_PUBLIC_BASE_URL || 'https://media.xololo.mx';
+const PUBLIC_BASE_URL = () => process.env.R2_PUBLIC_BASE_URL || 'https://media.xololo.mx';
 const BUCKET = () => process.env.R2_BUCKET || 'xololo-media';
 
 // Wrap multer para capturar errores (tamaño, tipo) y responderlos como JSON.

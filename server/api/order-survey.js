@@ -36,10 +36,14 @@ module.exports = async (req, res) => {
     const { transactionId, outcome, rating, comment, issueDetail } = req.body || {};
 
     if (!transactionId || typeof transactionId !== 'string') {
-      return res.status(400).json({ error: 'invalid_request', details: 'transactionId requerido.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'transactionId requerido.' });
     }
     if (outcome !== 'good' && outcome !== 'bad') {
-      return res.status(400).json({ error: 'invalid_request', details: 'outcome debe ser good|bad.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'outcome debe ser good|bad.' });
     }
     if (outcome === 'good') {
       const r = Number(rating);
@@ -118,8 +122,7 @@ module.exports = async (req, res) => {
     const trackingEvents = meta.xololoShippingTrackingEvents || [];
     const wasDeliveredByWebhook = trackingEvents.some(e => e.status === 'delivered');
     const wasDeliveredByCode =
-      !!meta.xololoDeliveryCodeVerified?.verifiedAt ||
-      !!meta.xololoPickupCodeVerified?.verifiedAt;
+      !!meta.xololoDeliveryCodeVerified?.verifiedAt || !!meta.xololoPickupCodeVerified?.verifiedAt;
     if (!wasDeliveredByTx && !wasDeliveredByWebhook && !wasDeliveredByCode) {
       return res.status(409).json({
         error: 'not_delivered',

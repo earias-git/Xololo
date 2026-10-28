@@ -69,11 +69,7 @@ const sendShippingCoordinationMessage = async (trustedSdk, transactionId, mode) 
     await trustedSdk.messages.send({ transactionId, content });
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error(
-      '[shipping-coordination-msg] failed to send',
-      err?.status,
-      err?.message || err
-    );
+    console.error('[shipping-coordination-msg] failed to send', err?.status, err?.message || err);
   }
 };
 

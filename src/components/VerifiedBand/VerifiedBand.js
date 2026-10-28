@@ -49,8 +49,7 @@ const VerifiedBand = props => {
     {
       id: 'cobros',
       title: 'Cuenta de cobros',
-      description:
-        'Pagos a cuenta bancaria registrada — no a cuenta personal desconocida',
+      description: 'Pagos a cuenta bancaria registrada — no a cuenta personal desconocida',
       icon: (
         <>
           <path d="M3 10l9-6 9 6" />
@@ -81,14 +80,11 @@ const VerifiedBand = props => {
         <div className={css.band}>
           <header className={css.header}>
             <p className={css.eyebrow}>Confianza bidireccional</p>
-            <h2 className={css.title}>
-              Xololo Verified™ — el sello que respalda cada compra
-            </h2>
+            <h2 className={css.title}>Xololo Verified™ — el sello que respalda cada compra</h2>
             <p className={css.description}>
-              Cada vendedor con este sello pasó por 4 filtros antes de ponerle un
-              producto frente a tus ojos. Para el comprador, es la garantía de
-              que compra sin miedo. Para el vendedor, es la razón por la que su
-              conversión sube.
+              Cada vendedor con este sello pasó por 4 filtros antes de ponerle un producto frente a
+              tus ojos. Para el comprador, es la garantía de que compra sin miedo. Para el vendedor,
+              es la razón por la que su conversión sube.
             </p>
           </header>
 
@@ -122,10 +118,7 @@ const VerifiedBand = props => {
                   al mismo listing filtrado por verified — pendiente un
                   directorio real /tiendas-verified con cards de storefront. */}
               <div className={css.ctasBuyer}>
-                <a
-                  className={css.ctaSecondary}
-                  href="/s?pub_verified=true&pub_listingType=product"
-                >
+                <a className={css.ctaSecondary} href="/s?pub_verified=true&pub_listingType=product">
                   Ver productos
                 </a>
                 <a

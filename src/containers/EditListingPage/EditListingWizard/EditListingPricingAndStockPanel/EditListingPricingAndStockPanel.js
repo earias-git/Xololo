@@ -73,8 +73,8 @@ const getInitialValues = props => {
       publicData?.condition === 'used'
         ? 'used'
         : publicData?.condition === 'new'
-          ? 'new'
-          : defaultCondition,
+        ? 'new'
+        : defaultCondition,
   };
 
   // XOLOLO: nivel de estado del artículo usado.
@@ -279,8 +279,7 @@ const EditListingPricingAndStockPanel = props => {
             // Para casual, condition siempre es 'used' (único modo que puede
             // publicar). Esto hidrata correctamente listings viejos que
             // quedaron sin publicData.condition persistido.
-            const isCasualSubmit =
-              getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
+            const isCasualSubmit = getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
             const taxUpdate = buildTaxClassificationUpdate(
               isCasualSubmit ? { ...values, condition: 'used' } : values,
               listing
@@ -288,15 +287,13 @@ const EditListingPricingAndStockPanel = props => {
             const conditionValue = isCasualSubmit
               ? 'used'
               : values?.condition === 'used'
-                ? 'used'
-                : 'new';
+              ? 'used'
+              : 'new';
             // XOLOLO: nivel de estado — null si el seller no eligió aún
             // (o si volvió a 'new'); el buyer sólo lo verá cuando venga
             // definido y la condition sea 'used'.
             const usedConditionValue =
-              conditionValue === 'used' && values?.usedCondition
-                ? values.usedCondition
-                : null;
+              conditionValue === 'used' && values?.usedCondition ? values.usedCondition : null;
             const publicDataPayload = {
               ...(taxUpdate ? { taxClassification: taxUpdate.taxClassification } : {}),
               condition: conditionValue,

@@ -102,8 +102,7 @@ module.exports = async (req, res) => {
             subcategory,
             condition,
             currentTitle: currentTitle || listing.attributes.title || '',
-            currentDescription:
-              currentDescription || listing.attributes.description || '',
+            currentDescription: currentDescription || listing.attributes.description || '',
             aiAnalysisTags,
             attributes,
             attributesSchema,

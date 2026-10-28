@@ -114,11 +114,7 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
   ].filter(Boolean);
   const requestedV2 = orderData?.selectedShippingMethod;
   const selectedV2 =
-    enabledV2.length > 0
-      ? enabledV2.includes(requestedV2)
-        ? requestedV2
-        : enabledV2[0]
-      : null;
+    enabledV2.length > 0 ? (enabledV2.includes(requestedV2) ? requestedV2 : enabledV2[0]) : null;
   if (selectedV2 === 'pickup') {
     return {
       mode: 'pickup',
@@ -192,8 +188,7 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
           dropoffOnly: !!rate.dropoffOnly,
           // Desglose público (post-margen) para 2 líneas en breakdown.
           insuranceTotalPublic: Number(rate.insuranceTotalPublic) || 0,
-          shippingFeePublic:
-            Number(rate.shippingFeePublic) || Number(rate.total) || 0,
+          shippingFeePublic: Number(rate.shippingFeePublic) || Number(rate.total) || 0,
         }
       : null;
     return {
@@ -281,8 +276,7 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
           sosDecisionAt: new Date().toISOString(),
           dropoffOnly: !!rate.dropoffOnly,
           insuranceTotalPublic: Number(rate.insuranceTotalPublic) || 0,
-          shippingFeePublic:
-            Number(rate.shippingFeePublic) || Number(rate.total) || 0,
+          shippingFeePublic: Number(rate.shippingFeePublic) || Number(rate.total) || 0,
         }
       : null;
     return {
@@ -354,7 +348,8 @@ module.exports = (req, res) => {
         if (!primaryAuthorId || authorId !== primaryAuthorId) {
           const err = new Error('cart_cross_seller');
           err.status = 400;
-          err.statusText = 'Additional cart items must belong to the same seller as the primary listing';
+          err.statusText =
+            'Additional cart items must belong to the same seller as the primary listing';
           err.data = { primaryListingId, offendingListingId: l.id?.uuid };
           throw err;
         }

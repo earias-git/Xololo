@@ -669,8 +669,7 @@ class StripePaymentForm extends Component {
       (xololoSelectedShippingMethod || xololoDefaultShippingMethod) === 'skydropxCarrier';
     const isPureLegacy = xoloMethodEnabledCount === 0;
     const showRateSelector =
-      isXoloSkydropxSelected ||
-      (isPureLegacy && listingShippingPricingMode === 'carrier');
+      isXoloSkydropxSelected || (isPureLegacy && listingShippingPricingMode === 'carrier');
     const handleRateSelected = rate => {
       formApi.change('selectedShippingRate', rate || undefined);
       if (typeof onShippingRateSelected === 'function') {
@@ -729,19 +728,20 @@ class StripePaymentForm extends Component {
             aquí — el buyer lo eligió en el ListingPage. Mostramos sólo
             un resumen compacto del método fijado. Si necesita cambiarlo,
             debe regresar al listing. */}
-        {showXololoMethodSelector && (xololoSelectedShippingMethod || xololoDefaultShippingMethod) ? (
-          <div style={{
-            margin: '16px 0',
-            padding: '10px 14px',
-            border: '1px solid var(--colorGrey100)',
-            borderRadius: 6,
-            background: 'var(--colorGrey50)',
-            fontSize: 13,
-            color: 'var(--colorGrey700)',
-          }}>
-            <strong style={{ fontWeight: 'var(--fontWeightSemiBold)' }}>
-              Método de entrega:
-            </strong>{' '}
+        {showXololoMethodSelector &&
+        (xololoSelectedShippingMethod || xololoDefaultShippingMethod) ? (
+          <div
+            style={{
+              margin: '16px 0',
+              padding: '10px 14px',
+              border: '1px solid var(--colorGrey100)',
+              borderRadius: 6,
+              background: 'var(--colorGrey50)',
+              fontSize: 13,
+              color: 'var(--colorGrey700)',
+            }}
+          >
+            <strong style={{ fontWeight: 'var(--fontWeightSemiBold)' }}>Método de entrega:</strong>{' '}
             {(() => {
               const m = xololoSelectedShippingMethod || xololoDefaultShippingMethod;
               if (m === 'pickup') return 'Recolección en domicilio del vendedor · Gratis';
@@ -812,8 +812,7 @@ class StripePaymentForm extends Component {
             >
               <strong>El vendedor no cubre tu dirección con este método.</strong>
               <br />
-              Cobertura declarada: <em>{zonaLabel || '—'}</em>. Tu dirección:{' '}
-              {buyerAddress.estado}
+              Cobertura declarada: <em>{zonaLabel || '—'}</em>. Tu dirección: {buyerAddress.estado}
               {buyerAddress.municipio ? ` · ${buyerAddress.municipio}` : ''}.
               <br />
               Vuelve al producto y elige otro método (recolección, paquetería o flete) para

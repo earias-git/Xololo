@@ -39,7 +39,8 @@ const CHANNELS = [
     label: 'Facebook',
     icon: 'ti-brand-facebook',
     color: '#1877F2',
-    buildUrl: ({ url }) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+    buildUrl: ({ url }) =>
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
   },
   {
     key: 'twitter',
@@ -48,7 +49,9 @@ const CHANNELS = [
     color: '#000000',
     buildUrl: ({ title, url }) => {
       const text = title ? `${title}` : '';
-      return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+      return `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+        text
+      )}&url=${encodeURIComponent(url)}`;
     },
   },
   {
@@ -82,13 +85,7 @@ const withUtms = (rawUrl, channel) => {
   }
 };
 
-const ShareListingButton = ({
-  listingId,
-  listingTitle,
-  listingUrl,
-  className,
-  rootClassName,
-}) => {
+const ShareListingButton = ({ listingId, listingTitle, listingUrl, className, rootClassName }) => {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const menuRef = useRef(null);
@@ -105,8 +102,7 @@ const ShareListingButton = ({
   }, [open]);
 
   const handleChannel = channel => {
-    const url =
-      listingUrl || (typeof window !== 'undefined' ? window.location.href : '');
+    const url = listingUrl || (typeof window !== 'undefined' ? window.location.href : '');
     const shareUrl = withUtms(url, channel.key);
 
     // Track antes de abrir la ventana externa — así no perdemos el
@@ -165,17 +161,11 @@ const ShareListingButton = ({
               className={css.menuItem}
               onClick={() => handleChannel(c)}
             >
-              <span
-                className={css.menuIcon}
-                aria-hidden
-                style={{ color: c.color }}
-              >
+              <span className={css.menuIcon} aria-hidden style={{ color: c.color }}>
                 <i className={`ti ${c.icon}`} />
               </span>
               {c.label}
-              {c.key === 'instagram' ? (
-                <span className={css.menuHint}>copia link</span>
-              ) : null}
+              {c.key === 'instagram' ? <span className={css.menuHint}>copia link</span> : null}
             </button>
           ))}
         </div>

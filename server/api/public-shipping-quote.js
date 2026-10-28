@@ -69,10 +69,14 @@ module.exports = async (req, res) => {
   try {
     const { from, to, parcel, declaredValue, includeInsurance } = req.body || {};
     if (!validatePostalCode(from?.postal_code)) {
-      return res.status(400).json({ error: 'invalid_request', details: 'from.postal_code debe ser 5 dígitos.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'from.postal_code debe ser 5 dígitos.' });
     }
     if (!validatePostalCode(to?.postal_code)) {
-      return res.status(400).json({ error: 'invalid_request', details: 'to.postal_code debe ser 5 dígitos.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'to.postal_code debe ser 5 dígitos.' });
     }
     const parcelErr = validateParcel(parcel);
     if (parcelErr) {
@@ -152,9 +156,7 @@ module.exports = async (req, res) => {
         publicTotal: breakdown.publicTotal,
         currency: 'MXN',
         insuranceAvailable: !!r.insurable,
-        insurancePrice: includeInsurance
-          ? Number((insReal * (1 + 0.125)).toFixed(2))
-          : null,
+        insurancePrice: includeInsurance ? Number((insReal * (1 + 0.125)).toFixed(2)) : null,
       };
     });
 
@@ -164,8 +166,7 @@ module.exports = async (req, res) => {
     const insuranceSamples = buyerFacingRates
       .map(r => r.insurancePrice)
       .filter(v => typeof v === 'number' && v > 0);
-    const insuranceDisplayPrice =
-      insuranceSamples.length > 0 ? Math.min(...insuranceSamples) : 0;
+    const insuranceDisplayPrice = insuranceSamples.length > 0 ? Math.min(...insuranceSamples) : 0;
 
     return res.json({
       quotationId,

@@ -162,8 +162,7 @@ const moderateListingLegality = async ctx => {
     // no bloquear por una corazonada débil. 75 es más laxo que el
     // threshold de auto-aprobación fiscal (85) porque un falso
     // positivo que bloquea es más disruptivo que uno que solo flaggea.
-    const effectiveVerdict =
-      verdict === 'illegal' && confidence < 75 ? 'needs_review' : verdict;
+    const effectiveVerdict = verdict === 'illegal' && confidence < 75 ? 'needs_review' : verdict;
 
     return {
       verdict: effectiveVerdict,

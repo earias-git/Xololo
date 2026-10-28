@@ -30,7 +30,10 @@ const esc = str =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-const paragraph = txt => `<p style="margin: 0 0 12px; font-size: 15px; line-height: 1.55; color: #232d40;">${esc(txt)}</p>`;
+const paragraph = txt =>
+  `<p style="margin: 0 0 12px; font-size: 15px; line-height: 1.55; color: #232d40;">${esc(
+    txt
+  )}</p>`;
 
 // Convierte bodyText plano en HTML seguro (rompe párrafos por \n\n).
 const textToHtml = txt =>
@@ -44,11 +47,19 @@ const sellerHeader = ({ seller }) => {
   const brandColor = seller?.primaryColor || XOLOLO_PRIMARY;
   const sellerUrl = seller?.slug ? `https://${seller.slug}.xololo.mx` : XOLOLO_BRAND_HREF;
   const sellerLogoImg = seller?.logoUrl
-    ? `<img src="${esc(seller.logoUrl)}" alt="${esc(seller?.name || 'Tienda')}" width="200" style="max-height: 60px; max-width: 200px; height: auto; display: block; border: 0;" />`
-    : `<span style="color: ${esc(brandColor)}; font-size: 22px; font-weight: 800; letter-spacing: -0.01em;">${esc(seller?.name || 'Tienda')}</span>`;
+    ? `<img src="${esc(seller.logoUrl)}" alt="${esc(
+        seller?.name || 'Tienda'
+      )}" width="200" style="max-height: 60px; max-width: 200px; height: auto; display: block; border: 0;" />`
+    : `<span style="color: ${esc(
+        brandColor
+      )}; font-size: 22px; font-weight: 800; letter-spacing: -0.01em;">${esc(
+        seller?.name || 'Tienda'
+      )}</span>`;
 
   return `
-    <div style="background: #ffffff; border-bottom: 4px solid ${esc(brandColor)}; padding: 24px 32px; text-align: left;">
+    <div style="background: #ffffff; border-bottom: 4px solid ${esc(
+      brandColor
+    )}; padding: 24px 32px; text-align: left;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="vertical-align: middle;">
@@ -83,14 +94,18 @@ const xololoHeader = () => `
 // pasamos `insuranceLine: false` para no inducir a confusión.
 const xololoFooter = ({ insuranceLine = true } = {}) => `
   <div style="background: ${XOLOLO_PRIMARY}; color: #dfe4ee; padding: 24px 32px; text-align: center;">
-    ${insuranceLine ? `
+    ${
+      insuranceLine
+        ? `
     <p style="margin: 0 0 8px; font-size: 14px; color: #ffffff; font-weight: 700;">
       🛡️ Envíos por paquetería asegurados hasta $100,000 MXN
     </p>
     <p style="margin: 0 0 16px; font-size: 12.5px; color: rgba(223, 228, 238, 0.75); line-height: 1.5;">
       Los envíos por paquetería contratados con Xololo incluyen SOS<br />
       Protección (Skydropx). No aplica a otros métodos de envío.
-    </p>` : ''}
+    </p>`
+        : ''
+    }
     <p style="margin: 0 0 8px;">
       <a href="${XOLOLO_BRAND_HREF}" style="text-decoration: none; display: inline-block;">
         <img src="${XOLOLO_LOGO_URL}" alt="Xololo" height="24" style="height: 24px; width: auto; display: inline-block; border: 0; opacity: 0.9;" />
@@ -107,7 +122,9 @@ const buttonCta = ({ url, label }, brandColor) => {
   const bg = brandColor || XOLOLO_PRIMARY;
   return `
     <div style="text-align: center; padding: 8px 0 4px;">
-      <a href="${esc(url)}" style="display: inline-block; padding: 12px 28px; background-color: ${esc(
+      <a href="${esc(
+        url
+      )}" style="display: inline-block; padding: 12px 28px; background-color: ${esc(
     bg
   )}; color: #ffffff; text-decoration: none; border-radius: 999px; font-weight: 700; font-size: 15px;">
         ${esc(label)}
@@ -140,7 +157,9 @@ const renderEmailHtml = ({ actor, seller, title, bodyHtml, bodyText, cta, footer
             <tr><td>${header}</td></tr>
             <tr>
               <td style="padding: 28px 32px 8px;">
-                <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 800; color: #232d40; line-height: 1.3;">${esc(title)}</h1>
+                <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 800; color: #232d40; line-height: 1.3;">${esc(
+                  title
+                )}</h1>
                 ${bodyContent}
                 ${cta?.url && cta?.label ? buttonCta(cta, brandColor) : ''}
               </td>

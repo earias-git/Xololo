@@ -14,8 +14,20 @@ import css from './ManageStoreForm.module.css';
 // (opcional) — el server valida al persistir.
 
 const RESERVED_SLUGS = new Set([
-  'www', 'api', 'app', 'admin', 'staging', 'dev', 'test',
-  'mail', 'blog', 'docs', 'help', 'my', 'account', 'stripe',
+  'www',
+  'api',
+  'app',
+  'admin',
+  'staging',
+  'dev',
+  'test',
+  'mail',
+  'blog',
+  'docs',
+  'help',
+  'my',
+  'account',
+  'stripe',
 ]);
 
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
@@ -26,17 +38,41 @@ const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 // marca sin tener que pensar en códigos HEX.
 const PRIMARY_PALETTE = [
   // Verdes / naturaleza (8)
-  '#166534', '#15803d', '#1f8f52', '#0f7a3f',
-  '#2ea44f', '#3fb56b', '#65a30d', '#4d7c0f',
+  '#166534',
+  '#15803d',
+  '#1f8f52',
+  '#0f7a3f',
+  '#2ea44f',
+  '#3fb56b',
+  '#65a30d',
+  '#4d7c0f',
   // Naranja / cálidos (8)
-  '#7c2d12', '#c2410c', '#c8720f', '#e05a1a',
-  '#f0932b', '#eb984e', '#eab308', '#ca8a04',
+  '#7c2d12',
+  '#c2410c',
+  '#c8720f',
+  '#e05a1a',
+  '#f0932b',
+  '#eb984e',
+  '#eab308',
+  '#ca8a04',
   // Azul / confianza (8)
-  '#1e3a8a', '#1e40af', '#2563eb', '#0891b2',
-  '#0ea5e9', '#0284c7', '#0369a1', '#164e63',
+  '#1e3a8a',
+  '#1e40af',
+  '#2563eb',
+  '#0891b2',
+  '#0ea5e9',
+  '#0284c7',
+  '#0369a1',
+  '#164e63',
   // Morado / rosa (8)
-  '#4c1d95', '#6d28d9', '#7c3aed', '#a855f7',
-  '#c026d3', '#db2777', '#e11d48', '#be185d',
+  '#4c1d95',
+  '#6d28d9',
+  '#7c3aed',
+  '#a855f7',
+  '#c026d3',
+  '#db2777',
+  '#e11d48',
+  '#be185d',
 ];
 
 // Paleta secundaria — tonos más suaves y complementarios para acentos,
@@ -44,22 +80,48 @@ const PRIMARY_PALETTE = [
 // para que sea intuitivo combinar.
 const SECONDARY_PALETTE = [
   // Verdes suaves
-  '#86efac', '#6bcb8c', '#a8e6b8', '#7dd3a2',
-  '#c4f0d4', '#bbf7d0', '#d9f99d', '#a3e635',
+  '#86efac',
+  '#6bcb8c',
+  '#a8e6b8',
+  '#7dd3a2',
+  '#c4f0d4',
+  '#bbf7d0',
+  '#d9f99d',
+  '#a3e635',
   // Naranja suaves
-  '#fdba74', '#e4a856', '#f5b96f', '#fbcf94',
-  '#ffe0b0', '#fed7aa', '#fde68a', '#facc15',
+  '#fdba74',
+  '#e4a856',
+  '#f5b96f',
+  '#fbcf94',
+  '#ffe0b0',
+  '#fed7aa',
+  '#fde68a',
+  '#facc15',
   // Azules suaves
-  '#93c5fd', '#bfdbfe', '#a5f3fc', '#bae6fd',
-  '#7dd3fc', '#cffafe', '#e0f2fe', '#dbeafe',
+  '#93c5fd',
+  '#bfdbfe',
+  '#a5f3fc',
+  '#bae6fd',
+  '#7dd3fc',
+  '#cffafe',
+  '#e0f2fe',
+  '#dbeafe',
   // Morados/rosas suaves
-  '#c4b5fd', '#e9d5ff', '#ddd6fe', '#fbcfe8',
-  '#f5d0fe', '#fecdd3', '#fbb6ce', '#fda4af',
+  '#c4b5fd',
+  '#e9d5ff',
+  '#ddd6fe',
+  '#fbcfe8',
+  '#f5d0fe',
+  '#fecdd3',
+  '#fbb6ce',
+  '#fda4af',
 ];
 
 const validateSlug = value => {
   if (!value) return 'Slug requerido para tu tienda.';
-  const v = String(value).toLowerCase().trim();
+  const v = String(value)
+    .toLowerCase()
+    .trim();
   if (!SLUG_PATTERN.test(v)) return 'Solo letras minúsculas, números y guiones. 2-40 caracteres.';
   if (RESERVED_SLUGS.has(v)) return 'Este slug está reservado. Elige otro.';
   return undefined;
@@ -75,7 +137,8 @@ const validateUrl = value => {
   if (!value) return undefined;
   try {
     const u = new URL(String(value).trim());
-    if (u.protocol !== 'https:' && u.protocol !== 'http:') return 'Debe ser una URL http:// o https://';
+    if (u.protocol !== 'https:' && u.protocol !== 'http:')
+      return 'Debe ser una URL http:// o https://';
     return undefined;
   } catch {
     return 'URL inválida';
@@ -143,7 +206,11 @@ const PaletteField = ({ name, label, palette, defaultColor }) => {
                     aria-pressed={isSelected}
                     onClick={() => input.onChange(color)}
                   >
-                    {isSelected ? <span className={css.paletteCheck} aria-hidden="true">✓</span> : null}
+                    {isSelected ? (
+                      <span className={css.paletteCheck} aria-hidden="true">
+                        ✓
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
@@ -156,9 +223,9 @@ const PaletteField = ({ name, label, palette, defaultColor }) => {
             >
               {customOpen
                 ? '− Cerrar color personalizado'
-                : (isInPalette || !current
-                    ? '+ Usar un color propio (HEX o picker)'
-                    : '+ Editar mi color personalizado')}
+                : isInPalette || !current
+                ? '+ Usar un color propio (HEX o picker)'
+                : '+ Editar mi color personalizado'}
             </button>
 
             {customOpen ? (
@@ -194,10 +261,11 @@ const PaletteField = ({ name, label, palette, defaultColor }) => {
 // el seller teclea. Cuando el slug es válido queda linkeado y se abre
 // en pestaña nueva.
 const SlugPreview = ({ slug }) => {
-  const clean = String(slug || '').toLowerCase().trim();
+  const clean = String(slug || '')
+    .toLowerCase()
+    .trim();
   const isValid = clean && SLUG_PATTERN.test(clean) && !RESERVED_SLUGS.has(clean);
-  const isLocal =
-    typeof window !== 'undefined' && /localhost/.test(window.location.hostname);
+  const isLocal = typeof window !== 'undefined' && /localhost/.test(window.location.hostname);
   const host = isLocal ? `${clean || 'tu-slug'}.localhost:3000` : `${clean || 'tu-slug'}.xololo.mx`;
   const href = isLocal ? `http://${host}` : `https://${host}`;
 
@@ -227,16 +295,12 @@ const SlugPreview = ({ slug }) => {
 // obligatorios: una dirección con street pero sin CP no sirve para
 // cotizar envío ni cumplir SAT.
 const AddressBlock = ({ name, title, hint, required = false }) => {
-  const req = required
-    ? validators.required('Este campo es requerido.')
-    : undefined;
+  const req = required ? validators.required('Este campo es requerido.') : undefined;
   const cp = required
-    ? validators.composeValidators(
-        validators.required('Este campo es requerido.'),
-        v =>
-          /^\d{5}$/.test(String(v || '').trim())
-            ? undefined
-            : 'Debe ser un código postal de 5 dígitos.'
+    ? validators.composeValidators(validators.required('Este campo es requerido.'), v =>
+        /^\d{5}$/.test(String(v || '').trim())
+          ? undefined
+          : 'Debe ser un código postal de 5 dígitos.'
       )
     : undefined;
   return (
@@ -318,7 +382,9 @@ const ManageStoreForm = props => (
         <Form className={classNames(className, css.form)} onSubmit={handleSubmit}>
           <fieldset className={css.section}>
             <legend className={css.sectionTitle}>
-              <span aria-hidden="true" className={css.sectionIcon}>🏷️</span>
+              <span aria-hidden="true" className={css.sectionIcon}>
+                🏷️
+              </span>
               Identidad de tu tienda
             </legend>
 
@@ -375,7 +441,9 @@ const ManageStoreForm = props => (
 
           <fieldset className={css.section}>
             <legend className={css.sectionTitle}>
-              <span aria-hidden="true" className={css.sectionIcon}>🎨</span>
+              <span aria-hidden="true" className={css.sectionIcon}>
+                🎨
+              </span>
               Look de tu tienda
             </legend>
 
@@ -427,7 +495,9 @@ const ManageStoreForm = props => (
 
           <fieldset className={css.section}>
             <legend className={css.sectionTitle}>
-              <span aria-hidden="true" className={css.sectionIcon}>📱</span>
+              <span aria-hidden="true" className={css.sectionIcon}>
+                📱
+              </span>
               Contacto directo
             </legend>
 
@@ -441,8 +511,8 @@ const ManageStoreForm = props => (
               validate={validateWhatsapp}
             />
             <p className={css.hint}>
-              Formato internacional sin “+” ni espacios. México: empieza con
-              521 seguido del número a 10 dígitos.
+              Formato internacional sin “+” ni espacios. México: empieza con 521 seguido del número
+              a 10 dígitos.
             </p>
 
             <FieldTextInput
@@ -463,14 +533,16 @@ const ManageStoreForm = props => (
               placeholder="mitienda.oficial"
             />
             <p className={css.hint}>
-              Puedes poner solo el usuario (<code>mitienda.oficial</code>) o la
-              URL completa (<code>https://facebook.com/mitienda.oficial</code>).
+              Puedes poner solo el usuario (<code>mitienda.oficial</code>) o la URL completa (
+              <code>https://facebook.com/mitienda.oficial</code>).
             </p>
           </fieldset>
 
           <fieldset className={css.section}>
             <legend className={css.sectionTitle}>
-              <span aria-hidden="true" className={css.sectionIcon}>📍</span>
+              <span aria-hidden="true" className={css.sectionIcon}>
+                📍
+              </span>
               Datos legales y ubicaciones
             </legend>
 
@@ -554,7 +626,9 @@ const ManageStoreForm = props => (
 
           <fieldset className={css.section}>
             <legend className={css.sectionTitle}>
-              <span aria-hidden="true" className={css.sectionIcon}>📅</span>
+              <span aria-hidden="true" className={css.sectionIcon}>
+                📅
+              </span>
               Disponibilidad
             </legend>
 
@@ -568,15 +642,14 @@ const ManageStoreForm = props => (
               <option value="yes">Sí, mostrar calendario</option>
             </FieldSelect>
             <p className={css.hint}>
-              Actívalo si vendes servicios con reserva por hora o por día.
-              La sección aparece bajo el catálogo con las próximas fechas.
+              Actívalo si vendes servicios con reserva por hora o por día. La sección aparece bajo
+              el catálogo con las próximas fechas.
             </p>
           </fieldset>
 
           {saveStoreError ? (
             <p className={css.error}>
-              No pudimos guardar los cambios. Intenta de nuevo o revisa que los
-              datos sean válidos.
+              No pudimos guardar los cambios. Intenta de nuevo o revisa que los datos sean válidos.
             </p>
           ) : null}
           {ready ? (

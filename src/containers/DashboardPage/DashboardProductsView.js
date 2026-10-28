@@ -4,11 +4,7 @@ import { apiBaseUrl } from '../../util/api';
 
 import { IconSpinner } from '../../components';
 
-import {
-  PERIOD_PRESETS,
-  formatSubunitsAsMxn,
-  clampCustomRange,
-} from './dashboardUtils';
+import { PERIOD_PRESETS, formatSubunitsAsMxn, clampCustomRange } from './dashboardUtils';
 
 import css from './DashboardPage.module.css';
 
@@ -45,7 +41,9 @@ const Thumb = ({ url, title }) => (
     {url ? (
       <img src={url} alt="" />
     ) : (
-      <span className={css.thumbEmpty} title={title || ''}>📦</span>
+      <span className={css.thumbEmpty} title={title || ''}>
+        📦
+      </span>
     )}
   </span>
 );
@@ -58,7 +56,9 @@ const AlertRow = ({ variant, title, image, meta, cta, href }) => (
       <p className={css.alertMeta}>{meta}</p>
     </div>
     {href ? (
-      <a href={href} className={css.alertCta}>{cta}</a>
+      <a href={href} className={css.alertCta}>
+        {cta}
+      </a>
     ) : (
       <span className={css.alertCta}>{cta}</span>
     )}
@@ -153,9 +153,22 @@ const DashboardProductsView = () => {
           </div>
           {periodKey === 'custom' ? (
             <div className={css.customRange}>
-              <input type="date" value={customFrom} max={customTo} onChange={e => setCustomFrom(e.target.value)} aria-label="Desde" />
+              <input
+                type="date"
+                value={customFrom}
+                max={customTo}
+                onChange={e => setCustomFrom(e.target.value)}
+                aria-label="Desde"
+              />
               <span aria-hidden>→</span>
-              <input type="date" value={customTo} min={customFrom} max={ymdOf()} onChange={e => setCustomTo(e.target.value)} aria-label="Hasta" />
+              <input
+                type="date"
+                value={customTo}
+                min={customFrom}
+                max={ymdOf()}
+                onChange={e => setCustomTo(e.target.value)}
+                aria-label="Hasta"
+              />
               {customError ? <span className={css.customError}>{customError}</span> : null}
             </div>
           ) : null}
@@ -207,7 +220,10 @@ const DashboardProductsView = () => {
                         <td className={css.numeric}>{formatSubunitsAsMxn(p.revenueAmount)}</td>
                         <td className={css.numeric}>
                           <div className={css.pctBar}>
-                            <span className={css.pctBarFill} style={{ width: `${Math.min(100, p.pctOfTotal)}%` }} />
+                            <span
+                              className={css.pctBarFill}
+                              style={{ width: `${Math.min(100, p.pctOfTotal)}%` }}
+                            />
                             <span className={css.pctBarText}>{p.pctOfTotal}%</span>
                           </div>
                         </td>
@@ -215,9 +231,17 @@ const DashboardProductsView = () => {
                     ))}
                     {totals ? (
                       <tr className={css.totalsRow}>
-                        <td><strong>Total ({top.length} de {totals.listingsCount})</strong></td>
-                        <td className={css.numeric}><strong>{totals.unitsSold}</strong></td>
-                        <td className={css.numeric}><strong>{formatSubunitsAsMxn(totals.salesAmount)}</strong></td>
+                        <td>
+                          <strong>
+                            Total ({top.length} de {totals.listingsCount})
+                          </strong>
+                        </td>
+                        <td className={css.numeric}>
+                          <strong>{totals.unitsSold}</strong>
+                        </td>
+                        <td className={css.numeric}>
+                          <strong>{formatSubunitsAsMxn(totals.salesAmount)}</strong>
+                        </td>
                         <td className={css.numeric}>—</td>
                       </tr>
                     ) : null}
@@ -271,15 +295,16 @@ const DashboardProductsView = () => {
               </ul>
             )}
             <p className={css.alertsFoot}>
-              Se muestran hasta 20 alertas por tipo. Los conteos completos aparecen cuando corrijas éstas.
+              Se muestran hasta 20 alertas por tipo. Los conteos completos aparecen cuando corrijas
+              éstas.
             </p>
           </section>
 
           <div className={css.footNote}>
             <p>
-              <strong>Próximo sprint:</strong> Top productos por <em>vistas</em> con conversion rate.
-              El agregador de tracking ya está recolectando datos — la sección aparecerá cuando haya
-              suficiente muestra.
+              <strong>Próximo sprint:</strong> Top productos por <em>vistas</em> con conversion
+              rate. El agregador de tracking ya está recolectando datos — la sección aparecerá
+              cuando haya suficiente muestra.
             </p>
           </div>
         </>

@@ -4,13 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 
-import {
-  H2,
-  LayoutSideNavigation,
-  Page,
-  PayoutGateBanner,
-  TabNav,
-} from '../../components';
+import { H2, LayoutSideNavigation, Page, PayoutGateBanner, TabNav } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 

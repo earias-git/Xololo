@@ -9,12 +9,7 @@ const METHOD_LOCAL_DELIVERY = 'localDelivery';
 const METHOD_SKYDROPX = 'skydropxCarrier';
 const METHOD_FREIGHT = 'freight';
 
-const ALL_METHODS = [
-  METHOD_PICKUP,
-  METHOD_LOCAL_DELIVERY,
-  METHOD_SKYDROPX,
-  METHOD_FREIGHT,
-];
+const ALL_METHODS = [METHOD_PICKUP, METHOD_LOCAL_DELIVERY, METHOD_SKYDROPX, METHOD_FREIGHT];
 
 const emptyConfig = () => ({
   pickup: { enabled: false, instructions: '' },
@@ -109,8 +104,7 @@ const enabledMethodsList = methods => {
     out.push({ key: METHOD_LOCAL_DELIVERY, config: methods.localDelivery });
   if (methods?.skydropxCarrier?.enabled)
     out.push({ key: METHOD_SKYDROPX, config: methods.skydropxCarrier });
-  if (methods?.freight?.enabled)
-    out.push({ key: METHOD_FREIGHT, config: methods.freight });
+  if (methods?.freight?.enabled) out.push({ key: METHOD_FREIGHT, config: methods.freight });
   return out;
 };
 

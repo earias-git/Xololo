@@ -216,7 +216,10 @@ module.exports = async (req, res) => {
 
       // ----- Summary counters -----
       if (!isCanceled(tx)) {
-        if (isInTransit(tx) || (!isDelivered(tx) && tx.attributes.lastTransition?.includes('confirm-payment'))) {
+        if (
+          isInTransit(tx) ||
+          (!isDelivered(tx) && tx.attributes.lastTransition?.includes('confirm-payment'))
+        ) {
           ordersActive += 1;
         }
       }

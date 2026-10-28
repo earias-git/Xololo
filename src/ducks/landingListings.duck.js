@@ -137,11 +137,7 @@ const imageUrlFromListing = (listing, included) => {
   if (!imageRef) return null;
   const image = included.find(i => i.type === 'image' && i.id.uuid === imageRef.id.uuid);
   const variants = image?.attributes?.variants;
-  return (
-    variants?.['listing-card-2x']?.url ||
-    variants?.['listing-card']?.url ||
-    null
-  );
+  return variants?.['listing-card-2x']?.url || variants?.['listing-card']?.url || null;
 };
 
 const authorNameFromListing = (listing, included) => {
@@ -162,9 +158,7 @@ const listingToFeaturedItem = (kind, listing, included, idx) => {
     kind,
     name: listing.attributes.title,
     seller: authorNameFromListing(listing, included),
-    price: listing.attributes.price?.amount
-      ? listing.attributes.price.amount / 100
-      : undefined,
+    price: listing.attributes.price?.amount ? listing.attributes.price.amount / 100 : undefined,
     imageUrl: imageUrlFromListing(listing, included),
     tone: TONES[idx % TONES.length],
     href: `/l/${slug}/${listing.id.uuid}`,
@@ -223,33 +217,58 @@ const normalizeStr = s =>
 // Mapa alias → nombre canónico. Las variantes que vemos en la vida real
 // vienen de ip-api.com (regionName) y de Google Places (address string).
 const STATE_ALIASES = {
-  'cdmx': 'ciudad de mexico',
-  'df': 'ciudad de mexico',
+  cdmx: 'ciudad de mexico',
+  df: 'ciudad de mexico',
   'd.f.': 'ciudad de mexico',
   'distrito federal': 'ciudad de mexico',
   'mexico city': 'ciudad de mexico',
-  'edomex': 'estado de mexico',
+  edomex: 'estado de mexico',
   'estado de mexico': 'estado de mexico',
   'estado de méxico': 'estado de mexico',
   'edo. mex.': 'estado de mexico',
   'edo mex': 'estado de mexico',
   'baja california norte': 'baja california',
-  'bcs': 'baja california sur',
-  'bc': 'baja california',
-  'qroo': 'quintana roo',
+  bcs: 'baja california sur',
+  bc: 'baja california',
+  qroo: 'quintana roo',
   'q. roo': 'quintana roo',
-  'nl': 'nuevo leon',
-  'slp': 'san luis potosi',
+  nl: 'nuevo leon',
+  slp: 'san luis potosi',
 };
 
 // Lista canónica normalizada — para substring match contra una dirección.
 const CANONICAL_STATES_NORM = [
-  'aguascalientes', 'baja california sur', 'baja california', 'campeche',
-  'chiapas', 'chihuahua', 'ciudad de mexico', 'coahuila', 'colima',
-  'durango', 'estado de mexico', 'guanajuato', 'guerrero', 'hidalgo',
-  'jalisco', 'michoacan', 'morelos', 'nayarit', 'nuevo leon', 'oaxaca',
-  'puebla', 'queretaro', 'quintana roo', 'san luis potosi', 'sinaloa',
-  'sonora', 'tabasco', 'tamaulipas', 'tlaxcala', 'veracruz', 'yucatan',
+  'aguascalientes',
+  'baja california sur',
+  'baja california',
+  'campeche',
+  'chiapas',
+  'chihuahua',
+  'ciudad de mexico',
+  'coahuila',
+  'colima',
+  'durango',
+  'estado de mexico',
+  'guanajuato',
+  'guerrero',
+  'hidalgo',
+  'jalisco',
+  'michoacan',
+  'morelos',
+  'nayarit',
+  'nuevo leon',
+  'oaxaca',
+  'puebla',
+  'queretaro',
+  'quintana roo',
+  'san luis potosi',
+  'sinaloa',
+  'sonora',
+  'tabasco',
+  'tamaulipas',
+  'tlaxcala',
+  'veracruz',
+  'yucatan',
   'zacatecas',
 ];
 
@@ -301,8 +320,7 @@ export const listingMatchesBuyerState = (listing, buyerState, authorsById) => {
 // mapea al submit), por eso vive en el fetch de products — pero NO debe
 // aparecer en el riel "Productos destacados" (es un servicio temporal,
 // no un objeto físico). Lo re-canalizamos a la sección Servicios.
-const isEventListing = listing =>
-  listing?.attributes?.publicData?.isEvent === true;
+const isEventListing = listing => listing?.attributes?.publicData?.isEvent === true;
 
 // XOLOLO Task #17: filtra listings al estado del buyer con fallback.
 // Si !buyerState, devuelve la lista tal cual (sin ubicación → oferta
@@ -312,9 +330,7 @@ const isEventListing = listing =>
 // y el landing mostraba placeholders).
 const filterByBuyerState = (listingsArr, buyerState, authorsById) => {
   if (!buyerState || !listingsArr?.length) return listingsArr || [];
-  const filtered = listingsArr.filter(l =>
-    listingMatchesBuyerState(l, buyerState, authorsById)
-  );
+  const filtered = listingsArr.filter(l => listingMatchesBuyerState(l, buyerState, authorsById));
   // Fallback: si no hay locales, muestra la oferta global en vez de
   // dejar el riel vacío (que cae a placeholders).
   return filtered.length > 0 ? filtered : listingsArr;
@@ -332,9 +348,7 @@ export const selectFeaturedProducts = (buyerState = null) => state => {
   // de verdad hasta que `condition` exista como field en Console.
   // También excluye eventos (van a la sección Servicios).
   const authorsById = buildAuthorIndex(products.included);
-  const base = products.data.filter(
-    l => !isUsedListing(l, authorsById) && !isEventListing(l)
-  );
+  const base = products.data.filter(l => !isUsedListing(l, authorsById) && !isEventListing(l));
   const ordered = filterByBuyerState(base, buyerState, authorsById);
   return ordered
     .slice(0, VISIBLE_PER_RAIL)
@@ -400,8 +414,7 @@ export const selectFeaturedUsed = (buyerState = null) => state => {
 // cargan: la LandingPage pasa items=[] a FeaturedListings durante el
 // fetch (el componente se auto-oculta) y sólo cae al placeholder si el
 // fetch terminó sin resultados.
-export const selectLandingListingsLoading = state =>
-  state.landingListings?.inProgress === true;
+export const selectLandingListingsLoading = state => state.landingListings?.inProgress === true;
 
 // Backward compat action creator wrapper
 export const fetchLandingListings = () => dispatch =>

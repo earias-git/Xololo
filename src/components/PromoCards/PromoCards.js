@@ -33,9 +33,7 @@ const PromoCards = props => {
               <span className={css.deco} aria-hidden="true" />
               {card.kicker ? <span className={css.kicker}>{card.kicker}</span> : null}
               <h3 className={css.title}>{card.title}</h3>
-              {card.description ? (
-                <p className={css.description}>{card.description}</p>
-              ) : null}
+              {card.description ? <p className={css.description}>{card.description}</p> : null}
               {card.cta ? (
                 <span className={css.go}>
                   {card.cta} <span aria-hidden="true">→</span>

@@ -84,7 +84,10 @@ const linkKey = (family, weights) => `${family}:${weights.join(',')}`;
 const buildGoogleFontsUrl = (family, weights) => {
   // https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap
   const q = encodeURIComponent(family).replace(/%20/g, '+');
-  const w = weights.slice().sort((a, b) => a - b).join(';');
+  const w = weights
+    .slice()
+    .sort((a, b) => a - b)
+    .join(';');
   return `https://fonts.googleapis.com/css2?family=${q}:wght@${w}&display=swap`;
 };
 

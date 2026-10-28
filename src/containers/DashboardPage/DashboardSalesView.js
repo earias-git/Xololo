@@ -70,7 +70,9 @@ const KpiCard = ({ label, value, delta }) => {
     } else if (delta.direction === 'up') {
       deltaEl = <span className={`${css.kpiDelta} ${css.kpiDeltaUp}`}>↑ {delta.pct}%</span>;
     } else if (delta.direction === 'down') {
-      deltaEl = <span className={`${css.kpiDelta} ${css.kpiDeltaDown}`}>↓ {Math.abs(delta.pct)}%</span>;
+      deltaEl = (
+        <span className={`${css.kpiDelta} ${css.kpiDeltaDown}`}>↓ {Math.abs(delta.pct)}%</span>
+      );
     } else {
       deltaEl = <span className={`${css.kpiDelta} ${css.kpiDeltaFlat}`}>— sin cambio</span>;
     }
@@ -242,7 +244,9 @@ const DashboardSalesView = () => {
                   type="button"
                   className={active ? css.chipActive : css.chip}
                   onClick={() => setGranKey(g.key)}
-                  title={g.key === 'auto' ? `Auto elige "${granularity}" para este rango` : undefined}
+                  title={
+                    g.key === 'auto' ? `Auto elige "${granularity}" para este rango` : undefined
+                  }
                 >
                   {g.label}
                   {g.key === 'auto' && granKey === 'auto' ? (
@@ -271,11 +275,27 @@ const DashboardSalesView = () => {
       {current.status === 'ok' && summary ? (
         <>
           <div className={css.kpiGrid}>
-            <KpiCard label="Ventas totales" value={formatSubunitsAsMxn(summary.salesAmount)} delta={deltas?.salesAmount} />
+            <KpiCard
+              label="Ventas totales"
+              value={formatSubunitsAsMxn(summary.salesAmount)}
+              delta={deltas?.salesAmount}
+            />
             <KpiCard label="Pedidos" value={summary.count} delta={deltas?.count} />
-            <KpiCard label="Ticket promedio" value={formatSubunitsAsMxn(ticketAverage)} delta={deltas?.ticketAverage} />
-            <KpiCard label="Comisión Xololo" value={formatSubunitsAsMxn(summary.commissionAmount)} delta={deltas?.commissionAmount} />
-            <KpiCard label="Neto para ti" value={formatSubunitsAsMxn(summary.providerAmount)} delta={deltas?.providerAmount} />
+            <KpiCard
+              label="Ticket promedio"
+              value={formatSubunitsAsMxn(ticketAverage)}
+              delta={deltas?.ticketAverage}
+            />
+            <KpiCard
+              label="Comisión Xololo"
+              value={formatSubunitsAsMxn(summary.commissionAmount)}
+              delta={deltas?.commissionAmount}
+            />
+            <KpiCard
+              label="Neto para ti"
+              value={formatSubunitsAsMxn(summary.providerAmount)}
+              delta={deltas?.providerAmount}
+            />
           </div>
 
           {buckets.length > 0 ? (
@@ -330,11 +350,21 @@ const DashboardSalesView = () => {
                         </tr>
                       ))}
                       <tr className={css.totalsRow}>
-                        <td><strong>Totales</strong></td>
-                        <td className={css.numeric}><strong>{summary.count}</strong></td>
-                        <td className={css.numeric}><strong>{formatSubunitsAsMxn(summary.salesAmount)}</strong></td>
-                        <td className={css.numeric}><strong>{formatSubunitsAsMxn(summary.commissionAmount)}</strong></td>
-                        <td className={css.numeric}><strong>{formatSubunitsAsMxn(summary.providerAmount)}</strong></td>
+                        <td>
+                          <strong>Totales</strong>
+                        </td>
+                        <td className={css.numeric}>
+                          <strong>{summary.count}</strong>
+                        </td>
+                        <td className={css.numeric}>
+                          <strong>{formatSubunitsAsMxn(summary.salesAmount)}</strong>
+                        </td>
+                        <td className={css.numeric}>
+                          <strong>{formatSubunitsAsMxn(summary.commissionAmount)}</strong>
+                        </td>
+                        <td className={css.numeric}>
+                          <strong>{formatSubunitsAsMxn(summary.providerAmount)}</strong>
+                        </td>
                       </tr>
                     </tbody>
                   </table>

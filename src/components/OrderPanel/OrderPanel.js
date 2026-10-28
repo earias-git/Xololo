@@ -370,9 +370,7 @@ const OrderPanel = props => {
   // muestra el selector de 4 opciones AQUÍ (ListingPage) — el buyer
   // elige antes de "Comprar ahora". Si no, cae al selector legacy
   // pickup/shipping. Para eventos se fuerza a null.
-  const xoloShippingMethods = isEventListing
-    ? null
-    : getShippingMethodsFromListing(listing);
+  const xoloShippingMethods = isEventListing ? null : getShippingMethodsFromListing(listing);
   const xoloShippingMethodsEnabledCount = [
     xoloShippingMethods?.pickup?.enabled,
     xoloShippingMethods?.localDelivery?.enabled,

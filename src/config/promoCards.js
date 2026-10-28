@@ -10,8 +10,7 @@ const promoCards = [
     id: 'ofertas-dia',
     kicker: 'Ofertas del día',
     title: 'Hasta 30% off en artesanías mexicanas',
-    description:
-      'Piezas hechas a mano de vendedores Verified en Oaxaca, Puebla y Michoacán.',
+    description: 'Piezas hechas a mano de vendedores Verified en Oaxaca, Puebla y Michoacán.',
     cta: 'Ver ofertas',
     href: '/s?pub_categoryLevel1=artesanias',
     variant: 'amber',

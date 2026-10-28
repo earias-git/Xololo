@@ -18,7 +18,9 @@ const formatDate = iso => {
   if (!iso) return '—';
   try {
     return new Date(iso).toLocaleDateString('es-MX', {
-      year: 'numeric', month: 'short', day: '2-digit',
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
     });
   } catch (_) {
     return iso.slice(0, 10);
@@ -110,7 +112,11 @@ const SectionEventAttendeesMaybe = props => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(`No se pudo enviar: ${data?.error || res.status}${data?.details ? '\n' + data.details : ''}`);
+        alert(
+          `No se pudo enviar: ${data?.error || res.status}${
+            data?.details ? '\n' + data.details : ''
+          }`
+        );
       } else {
         alert(`Boleto enviado a ${data.sentTo}.`);
       }
@@ -147,10 +153,12 @@ const SectionEventAttendeesMaybe = props => {
             <button
               type="button"
               className={css.attendeesCsvBtn}
-              onClick={() => downloadCsv(
-                toCsv(attendees, d.eventTitle),
-                `asistentes-${d.eventDate || 'evento'}.csv`
-              )}
+              onClick={() =>
+                downloadCsv(
+                  toCsv(attendees, d.eventTitle),
+                  `asistentes-${d.eventDate || 'evento'}.csv`
+                )
+              }
             >
               📥 Descargar CSV
             </button>
@@ -167,9 +175,8 @@ const SectionEventAttendeesMaybe = props => {
       </header>
 
       <p className={css.attendeesLead}>
-        Vista exclusiva para ti como organizador. Imprime o descarga la lista
-        y marca a cada persona en la puerta del evento. Sólo tú ves esta
-        sección — el buyer no.
+        Vista exclusiva para ti como organizador. Imprime o descarga la lista y marca a cada persona
+        en la puerta del evento. Sólo tú ves esta sección — el buyer no.
       </p>
 
       {state.loading ? (
@@ -185,8 +192,7 @@ const SectionEventAttendeesMaybe = props => {
         </div>
       ) : attendees.length === 0 ? (
         <p className={css.attendeesEmpty}>
-          Aún no hay boletos vendidos. Cuando alguien compre, aparecerá aquí
-          automáticamente.
+          Aún no hay boletos vendidos. Cuando alguien compre, aparecerá aquí automáticamente.
         </p>
       ) : (
         <table className={css.attendeesTable}>

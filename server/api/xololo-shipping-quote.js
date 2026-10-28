@@ -47,7 +47,12 @@ const verifyActor = async (req, expectedRole /* 'provider' | 'customer' */) => {
   }
   const { transactionId } = req.body || {};
   if (!transactionId || typeof transactionId !== 'string') {
-    return { error: { status: 400, body: { error: 'invalid_request', details: 'transactionId requerido.' } } };
+    return {
+      error: {
+        status: 400,
+        body: { error: 'invalid_request', details: 'transactionId requerido.' },
+      },
+    };
   }
   let txResp;
   try {
@@ -88,7 +93,10 @@ const buildNotifContextFromTx = async (isdk, tx, extras = {}) => {
   const providerAttrs = providerResp?.data?.data?.attributes || {};
   const customerAttrs = customerResp?.data?.data?.attributes || {};
   const listingAttrs = listingResp?.data?.data?.attributes || {};
-  const rootUrl = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx').replace(/\/$/, '');
+  const rootUrl = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx').replace(
+    /\/$/,
+    ''
+  );
   return {
     seller: {
       name: providerAttrs.profile?.displayName || 'Vendedor',
@@ -151,7 +159,8 @@ const submit = async (req, res) => {
     }
 
     const isdk = getIntegrationSdk();
-    if (!isdk) return res.status(500).json({ error: 'internal', details: 'Integration SDK ausente.' });
+    if (!isdk)
+      return res.status(500).json({ error: 'internal', details: 'Integration SDK ausente.' });
 
     const merged = {
       ...existing,
@@ -211,7 +220,8 @@ const authorize = async (req, res) => {
     }
 
     const isdk = getIntegrationSdk();
-    if (!isdk) return res.status(500).json({ error: 'internal', details: 'Integration SDK ausente.' });
+    if (!isdk)
+      return res.status(500).json({ error: 'internal', details: 'Integration SDK ausente.' });
 
     const merged = {
       ...existing,

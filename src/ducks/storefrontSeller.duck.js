@@ -26,12 +26,11 @@ const commonListingsQuery = authorId => ({
   sort: 'createdAt',
 });
 
-const fetchSellerPayloadCreator = async (
-  slug,
-  { extra: sdk, rejectWithValue }
-) => {
+const fetchSellerPayloadCreator = async (slug, { extra: sdk, rejectWithValue }) => {
   try {
-    const sellerRes = await fetch(`${apiBaseUrl()}/api/seller-by-slug?slug=${encodeURIComponent(slug)}`);
+    const sellerRes = await fetch(
+      `${apiBaseUrl()}/api/seller-by-slug?slug=${encodeURIComponent(slug)}`
+    );
     if (sellerRes.status === 404) {
       return rejectWithValue({ notFound: true });
     }
@@ -136,9 +135,7 @@ const listingToItem = (listing, included, idx) => {
     id: listing.id.uuid,
     kind,
     name: listing.attributes.title,
-    price: listing.attributes.price?.amount
-      ? listing.attributes.price.amount / 100
-      : undefined,
+    price: listing.attributes.price?.amount ? listing.attributes.price.amount / 100 : undefined,
     imageUrl: imageUrlFromListing(listing, included),
     tone: TONES[idx % TONES.length],
     href: `/l/${slug}/${listing.id.uuid}`,

@@ -125,7 +125,10 @@ const MetaCommerceFeed = () => {
               <li>
                 <em>Add items → Data feed → Set up a scheduled feed</em> y pega esta URL.
               </li>
-              <li>Programa la actualización (diaria recomendada). Meta leerá tus {data.listingCount} productos publicados.</li>
+              <li>
+                Programa la actualización (diaria recomendada). Meta leerá tus {data.listingCount}{' '}
+                productos publicados.
+              </li>
             </ol>
           </div>
         </>

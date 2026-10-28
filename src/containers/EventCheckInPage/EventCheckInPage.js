@@ -5,13 +5,7 @@ import { useSelector } from 'react-redux';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { apiBaseUrl } from '../../util/api';
 
-import {
-  H3,
-  LayoutSingleColumn,
-  NamedLink,
-  Page,
-  PrimaryButton,
-} from '../../components';
+import { H3, LayoutSingleColumn, NamedLink, Page, PrimaryButton } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
@@ -83,10 +77,7 @@ const EventCheckInPage = () => {
 
   return (
     <Page title="Check-in de evento" scrollingDisabled={scrollingDisabled} noIndex>
-      <LayoutSingleColumn
-        topbar={<TopbarContainer />}
-        footer={<FooterContainer />}
-      >
+      <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
         <main className={css.main}>
           <H3 as="h1" className={css.heading}>
             🎫 Check-in de evento
@@ -99,8 +90,8 @@ const EventCheckInPage = () => {
             </p>
           ) : (
             <p className={css.lead}>
-              Escanea el QR del asistente con la cámara de tu celular. Si llegas
-              aquí sin token, puedes pegarlo manualmente abajo.
+              Escanea el QR del asistente con la cámara de tu celular. Si llegas aquí sin token,
+              puedes pegarlo manualmente abajo.
             </p>
           )}
 
@@ -151,14 +142,16 @@ const ResultCard = ({ result }) => {
         <p className={css.resultIcon}>⚠️</p>
         <h2 className={css.resultTitle}>Ya hizo check-in</h2>
         <p className={css.resultBig}>{buyerName}</p>
-        <p className={css.resultMeta}>{listingTitle} · {quantity} boleto{quantity === 1 ? '' : 's'}</p>
+        <p className={css.resultMeta}>
+          {listingTitle} · {quantity} boleto{quantity === 1 ? '' : 's'}
+        </p>
         <p className={css.resultSmall}>
           Primer check-in: <strong>{whenPretty}</strong>
           {previousScannedBy ? ` por ${previousScannedBy}` : ''}
         </p>
         <p className={css.resultHint}>
-          Si consideras que es la misma persona re-escaneando por error, deja pasar.
-          Si parece un intento de doble entrada, verifica identidad con INE.
+          Si consideras que es la misma persona re-escaneando por error, deja pasar. Si parece un
+          intento de doble entrada, verifica identidad con INE.
         </p>
       </div>
     );
@@ -169,8 +162,12 @@ const ResultCard = ({ result }) => {
       <p className={css.resultIcon}>✅</p>
       <h2 className={css.resultTitle}>Boleto válido · Deja pasar</h2>
       <p className={css.resultBig}>{buyerName}</p>
-      <p className={css.resultMeta}>{listingTitle} · {quantity} boleto{quantity === 1 ? '' : 's'}</p>
-      <p className={css.resultSmall}>Check-in registrado: <strong>{whenPretty}</strong></p>
+      <p className={css.resultMeta}>
+        {listingTitle} · {quantity} boleto{quantity === 1 ? '' : 's'}
+      </p>
+      <p className={css.resultSmall}>
+        Check-in registrado: <strong>{whenPretty}</strong>
+      </p>
     </div>
   );
 };
@@ -178,15 +175,18 @@ const ResultCard = ({ result }) => {
 const ERROR_COPY = {
   invalid_token: {
     title: 'Boleto inválido',
-    detail: 'El QR no es reconocible o fue firmado con otra clave. Verifica que el QR venga de un boleto Xololo.',
+    detail:
+      'El QR no es reconocible o fue firmado con otra clave. Verifica que el QR venga de un boleto Xololo.',
   },
   not_owner: {
     title: '⛔ No eres el organizador',
-    detail: 'Este boleto pertenece a un evento de otro seller. Debes estar logueado con la cuenta del organizador para registrar check-ins.',
+    detail:
+      'Este boleto pertenece a un evento de otro seller. Debes estar logueado con la cuenta del organizador para registrar check-ins.',
   },
   unauthorized: {
     title: 'Sesión requerida',
-    detail: 'Debes estar logueado como el organizador del evento. Inicia sesión y vuelve a escanear.',
+    detail:
+      'Debes estar logueado como el organizador del evento. Inicia sesión y vuelve a escanear.',
   },
   tx_not_found: {
     title: 'Transacción no encontrada',

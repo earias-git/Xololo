@@ -28,10 +28,7 @@
 // empresarial.
 
 import { PERSON_TYPES } from './xololoPayout';
-import {
-  TAX_CLASSIFICATIONS,
-  getClassificationByCode,
-} from './xololoTaxClassification';
+import { TAX_CLASSIFICATIONS, getClassificationByCode } from './xololoTaxClassification';
 
 export const SELLER_MODES = {
   STORE: 'store',

@@ -27,10 +27,7 @@ const LineItemShippingInsuranceMaybe = props => {
   return insuranceLineItem ? (
     <div className={css.lineItem}>
       <span className={css.itemLabel}>
-        <FormattedMessage
-          id="OrderBreakdown.shippingInsurance"
-          defaultMessage="Protección SOS"
-        />
+        <FormattedMessage id="OrderBreakdown.shippingInsurance" defaultMessage="Protección SOS" />
       </span>
       <span className={css.itemValue}>{formatMoney(intl, insuranceLineItem.lineTotal)}</span>
     </div>

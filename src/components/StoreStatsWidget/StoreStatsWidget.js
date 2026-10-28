@@ -29,13 +29,7 @@ const monthsToLabel = m => {
   return `${years} ${years === 1 ? 'año' : 'años'} en Xololo`;
 };
 
-const StoreStatsWidget = ({
-  sellerId,
-  slug,
-  className,
-  rootClassName,
-  variant = 'card',
-}) => {
+const StoreStatsWidget = ({ sellerId, slug, className, rootClassName, variant = 'card' }) => {
   const [state, setState] = useState({ status: 'loading', data: null });
 
   useEffect(() => {
@@ -86,9 +80,7 @@ const StoreStatsWidget = ({
       <div className={css.metrics}>
         <div className={css.metric}>
           <p className={css.metricValue}>{stats.ordersTotal.toLocaleString('es-MX')}</p>
-          <p className={css.metricLabel}>
-            {stats.ordersTotal === 1 ? 'venta' : 'ventas'}
-          </p>
+          <p className={css.metricLabel}>{stats.ordersTotal === 1 ? 'venta' : 'ventas'}</p>
         </div>
         <div className={css.metric}>
           <p className={css.metricValue}>{stats.productsSold.toLocaleString('es-MX')}</p>

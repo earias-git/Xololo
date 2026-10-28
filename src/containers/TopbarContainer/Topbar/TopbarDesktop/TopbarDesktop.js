@@ -70,11 +70,7 @@ const SellOnXololoLink = () => {
 // izquierda de "Publicar anuncio" / "Cotizar envío" del CustomLinksMenu.
 // Estilo outlined — no compite visualmente con el CTA primario morado.
 const CotizarEnvioLink = () => (
-  <NamedLink
-    id="cotizar-envio-link"
-    name="CotizarEnvioPage"
-    className={css.cotizarEnvioLink}
-  >
+  <NamedLink id="cotizar-envio-link" name="CotizarEnvioPage" className={css.cotizarEnvioLink}>
     <FormattedMessage id="TopbarDesktop.cotizarEnvio" defaultMessage="Cotizar envío" />
   </NamedLink>
 );
@@ -121,10 +117,7 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
               name="DashboardPage"
             >
               <span className={css.menuItemBorder} />
-              <FormattedMessage
-                id="TopbarDesktop.dashboardLink"
-                defaultMessage="Dashboard"
-              />
+              <FormattedMessage id="TopbarDesktop.dashboardLink" defaultMessage="Dashboard" />
             </NamedLink>
           </MenuItem>
         ) : null}

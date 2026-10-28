@@ -155,13 +155,18 @@ const quote = async (req, res) => {
         .status(400)
         .json({ error: 'invalid_request', details: 'amountSubunits debe ser entero positivo.' });
     }
-    const desc = String(description || '').slice(0, MAX_DESCRIPTION_LEN).trim();
+    const desc = String(description || '')
+      .slice(0, MAX_DESCRIPTION_LEN)
+      .trim();
     if (!desc) {
       return res
         .status(400)
         .json({ error: 'invalid_request', details: 'description es requerida.' });
     }
-    const carrier = String(carrierName || '').slice(0, MAX_CARRIER_LEN).trim() || null;
+    const carrier =
+      String(carrierName || '')
+        .slice(0, MAX_CARRIER_LEN)
+        .trim() || null;
 
     const isdk = getIntegrationSdk();
     if (!isdk) {
@@ -197,14 +202,7 @@ const createPaymentIntent = async (req, res) => {
   try {
     const ctx = await loadTxForActor(req, res, 'customer');
     if (!ctx) return;
-    const {
-      transactionId,
-      tx,
-      xShipping,
-      currentUserId,
-      currentUserEmail,
-      stripeCustomerId,
-    } = ctx;
+    const { transactionId, tx, xShipping, currentUserId, currentUserEmail, stripeCustomerId } = ctx;
 
     if (xShipping.mode !== 'freight') {
       return res.status(409).json({ error: 'not_freight_mode' });
@@ -222,9 +220,7 @@ const createPaymentIntent = async (req, res) => {
       // eslint-disable-next-line no-console
       console.error(
         '[freight.createPaymentIntent] Stripe no configurado. ' +
-          `STRIPE_SECRET_KEY env var: ${
-            process.env.STRIPE_SECRET_KEY ? 'presente' : 'AUSENTE'
-          }. ` +
+          `STRIPE_SECRET_KEY env var: ${process.env.STRIPE_SECRET_KEY ? 'presente' : 'AUSENTE'}. ` +
           'Verifica en el dashboard de Render que la variable esté seteada en el service ' +
           'y que se haya hecho un redeploy después de agregarla.'
       );

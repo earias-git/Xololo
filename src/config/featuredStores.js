@@ -11,8 +11,7 @@ const featuredStores = [
     id: 'artesanias-del-mar',
     name: 'Artesanías del Mar',
     subdomain: 'artesaniasdelmar.xololo.mx',
-    description:
-      'Piezas de cerámica y joyería hechas a mano, inspiradas en la costa mexicana.',
+    description: 'Piezas de cerámica y joyería hechas a mano, inspiradas en la costa mexicana.',
     href: 'https://artesaniasdelmar.xololo.mx',
     cover: artesaniasDelMar,
     coverPosition: 'center 65%',
@@ -21,8 +20,7 @@ const featuredStores = [
     id: 'belleza-natural',
     name: 'Belleza Natural',
     subdomain: 'bellezanatural.xololo.mx',
-    description:
-      'Estética avanzada en Querétaro: tratamientos faciales y servicios profesionales.',
+    description: 'Estética avanzada en Querétaro: tratamientos faciales y servicios profesionales.',
     href: 'https://bellezanatural.xololo.mx',
     cover: bellezaNatural,
     coverPosition: 'center 30%',

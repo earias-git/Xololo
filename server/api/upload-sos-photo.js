@@ -58,8 +58,7 @@ const getR2 = () => {
   return r2Client;
 };
 
-const PUBLIC_BASE_URL = () =>
-  process.env.R2_PUBLIC_BASE_URL || 'https://media.xololo.mx';
+const PUBLIC_BASE_URL = () => process.env.R2_PUBLIC_BASE_URL || 'https://media.xololo.mx';
 const BUCKET = () => process.env.R2_BUCKET || 'xololo-media';
 
 const runUpload = (req, res) =>
@@ -166,8 +165,7 @@ module.exports = async (req, res) => {
       );
     } else {
       const currentTx = await isdk.transactions.show({ id: transactionId });
-      const currentSos =
-        currentTx.data.data.attributes.metadata?.xololoShippingSosPhotos || {};
+      const currentSos = currentTx.data.data.attributes.metadata?.xololoShippingSosPhotos || {};
       const mergedSos = { ...currentSos, [slot]: url };
       await isdk.transactions.updateMetadata({
         id: transactionId,

@@ -34,7 +34,9 @@ const XololoShippingMethodSelector = ({
       key: 'pickup',
       title: 'Recolección en domicilio del vendedor',
       priceLabel: 'Gratis',
-      note: methods.pickup.instructions || 'El vendedor te compartirá los detalles después de la compra.',
+      note:
+        methods.pickup.instructions ||
+        'El vendedor te compartirá los detalles después de la compra.',
     });
   }
   if (methods?.localDelivery?.enabled) {
@@ -71,8 +73,7 @@ const XololoShippingMethodSelector = ({
   if (list.length === 0) {
     return (
       <div className={css.empty}>
-        Este producto no tiene métodos de entrega configurados aún.
-        Contacta al vendedor.
+        Este producto no tiene métodos de entrega configurados aún. Contacta al vendedor.
       </div>
     );
   }
@@ -91,10 +92,7 @@ const XololoShippingMethodSelector = ({
         {list.map(m => {
           const checked = effectiveValue === m.key;
           return (
-            <li
-              key={m.key}
-              className={classNames(css.item, { [css.itemChecked]: checked })}
-            >
+            <li key={m.key} className={classNames(css.item, { [css.itemChecked]: checked })}>
               <label className={css.label}>
                 <input
                   type="radio"

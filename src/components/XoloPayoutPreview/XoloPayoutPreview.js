@@ -116,8 +116,7 @@ const XoloPayoutPreview = ({
       </div>
     );
   }
-  const currency =
-    (typeof price === 'object' && price?.currency) || currencyProp || 'MXN';
+  const currency = (typeof price === 'object' && price?.currency) || currencyProp || 'MXN';
 
   const bd = computePayoutBreakdown({
     priceSubunits: Math.round(amount),
@@ -205,16 +204,16 @@ const XoloPayoutPreview = ({
             {personType === PERSON_TYPES.INDIVIDUAL
               ? '(particular — no es contribuyente LISR 113-A)'
               : personType === PERSON_TYPES.MORAL
-                ? '(persona moral — LISR 113-A no aplica)'
-                : !hasRfc
-                  ? '(sin RFC — 20% fijo LISR 113-A)'
-                  : `(LISR 113-A · ${
-                      taxActivity === TAX_ACTIVITIES.HOSPEDAJE
-                        ? 'hospedaje'
-                        : taxActivity === TAX_ACTIVITIES.TRANSPORTE_ENTREGA
-                          ? 'transporte y entrega'
-                          : 'enajenación y servicios'
-                    })`}
+              ? '(persona moral — LISR 113-A no aplica)'
+              : !hasRfc
+              ? '(sin RFC — 20% fijo LISR 113-A)'
+              : `(LISR 113-A · ${
+                  taxActivity === TAX_ACTIVITIES.HOSPEDAJE
+                    ? 'hospedaje'
+                    : taxActivity === TAX_ACTIVITIES.TRANSPORTE_ENTREGA
+                    ? 'transporte y entrega'
+                    : 'enajenación y servicios'
+                })`}
           </span>
         </span>
         <span>−{money(bd.retIsrSubunits, currency)}</span>
@@ -226,10 +225,10 @@ const XoloPayoutPreview = ({
             {!isGravado
               ? `(no causa IVA · ${ivaArticleLabel})`
               : personType === PERSON_TYPES.MORAL
-                ? '(persona moral — LIVA 18-J no aplica)'
-                : !hasRfc
-                  ? '(sin RFC — 100% del IVA causado)'
-                  : '(LIVA 18-J · 50% del IVA causado)'}
+              ? '(persona moral — LIVA 18-J no aplica)'
+              : !hasRfc
+              ? '(sin RFC — 100% del IVA causado)'
+              : '(LIVA 18-J · 50% del IVA causado)'}
           </span>
         </span>
         <span>−{money(bd.retIvaSubunits, currency)}</span>
@@ -257,17 +256,15 @@ const XoloPayoutPreview = ({
         {isExento ? (
           <>
             {' '}
-            <strong>Producto exento ({ivaArticleLabel}):</strong> no causas IVA al
-            cliente, pero tampoco puedes acreditar el IVA que pagaste por tus
-            insumos relacionados.
+            <strong>Producto exento ({ivaArticleLabel}):</strong> no causas IVA al cliente, pero
+            tampoco puedes acreditar el IVA que pagaste por tus insumos relacionados.
           </>
         ) : null}
         {isTasaCero ? (
           <>
             {' '}
-            <strong>Producto a tasa 0% ({ivaArticleLabel}):</strong> no cobras
-            IVA al cliente, pero sí puedes acreditar el IVA que pagaste por tus
-            insumos en tu declaración mensual.
+            <strong>Producto a tasa 0% ({ivaArticleLabel}):</strong> no cobras IVA al cliente, pero
+            sí puedes acreditar el IVA que pagaste por tus insumos en tu declaración mensual.
           </>
         ) : null}
       </p>

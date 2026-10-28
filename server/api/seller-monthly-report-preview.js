@@ -30,7 +30,9 @@ module.exports = async (req, res) => {
 
     const isdk = getIntegrationSdk();
     if (!isdk) {
-      return res.status(500).json({ error: 'internal', details: 'Integration SDK sin configurar.' });
+      return res
+        .status(500)
+        .json({ error: 'internal', details: 'Integration SDK sin configurar.' });
     }
 
     // Default: mes anterior al actual (en UTC — para preview el offset
@@ -61,7 +63,8 @@ module.exports = async (req, res) => {
     const emailResult = (notifResult?.results || []).find(r => r?.channel === 'email') || {};
     const recipientEmail = ctx?.seller?.email || null;
     const sent = emailResult.sent === true;
-    const mode = emailResult.mode || (emailResult.skipped ? `skipped:${emailResult.skipped}` : null);
+    const mode =
+      emailResult.mode || (emailResult.skipped ? `skipped:${emailResult.skipped}` : null);
     const errorMsg = emailResult.error || null;
     // eslint-disable-next-line no-console
     console.log(

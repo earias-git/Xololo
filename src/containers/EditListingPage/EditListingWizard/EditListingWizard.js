@@ -118,10 +118,39 @@ const tabsForListingType = (processName, listingTypeConfig, isEvent = false) => 
   //   - PHOTOS puede caer a STYLE para listingTypes que no requieren imagen
   //     (ej. inquiry puro).
   const tabs = {
-    ['default-booking']: [DETAILS, ...styleOrPhotosTab, ATTRIBUTES, ...locationMaybe, PRICING, AVAILABILITY, TEXT],
-    ['default-purchase']: [DETAILS, ...styleOrPhotosTab, ATTRIBUTES, PRICING_AND_STOCK, ...deliveryMaybe, TEXT],
-    ['default-negotiation']: [DETAILS, ...styleOrPhotosTab, ATTRIBUTES, ...locationMaybe, ...pricingMaybe, TEXT],
-    ['default-inquiry']: [DETAILS, ...styleOrPhotosTab, ATTRIBUTES, ...locationMaybe, ...pricingMaybe, TEXT],
+    ['default-booking']: [
+      DETAILS,
+      ...styleOrPhotosTab,
+      ATTRIBUTES,
+      ...locationMaybe,
+      PRICING,
+      AVAILABILITY,
+      TEXT,
+    ],
+    ['default-purchase']: [
+      DETAILS,
+      ...styleOrPhotosTab,
+      ATTRIBUTES,
+      PRICING_AND_STOCK,
+      ...deliveryMaybe,
+      TEXT,
+    ],
+    ['default-negotiation']: [
+      DETAILS,
+      ...styleOrPhotosTab,
+      ATTRIBUTES,
+      ...locationMaybe,
+      ...pricingMaybe,
+      TEXT,
+    ],
+    ['default-inquiry']: [
+      DETAILS,
+      ...styleOrPhotosTab,
+      ATTRIBUTES,
+      ...locationMaybe,
+      ...pricingMaybe,
+      TEXT,
+    ],
   };
 
   return tabs[processName] || tabs['default-inquiry'];
@@ -581,8 +610,7 @@ class EditListingWizard extends Component {
       existingListingType || this.state.selectedListingType || validListingTypes.length === 1;
 
     // For oudated draft listing, we don't show other tabs but the "details"
-    const isEventListing =
-      currentListing?.attributes?.publicData?.isEvent === true;
+    const isEventListing = currentListing?.attributes?.publicData?.isEvent === true;
     const tabs =
       isNewListingFlow && (invalidExistingListingType || !hasListingTypeSelected)
         ? TABS_DETAILS_ONLY

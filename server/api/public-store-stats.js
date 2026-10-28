@@ -131,13 +131,15 @@ const fetchSellerStats = async (isdk, sellerId) => {
 const findSellerBySlug = async (isdk, slug) => {
   // Búsqueda por publicData.slug con Integration API.
   const resp = await isdk.users.query({
-    'pub_slug': slug,
+    pub_slug: slug,
     perPage: 5,
   });
   const users = resp.data.data || [];
   // Match exacto — case-insensitive por si acaso.
   const match = users.find(
-    u => String(u.attributes?.profile?.publicData?.slug || '').toLowerCase() === String(slug).toLowerCase()
+    u =>
+      String(u.attributes?.profile?.publicData?.slug || '').toLowerCase() ===
+      String(slug).toLowerCase()
   );
   return match || null;
 };
@@ -147,7 +149,9 @@ module.exports = async (req, res) => {
     const sellerId = String(req.query.sellerId || '').trim();
     const slug = String(req.query.slug || '').trim();
     if (!sellerId && !slug) {
-      return res.status(400).json({ error: 'invalid_request', details: 'sellerId o slug requerido.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'sellerId o slug requerido.' });
     }
 
     const cacheK = sellerId ? `id:${sellerId}` : `slug:${slug.toLowerCase()}`;
@@ -190,7 +194,10 @@ module.exports = async (req, res) => {
     // Miembro desde: usamos createdAt del user.
     const createdAt = sellerAttrs.createdAt || null;
     const memberMonths = createdAt
-      ? Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / (30.4 * 24 * 60 * 60 * 1000)))
+      ? Math.max(
+          0,
+          Math.floor((Date.now() - new Date(createdAt).getTime()) / (30.4 * 24 * 60 * 60 * 1000))
+        )
       : 0;
 
     const eligible = ordersTotal >= MIN_ORDERS_FOR_ELIGIBLE;

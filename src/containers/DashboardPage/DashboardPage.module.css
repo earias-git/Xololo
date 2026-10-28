@@ -543,8 +543,12 @@
   color: var(--colorGrey500);
 }
 
-.alertRow--danger .alertMeta { color: #991b1b; }
-.alertRow--warn .alertMeta { color: #92400e; }
+.alertRow--danger .alertMeta {
+  color: #991b1b;
+}
+.alertRow--warn .alertMeta {
+  color: #92400e;
+}
 
 .alertCta {
   flex-shrink: 0;

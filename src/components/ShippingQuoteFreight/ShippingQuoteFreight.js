@@ -139,9 +139,9 @@ const ShippingQuoteFreight = ({ transaction, role, onUpdated }) => {
         {isBuyer ? (
           <>
             <p className={css.hint}>
-              Al autorizar, el vendedor coordinará el envío contigo. El pago
-              del flete se hace por fuera (WhatsApp, transferencia, etc); tu
-              pago de los productos ya fue procesado por Xololo.
+              Al autorizar, el vendedor coordinará el envío contigo. El pago del flete se hace por
+              fuera (WhatsApp, transferencia, etc); tu pago de los productos ya fue procesado por
+              Xololo.
             </p>
             <button
               type="button"
@@ -154,8 +154,7 @@ const ShippingQuoteFreight = ({ transaction, role, onUpdated }) => {
           </>
         ) : (
           <p className={css.hint}>
-            Esperando autorización del comprador. Recibirás una notificación
-            cuando responda.
+            Esperando autorización del comprador. Recibirás una notificación cuando responda.
           </p>
         )}
         {state.error ? <p className={css.error}>{state.error}</p> : null}
@@ -169,8 +168,8 @@ const ShippingQuoteFreight = ({ transaction, role, onUpdated }) => {
       <section className={classNames(css.root, css.rootPending)}>
         <h3 className={css.title}>Cotización de envío pendiente</h3>
         <p className={css.hint}>
-          El comprador eligió pagar el envío por flete. Ingresa el monto
-          que le vas a cobrar por el envío para que él lo autorice.
+          El comprador eligió pagar el envío por flete. Ingresa el monto que le vas a cobrar por el
+          envío para que él lo autorice.
         </p>
         <div className={css.formRow}>
           <label className={css.label}>
@@ -216,9 +215,8 @@ const ShippingQuoteFreight = ({ transaction, role, onUpdated }) => {
     <section className={classNames(css.root, css.rootPending)}>
       <h3 className={css.title}>Envío por flete · esperando cotización</h3>
       <p className={css.hint}>
-        Elegiste pagar el envío por flete. El vendedor te enviará una
-        cotización pronto. Recibirás una notificación cuando esté lista y
-        podrás autorizarla desde aquí.
+        Elegiste pagar el envío por flete. El vendedor te enviará una cotización pronto. Recibirás
+        una notificación cuando esté lista y podrás autorizarla desde aquí.
       </p>
     </section>
   );

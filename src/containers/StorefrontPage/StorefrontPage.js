@@ -76,8 +76,12 @@ const BannerCarousel = ({ banners }) => {
       if (!paused) setActiveIdx(prev => (prev + 1) % numSlides);
     };
     intervalId = window.setInterval(tick, BANNER_AUTOPLAY_MS);
-    const pause = () => { paused = true; };
-    const resume = () => { paused = false; };
+    const pause = () => {
+      paused = true;
+    };
+    const resume = () => {
+      paused = false;
+    };
 
     container?.addEventListener('mouseenter', pause);
     container?.addEventListener('mouseleave', resume);
@@ -124,7 +128,13 @@ const BannerCarousel = ({ banners }) => {
             aria-label="Banner anterior"
           >
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M15 6l-6 6 6 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
           <button
@@ -134,7 +144,13 @@ const BannerCarousel = ({ banners }) => {
             aria-label="Banner siguiente"
           >
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M9 6l6 6-6 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
           <div className={css.bannerDots} role="tablist" aria-label="Elegir banner">
@@ -169,7 +185,9 @@ const buildWhatsAppUrl = (number, sellerName) => {
 
 const buildInstagramUrl = handle => {
   if (!handle) return null;
-  const clean = String(handle).replace(/^@/, '').trim();
+  const clean = String(handle)
+    .replace(/^@/, '')
+    .trim();
   if (!clean) return null;
   return `https://instagram.com/${clean}`;
 };
@@ -244,15 +262,7 @@ const IconMapPin = props => (
 );
 
 const StorefrontPageComponent = props => {
-  const {
-    slug,
-    seller,
-    listings,
-    listingsFetched,
-    inProgress,
-    notFound,
-    onFetchSeller,
-  } = props;
+  const { slug, seller, listings, listingsFetched, inProgress, notFound, onFetchSeller } = props;
 
   // XOLOLO: el SSR (server/dataLoader.js) hidrata sólo `seller` para que
   // crawlers de WhatsApp/FB/X vean los meta OG en el HTML inicial. Los
@@ -299,9 +309,8 @@ const StorefrontPageComponent = props => {
           <p className={css.notFoundEyebrow}>Tienda no encontrada</p>
           <h1 className={css.notFoundTitle}>{slug}.xololo.mx aún no existe</h1>
           <p className={css.notFoundText}>
-            No hay ninguna tienda con este subdominio. Si crees que es tuya,
-            revisa que el <code>slug</code> en tu perfil coincida con{' '}
-            <strong>{slug}</strong>.
+            No hay ninguna tienda con este subdominio. Si crees que es tuya, revisa que el{' '}
+            <code>slug</code> en tu perfil coincida con <strong>{slug}</strong>.
           </p>
           <a href="https://xololo.mx" className={css.notFoundLink}>
             Ir al marketplace →
@@ -330,9 +339,7 @@ const StorefrontPageComponent = props => {
   const ogUrl = pd.slug ? `https://${pd.slug}.xololo.mx` : null;
   const ogTitle = `${seller.displayName} en Xololo`;
   const ogDescription =
-    pd.shortDescription ||
-    pd.tagline ||
-    `Conoce la tienda de ${seller.displayName} en Xololo.mx`;
+    pd.shortDescription || pd.tagline || `Conoce la tienda de ${seller.displayName} en Xololo.mx`;
   const whatsappUrl = buildWhatsAppUrl(pd.whatsapp, seller.displayName);
   const instagramUrl = buildInstagramUrl(pd.instagram);
   const facebookUrl = buildFacebookUrl(pd.facebook);
@@ -410,10 +417,7 @@ const StorefrontPageComponent = props => {
             Se auto-oculta si no hay ratings ni ventas. Click en las
             estrellas navega a la ProfilePage (sección de reseñas). */}
         <div className={css.headerStats}>
-          <StoreHeaderStats
-            sellerId={seller.id}
-            reviewsHref={`/u/${seller.id}#reviews`}
-          />
+          <StoreHeaderStats sellerId={seller.id} reviewsHref={`/u/${seller.id}#reviews`} />
         </div>
       </header>
 
@@ -428,7 +432,12 @@ const StorefrontPageComponent = props => {
           ) : null}
           <div className={css.heroCtas}>
             {whatsappUrl ? (
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className={css.heroCta}>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={css.heroCta}
+              >
                 Escríbenos por WhatsApp
               </a>
             ) : null}
@@ -481,9 +490,7 @@ const StorefrontPageComponent = props => {
         <section id="disponibilidad" className={css.calendar}>
           <div className={css.calendarInner}>
             <h2 className={css.sectionTitle}>Disponibilidad</h2>
-            <p className={css.calendarNote}>
-              Calendario de próximas fechas disponibles.
-            </p>
+            <p className={css.calendarNote}>Calendario de próximas fechas disponibles.</p>
             <div className={css.calendarPlaceholder}>
               📅 El calendario detallado por servicio aparece al abrir cada listing.
             </div>
@@ -495,8 +502,8 @@ const StorefrontPageComponent = props => {
         <div className={css.contactInner}>
           <h2 className={css.sectionTitle}>Contacto directo</h2>
           <p className={css.contactNote}>
-            Escríbenos por WhatsApp o síguenos en redes. También puedes usar
-            el chat interno cuando compres uno de nuestros productos o servicios.
+            Escríbenos por WhatsApp o síguenos en redes. También puedes usar el chat interno cuando
+            compres uno de nuestros productos o servicios.
           </p>
           <div className={css.contactButtons}>
             {whatsappUrl ? (
@@ -539,12 +546,10 @@ const StorefrontPageComponent = props => {
       {/* XOLOLO: footer legal del seller — nombre legal + dirección + link a
           Google Maps si aplica. Separado del footer corporativo de Xololo
           para que quede claro qué información pertenece a cada uno. */}
-      {(legalName || address) ? (
+      {legalName || address ? (
         <section className={css.legalFooter}>
           <div className={css.legalFooterInner}>
-            {legalName ? (
-              <p className={css.legalName}>{legalName}</p>
-            ) : null}
+            {legalName ? <p className={css.legalName}>{legalName}</p> : null}
             {address ? (
               <p className={css.legalAddress}>
                 <IconMapPin className={css.legalAddressIcon} />
@@ -569,8 +574,11 @@ const StorefrontPageComponent = props => {
       <footer className={css.footer}>
         <div className={css.footerInner}>
           <p className={css.footerText}>
-            Powered by <a href="https://xololo.mx" className={css.footerLink}>Xololo®</a> —
-            Marca registrada. Único sitio oficial: xololo.mx
+            Powered by{' '}
+            <a href="https://xololo.mx" className={css.footerLink}>
+              Xololo®
+            </a>{' '}
+            — Marca registrada. Único sitio oficial: xololo.mx
           </p>
         </div>
       </footer>

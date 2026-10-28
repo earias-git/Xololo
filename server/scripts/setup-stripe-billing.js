@@ -30,9 +30,7 @@ const ensurePrice = async (stripe, def) => {
   });
   if (existing.data.length > 0) {
     const price = existing.data[0];
-    console.log(
-      `[skip] ${def.lookupKey} ya existe → price ${price.id} (product ${price.product})`
-    );
+    console.log(`[skip] ${def.lookupKey} ya existe → price ${price.id} (product ${price.product})`);
     return price;
   }
 

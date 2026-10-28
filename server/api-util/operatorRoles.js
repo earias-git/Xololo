@@ -19,26 +19,26 @@ const ALL_ROLES = Object.values(ROLES);
 
 // Módulos del módulo /admin donde se aplican permisos.
 const MODULES = {
-  PENALTIES: 'penalties',           // cola de penalidades, aprobar/rechazar/revertir
-  DISPUTES: 'disputes',             // cola de disputes + mediación
-  APPEALS: 'appeals',               // apelaciones de sellers
-  LOGISTICS: 'logistics',           // guías, fletes, entregas
-  ACCOUNTING: 'accounting',         // Facturama, Stripe balance, CxC/CxP
-  USERS: 'users',                   // ver seller/buyer history, perfiles
-  OPERATORS: 'operators',           // CRUD de operadores (super_admin)
-  AUDIT_LOG: 'audit_log',           // registro de acciones
-  SETTINGS: 'settings',             // configuración global (tasas, timeouts)
+  PENALTIES: 'penalties', // cola de penalidades, aprobar/rechazar/revertir
+  DISPUTES: 'disputes', // cola de disputes + mediación
+  APPEALS: 'appeals', // apelaciones de sellers
+  LOGISTICS: 'logistics', // guías, fletes, entregas
+  ACCOUNTING: 'accounting', // Facturama, Stripe balance, CxC/CxP
+  USERS: 'users', // ver seller/buyer history, perfiles
+  OPERATORS: 'operators', // CRUD de operadores (super_admin)
+  AUDIT_LOG: 'audit_log', // registro de acciones
+  SETTINGS: 'settings', // configuración global (tasas, timeouts)
 };
 
 // Acciones estándar por módulo.
 const ACTIONS = {
-  VIEW: 'view',           // solo lectura
-  CREATE: 'create',       // crear registro nuevo
-  UPDATE: 'update',       // modificar registro existente
-  APPROVE: 'approve',     // aprobar penalidad propuesta por sistema
-  REVERT: 'revert',       // revertir decisión previa
-  EXPORT: 'export',       // descargar CSV / reporte
-  SUSPEND: 'suspend',     // suspender un operator (SUPER_ADMIN)
+  VIEW: 'view', // solo lectura
+  CREATE: 'create', // crear registro nuevo
+  UPDATE: 'update', // modificar registro existente
+  APPROVE: 'approve', // aprobar penalidad propuesta por sistema
+  REVERT: 'revert', // revertir decisión previa
+  EXPORT: 'export', // descargar CSV / reporte
+  SUSPEND: 'suspend', // suspender un operator (SUPER_ADMIN)
 };
 
 // Matriz default de permisos. Lee: PERMISSIONS[rol][modulo] = Set<acciones>
@@ -73,9 +73,9 @@ const PERMISSIONS = {
   },
   [ROLES.ACCOUNTING]: {
     [MODULES.ACCOUNTING]: ['view', 'update', 'export'],
-    [MODULES.PENALTIES]: ['view', 'export'],   // ve cargos para contabilizar
+    [MODULES.PENALTIES]: ['view', 'export'], // ve cargos para contabilizar
     [MODULES.DISPUTES]: ['view', 'export'],
-    [MODULES.USERS]: ['view'],                 // ver RFC + Constancia SAT
+    [MODULES.USERS]: ['view'], // ver RFC + Constancia SAT
     [MODULES.AUDIT_LOG]: ['view', 'export'],
     // Sin approve/revert — contabilidad reporta, no decide.
   },
@@ -122,7 +122,9 @@ const hasPermission = (role, module, action, overrides = []) => {
  * Usado para construir el menú del /admin.
  */
 const visibleModules = (role, overrides = []) => {
-  return Object.values(MODULES).filter(module => hasPermission(role, module, ACTIONS.VIEW, overrides));
+  return Object.values(MODULES).filter(module =>
+    hasPermission(role, module, ACTIONS.VIEW, overrides)
+  );
 };
 
 /**

@@ -126,41 +126,48 @@ const EditListingPhotosPanel = props => {
           antes o después de guardar. Si aún no subió fotos, el CTA
           cambia copy a "Primero sube tus fotos" (ir a Detalles sin fotos
           no sirve a la IA, que analiza visualmente). */}
-      {listing?.id ? (() => {
-        const hasImages =
-          (listing?.images?.length || 0) > 0 ||
-          (listing?.relationships?.images?.data?.length || 0) > 0;
-        return (
-          <aside className={css.aiCta}>
-            <div className={css.aiCtaLeft}>
-              <span className={css.aiCtaSparkle} aria-hidden="true">✨</span>
-              <div>
-                <h4 className={css.aiCtaTitle}>¿Quieres mejorar tu texto con IA?</h4>
-                <p className={css.aiCtaDesc}>
-                  {hasImages
-                    ? 'Nuestra IA analiza tus fotos y te sugiere un título y descripción más atractivos. Toma ~20 segundos.'
-                    : 'Sube al menos una foto arriba y guarda, después vuelve a Detalles y nuestra IA te sugerirá título y descripción basados en lo que ve.'}
-                </p>
-              </div>
-            </div>
-            <NamedLink
-              name="EditListingPage"
-              params={{
-                id: listing.id.uuid,
-                slug: listing.attributes.title
-                  ? listing.attributes.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-                  : 'draft',
-                type: isPublished ? 'edit' : 'draft',
-                tab: DETAILS_TAB,
-              }}
-              to={{ search: '?autoSuggest=1' }}
-              className={css.aiCtaBtn}
-            >
-              {hasImages ? 'Mejorar en Detalles →' : 'Ir a Detalles →'}
-            </NamedLink>
-          </aside>
-        );
-      })() : null}
+      {listing?.id
+        ? (() => {
+            const hasImages =
+              (listing?.images?.length || 0) > 0 ||
+              (listing?.relationships?.images?.data?.length || 0) > 0;
+            return (
+              <aside className={css.aiCta}>
+                <div className={css.aiCtaLeft}>
+                  <span className={css.aiCtaSparkle} aria-hidden="true">
+                    ✨
+                  </span>
+                  <div>
+                    <h4 className={css.aiCtaTitle}>¿Quieres mejorar tu texto con IA?</h4>
+                    <p className={css.aiCtaDesc}>
+                      {hasImages
+                        ? 'Nuestra IA analiza tus fotos y te sugiere un título y descripción más atractivos. Toma ~20 segundos.'
+                        : 'Sube al menos una foto arriba y guarda, después vuelve a Detalles y nuestra IA te sugerirá título y descripción basados en lo que ve.'}
+                    </p>
+                  </div>
+                </div>
+                <NamedLink
+                  name="EditListingPage"
+                  params={{
+                    id: listing.id.uuid,
+                    slug: listing.attributes.title
+                      ? listing.attributes.title
+                          .toLowerCase()
+                          .replace(/[^a-z0-9]+/g, '-')
+                          .replace(/^-+|-+$/g, '')
+                      : 'draft',
+                    type: isPublished ? 'edit' : 'draft',
+                    tab: DETAILS_TAB,
+                  }}
+                  to={{ search: '?autoSuggest=1' }}
+                  className={css.aiCtaBtn}
+                >
+                  {hasImages ? 'Mejorar en Detalles →' : 'Ir a Detalles →'}
+                </NamedLink>
+              </aside>
+            );
+          })()
+        : null}
     </main>
   );
 };

@@ -104,7 +104,8 @@ const CATALOG = {
     ivaMode: IVA_MODES.TASA_CERO,
     taxActivity: TAX_ACTIVITIES.ENAJENACION_SERVICIOS,
     ivaArticle: 'Art. 2-A I-f LIVA',
-    description: 'Fertilizantes, plaguicidas, herbicidas y fungicidas destinados a agricultura o ganadería.',
+    description:
+      'Fertilizantes, plaguicidas, herbicidas y fungicidas destinados a agricultura o ganadería.',
     requiresReview: true,
   },
   [TAX_CLASSIFICATIONS.TASA_CERO_2A_I_I]: {

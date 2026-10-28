@@ -9,12 +9,7 @@ import css from './AppBand.module.css';
 // cambiar desde las props; por ahora apuntan a `#` porque la app aún no
 // está publicada.
 const AppBand = props => {
-  const {
-    appStoreHref = '#',
-    playStoreHref = '#',
-    className,
-    rootClassName,
-  } = props;
+  const { appStoreHref = '#', playStoreHref = '#', className, rootClassName } = props;
 
   return (
     <section
@@ -25,12 +20,9 @@ const AppBand = props => {
         <div className={css.band}>
           <div className={css.copy}>
             <p className={css.eyebrow}>Descarga la app</p>
-            <h2 className={css.title}>
-              Gestiona tus compras, ventas y reservas desde donde estés
-            </h2>
+            <h2 className={css.title}>Gestiona tus compras, ventas y reservas desde donde estés</h2>
             <p className={css.description}>
-              Notificaciones al instante, pagos protegidos y soporte por
-              WhatsApp integrado.
+              Notificaciones al instante, pagos protegidos y soporte por WhatsApp integrado.
             </p>
             <div className={css.badges}>
               <a

@@ -112,9 +112,7 @@ const PostDeliverySurvey = ({ transactionId, onDone, className }) => {
           <span className={css.doneIcon}>✓</span>
           <div>
             <p className={css.doneTitle}>Gracias, tu respuesta fue registrada</p>
-            <p className={css.doneSubtitle}>
-              Puedes cerrar esta ventana.
-            </p>
+            <p className={css.doneSubtitle}>Puedes cerrar esta ventana.</p>
           </div>
         </div>
       </section>
@@ -126,9 +124,8 @@ const PostDeliverySurvey = ({ transactionId, onDone, className }) => {
       <header className={css.header}>
         <h3 className={css.title}>Confirma tu recepción</h3>
         <p className={css.subtitle}>
-          Tu paquete fue marcado como entregado. Tienes 48 horas para reportar
-          cualquier problema. Si no respondes, el pago se libera al vendedor
-          automáticamente.
+          Tu paquete fue marcado como entregado. Tienes 48 horas para reportar cualquier problema.
+          Si no respondes, el pago se libera al vendedor automáticamente.
         </p>
       </header>
 
@@ -196,12 +193,10 @@ const PostDeliverySurvey = ({ transactionId, onDone, className }) => {
 
       {mode === 'bad' || (mode === 'submitting' && issueDetail) ? (
         <div className={css.detailForm}>
-          <h4 className={classNames(css.detailTitle, css.detailTitleBad)}>
-            Reportar problema
-          </h4>
+          <h4 className={classNames(css.detailTitle, css.detailTitleBad)}>Reportar problema</h4>
           <p className={css.warningText}>
-            Al reportar un problema los fondos se congelan mientras Xololo
-            revisa. Recibirás una respuesta en menos de 72 horas.
+            Al reportar un problema los fondos se congelan mientras Xololo revisa. Recibirás una
+            respuesta en menos de 72 horas.
           </p>
           <label className={css.detailField}>
             <span className={css.detailLabel}>Describe el problema *</span>

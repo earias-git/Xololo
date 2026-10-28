@@ -223,9 +223,7 @@ const SignupFormComponent = props => (
                   suscripción. Dejar vacío (opción "más tarde") equivale a
                   modo 'store' por default. */}
               <fieldset className={css.sellerModeFieldset}>
-                <legend className={css.sellerModeLegend}>
-                  ¿Cómo vas a usar Xololo?
-                </legend>
+                <legend className={css.sellerModeLegend}>¿Cómo vas a usar Xololo?</legend>
                 <FieldRadioButton
                   id={formId ? `${formId}.sellerMode.later` : 'sellerMode.later'}
                   name="sellerMode"

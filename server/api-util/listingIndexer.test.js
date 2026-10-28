@@ -3,7 +3,9 @@ const { listingToAlgoliaDoc, toSlug } = require('./listingIndexer');
 describe('toSlug', () => {
   test('normaliza acentos y símbolos', () => {
     expect(toSlug('Diadema con Flores Dísecadas')).toBe('diadema-con-flores-disecadas');
-    expect(toSlug('Jarrón de barro "cilindro" 40 x 40 cm.')).toBe('jarron-de-barro-cilindro-40-x-40-cm');
+    expect(toSlug('Jarrón de barro "cilindro" 40 x 40 cm.')).toBe(
+      'jarron-de-barro-cilindro-40-x-40-cm'
+    );
     expect(toSlug('')).toBe('listing');
     expect(toSlug(null)).toBe('listing');
   });

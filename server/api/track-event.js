@@ -21,11 +21,7 @@
 // Rate-limit: ventana deslizante de 60s con máximo 60 events por IP.
 // Bot filter: user-agent regex — bots comunes se rechazan silente.
 
-const {
-  enqueue,
-  VALID_EVENTS,
-  USER_KEYED_EVENTS,
-} = require('../api-util/trackingQueue');
+const { enqueue, VALID_EVENTS, USER_KEYED_EVENTS } = require('../api-util/trackingQueue');
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 60s
 const RATE_LIMIT_MAX = 60;
@@ -105,7 +101,9 @@ module.exports = (req, res) => {
       return res.status(400).json({ error: 'invalid_request', details: 'sessionId requerido.' });
     }
     if (event === 'listing.shared_external' && !channel) {
-      return res.status(400).json({ error: 'invalid_request', details: 'channel requerido para shared_external.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'channel requerido para shared_external.' });
     }
 
     const result = enqueue({

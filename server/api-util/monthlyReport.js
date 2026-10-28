@@ -17,8 +17,18 @@
 const { readLineItemQty } = require('./lineItemMoney');
 
 const MONTH_LABELS_ES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
 ];
 
 const formatMxn = subunits => {
@@ -143,24 +153,33 @@ const buildMonthlyReportForSeller = async (isdk, sellerId, { year, month }) => {
   const top = topProducts(curRes.txs, curRes.included);
 
   // Delta %.
-  const deltaPct = prevSum.salesAmount > 0
-    ? Math.round(((curSum.salesAmount - prevSum.salesAmount) / prevSum.salesAmount) * 100)
-    : null;
-  const deltaLabel = deltaPct == null
-    ? ''
-    : deltaPct > 0
-    ? ` (+${deltaPct}% vs ${prev.monthLabel})`
-    : deltaPct < 0
-    ? ` (${deltaPct}% vs ${prev.monthLabel})`
-    : ` (sin cambio vs ${prev.monthLabel})`;
+  const deltaPct =
+    prevSum.salesAmount > 0
+      ? Math.round(((curSum.salesAmount - prevSum.salesAmount) / prevSum.salesAmount) * 100)
+      : null;
+  const deltaLabel =
+    deltaPct == null
+      ? ''
+      : deltaPct > 0
+      ? ` (+${deltaPct}% vs ${prev.monthLabel})`
+      : deltaPct < 0
+      ? ` (${deltaPct}% vs ${prev.monthLabel})`
+      : ` (sin cambio vs ${prev.monthLabel})`;
 
-  const topText = top.length > 0
-    ? 'Top productos:\n' + top.map((p, i) => `  ${i + 1}. ${p.title} — ${p.units} vendidos (${formatMxn(p.revenue)})`).join('\n')
-    : 'Aún sin ventas este mes.';
+  const topText =
+    top.length > 0
+      ? 'Top productos:\n' +
+        top
+          .map((p, i) => `  ${i + 1}. ${p.title} — ${p.units} vendidos (${formatMxn(p.revenue)})`)
+          .join('\n')
+      : 'Aún sin ventas este mes.';
 
   const ticket = curSum.count > 0 ? Math.round(curSum.salesAmount / curSum.count) : 0;
 
-  const rootUrl = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx').replace(/\/$/, '');
+  const rootUrl = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx').replace(
+    /\/$/,
+    ''
+  );
   const dashboardUrl = `${rootUrl}/dashboard`;
 
   // User + branding para dual-brand del email.

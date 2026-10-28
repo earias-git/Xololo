@@ -63,9 +63,7 @@ const slugify = s =>
 const firstImageUrlFromIncluded = (listing, included) => {
   const imgRels = listing.relationships?.images?.data || [];
   if (imgRels.length === 0) return null;
-  const first = included.find(
-    r => r.type === 'image' && r.id?.uuid === imgRels[0].id?.uuid
-  );
+  const first = included.find(r => r.type === 'image' && r.id?.uuid === imgRels[0].id?.uuid);
   // Preferimos variants grandes para Meta (ellos re-escalan).
   const variants = first?.attributes?.variants || {};
   return (
@@ -177,10 +175,7 @@ module.exports = async (req, res) => {
 
     res.set('Content-Type', 'text/csv; charset=utf-8');
     res.set('Cache-Control', 'public, max-age=300');
-    res.set(
-      'Content-Disposition',
-      `inline; filename="xololo-meta-feed-${sellerId}.csv"`
-    );
+    res.set('Content-Disposition', `inline; filename="xololo-meta-feed-${sellerId}.csv"`);
     return res.status(200).send(csv);
   } catch (e) {
     const status = e?.status === 404 ? 404 : 500;

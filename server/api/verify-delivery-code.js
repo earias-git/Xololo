@@ -36,17 +36,20 @@ const CODE_MODES = ['pickup', 'localDelivery', 'freight'];
 
 // Lee el shape del código aceptando ambos nombres (deliveryCode nuevo,
 // pickupCode legacy) para no romper tx creadas antes del rename.
-const readDeliveryCode = xShipping =>
-  xShipping?.deliveryCode || xShipping?.pickupCode || null;
+const readDeliveryCode = xShipping => xShipping?.deliveryCode || xShipping?.pickupCode || null;
 
 module.exports = async (req, res) => {
   try {
     const { transactionId, code } = req.body || {};
     if (!transactionId || typeof transactionId !== 'string') {
-      return res.status(400).json({ error: 'invalid_request', details: 'transactionId requerido.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'transactionId requerido.' });
     }
     if (!code || !/^\d{6}$/.test(String(code))) {
-      return res.status(400).json({ error: 'invalid_request', details: 'code debe ser 6 dígitos.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'code debe ser 6 dígitos.' });
     }
 
     const sdk = getSdk(req, res);

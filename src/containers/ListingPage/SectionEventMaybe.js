@@ -12,8 +12,18 @@ import css from './ListingPage.module.css';
 // Sharetribe decrementa cuando se cierran transacciones de compra).
 
 const MONTHS_ES = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
 ];
 const DAYS_ES = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 
@@ -90,7 +100,9 @@ const SectionEventMaybe = props => {
           🎫{' '}
           {soldOut
             ? 'Agotado'
-            : `${seatsLeft} ${seatsLeft === 1 ? 'lugar disponible' : 'lugares disponibles'} de ${capacity}`}
+            : `${seatsLeft} ${
+                seatsLeft === 1 ? 'lugar disponible' : 'lugares disponibles'
+              } de ${capacity}`}
         </p>
       ) : null}
 

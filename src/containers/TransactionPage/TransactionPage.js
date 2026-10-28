@@ -759,8 +759,7 @@ export const TransactionPageComponent = props => {
   // "título + unitPrice × qty" en cuanto recibe `title`, lo cual es
   // útil para multi-cart pero visualmente redundante y rompe tests
   // cuando el carrito tiene un solo listing.
-  const xololoCartItems =
-    transaction?.attributes?.protectedData?.xololoCart?.items || [];
+  const xololoCartItems = transaction?.attributes?.protectedData?.xololoCart?.items || [];
   const itemTitlesForBreakdown =
     xololoCartItems.length > 0
       ? [listing?.attributes?.title || null, ...xololoCartItems.map(i => i?.title || null)]
@@ -1025,150 +1024,151 @@ export const TransactionPageComponent = props => {
           se hace transparente y renderea sólo children — ahí sí LayoutSingleColumn
           aporta el topbar/footer corporate de Xololo. */}
       <SellerBrandFrame seller={provider}>
-      <LayoutSingleColumn
-        topbar={
-          provider?.attributes?.profile?.publicData?.brandPrimaryColor
-            ? null
-            : <TopbarContainer />
-        }
-        footer={
-          provider?.attributes?.profile?.publicData?.brandPrimaryColor
-            ? null
-            : <FooterContainer />
-        }
-      >
-        <div className={css.root}>
-          {/* XOLOLO Envíos v2: el loop de cotización de flete vive ahora
+        <LayoutSingleColumn
+          topbar={
+            provider?.attributes?.profile?.publicData?.brandPrimaryColor ? null : (
+              <TopbarContainer />
+            )
+          }
+          footer={
+            provider?.attributes?.profile?.publicData?.brandPrimaryColor ? null : (
+              <FooterContainer />
+            )
+          }
+        >
+          <div className={css.root}>
+            {/* XOLOLO Envíos v2: el loop de cotización de flete vive ahora
               dentro del XoloFulfillmentPanel (por rol+etapa+modo).
               ShippingQuoteFreight legacy se retiró aquí para evitar
               duplicación de UI + copy inconsistente (decía "pago fuera
               de la plataforma" pero implementamos Stripe PI secundario
               en el sub-commit 5). */}
-          {/* XOLOLO Track #27: gate del payout. Solo visible al PROVIDER
+            {/* XOLOLO Track #27: gate del payout. Solo visible al PROVIDER
               (el seller mirando su venta). Si tiene blockers, el banner
               rojo le empuja a configurar Stripe + subir docs antes de
               que podamos liberarle el dinero. Auto-oculto si ya puede
               recibir pagos. */}
-          {isProviderRole && isDataAvailable ? (
-            <PayoutGateBanner variant="urgent" />
-          ) : null}
-          {/* XOLOLO: timeline de la orden (Fase D.7). Visible para ambas
+            {isProviderRole && isDataAvailable ? <PayoutGateBanner variant="urgent" /> : null}
+            {/* XOLOLO: timeline de la orden (Fase D.7). Visible para ambas
               partes — cada uno ve el estado en tiempo real alimentado
               por los eventos del webhook Skydropx (D.6). */}
-          {isDataAvailable ? <OrderTimeline transaction={transaction} /> : null}
-          {/* XOLOLO: panel de fulfillment del seller (Fase D.5c).
+            {isDataAvailable ? <OrderTimeline transaction={transaction} /> : null}
+            {/* XOLOLO: panel de fulfillment del seller (Fase D.5c).
               Solo renderea si el user logueado es el PROVIDER y el
               listing tiene shipping carrier con rate elegido. */}
-          {isProviderRole && isDataAvailable ? (
-            <OrderFulfillmentPanel transaction={transaction} />
-          ) : null}
-          {/* XOLOLO: encuesta post-entrega del buyer (D.8). Solo para
+            {isProviderRole && isDataAvailable ? (
+              <OrderFulfillmentPanel transaction={transaction} />
+            ) : null}
+            {/* XOLOLO: encuesta post-entrega del buyer (D.8). Solo para
               CUSTOMER, cuando la orden ya se entregó (webhook o transición
               lo dice) y aún no hay review ni disputa registrada. Si el
               buyer no responde en 48h, el cron aplica afirmativa ficta. */}
-          {isCustomerRole && isDataAvailable && (() => {
-            const meta = transaction?.attributes?.metadata || {};
-            const trackingEvents = meta.xololoShippingTrackingEvents || [];
-            const wasDeliveredByWebhook = trackingEvents.some(e => e.status === 'delivered');
-            const wasDeliveredByTx = (transaction?.attributes?.transitions || [])
-              .some(t => t.transition === 'transition/mark-delivered');
-            // XOLOLO Envíos v2: código de 6 dígitos verificado también
-            // cuenta como "entregado" — así el buyer ve la encuesta
-            // aunque la transición mark-delivered en Sharetribe falle
-            // por alguna razón (params, actor, race). El código sólo se
-            // marca verified al éxito real en verify-delivery-code.
-            const wasDeliveredByCode =
-              !!meta.xololoDeliveryCodeVerified?.verifiedAt ||
-              !!meta.xololoPickupCodeVerified?.verifiedAt;
-            const isDelivered = wasDeliveredByWebhook || wasDeliveredByTx || wasDeliveredByCode;
-            const alreadyAnswered =
-              !!meta.xololoBuyerReview ||
-              !!meta.xololoDispute ||
-              meta.xololoAcceptanceProof?.type === 'tacit';
-            return isDelivered && !alreadyAnswered ? (
-              <PostDeliverySurvey transactionId={transaction.id.uuid} />
-            ) : null;
-          })()}
-          {panel}
-        </div>
-        <ReviewModal
-          id="ReviewOrderModal"
-          isOpen={isReviewModalOpen}
-          focusElementId={`${actionButtonContainer}_${ACTION_BUTTON_1_ID}`}
-          onCloseModal={() => setReviewModalOpen(false)}
-          onManageDisableScrolling={onManageDisableScrolling}
-          onSubmitReview={onSubmitReview}
-          revieweeName={otherUserDisplayName}
-          reviewSent={reviewSubmitted}
-          sendReviewInProgress={sendReviewInProgress}
-          sendReviewError={sendReviewError}
-          marketplaceName={config.marketplaceName}
-        />
-        {process?.transitions?.DISPUTE ? (
-          <DisputeModal
-            id="DisputeOrderModal"
-            isOpen={isDisputeModalOpen}
-            focusElementId={`${actionButtonContainer}_disputeOrderButton`}
-            onCloseModal={() => setDisputeModalOpen(false)}
+            {isCustomerRole &&
+              isDataAvailable &&
+              (() => {
+                const meta = transaction?.attributes?.metadata || {};
+                const trackingEvents = meta.xololoShippingTrackingEvents || [];
+                const wasDeliveredByWebhook = trackingEvents.some(e => e.status === 'delivered');
+                const wasDeliveredByTx = (transaction?.attributes?.transitions || []).some(
+                  t => t.transition === 'transition/mark-delivered'
+                );
+                // XOLOLO Envíos v2: código de 6 dígitos verificado también
+                // cuenta como "entregado" — así el buyer ve la encuesta
+                // aunque la transición mark-delivered en Sharetribe falle
+                // por alguna razón (params, actor, race). El código sólo se
+                // marca verified al éxito real en verify-delivery-code.
+                const wasDeliveredByCode =
+                  !!meta.xololoDeliveryCodeVerified?.verifiedAt ||
+                  !!meta.xololoPickupCodeVerified?.verifiedAt;
+                const isDelivered = wasDeliveredByWebhook || wasDeliveredByTx || wasDeliveredByCode;
+                const alreadyAnswered =
+                  !!meta.xololoBuyerReview ||
+                  !!meta.xololoDispute ||
+                  meta.xololoAcceptanceProof?.type === 'tacit';
+                return isDelivered && !alreadyAnswered ? (
+                  <PostDeliverySurvey transactionId={transaction.id.uuid} />
+                ) : null;
+              })()}
+            {panel}
+          </div>
+          <ReviewModal
+            id="ReviewOrderModal"
+            isOpen={isReviewModalOpen}
+            focusElementId={`${actionButtonContainer}_${ACTION_BUTTON_1_ID}`}
+            onCloseModal={() => setReviewModalOpen(false)}
             onManageDisableScrolling={onManageDisableScrolling}
-            onDisputeOrder={onDisputeOrder(
-              transaction?.id,
-              process.transitions.DISPUTE,
-              onTransition,
-              setDisputeSubmitted
-            )}
-            disputeSubmitted={disputeSubmitted}
-            disputeInProgress={transitionInProgress === process.transitions.DISPUTE}
-            disputeError={transitionError}
+            onSubmitReview={onSubmitReview}
+            revieweeName={otherUserDisplayName}
+            reviewSent={reviewSubmitted}
+            sendReviewInProgress={sendReviewInProgress}
+            sendReviewError={sendReviewError}
+            marketplaceName={config.marketplaceName}
           />
-        ) : null}
-        {process?.transitions?.REQUEST_CHANGES ? (
-          <RequestChangesModal
-            id="RequestChangesModal"
-            isOpen={isRequestChangesModalOpen}
-            focusElementId={`${actionButtonContainer}_${ACTION_BUTTON_2_ID}`}
-            onCloseModal={() => setRequestChangesModalOpen(false)}
-            onManageDisableScrolling={onManageDisableScrolling}
-            onChangeRequest={onChangeRequest(
-              transaction?.id,
-              process.transitions.REQUEST_CHANGES,
-              onTransition,
-              onSendMessage,
-              config,
-              setRequestChangesModalOpen,
-              setChangeRequestSubmitted
-            )}
-            changeRequestSubmitted={changeRequestSubmitted}
-            changeRequestInProgress={transitionInProgress === process.transitions.REQUEST_CHANGES}
-            changeRequestError={transitionError}
-          />
-        ) : null}
-        {showMakeCounterOfferModal ? (
-          <MakeCounterOfferModal
-            id="MakeCounterOfferModal"
-            isOpen={isMakeCounterOfferModalOpen}
-            onCloseModal={() => setMakeCounterOfferModalOpen(false)}
-            focusElementId={`${actionButtonContainer}_${ACTION_BUTTON_3_ID}`}
-            onManageDisableScrolling={onManageDisableScrolling}
-            onMakeCounterOffer={onMakeCounterOffer(
-              transaction?.id,
-              transactionRole === CUSTOMER
-                ? process?.transitions?.CUSTOMER_MAKE_COUNTER_OFFER
-                : process?.transitions?.PROVIDER_MAKE_COUNTER_OFFER,
-              onTransition,
-              transactionRole,
-              currency,
-              setMakeCounterOfferModalOpen,
-              setCounterOfferSubmitted
-            )}
-            currentOffer={currentOffer}
-            counterOfferSubmitted={counterOfferSubmitted}
-            counterOfferInProgress={counterOffers.includes(transitionInProgress)}
-            counterOfferError={transitionError}
-            currencyConfig={currencyConfig}
-          />
-        ) : null}
-      </LayoutSingleColumn>
+          {process?.transitions?.DISPUTE ? (
+            <DisputeModal
+              id="DisputeOrderModal"
+              isOpen={isDisputeModalOpen}
+              focusElementId={`${actionButtonContainer}_disputeOrderButton`}
+              onCloseModal={() => setDisputeModalOpen(false)}
+              onManageDisableScrolling={onManageDisableScrolling}
+              onDisputeOrder={onDisputeOrder(
+                transaction?.id,
+                process.transitions.DISPUTE,
+                onTransition,
+                setDisputeSubmitted
+              )}
+              disputeSubmitted={disputeSubmitted}
+              disputeInProgress={transitionInProgress === process.transitions.DISPUTE}
+              disputeError={transitionError}
+            />
+          ) : null}
+          {process?.transitions?.REQUEST_CHANGES ? (
+            <RequestChangesModal
+              id="RequestChangesModal"
+              isOpen={isRequestChangesModalOpen}
+              focusElementId={`${actionButtonContainer}_${ACTION_BUTTON_2_ID}`}
+              onCloseModal={() => setRequestChangesModalOpen(false)}
+              onManageDisableScrolling={onManageDisableScrolling}
+              onChangeRequest={onChangeRequest(
+                transaction?.id,
+                process.transitions.REQUEST_CHANGES,
+                onTransition,
+                onSendMessage,
+                config,
+                setRequestChangesModalOpen,
+                setChangeRequestSubmitted
+              )}
+              changeRequestSubmitted={changeRequestSubmitted}
+              changeRequestInProgress={transitionInProgress === process.transitions.REQUEST_CHANGES}
+              changeRequestError={transitionError}
+            />
+          ) : null}
+          {showMakeCounterOfferModal ? (
+            <MakeCounterOfferModal
+              id="MakeCounterOfferModal"
+              isOpen={isMakeCounterOfferModalOpen}
+              onCloseModal={() => setMakeCounterOfferModalOpen(false)}
+              focusElementId={`${actionButtonContainer}_${ACTION_BUTTON_3_ID}`}
+              onManageDisableScrolling={onManageDisableScrolling}
+              onMakeCounterOffer={onMakeCounterOffer(
+                transaction?.id,
+                transactionRole === CUSTOMER
+                  ? process?.transitions?.CUSTOMER_MAKE_COUNTER_OFFER
+                  : process?.transitions?.PROVIDER_MAKE_COUNTER_OFFER,
+                onTransition,
+                transactionRole,
+                currency,
+                setMakeCounterOfferModalOpen,
+                setCounterOfferSubmitted
+              )}
+              currentOffer={currentOffer}
+              counterOfferSubmitted={counterOfferSubmitted}
+              counterOfferInProgress={counterOffers.includes(transitionInProgress)}
+              counterOfferError={transitionError}
+              currencyConfig={currencyConfig}
+            />
+          ) : null}
+        </LayoutSingleColumn>
       </SellerBrandFrame>
     </Page>
   );

@@ -67,26 +67,20 @@ const TiendasVerifiedPage = () => {
       <Helmet>
         <link rel="canonical" href="https://xololo.mx/tiendas-verified" />
       </Helmet>
-      <LayoutSingleColumn
-        topbar={<TopbarContainer />}
-        footer={<FooterContainer />}
-      >
+      <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
         <section className={css.hero}>
           <div className={css.heroInner}>
             <p className={css.eyebrow}>Confianza bidireccional</p>
             <h1 className={css.heroTitle}>Tiendas Xololo Verified™</h1>
             <p className={css.heroDesc}>
-              Cada tienda de este directorio pasó los 4 filtros de Xololo
-              Verified: identidad validada, documentos legales aprobados,
-              cuenta de cobros registrada y suscripción activa. Compra sin
-              miedo.
+              Cada tienda de este directorio pasó los 4 filtros de Xololo Verified: identidad
+              validada, documentos legales aprobados, cuenta de cobros registrada y suscripción
+              activa. Compra sin miedo.
             </p>
           </div>
         </section>
 
-        {state.status === 'loading' ? (
-          <div className={css.feedback}>Cargando tiendas…</div>
-        ) : null}
+        {state.status === 'loading' ? <div className={css.feedback}>Cargando tiendas…</div> : null}
 
         {state.status === 'error' ? (
           <div className={css.feedback}>
@@ -95,9 +89,7 @@ const TiendasVerifiedPage = () => {
         ) : null}
 
         {state.status === 'ok' && state.stores.length === 0 ? (
-          <div className={css.feedback}>
-            Aún no hay tiendas Verified publicadas. Vuelve pronto.
-          </div>
+          <div className={css.feedback}>Aún no hay tiendas Verified publicadas. Vuelve pronto.</div>
         ) : null}
 
         {state.status === 'ok' && state.stores.length > 0 ? (

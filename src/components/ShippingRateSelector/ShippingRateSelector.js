@@ -184,10 +184,8 @@ const ShippingRateSelector = props => {
       if (!res.ok) {
         const msgByError = {
           origin_not_configured: 'El vendedor aún no configuró su código postal de origen.',
-          listing_not_shippable:
-            'Este producto no está disponible para envío por paquetería.',
-          listing_incomplete:
-            'El vendedor no capturó peso o dimensiones para cotizar el envío.',
+          listing_not_shippable: 'Este producto no está disponible para envío por paquetería.',
+          listing_incomplete: 'El vendedor no capturó peso o dimensiones para cotizar el envío.',
           quote_timeout: 'La cotización tardó demasiado. Intenta de nuevo.',
           quote_failed: 'No pudimos cotizar el envío para esta dirección.',
         };
@@ -252,13 +250,13 @@ const ShippingRateSelector = props => {
       <h3 className={css.title}>Opciones de envío</h3>
       {!destinationReady ? (
         <p className={css.hint}>
-          Completa la dirección de envío arriba (CP, estado, ciudad, colonia
-          y calle con número) para ver las paqueterías disponibles.
+          Completa la dirección de envío arriba (CP, estado, ciudad, colonia y calle con número)
+          para ver las paqueterías disponibles.
         </p>
       ) : state.status === QuoteRequestState.LOADING ? (
         <p className={css.hint}>
-          Estamos solicitando el presupuesto para CP {destination.postal_code} —
-          esto puede tardar unos segundos…
+          Estamos solicitando el presupuesto para CP {destination.postal_code} — esto puede tardar
+          unos segundos…
         </p>
       ) : state.status === QuoteRequestState.SUCCESS ? (
         <p className={css.hint}>
@@ -266,9 +264,7 @@ const ShippingRateSelector = props => {
         </p>
       ) : null}
 
-      {state.status === QuoteRequestState.ERROR ? (
-        <p className={css.error}>{state.error}</p>
-      ) : null}
+      {state.status === QuoteRequestState.ERROR ? <p className={css.error}>{state.error}</p> : null}
 
       {/* XOLOLO Fase 2: toggle SOS Protección. Visible sólo cuando el
           valor declarado supera el umbral mínimo (default $500). */}
@@ -287,9 +283,8 @@ const ShippingRateSelector = props => {
             <span>
               <strong>Agregar Protección SOS</strong>
               <small className={css.insuranceHelp}>
-                Si el paquete se extravía o llega dañado por la paquetería,
-                puedes solicitar el reembolso del valor declarado (
-                ${state.declaredValue.toLocaleString('es-MX')} MXN).
+                Si el paquete se extravía o llega dañado por la paquetería, puedes solicitar el
+                reembolso del valor declarado ( ${state.declaredValue.toLocaleString('es-MX')} MXN).
               </small>
             </span>
           </label>
@@ -301,9 +296,8 @@ const ShippingRateSelector = props => {
                 onChange={e => setAcceptsNoInsurance(e.target.checked)}
               />
               <small>
-                Entiendo que al no contratar la Protección SOS, Xololo y
-                el vendedor no se hacen responsables por daño, robo o
-                extravío del paquete durante el envío. Si esto ocurre,
+                Entiendo que al no contratar la Protección SOS, Xololo y el vendedor no se hacen
+                responsables por daño, robo o extravío del paquete durante el envío. Si esto ocurre,
                 deberé gestionar el reclamo directamente con la paquetería.
               </small>
             </label>

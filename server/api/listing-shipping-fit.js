@@ -43,7 +43,9 @@ module.exports = async (req, res) => {
 
     const sdk = getIntegrationSdk();
     if (!sdk) {
-      return res.status(500).json({ error: 'internal', details: 'Integration SDK sin configurar.' });
+      return res
+        .status(500)
+        .json({ error: 'internal', details: 'Integration SDK sin configurar.' });
     }
 
     const resp = await sdk.listings.show({ id: listingId });

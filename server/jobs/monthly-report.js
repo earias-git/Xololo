@@ -134,7 +134,9 @@ const start = () => {
       // m-2 es el previo. Ej: monthKey='2026-09' → m=9 → month=7 → agosto)
 
       // eslint-disable-next-line no-console
-      console.log(`[monthly-report] tick — enviando reporte de ${prevMonth.year}-${prevMonth.month + 1}`);
+      console.log(
+        `[monthly-report] tick — enviando reporte de ${prevMonth.year}-${prevMonth.month + 1}`
+      );
       const r = await runBatch(prevMonth);
       // eslint-disable-next-line no-console
       console.log('[monthly-report] batch:', r);

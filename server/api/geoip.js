@@ -23,7 +23,9 @@ const extractClientIp = req => {
   // la primera es la del cliente real).
   const xff = req.headers['x-forwarded-for'];
   if (xff) {
-    const first = String(xff).split(',')[0].trim();
+    const first = String(xff)
+      .split(',')[0]
+      .trim();
     if (first) return first;
   }
   return req.ip || req.connection?.remoteAddress || null;
@@ -42,7 +44,9 @@ const isPrivateIp = ip => {
 const lookupIp = async ip => {
   // ip-api.com free tier: HTTP sin SSL. Server-side es aceptable.
   // Fields acotados para reducir latencia + no exponer data innecesaria.
-  const url = `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,countryCode,regionName,city,zip,lat,lon,query`;
+  const url = `http://ip-api.com/json/${encodeURIComponent(
+    ip
+  )}?fields=status,country,countryCode,regionName,city,zip,lat,lon,query`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 3000);
   try {

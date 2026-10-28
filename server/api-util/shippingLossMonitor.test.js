@@ -1,7 +1,4 @@
-const {
-  detectShippingLoss,
-  extractActualCost,
-} = require('./shippingLossMonitor');
+const { detectShippingLoss, extractActualCost } = require('./shippingLossMonitor');
 
 describe('detectShippingLoss', () => {
   it('no detecta si no hay actualSkydropxCostMxn (null)', () => {
@@ -86,9 +83,7 @@ describe('extractActualCost', () => {
   });
 
   it('prioriza master_rate_price', () => {
-    expect(
-      extractActualCost({ master_rate_price: 100, rate_price: 50, price: 10 })
-    ).toBe(100);
+    expect(extractActualCost({ master_rate_price: 100, rate_price: 50, price: 10 })).toBe(100);
   });
 
   it('cae a rate_price si no hay master_rate_price', () => {

@@ -50,8 +50,8 @@ const AdminHealthView = () => {
         />
       </div>
       <p className={css.footNote}>
-        Estas métricas son un resumen de los últimos 30 días.
-        Cache de 5 min desde la última consulta.
+        Estas métricas son un resumen de los últimos 30 días. Cache de 5 min desde la última
+        consulta.
       </p>
     </>
   );

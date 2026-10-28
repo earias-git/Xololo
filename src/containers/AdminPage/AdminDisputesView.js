@@ -50,12 +50,11 @@ const AdminDisputesView = () => {
               </div>
               <p className={css.disputeListing}>{d.listing.title || 'Producto'}</p>
               <p className={css.disputeParties}>
-                <strong>Buyer:</strong> {d.buyer.name} · {d.buyer.email}<br />
+                <strong>Buyer:</strong> {d.buyer.name} · {d.buyer.email}
+                <br />
                 <strong>Seller:</strong> {d.seller.name} · {d.seller.email}
               </p>
-              {d.issueDetail ? (
-                <p className={css.disputeIssue}>{d.issueDetail}</p>
-              ) : null}
+              {d.issueDetail ? <p className={css.disputeIssue}>{d.issueDetail}</p> : null}
               <p className={css.disputeFoot}>
                 <span>Abierta el {new Date(d.openedAt).toLocaleString('es-MX')}</span>
                 <a

@@ -52,7 +52,10 @@ const isValidSlug = candidate => {
 
 export const extractStorefrontSlug = hostHeader => {
   if (!hostHeader || typeof hostHeader !== 'string') return null;
-  const hostname = hostHeader.split(':')[0].toLowerCase().trim();
+  const hostname = hostHeader
+    .split(':')[0]
+    .toLowerCase()
+    .trim();
   if (!hostname) return null;
   if (isNonStorefrontHost(hostname)) return null;
 

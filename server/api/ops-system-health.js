@@ -22,9 +22,7 @@ const TIMEOUT_MS = 5000;
 const withTimeout = (promise, ms = TIMEOUT_MS) =>
   Promise.race([
     promise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), ms)
-    ),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
   ]);
 
 const measure = async (name, fn) => {

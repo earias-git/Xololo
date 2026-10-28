@@ -47,13 +47,16 @@ const BackfillVerifiedView = ({ onBack }) => {
   const executeRun = async () => {
     const d = dryRun.data;
     const expectedChanges = (d?.wouldBecomeVerified || 0) + (d?.wouldLoseVerified || 0);
-    if (!window.confirm(
-      `¿Ejecutar backfill en ${d?.total || 0} sellers?\n\n` +
-      `• ${d?.wouldBecomeVerified || 0} ganarán el badge\n` +
-      `• ${d?.wouldLoseVerified || 0} perderán el badge\n` +
-      `• ${d?.noChange || 0} quedan igual\n\n` +
-      `El sync es idempotente. Puede tardar 1-5 min.`
-    )) return;
+    if (
+      !window.confirm(
+        `¿Ejecutar backfill en ${d?.total || 0} sellers?\n\n` +
+          `• ${d?.wouldBecomeVerified || 0} ganarán el badge\n` +
+          `• ${d?.wouldLoseVerified || 0} perderán el badge\n` +
+          `• ${d?.noChange || 0} quedan igual\n\n` +
+          `El sync es idempotente. Puede tardar 1-5 min.`
+      )
+    )
+      return;
 
     setRunResult({ loading: true, data: null, error: null });
     const { ok, data } = await api('/api/admin/backfill-verified-badge/run', { method: 'POST' });
@@ -78,8 +81,8 @@ const BackfillVerifiedView = ({ onBack }) => {
       <p className={css.lead}>
         Re-evalúa a todos los sellers del marketplace y sincroniza el badge
         <code> xololoVerified</code>. Los criterios actuales viven en
-        <code> server/api-util/sellerVerified.js</code>. Idempotente —
-        sellers que ya están correctos no se tocan.
+        <code> server/api-util/sellerVerified.js</code>. Idempotente — sellers que ya están
+        correctos no se tocan.
       </p>
 
       {/* ----- Dry-run ----- */}
@@ -114,7 +117,9 @@ const BackfillVerifiedView = ({ onBack }) => {
 
           {dryRun.data.samples?.length > 0 ? (
             <>
-              <h3 className={css.sectionTitle}>Primeros {dryRun.data.samples.length} que cambiarían</h3>
+              <h3 className={css.sectionTitle}>
+                Primeros {dryRun.data.samples.length} que cambiarían
+              </h3>
               <table className={css.table}>
                 <thead>
                   <tr>
@@ -146,8 +151,7 @@ const BackfillVerifiedView = ({ onBack }) => {
             </>
           ) : (
             <p className={css.empty}>
-              Nada que hacer — todos los sellers tienen el badge correctamente
-              sincronizado.
+              Nada que hacer — todos los sellers tienen el badge correctamente sincronizado.
             </p>
           )}
 
@@ -159,9 +163,7 @@ const BackfillVerifiedView = ({ onBack }) => {
                 disabled={runResult.loading}
                 onClick={executeRun}
               >
-                {runResult.loading
-                  ? 'Ejecutando backfill…'
-                  : '🔄 Ejecutar backfill real'}
+                {runResult.loading ? 'Ejecutando backfill…' : '🔄 Ejecutar backfill real'}
               </button>
               <button
                 type="button"
@@ -177,9 +179,7 @@ const BackfillVerifiedView = ({ onBack }) => {
       )}
 
       {/* ----- Resultado del run ----- */}
-      {runResult.error ? (
-        <p className={css.error}>Error al ejecutar: {runResult.error}</p>
-      ) : null}
+      {runResult.error ? <p className={css.error}>Error al ejecutar: {runResult.error}</p> : null}
       {runResult.data ? (
         <div className={css.aiReviewBlock}>
           <h3 className={css.sectionTitle}>Resultado del último backfill</h3>
@@ -197,7 +197,9 @@ const BackfillVerifiedView = ({ onBack }) => {
               <summary>Ver errores ({runResult.data.errors.length})</summary>
               <ul>
                 {runResult.data.errors.map((e, i) => (
-                  <li key={i}>{e.sellerId}: {e.error}</li>
+                  <li key={i}>
+                    {e.sellerId}: {e.error}
+                  </li>
                 ))}
               </ul>
             </details>

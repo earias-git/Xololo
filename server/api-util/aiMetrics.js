@@ -25,8 +25,8 @@
 
 const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
 
-const PRICE_INPUT_PER_1M = 0.80;
-const PRICE_OUTPUT_PER_1M = 4.00;
+const PRICE_INPUT_PER_1M = 0.8;
+const PRICE_OUTPUT_PER_1M = 4.0;
 
 const FLUSH_INTERVAL_MS = 60_000;
 
@@ -147,9 +147,7 @@ const flush = async () => {
   try {
     let doc;
     try {
-      const resp = await client.send(
-        new GetObjectCommand({ Bucket: BUCKET(), Key: r2Key(date) })
-      );
+      const resp = await client.send(new GetObjectCommand({ Bucket: BUCKET(), Key: r2Key(date) }));
       const text = await resp.Body.transformToString('utf-8');
       doc = JSON.parse(text);
     } catch (err) {
@@ -186,9 +184,7 @@ const getMetricsForDate = async date => {
   }
   let doc;
   try {
-    const resp = await client.send(
-      new GetObjectCommand({ Bucket: BUCKET(), Key: r2Key(date) })
-    );
+    const resp = await client.send(new GetObjectCommand({ Bucket: BUCKET(), Key: r2Key(date) }));
     const text = await resp.Body.transformToString('utf-8');
     doc = JSON.parse(text);
   } catch (err) {

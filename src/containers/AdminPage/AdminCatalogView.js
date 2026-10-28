@@ -59,11 +59,7 @@ const AdminCatalogView = () => {
           hint={`${Math.round((catalog.servicesCount / total) * 100)}% del catálogo`}
           tone="ok"
         />
-        <Kpi
-          label="Otros"
-          value={formatNumber(catalog.otherCount)}
-          hint="Inquiry, ofertas, etc."
-        />
+        <Kpi label="Otros" value={formatNumber(catalog.otherCount)} hint="Inquiry, ofertas, etc." />
         <Kpi label="Total publicados" value={formatNumber(catalog.totalPublished)} tone="revenue" />
       </div>
 
@@ -74,8 +70,9 @@ const AdminCatalogView = () => {
 
       <p className={css.footNote}>
         Clasificación producto/servicio inferida de <code>publicData.unitType</code>{' '}
-        (&apos;item&apos; = producto; &apos;hour&apos;/&apos;day&apos;/&apos;night&apos;/&apos;fixed&apos; = servicio).
-        Sharetribe no tiene un campo booleano dedicado para esto.
+        (&apos;item&apos; = producto;
+        &apos;hour&apos;/&apos;day&apos;/&apos;night&apos;/&apos;fixed&apos; = servicio). Sharetribe
+        no tiene un campo booleano dedicado para esto.
       </p>
     </>
   );

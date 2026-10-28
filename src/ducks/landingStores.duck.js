@@ -53,7 +53,6 @@ const landingStoresSlice = createSlice({
 
 export default landingStoresSlice.reducer;
 
-export const fetchLandingStores = () => dispatch =>
-  dispatch(fetchLandingStoresThunk()).unwrap();
+export const fetchLandingStores = () => dispatch => dispatch(fetchLandingStoresThunk()).unwrap();
 
 export const selectLandingStores = state => state.landingStores?.stores || [];

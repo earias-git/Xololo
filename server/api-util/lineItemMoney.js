@@ -22,9 +22,7 @@
 const readLineItemQty = liOrValue => {
   if (liOrValue == null) return 0;
   const q =
-    typeof liOrValue === 'object' && 'quantity' in liOrValue
-      ? liOrValue.quantity
-      : liOrValue;
+    typeof liOrValue === 'object' && 'quantity' in liOrValue ? liOrValue.quantity : liOrValue;
   if (q == null) return 0;
   if (typeof q === 'number') return Number.isFinite(q) ? q : 0;
   if (typeof q === 'string') {

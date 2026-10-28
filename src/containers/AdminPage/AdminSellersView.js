@@ -68,7 +68,12 @@ const AdminSellersView = () => {
                   <td className={css.numeric}>{formatMxn(s.commission)}</td>
                   <td>
                     {s.storeUrl ? (
-                      <a href={s.storeUrl} target="_blank" rel="noreferrer" className={css.storeLink}>
+                      <a
+                        href={s.storeUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={css.storeLink}
+                      >
                         {s.storeSlug} ↗
                       </a>
                     ) : (

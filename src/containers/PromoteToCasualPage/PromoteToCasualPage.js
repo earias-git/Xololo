@@ -5,14 +5,8 @@ import { useHistory } from 'react-router-dom';
 import { FormattedMessage } from '../../util/reactIntl';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { ensureCurrentUser } from '../../util/data';
-import {
-  SELLER_MODES,
-  isCasualReseller as checkIsCasual,
-} from '../../util/xololoSellerMode';
-import {
-  PERSON_TYPES,
-  buildTaxProfilePayload,
-} from '../../util/xololoTaxProfile';
+import { SELLER_MODES, isCasualReseller as checkIsCasual } from '../../util/xololoSellerMode';
+import { PERSON_TYPES, buildTaxProfilePayload } from '../../util/xololoTaxProfile';
 import { updateProfile } from '../ManageAccountPage/ManageAccountPage.duck';
 
 import {
@@ -97,20 +91,17 @@ const PromoteToCasualPage = () => {
 
   return (
     <Page title="Activar vendedor casual" scrollingDisabled={scrollingDisabled} noIndex>
-      <LayoutSingleColumn
-        topbar={<TopbarContainer />}
-        footer={<FooterContainer />}
-      >
+      <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
         <main className={css.main}>
           <H3 as="h1" className={css.heading}>
             Publica tus cosas usadas en 1 clic
           </H3>
           <p className={css.lead}>
-            Vas a activar tu modo <strong>Vendedor casual</strong>. Es gratis,
-            no abre tienda ni te cobra mensualidad. Puedes publicar tu primer
-            anuncio ahora mismo y completar lo administrativo (cuenta de cobro
-            y documentos) <strong>cuando aparezca tu primer comprador</strong>
-            {' '}— mientras tanto el pago queda retenido por Xololo.
+            Vas a activar tu modo <strong>Vendedor casual</strong>. Es gratis, no abre tienda ni te
+            cobra mensualidad. Puedes publicar tu primer anuncio ahora mismo y completar lo
+            administrativo (cuenta de cobro y documentos){' '}
+            <strong>cuando aparezca tu primer comprador</strong> — mientras tanto el pago queda
+            retenido por Xololo.
           </p>
 
           <ul className={css.benefits}>
@@ -118,17 +109,16 @@ const PromoteToCasualPage = () => {
               <strong>Sin suscripción</strong> — publicas sin pagar nada.
             </li>
             <li>
-              <strong>Sin IVA ni retención ISR</strong> en tus ventas de
-              segunda mano (Art. 9 fracc. IV LIVA — venta particular ocasional).
+              <strong>Sin IVA ni retención ISR</strong> en tus ventas de segunda mano (Art. 9 fracc.
+              IV LIVA — venta particular ocasional).
             </li>
             <li>
-              <strong>Pago protegido</strong> — Xololo retiene el dinero del
-              comprador hasta que confirmas la entrega.
+              <strong>Pago protegido</strong> — Xololo retiene el dinero del comprador hasta que
+              confirmas la entrega.
             </li>
             <li>
-              Antes de recibir tu <strong>primer pago</strong> te pediremos
-              identificación oficial (frente + reverso) y comprobante de
-              domicilio. Nada más.
+              Antes de recibir tu <strong>primer pago</strong> te pediremos identificación oficial
+              (frente + reverso) y comprobante de domicilio. Nada más.
             </li>
           </ul>
 
@@ -142,14 +132,12 @@ const PromoteToCasualPage = () => {
                     name="acceptTerms"
                     label={
                       <>
-                        Declaro bajo protesta de decir verdad que vendo mis
-                        propios bienes usados de forma ocasional y que no realizo
-                        actividad empresarial. Acepto los{' '}
+                        Declaro bajo protesta de decir verdad que vendo mis propios bienes usados de
+                        forma ocasional y que no realizo actividad empresarial. Acepto los{' '}
                         <a href="/p/terminos" target="_blank" rel="noreferrer">
                           Términos y Condiciones
                         </a>{' '}
-                        y asumo la responsabilidad ante el SAT por mi
-                        clasificación fiscal.
+                        y asumo la responsabilidad ante el SAT por mi clasificación fiscal.
                       </>
                     }
                   />
@@ -170,9 +158,9 @@ const PromoteToCasualPage = () => {
           />
 
           <p className={css.footnote}>
-            Si en algún momento empiezas a vender como negocio (habitualmente
-            o con actividad empresarial), deberás desactivar el modo casual y
-            dar de alta tu RFC. Esta es tu responsabilidad.
+            Si en algún momento empiezas a vender como negocio (habitualmente o con actividad
+            empresarial), deberás desactivar el modo casual y dar de alta tu RFC. Esta es tu
+            responsabilidad.
           </p>
         </main>
       </LayoutSingleColumn>

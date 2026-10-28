@@ -13,9 +13,15 @@ describe('userTypes helper', () => {
     });
 
     test('acepta variantes históricas en español e inglés', () => {
-      ['Proveedor', 'proveedor', 'PROVEEDOR', 'Provider', 'seller', 'Vendedor', 'merchant'].forEach(
-        v => expect(isSellerUserType(v)).toBe(true)
-      );
+      [
+        'Proveedor',
+        'proveedor',
+        'PROVEEDOR',
+        'Provider',
+        'seller',
+        'Vendedor',
+        'merchant',
+      ].forEach(v => expect(isSellerUserType(v)).toBe(true));
     });
 
     test('trim antes de comparar', () => {

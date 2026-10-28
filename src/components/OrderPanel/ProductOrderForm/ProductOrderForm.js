@@ -43,9 +43,7 @@ const handleFetchLineItems = ({
 }) => {
   const stockReservationQuantity = Number.parseInt(quantity, 10);
   const deliveryMethodMaybe = deliveryMethod ? { deliveryMethod } : {};
-  const selectedShippingMethodMaybe = selectedShippingMethod
-    ? { selectedShippingMethod }
-    : {};
+  const selectedShippingMethodMaybe = selectedShippingMethod ? { selectedShippingMethod } : {};
   const isBrowser = typeof window !== 'undefined';
   // Con v2, exigimos que el buyer haya elegido método (analogous al
   // legacy que exigía deliveryMethod).
@@ -216,11 +214,8 @@ const renderForm = formRenderProps => {
     const { quantity, deliveryMethod, selectedShippingMethod } = values || {};
     // XOLOLO Envíos v2: si hay métodos v2, exigimos selectedShippingMethod
     // en vez del deliveryMethod legacy.
-    const needsMethodChoice =
-      displayDeliveryMethod || hasXoloMethods;
-    const methodChosen = hasXoloMethods
-      ? !!selectedShippingMethod
-      : !!deliveryMethod;
+    const needsMethodChoice = displayDeliveryMethod || hasXoloMethods;
+    const methodChosen = hasXoloMethods ? !!selectedShippingMethod : !!deliveryMethod;
     if (!quantity || quantity < 1) {
       e.preventDefault();
       // Blur event will show validator message

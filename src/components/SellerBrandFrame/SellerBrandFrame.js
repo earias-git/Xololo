@@ -113,19 +113,16 @@ const SellerBrandFrame = ({ seller, children, className, showFooter = true }) =>
               <a href="https://xololo.mx" className={css.footerBrand}>
                 Xololo<sup>®</sup>
               </a>
-              <p className={css.footerTag}>
-                Marca registrada · Único sitio oficial: xololo.mx
-              </p>
+              <p className={css.footerTag}>Marca registrada · Único sitio oficial: xololo.mx</p>
             </div>
             <div className={css.footerCol}>
               <p className={css.footerBenefit}>
                 🛡️ <strong>Envíos por paquetería asegurados hasta $100,000</strong>
               </p>
               <p className={css.footerBenefitSub}>
-                Los envíos por paquetería contratados a través de Xololo
-                (Skydropx) incluyen SOS Protección: si el paquete se pierde
-                o llega dañado, te devolvemos tu dinero. No aplica a
-                recolección en domicilio, envío local ni flete.
+                Los envíos por paquetería contratados a través de Xololo (Skydropx) incluyen SOS
+                Protección: si el paquete se pierde o llega dañado, te devolvemos tu dinero. No
+                aplica a recolección en domicilio, envío local ni flete.
               </p>
             </div>
           </div>

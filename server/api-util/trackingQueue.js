@@ -105,8 +105,7 @@ const groupByKey = (events, keyField) => {
       out.set(key, entry);
     }
     if (!entry.totals[bucketEvent]) entry.totals[bucketEvent] = {};
-    entry.totals[bucketEvent][bucketSource] =
-      (entry.totals[bucketEvent][bucketSource] || 0) + 1;
+    entry.totals[bucketEvent][bucketSource] = (entry.totals[bucketEvent][bucketSource] || 0) + 1;
 
     const day = todayYmd();
     if (!entry.day[day]) entry.day[day] = {};

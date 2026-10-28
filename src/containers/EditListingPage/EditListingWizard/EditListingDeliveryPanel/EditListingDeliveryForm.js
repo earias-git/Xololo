@@ -113,12 +113,10 @@ export const EditListingDeliveryForm = props => (
               Ver src/util/xololoShippingMethods.js.
               ============================================================ */}
           <fieldset className={css.xxShippingModeGroup}>
-            <legend className={css.xxShippingModeLegend}>
-              Métodos de entrega (Xololo)
-            </legend>
+            <legend className={css.xxShippingModeLegend}>Métodos de entrega (Xololo)</legend>
             <p className={css.xxHint}>
-              Elige uno o más métodos para este producto. El comprador
-              podrá seleccionar cualquiera de los que actives.
+              Elige uno o más métodos para este producto. El comprador podrá seleccionar cualquiera
+              de los que actives.
             </p>
 
             {/* Método 1: Pickup en domicilio del seller (siempre $0) */}
@@ -181,8 +179,8 @@ export const EditListingDeliveryForm = props => (
                 />
                 <p className={css.xxHint} style={{ marginTop: 12 }}>
                   Estados donde entregas <strong>(obligatorio marcar al menos uno)</strong>. En el
-                  checkout se ocultará esta opción si la dirección del comprador está fuera de
-                  estos estados/municipios.
+                  checkout se ocultará esta opción si la dirección del comprador está fuera de estos
+                  estados/municipios.
                 </p>
                 <div
                   style={{
@@ -274,8 +272,7 @@ export const EditListingDeliveryForm = props => (
               >
                 <strong>🚫 No apto para paquetería estándar</strong>
                 <p style={{ margin: '4px 0 0', fontSize: 12, lineHeight: 1.4 }}>
-                  Detectamos: {shippingFit.matched?.[0]?.label}. {' '}
-                  {shippingFit.matched?.[0]?.advice}
+                  Detectamos: {shippingFit.matched?.[0]?.label}. {shippingFit.matched?.[0]?.advice}
                 </p>
                 <p style={{ margin: '6px 0 0', fontSize: 12, lineHeight: 1.4 }}>
                   <strong>Usa en su lugar</strong> pickup, entrega local o flete especializado.
@@ -295,8 +292,7 @@ export const EditListingDeliveryForm = props => (
               >
                 <strong>⚠️ Paquetería con condiciones</strong>
                 <p style={{ margin: '4px 0 0', fontSize: 12, lineHeight: 1.4 }}>
-                  Detectamos: {shippingFit.matched?.[0]?.label}. {' '}
-                  {shippingFit.matched?.[0]?.advice}
+                  Detectamos: {shippingFit.matched?.[0]?.label}. {shippingFit.matched?.[0]?.advice}
                 </p>
               </div>
             ) : null}
@@ -313,8 +309,8 @@ export const EditListingDeliveryForm = props => (
             {xoloSkydropxOn ? (
               <div style={{ marginLeft: 28, marginBottom: 12 }}>
                 <p className={css.xxHint}>
-                  El buyer verá cotizaciones en vivo (Estafeta, FedEx, etc.)
-                  contra su CP. Requiere peso y dimensiones del paquete cerrado.
+                  El buyer verá cotizaciones en vivo (Estafeta, FedEx, etc.) contra su CP. Requiere
+                  peso y dimensiones del paquete cerrado.
                 </p>
                 <FieldTextInput
                   id={`${formId}.xoloWeightGrams`}
@@ -373,13 +369,11 @@ export const EditListingDeliveryForm = props => (
             />
             {xoloFreightOn ? (
               <p className={css.xxHint} style={{ marginLeft: 28 }}>
-                El buyer completa la compra pagando sólo los productos.
-                Después, en el detalle del pedido, tú le cotizas el envío
-                y él lo autoriza para pagarlo aparte.
+                El buyer completa la compra pagando sólo los productos. Después, en el detalle del
+                pedido, tú le cotizas el envío y él lo autoriza para pagarlo aparte.
               </p>
             ) : null}
           </fieldset>
-
 
           <Button
             className={css.submitButton}

@@ -71,7 +71,8 @@ const scoreListing = (listing, interpretedKeywords) => {
   let score = 0;
   for (const kw of interpretedKeywords) {
     const k = String(kw).toLowerCase();
-    if (bag.has(k)) score += 2; // match en tags visuales pesa más
+    if (bag.has(k)) score += 2;
+    // match en tags visuales pesa más
     else if (title.includes(k)) score += 1.5;
     else if (desc.includes(k)) score += 1;
   }
@@ -175,10 +176,7 @@ module.exports = async (req, res) => {
 
     // Si Haiku restringió tipos (ej. solo "service" para "clases de yoga"),
     // aplicamos. Si incluye los 3 (default), no filtra nada.
-    if (
-      listingTypes.length > 0 &&
-      listingTypes.length < AVAILABLE_LISTING_TYPES.length
-    ) {
+    if (listingTypes.length > 0 && listingTypes.length < AVAILABLE_LISTING_TYPES.length) {
       queryParams.pub_listingType = listingTypes.join(',');
     }
 
@@ -199,9 +197,7 @@ module.exports = async (req, res) => {
       title: listing.attributes.title,
       href: buildHrefFromListing(listing),
       cover: extractImage(listing, included),
-      price: listing.attributes.price?.amount
-        ? listing.attributes.price.amount / 100
-        : null,
+      price: listing.attributes.price?.amount ? listing.attributes.price.amount / 100 : null,
       currency: listing.attributes.price?.currency,
       listingType: listing.attributes.publicData?.listingType,
       category: listing.attributes.publicData?.categoryLevel1,

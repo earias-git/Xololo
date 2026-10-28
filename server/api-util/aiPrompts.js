@@ -22,7 +22,9 @@ const IMAGE_ANALYSIS_V1 = {
   system:
     'Eres el motor de análisis visual del marketplace mexicano Xololo. Tu trabajo es analizar fotos de productos, servicios y eventos que suben los sellers; extraer metadata estructurada para búsqueda y SEO; detectar contenido ilícito o prohibido en México según CPF, Ley Federal de Armas, Ley Gral de Salud, NOM-059, INAH, Derechos de Autor; y recomendar al seller mejoras a la foto. Siempre respondes JSON válido, sin preámbulo.',
   instruction: ({ listingTitle, listingType, category }) =>
-    `Analiza esta foto de un ${listingType === 'service' || listingType === 'service-day' ? 'servicio' : 'producto o evento'} publicado en Xololo.
+    `Analiza esta foto de un ${
+      listingType === 'service' || listingType === 'service-day' ? 'servicio' : 'producto o evento'
+    } publicado en Xololo.
 
 Contexto declarado por el seller:
 - Título: "${listingTitle || '(sin título)'}"
@@ -105,10 +107,17 @@ const LISTING_TEXT_SUGGEST_V1 = {
   system:
     'Eres el asistente de redacción del marketplace mexicano Xololo. Ayudas a sellers (muchos MiPyMEs con poca experiencia en marketing) a redactar títulos y descripciones que vendan. Hablas español mexicano natural, sin anglicismos innecesarios. Siempre devuelves JSON válido.',
   instruction: ({
-    listingType, category, subcategory, condition,
-    currentTitle, currentDescription,
-    aiAnalysisTags, attributes, attributesSchema,
-    isEvent, event,
+    listingType,
+    category,
+    subcategory,
+    condition,
+    currentTitle,
+    currentDescription,
+    aiAnalysisTags,
+    attributes,
+    attributesSchema,
+    isEvent,
+    event,
   }) => {
     // XOLOLO (PR 4): formatea atributos declarados por el seller como
     // "label: valor" para que la IA los use directo en título ML-style.
@@ -128,20 +137,29 @@ const LISTING_TEXT_SUGGEST_V1 = {
       }
     }
     const attrsBlock = attrLines.length
-      ? `Características declaradas por el seller (úsalas directas en el título — son los más confiables):\n${attrLines.join('\n')}`
+      ? `Características declaradas por el seller (úsalas directas en el título — son los más confiables):\n${attrLines.join(
+          '\n'
+        )}`
       : '(No hay características declaradas aún — basa el título en categoría y fotos.)';
 
     const tagsBlock = aiAnalysisTags
-      ? `Tags detectados por IA en las fotos (contexto adicional, lo que la cámara ve):\n${JSON.stringify(aiAnalysisTags, null, 2)}`
+      ? `Tags detectados por IA en las fotos (contexto adicional, lo que la cámara ve):\n${JSON.stringify(
+          aiAnalysisTags,
+          null,
+          2
+        )}`
       : '(No hay análisis de IA en las fotos aún — ignora esta sección.)';
 
     // XOLOLO: contexto específico de evento. Si isEvent=true, el prompt
     // debe generar título ML-style con fecha + lugar visible (patrón
     // "Taller/Concierto X · DD mes · lugar"). Ejemplos reales de Eventbrite.
-    const eventBlock = isEvent && event
-      ? `
+    const eventBlock =
+      isEvent && event
+        ? `
 IMPORTANTE — ESTE LISTING ES UN EVENTO CON FECHA FIJA:
-- Fecha: ${event.date_start || '(sin fecha)'}${event.time_start ? ` · ${event.time_start}` : ''}${event.date_end && event.date_end !== event.date_start ? ` – ${event.date_end}` : ''}${event.time_end ? ` – ${event.time_end}` : ''}
+- Fecha: ${event.date_start || '(sin fecha)'}${event.time_start ? ` · ${event.time_start}` : ''}${
+            event.date_end && event.date_end !== event.date_start ? ` – ${event.date_end}` : ''
+          }${event.time_end ? ` – ${event.time_end}` : ''}
 - Lugar: ${event.location || '(sin lugar)'}
 - Modalidad: ${event.modality || 'presencial'}
 - Cupo: ${event.capacity || '(sin cupo)'} personas
@@ -159,12 +177,16 @@ Patrón de DESCRIPCIÓN para eventos: 3-5 oraciones. Oración 1: qué es
 y qué aprenderán/vivirán. Oración 2: fecha + hora + ubicación clara.
 Oración 3: qué incluye. Oración 4: cupo limitado + call-to-action.
 `
-      : '(No es un evento con fecha fija — flow normal de producto/servicio.)';
+        : '(No es un evento con fecha fija — flow normal de producto/servicio.)';
 
-    return `Un seller está editando un ${listingType === 'service' || listingType === 'service-day' ? 'servicio' : 'producto'} en Xololo. Quiere título + descripción que convierta en venta (estilo Mercado Libre: título compacto con marca+modelo+atributo clave).
+    return `Un seller está editando un ${
+      listingType === 'service' || listingType === 'service-day' ? 'servicio' : 'producto'
+    } en Xololo. Quiere título + descripción que convierta en venta (estilo Mercado Libre: título compacto con marca+modelo+atributo clave).
 
 Contexto:
-- Categoría: "${category || '(no definida)'}"${subcategory ? `\n- Sub-categoría: "${subcategory}"` : ''}${condition ? `\n- Condición: ${condition === 'used' ? 'USADO (segunda mano)' : 'NUEVO'}` : ''}
+- Categoría: "${category || '(no definida)'}"${
+      subcategory ? `\n- Sub-categoría: "${subcategory}"` : ''
+    }${condition ? `\n- Condición: ${condition === 'used' ? 'USADO (segunda mano)' : 'NUEVO'}` : ''}
 - Título actual: "${currentTitle || '(vacío)'}"
 - Descripción actual: "${currentDescription || '(vacía)'}"
 

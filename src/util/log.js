@@ -28,14 +28,39 @@ const pickSelectedErrors = (ignored, entry) => {
 // pueden traer query params con PII; los bodies de forms también
 // (recipientPhoneNumber, direcciones, montos).
 const PII_KEYS = [
-  'password', 'cardNumber', 'cvv', 'cvc', 'ssn', 'rfc', 'curp', 'ine',
-  'phone', 'phoneNumber', 'telefono', 'email',
-  'recipientPhoneNumber', 'recipientAddressLine1', 'recipientAddressLine2',
-  'recipientReferences', 'recipientPostal', 'recipientName',
+  'password',
+  'cardNumber',
+  'cvv',
+  'cvc',
+  'ssn',
+  'rfc',
+  'curp',
+  'ine',
+  'phone',
+  'phoneNumber',
+  'telefono',
+  'email',
+  'recipientPhoneNumber',
+  'recipientAddressLine1',
+  'recipientAddressLine2',
+  'recipientReferences',
+  'recipientPostal',
+  'recipientName',
   'recipientNeighborhood',
-  'address', 'direccion', 'street1', 'street2', 'line1', 'line2',
-  'postal_code', 'postalCode',
-  'authorization', 'bearer', 'cookie', 'token', 'access_token', 'refreshToken',
+  'address',
+  'direccion',
+  'street1',
+  'street2',
+  'line1',
+  'line2',
+  'postal_code',
+  'postalCode',
+  'authorization',
+  'bearer',
+  'cookie',
+  'token',
+  'access_token',
+  'refreshToken',
 ];
 const PII_SET = new Set(PII_KEYS);
 const PII_PATTERNS = [
@@ -74,7 +99,8 @@ const beforeSend = (event, _hint) => {
       }
       if (event.request.data) event.request.data = scrubObj(event.request.data);
       if (event.request.cookies) event.request.cookies = { scrubbed: true };
-      if (event.request.query_string) event.request.query_string = scrubStr(event.request.query_string);
+      if (event.request.query_string)
+        event.request.query_string = scrubStr(event.request.query_string);
     }
     if (event.extra) event.extra = scrubObj(event.extra);
     if (event.contexts) event.contexts = scrubObj(event.contexts);

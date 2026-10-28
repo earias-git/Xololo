@@ -69,7 +69,10 @@ const generateRecoveryCodes = async () => {
   const plain = [];
   const hashes = [];
   for (let i = 0; i < 8; i++) {
-    const code = `${crypto.randomBytes(2).toString('hex').toUpperCase()}-${crypto
+    const code = `${crypto
+      .randomBytes(2)
+      .toString('hex')
+      .toUpperCase()}-${crypto
       .randomBytes(2)
       .toString('hex')
       .toUpperCase()}`;
@@ -89,7 +92,9 @@ const generateRecoveryCodes = async () => {
  */
 const consumeRecoveryCode = async (plainCode, storedCodes) => {
   if (!plainCode || !Array.isArray(storedCodes)) return { ok: false };
-  const clean = String(plainCode).replace(/\s+/g, '').toUpperCase();
+  const clean = String(plainCode)
+    .replace(/\s+/g, '')
+    .toUpperCase();
   for (let i = 0; i < storedCodes.length; i++) {
     const entry = storedCodes[i];
     if (entry.consumedAt) continue;

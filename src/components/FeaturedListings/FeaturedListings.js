@@ -37,10 +37,7 @@ const FeaturedListings = props => {
   if (!items?.length) return null;
 
   return (
-    <section
-      className={classNames(rootClassName || css.root, className)}
-      aria-label={title}
-    >
+    <section className={classNames(rootClassName || css.root, className)} aria-label={title}>
       <div className={css.container}>
         <div className={css.header}>
           <h2 className={css.title}>{title}</h2>
@@ -73,9 +70,7 @@ const FeaturedListings = props => {
                 </div>
                 <div className={css.body}>
                   <span className={css.name}>{item.name}</span>
-                  {item.seller ? (
-                    <span className={css.seller}>{item.seller}</span>
-                  ) : null}
+                  {item.seller ? <span className={css.seller}>{item.seller}</span> : null}
                   {typeof item.rating === 'number' ? (
                     <span className={css.rating}>
                       <StarIcon />

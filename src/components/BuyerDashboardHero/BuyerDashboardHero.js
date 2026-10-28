@@ -36,7 +36,13 @@ const humanTimeAgo = iso => {
 
 const Thumb = ({ url, title }) => (
   <span className={css.thumb} aria-hidden>
-    {url ? <img src={url} alt="" /> : <span className={css.thumbEmpty} title={title}>📦</span>}
+    {url ? (
+      <img src={url} alt="" />
+    ) : (
+      <span className={css.thumbEmpty} title={title}>
+        📦
+      </span>
+    )}
   </span>
 );
 
@@ -54,12 +60,8 @@ const InTransitCard = ({ order }) => {
         </p>
       </div>
       <div className={css.transitTracking}>
-        {order.carrierName ? (
-          <p className={css.trackingCarrier}>{order.carrierName}</p>
-        ) : null}
-        {order.trackingNumber ? (
-          <p className={css.trackingNumber}>{order.trackingNumber}</p>
-        ) : null}
+        {order.carrierName ? <p className={css.trackingCarrier}>{order.carrierName}</p> : null}
+        {order.trackingNumber ? <p className={css.trackingNumber}>{order.trackingNumber}</p> : null}
         {order.lastEventAt ? (
           <p className={css.trackingAgo}>{humanTimeAgo(order.lastEventAt)}</p>
         ) : null}
@@ -98,7 +100,9 @@ const ReviewPendingRow = ({ item }) => {
 };
 
 const BuyAgainChip = ({ store }) => {
-  const url = store.sellerSlug ? `https://${store.sellerSlug}.xololo.mx` : `/order/${store.sellerId}`;
+  const url = store.sellerSlug
+    ? `https://${store.sellerSlug}.xololo.mx`
+    : `/order/${store.sellerId}`;
   return (
     <a href={url} className={css.buyAgainChip}>
       {store.sellerLogoUrl ? (
@@ -145,17 +149,22 @@ const BuyerDashboardHero = ({ className, rootClassName }) => {
   if (!hasAny) return null;
 
   return (
-    <section className={classNames(rootClassName || css.root, className)} aria-label="Resumen de tus pedidos">
+    <section
+      className={classNames(rootClassName || css.root, className)}
+      aria-label="Resumen de tus pedidos"
+    >
       {summary?.ordersActive > 0 || summary?.ordersDelivered30d > 0 ? (
         <div className={css.summary}>
           {summary.ordersActive > 0 ? (
             <span>
-              <strong>{summary.ordersActive}</strong> pedido{summary.ordersActive === 1 ? '' : 's'} en curso
+              <strong>{summary.ordersActive}</strong> pedido{summary.ordersActive === 1 ? '' : 's'}{' '}
+              en curso
             </span>
           ) : null}
           {summary.ordersDelivered30d > 0 ? (
             <span>
-              <strong>{summary.ordersDelivered30d}</strong> entregado{summary.ordersDelivered30d === 1 ? '' : 's'} en 30 días
+              <strong>{summary.ordersDelivered30d}</strong> entregado
+              {summary.ordersDelivered30d === 1 ? '' : 's'} en 30 días
             </span>
           ) : null}
         </div>

@@ -27,8 +27,7 @@ const rateLimit = require('express-rate-limit');
 // cookie que Sharetribe pone), su id viene en req.user. Caemos a la IP
 // (que Render pone en x-forwarded-for cuando confiamos en el proxy).
 const keyGenerator = req => {
-  const userId =
-    req.user?.id || req.user?.uuid || req.operator?.id || req.operatorId;
+  const userId = req.user?.id || req.user?.uuid || req.operator?.id || req.operatorId;
   if (userId) return `user:${userId}`;
   // El trustProxy del server/index.js hace que req.ip venga del XFF.
   return `ip:${req.ip || 'unknown'}`;

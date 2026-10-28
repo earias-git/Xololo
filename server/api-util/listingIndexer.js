@@ -36,10 +36,7 @@ const extractCoverUrl = (listing, included = []) => {
   const img = included.find(i => i.type === 'image' && i.id.uuid === ref.id.uuid);
   const v = img?.attributes?.variants;
   return (
-    v?.['listing-card-2x']?.url ||
-    v?.['listing-card']?.url ||
-    v?.['scaled-medium']?.url ||
-    null
+    v?.['listing-card-2x']?.url || v?.['listing-card']?.url || v?.['scaled-medium']?.url || null
   );
 };
 

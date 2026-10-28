@@ -38,7 +38,15 @@ const FEATURES = [
     title: 'Sin suscripción',
     description: 'No tienes tienda ni pagas mensualidad. Vendes y punto.',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
         <circle cx="12" cy="12" r="9" />
         <path d="M8 12l3 3 5-6" />
       </svg>
@@ -49,7 +57,15 @@ const FEATURES = [
     title: 'Pago protegido',
     description: 'Xololo retiene el pago hasta que la persona reciba el producto.',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
         <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z" />
       </svg>
     ),
@@ -59,7 +75,15 @@ const FEATURES = [
     title: 'Sin IVA ni ISR',
     description: 'Venta particular por Art. 9 fracc. IV LIVA. Recibes el 100% menos la comisión.',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
         <path d="M4 8h16" />
         <path d="M6 8v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8" />
         <path d="M9 8V5a3 3 0 0 1 6 0v3" />
@@ -71,7 +95,15 @@ const FEATURES = [
     title: 'Antifraude',
     description: 'Validación de identidad del vendedor y del comprador. Cuidamos ambos lados.',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
         <circle cx="12" cy="8" r="4" />
         <path d="M4 21a8 8 0 0 1 16 0" />
       </svg>
@@ -92,16 +124,15 @@ const UsedGoodsBand = props => {
       <div className={css.container}>
         <div className={css.band}>
           <header className={css.header}>
-            <p className={css.eyebrow}>
-              Vendedores casuales — Segunda mano
-            </p>
+            <p className={css.eyebrow}>Vendedores casuales — Segunda mano</p>
             <h2 className={css.title}>
-              Vende lo que ya no usas <span className={css.titleAccent}>— sin tienda, sin cobro mensual</span>
+              Vende lo que ya no usas{' '}
+              <span className={css.titleAccent}>— sin tienda, sin cobro mensual</span>
             </h2>
             <p className={css.description}>
-              Publica tu bici, cámara o lo que sea en 3 fotos. Xololo retiene
-              el pago hasta que la persona reciba el producto. Y por tratarse
-              de venta particular ocasional, no cargamos IVA ni retenemos ISR.
+              Publica tu bici, cámara o lo que sea en 3 fotos. Xololo retiene el pago hasta que la
+              persona reciba el producto. Y por tratarse de venta particular ocasional, no cargamos
+              IVA ni retenemos ISR.
             </p>
           </header>
 

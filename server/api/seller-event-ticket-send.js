@@ -113,9 +113,7 @@ module.exports = async (req, res) => {
     });
 
     // Build minimal seller context for dual-brand header.
-    const providerUser = included.find(
-      i => i.type === 'user' && i.id.uuid === providerId
-    );
+    const providerUser = included.find(i => i.type === 'user' && i.id.uuid === providerId);
     const sellerContext = {
       id: providerId,
       name:
@@ -126,8 +124,7 @@ module.exports = async (req, res) => {
       slug: providerUser?.attributes?.profile?.publicData?.slug || null,
       logoUrl: providerUser?.attributes?.profile?.publicData?.logoUrl || null,
       primaryColor: providerUser?.attributes?.profile?.publicData?.brandPrimaryColor || null,
-      secondaryColor:
-        providerUser?.attributes?.profile?.publicData?.brandSecondaryColor || null,
+      secondaryColor: providerUser?.attributes?.profile?.publicData?.brandSecondaryColor || null,
     };
 
     sendEventNotifications('event.ticket_issued', {

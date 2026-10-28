@@ -130,18 +130,12 @@ const runTick = async () => {
             await sendEventNotifications('order.tacit_acceptance', context);
           } catch (err) {
             // eslint-disable-next-line no-console
-            console.error(
-              `[tacit-acceptance] notify falló para tx ${tx.id.uuid}:`,
-              err?.message
-            );
+            console.error(`[tacit-acceptance] notify falló para tx ${tx.id.uuid}:`, err?.message);
           }
         })();
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.error(
-          `[tacit-acceptance] updateMetadata falló para tx ${tx.id.uuid}:`,
-          e.message
-        );
+        console.error(`[tacit-acceptance] updateMetadata falló para tx ${tx.id.uuid}:`, e.message);
       }
     }
 

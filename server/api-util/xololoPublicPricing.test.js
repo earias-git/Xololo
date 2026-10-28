@@ -1,4 +1,8 @@
-const { applyPublicMargin, toBuyerFacing, XOLOLO_PUBLIC_MARGIN_PCT } = require('./xololoPublicPricing');
+const {
+  applyPublicMargin,
+  toBuyerFacing,
+  XOLOLO_PUBLIC_MARGIN_PCT,
+} = require('./xololoPublicPricing');
 
 describe('xololoPublicPricing', () => {
   describe('applyPublicMargin', () => {

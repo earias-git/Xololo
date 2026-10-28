@@ -56,8 +56,7 @@ const LINE_ITEM_PENALTY_LEVEL_2 = 'line-item/penalty-level-2';
 const LINE_ITEM_PENALTY_LEVEL_3 = 'line-item/penalty-level-3';
 const LINE_ITEM_XOLOLO_DISPUTE_FEE = 'line-item/xololo-dispute-fee';
 const LINE_ITEM_STRIPE_CHARGEBACK_FEE = 'line-item/stripe-chargeback-fee';
-const LINE_ITEM_SERVICE_CANCELLATION_RETENTION =
-  'line-item/service-cancellation-retention';
+const LINE_ITEM_SERVICE_CANCELLATION_RETENTION = 'line-item/service-cancellation-retention';
 
 // Montos base en MXN (unidades enteras).
 const PENALTY_LEVEL_1_MXN = 50;

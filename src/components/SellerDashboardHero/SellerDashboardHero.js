@@ -23,10 +23,7 @@ const { Money } = sdkTypes;
 // ---------- helpers de agrupación por estado ----------
 
 // Estados considerados "activos" (post-pago, pre-entrega).
-const ACTIVE_TRANSITIONS = new Set([
-  'transition/confirm-payment',
-  'transition/mark-preparing',
-]);
+const ACTIVE_TRANSITIONS = new Set(['transition/confirm-payment', 'transition/mark-preparing']);
 
 const isDelivered = tx => {
   const transitions = tx?.attributes?.transitions || [];
@@ -159,13 +156,7 @@ const KpiCard = ({ label, value, hint, tone, icon }) => (
 const SellerDashboardHero = ({ transactions, className }) => {
   const intl = useIntl();
 
-  const {
-    salesMonth,
-    activeCount,
-    deliveredCount,
-    alertCount,
-    alertList,
-  } = useMemo(() => {
+  const { salesMonth, activeCount, deliveredCount, alertCount, alertList } = useMemo(() => {
     const txs = Array.isArray(transactions) ? transactions : [];
     const paidThisMonth = txs.filter(isPaidThisMonth);
     const active = txs.filter(isActive);
@@ -173,9 +164,8 @@ const SellerDashboardHero = ({ transactions, className }) => {
 
     // Sumar payin sólo de las pagadas este mes.
     const salesMoney = sumPayin(paidThisMonth);
-    const salesMoneyObj = salesMoney.amount > 0
-      ? new Money(salesMoney.amount, salesMoney.currency)
-      : null;
+    const salesMoneyObj =
+      salesMoney.amount > 0 ? new Money(salesMoney.amount, salesMoney.currency) : null;
 
     // Recolectar alertas.
     const alertList = [];
@@ -227,12 +217,7 @@ const SellerDashboardHero = ({ transactions, className }) => {
           value={String(activeCount)}
           hint={activeCount === 0 ? 'Todo entregado' : 'Pagados y sin entregar'}
         />
-        <KpiCard
-          icon="✅"
-          tone="delivered"
-          label="Entregados 30d"
-          value={String(deliveredCount)}
-        />
+        <KpiCard icon="✅" tone="delivered" label="Entregados 30d" value={String(deliveredCount)} />
         <KpiCard
           icon={alertCount > 0 ? '⚠️' : '👍'}
           tone={alertCount > 0 ? 'alert' : 'ok'}

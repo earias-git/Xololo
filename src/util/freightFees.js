@@ -68,7 +68,7 @@ export const computeFreightBreakdown = (fleteSubunits, sellerTaxProfile = null) 
   const totalRetenciones = retIsrSubunits + retIvaSubunits;
   const sellerReceives = flete - totalFees - totalRetenciones;
   return {
-    fleteSubunits: flete,             // Buyer paga esto (= cotización del seller)
+    fleteSubunits: flete, // Buyer paga esto (= cotización del seller)
     motorCobroSubunits: motorCobro,
     ivaMotorSubunits: ivaMotor,
     xololoAdminSubunits: xololoAdmin,

@@ -45,8 +45,13 @@
 }
 
 @keyframes sparkle {
-  0%, 100% { transform: scale(1) rotate(0); }
-  50% { transform: scale(1.15) rotate(10deg); }
+  0%,
+  100% {
+    transform: scale(1) rotate(0);
+  }
+  50% {
+    transform: scale(1.15) rotate(10deg);
+  }
 }
 
 .title {

@@ -97,19 +97,25 @@ const readDirectoryFromR2 = async () => {
 const writeDirectoryToR2 = async operators => {
   const r2 = getR2();
   if (!r2) throw new Error('r2_not_configured');
-  const body = JSON.stringify({
-    version: 1,
-    updatedAt: new Date().toISOString(),
-    operators,
-  }, null, 2);
-  await r2.send(new PutObjectCommand({
-    Bucket: BUCKET(),
-    Key: DIRECTORY_KEY,
-    Body: body,
-    ContentType: 'application/json',
-    // CacheControl: no-cache porque es datos operacionales críticos
-    CacheControl: 'no-cache',
-  }));
+  const body = JSON.stringify(
+    {
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      operators,
+    },
+    null,
+    2
+  );
+  await r2.send(
+    new PutObjectCommand({
+      Bucket: BUCKET(),
+      Key: DIRECTORY_KEY,
+      Body: body,
+      ContentType: 'application/json',
+      // CacheControl: no-cache porque es datos operacionales críticos
+      CacheControl: 'no-cache',
+    })
+  );
   invalidateCache();
 };
 
@@ -134,7 +140,9 @@ const getOperatorById = async id => {
 };
 
 const getOperatorByEmail = async email => {
-  const normalized = String(email || '').trim().toLowerCase();
+  const normalized = String(email || '')
+    .trim()
+    .toLowerCase();
   if (!normalized) return null;
   const all = await listOperators();
   return all.find(o => o.email.toLowerCase() === normalized) || null;
@@ -200,8 +208,14 @@ const updateOperator = async (id, patch) => {
   const existing = operators[idx];
   // Lista blanca de campos actualizables.
   const allowed = [
-    'name', 'role', 'passwordHash', 'mfaSecret', 'mfaEnabled',
-    'mfaRecoveryCodes', 'permissionsOverrides', 'lastLoginAt',
+    'name',
+    'role',
+    'passwordHash',
+    'mfaSecret',
+    'mfaEnabled',
+    'mfaRecoveryCodes',
+    'permissionsOverrides',
+    'lastLoginAt',
   ];
   const updated = { ...existing };
   for (const field of allowed) {

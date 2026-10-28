@@ -74,7 +74,12 @@ const PayoutQueueView = ({ onBack }) => {
   }, [load]);
 
   const release = async item => {
-    if (!window.confirm(`¿Liberar ${formatPesos(item.pendingAmountSubunits)} para ${item.sellerName || item.sellerEmail}? Se intentará el transfer real a su cuenta Stripe Connect.`)) {
+    if (
+      !window.confirm(
+        `¿Liberar ${formatPesos(item.pendingAmountSubunits)} para ${item.sellerName ||
+          item.sellerEmail}? Se intentará el transfer real a su cuenta Stripe Connect.`
+      )
+    ) {
       return;
     }
     setReleasingId(item.sellerId);
@@ -96,7 +101,10 @@ const PayoutQueueView = ({ onBack }) => {
     if (failed > 0) {
       const firstErr = (data.results || []).find(r => r.transferError)?.transferError;
       alert(
-        `Liberadas ${data.releasedCount} tx. Transfers exitosos: ${transferred}, fallidos: ${failed}.\n\nPrimer error: ${firstErr || 'desconocido'}\n\nUsa "Reintentar transfer" después de corregir.`
+        `Liberadas ${
+          data.releasedCount
+        } tx. Transfers exitosos: ${transferred}, fallidos: ${failed}.\n\nPrimer error: ${firstErr ||
+          'desconocido'}\n\nUsa "Reintentar transfer" después de corregir.`
       );
     } else {
       alert(`Liberadas ${data.releasedCount} tx. Transfers exitosos: ${transferred}.`);
@@ -106,7 +114,12 @@ const PayoutQueueView = ({ onBack }) => {
 
   const retry = async item => {
     if (!item.failedTxIds?.length) return;
-    if (!window.confirm(`¿Reintentar transfer de ${item.failedTransferCount} tx fallidas para ${item.sellerName || item.sellerEmail}?`)) {
+    if (
+      !window.confirm(
+        `¿Reintentar transfer de ${item.failedTransferCount} tx fallidas para ${item.sellerName ||
+          item.sellerEmail}?`
+      )
+    ) {
       return;
     }
     setReleasingId(item.sellerId);
@@ -123,7 +136,10 @@ const PayoutQueueView = ({ onBack }) => {
     const failed = data.failedCount || 0;
     if (failed > 0) {
       const firstErr = (data.results || []).find(r => r.transferError)?.transferError;
-      alert(`Reintento: ${transferred} exitosos, ${failed} fallidos.\nPrimer error: ${firstErr || 'desconocido'}`);
+      alert(
+        `Reintento: ${transferred} exitosos, ${failed} fallidos.\nPrimer error: ${firstErr ||
+          'desconocido'}`
+      );
     } else {
       alert(`Reintento exitoso: ${transferred} transfers completados.`);
     }
@@ -157,7 +173,9 @@ const PayoutQueueView = ({ onBack }) => {
           </div>
 
           {state.items.length === 0 ? (
-            <p className={css.empty}>Sin payouts retenidos. Todos los sellers con ventas tienen el gate cerrado.</p>
+            <p className={css.empty}>
+              Sin payouts retenidos. Todos los sellers con ventas tienen el gate cerrado.
+            </p>
           ) : (
             <table className={css.table}>
               <thead>
@@ -211,7 +229,9 @@ const PayoutQueueView = ({ onBack }) => {
                             disabled={releasingId === item.sellerId}
                             onClick={() => retry(item)}
                           >
-                            {releasingId === item.sellerId ? 'Reintentando…' : 'Reintentar transfer'}
+                            {releasingId === item.sellerId
+                              ? 'Reintentando…'
+                              : 'Reintentar transfer'}
                           </button>
                         ) : item.canReceivePayout ? (
                           <button

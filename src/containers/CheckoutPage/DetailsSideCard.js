@@ -122,12 +122,8 @@ const DetailsSideCard = props => {
                 )}
               </div>
               <div className={css.additionalItemMain}>
-                <span className={css.additionalItemTitle}>
-                  {it.title || 'Producto'}
-                </span>
-                <span className={css.additionalItemQty}>
-                  Cantidad: {it.quantity}
-                </span>
+                <span className={css.additionalItemTitle}>{it.title || 'Producto'}</span>
+                <span className={css.additionalItemQty}>Cantidad: {it.quantity}</span>
               </div>
             </li>
           ))}

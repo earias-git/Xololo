@@ -294,10 +294,7 @@ export const ListingPageComponent = props => {
                 por canal + UTMs en el link compartido. */}
             {currentListing?.id?.uuid ? (
               <div style={{ margin: '0 0 16px' }}>
-                <ShareListingButton
-                  listingId={currentListing.id.uuid}
-                  listingTitle={title}
-                />
+                <ShareListingButton listingId={currentListing.id.uuid} listingTitle={title} />
               </div>
             ) : null}
             {/* XOLOLO: banner prominente para listings tipo Evento. Aparece
@@ -309,10 +306,7 @@ export const ListingPageComponent = props => {
             />
             {/* XOLOLO: panel de asistentes para el seller dueño del evento.
                 Se auto-oculta si !isEvent o !isOwnListing. */}
-            <SectionEventAttendeesMaybe
-              listing={currentListing}
-              isOwner={isOwnListing}
-            />
+            <SectionEventAttendeesMaybe listing={currentListing} isOwner={isOwnListing} />
             {showDescription && <SectionText text={description} showAsIngress />}
 
             <CustomListingFields
@@ -348,56 +342,58 @@ export const ListingPageComponent = props => {
             {/* XOLOLO: wrapper sticky que agrupa OrderPanel + AddToCartCta
                 para que viajen juntos al scrollear y no se encimen. */}
             <div className={css.productOrderStickyWrap}>
-            <OrderPanel
-              className={classNames(css.productOrderPanel, {
-                [css.imagesEnabled]: showListingImage,
-              })}
-              listing={currentListing}
-              isOwnListing={isOwnListing}
-              onSubmit={handleOrderSubmit}
-              authorLink={
-                <NamedLink
-                  className={css.authorNameLink}
-                  name={isVariant ? 'ListingPageVariant' : 'ListingPage'}
-                  params={params}
-                  to={{ hash: '#author' }}
-                >
-                  {authorDisplayName}
-                </NamedLink>
-              }
-              title={<FormattedMessage id="ListingPage.orderTitle" values={{ title: richTitle }} />}
-              titleDesktop={
-                <H4 as="h1" className={css.orderPanelTitle}>
+              <OrderPanel
+                className={classNames(css.productOrderPanel, {
+                  [css.imagesEnabled]: showListingImage,
+                })}
+                listing={currentListing}
+                isOwnListing={isOwnListing}
+                onSubmit={handleOrderSubmit}
+                authorLink={
+                  <NamedLink
+                    className={css.authorNameLink}
+                    name={isVariant ? 'ListingPageVariant' : 'ListingPage'}
+                    params={params}
+                    to={{ hash: '#author' }}
+                  >
+                    {authorDisplayName}
+                  </NamedLink>
+                }
+                title={
                   <FormattedMessage id="ListingPage.orderTitle" values={{ title: richTitle }} />
-                </H4>
-              }
-              payoutDetailsWarning={payoutDetailsWarning}
-              author={ensuredAuthor}
-              onManageDisableScrolling={onManageDisableScrolling}
-              onContactUser={onContactUser}
-              {...restOfProps}
-              validListingTypes={config.listing.listingTypes}
-              marketplaceCurrency={config.currency}
-              dayCountAvailableForBooking={config.stripe.dayCountAvailableForBooking}
-              marketplaceName={config.marketplaceName}
-              showListingImage={showListingImage}
-            />
-            {/* XOLOLO: Cart.2b — botón "Agregar al carrito" bajo el
+                }
+                titleDesktop={
+                  <H4 as="h1" className={css.orderPanelTitle}>
+                    <FormattedMessage id="ListingPage.orderTitle" values={{ title: richTitle }} />
+                  </H4>
+                }
+                payoutDetailsWarning={payoutDetailsWarning}
+                author={ensuredAuthor}
+                onManageDisableScrolling={onManageDisableScrolling}
+                onContactUser={onContactUser}
+                {...restOfProps}
+                validListingTypes={config.listing.listingTypes}
+                marketplaceCurrency={config.currency}
+                dayCountAvailableForBooking={config.stripe.dayCountAvailableForBooking}
+                marketplaceName={config.marketplaceName}
+                showListingImage={showListingImage}
+              />
+              {/* XOLOLO: Cart.2b — botón "Agregar al carrito" bajo el
                 OrderPanel. Complementa el "Buy now" con la opción de
                 consolidar múltiples productos del mismo seller en un
                 solo envío (Cart.4 hará el checkout multi-item). Sin
                 Cart.4 aún, se acumula en localStorage pero al comprar
                 se cierra con transacción individual — se soluciona en
                 Cart.5. */}
-            {!isOwnListing ? (
-              <AddToCartCta
-                listing={currentListing}
-                author={ensuredAuthor}
-                imageUrl={
-                  currentListing?.images?.[0]?.attributes?.variants?.['listing-card']?.url
-                }
-              />
-            ) : null}
+              {!isOwnListing ? (
+                <AddToCartCta
+                  listing={currentListing}
+                  author={ensuredAuthor}
+                  imageUrl={
+                    currentListing?.images?.[0]?.attributes?.variants?.['listing-card']?.url
+                  }
+                />
+              ) : null}
             </div>
           </div>
         </div>

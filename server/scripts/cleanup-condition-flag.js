@@ -156,7 +156,9 @@ const classify = ({ listing, author }) => {
   console.log(`\n== Se MANTIENEN como usados ==`);
   toKeep.forEach(({ row, result }) => {
     console.log(
-      `  [KEEP] ${row.listing.id.uuid.slice(0, 8)} · "${row.listing.attributes.title}" — ${result.reason}`
+      `  [KEEP] ${row.listing.id.uuid.slice(0, 8)} · "${row.listing.attributes.title}" — ${
+        result.reason
+      }`
     );
   });
 
@@ -164,7 +166,9 @@ const classify = ({ listing, author }) => {
   toClean.forEach(({ row }) => {
     const authorName = row.author?.attributes?.profile?.displayName || '(sin autor)';
     console.log(
-      `  [CLEAN] ${row.listing.id.uuid.slice(0, 8)} · "${row.listing.attributes.title}" · seller: ${authorName}`
+      `  [CLEAN] ${row.listing.id.uuid.slice(0, 8)} · "${
+        row.listing.attributes.title
+      }" · seller: ${authorName}`
     );
   });
 
@@ -186,9 +190,7 @@ const classify = ({ listing, author }) => {
       process.stdout.write('.');
     } catch (e) {
       fail += 1;
-      console.error(
-        `\n  [FAIL] ${row.listing.id.uuid.slice(0, 8)}: ${e?.message || 'unknown'}`
-      );
+      console.error(`\n  [FAIL] ${row.listing.id.uuid.slice(0, 8)}: ${e?.message || 'unknown'}`);
     }
   }
 

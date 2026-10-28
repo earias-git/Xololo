@@ -86,8 +86,16 @@ const AdminTrafficView = () => {
       </header>
 
       <div className={css.kpiGrid}>
-        <Kpi label="Vistas a productos" value={formatNumber(traffic.listingViews.total)} tone="active" />
-        <Kpi label="Vistas a tiendas" value={formatNumber(traffic.storeViews.total)} tone="active" />
+        <Kpi
+          label="Vistas a productos"
+          value={formatNumber(traffic.listingViews.total)}
+          tone="active"
+        />
+        <Kpi
+          label="Vistas a tiendas"
+          value={formatNumber(traffic.storeViews.total)}
+          tone="active"
+        />
         <Kpi label="Productos con tráfico" value={formatNumber(traffic.topListings.length)} />
         <Kpi label="Tiendas con tráfico" value={formatNumber(traffic.topStores.length)} />
       </div>
@@ -95,11 +103,17 @@ const AdminTrafficView = () => {
       <div className={css.trafficGrid}>
         <section className={css.chartSection}>
           <h3 className={css.sectionTitle}>Vistas a productos por fuente</h3>
-          <SourceBreakdown bySource={traffic.listingViews.bySource} total={traffic.listingViews.total} />
+          <SourceBreakdown
+            bySource={traffic.listingViews.bySource}
+            total={traffic.listingViews.total}
+          />
         </section>
         <section className={css.chartSection}>
           <h3 className={css.sectionTitle}>Vistas a tiendas por fuente</h3>
-          <SourceBreakdown bySource={traffic.storeViews.bySource} total={traffic.storeViews.total} />
+          <SourceBreakdown
+            bySource={traffic.storeViews.bySource}
+            total={traffic.storeViews.total}
+          />
         </section>
       </div>
 
@@ -125,7 +139,12 @@ const AdminTrafficView = () => {
                 {traffic.topListings.map(l => (
                   <tr key={l.listingId}>
                     <td>
-                      <a href={`/l/${l.listingId}`} target="_blank" rel="noreferrer" className={css.storeLink}>
+                      <a
+                        href={`/l/${l.listingId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={css.storeLink}
+                      >
                         {l.title || 'Producto'}
                       </a>
                     </td>
@@ -187,10 +206,9 @@ const AdminTrafficView = () => {
       </section>
 
       <p className={css.footNote}>
-        No incluye vistas de la home de xololo.mx (todavía no hay dónde persistir un
-        contador global — se necesita una tabla/KV dedicada, ver DASHBOARDS_V1.md §5.4).
-        Las vistas de productos y de tiendas individuales sí están completas desde
-        que se activó el tracking.
+        No incluye vistas de la home de xololo.mx (todavía no hay dónde persistir un contador global
+        — se necesita una tabla/KV dedicada, ver DASHBOARDS_V1.md §5.4). Las vistas de productos y
+        de tiendas individuales sí están completas desde que se activó el tracking.
       </p>
     </>
   );

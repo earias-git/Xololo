@@ -302,8 +302,8 @@ export const MainContent = props => {
         <p className={css.casualResellerBadge}>
           <span className={css.casualResellerPill}>Vendedor casual</span>
           <span className={css.casualResellerText}>
-            Vende sus artículos usados ocasionalmente. La protección Xololo
-            del pago y antifraude aplica igual.
+            Vende sus artículos usados ocasionalmente. La protección Xololo del pago y antifraude
+            aplica igual.
           </span>
         </p>
       ) : null}

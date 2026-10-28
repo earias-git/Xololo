@@ -69,8 +69,7 @@ const isDuplicateEvent = id => {
 
 const buildSellerContext = user => {
   const profile = user.attributes?.profile || {};
-  const name =
-    profile.displayName || `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
+  const name = profile.displayName || `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
   return { name: name || 'Seller', email: user.attributes?.email };
 };
 
@@ -103,12 +102,18 @@ module.exports = async (req, res) => {
   const stripe = getStripeBilling();
   if (!stripe) return res.status(500).json({ error: 'stripe_billing_missing' });
 
-  const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body || {}));
+  const rawBody = Buffer.isBuffer(req.body)
+    ? req.body
+    : Buffer.from(JSON.stringify(req.body || {}));
 
   let event;
   if (WEBHOOK_SECRET) {
     try {
-      event = stripe.webhooks.constructEvent(rawBody, req.headers['stripe-signature'], WEBHOOK_SECRET);
+      event = stripe.webhooks.constructEvent(
+        rawBody,
+        req.headers['stripe-signature'],
+        WEBHOOK_SECRET
+      );
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('[webhook stripe-billing] firma inválida:', e.message);
@@ -129,7 +134,9 @@ module.exports = async (req, res) => {
   }
 
   if (isDuplicateEvent(event.id)) {
-    return res.status(200).json({ ok: true, processed: false, reason: 'duplicate_event', type: event.type });
+    return res
+      .status(200)
+      .json({ ok: true, processed: false, reason: 'duplicate_event', type: event.type });
   }
 
   const isdk = getIntegrationSdk();
@@ -140,7 +147,9 @@ module.exports = async (req, res) => {
       const session = event.data.object;
       const sellerId = session.metadata?.xololoSellerId;
       if (session.mode !== 'subscription' || !sellerId || !session.subscription) {
-        return res.status(200).json({ ok: true, processed: false, reason: 'not_applicable', type: event.type });
+        return res
+          .status(200)
+          .json({ ok: true, processed: false, reason: 'not_applicable', type: event.type });
       }
       const subscription = await stripe.subscriptions.retrieve(session.subscription);
       const onboardingIncluded = session.metadata?.xololoOnboardingIncluded === 'true';
@@ -155,15 +164,20 @@ module.exports = async (req, res) => {
     } else if (event.type === 'invoice.payment_failed') {
       const invoice = event.data.object;
       if (!invoice.subscription) {
-        return res.status(200).json({ ok: true, processed: false, reason: 'not_applicable', type: event.type });
+        return res
+          .status(200)
+          .json({ ok: true, processed: false, reason: 'not_applicable', type: event.type });
       }
       const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
       const sellerId = getSellerIdFromSubscription(subscription);
       if (!sellerId) {
-        return res.status(200).json({ ok: true, processed: false, reason: 'no_seller_metadata', type: event.type });
+        return res
+          .status(200)
+          .json({ ok: true, processed: false, reason: 'no_seller_metadata', type: event.type });
       }
       const existingResp = await isdk.users.show({ id: sellerId });
-      const existing = existingResp.data.data.attributes?.profile?.metadata?.xololoSubscription || {};
+      const existing =
+        existingResp.data.data.attributes?.profile?.metadata?.xololoSubscription || {};
       const warningsSent = [...(existing.warningsSent || []), new Date().toISOString()];
       const updated = await syncSubscriptionMetadata({
         isdk,
@@ -177,14 +191,18 @@ module.exports = async (req, res) => {
       const subscription = event.data.object;
       const sellerId = getSellerIdFromSubscription(subscription);
       if (!sellerId) {
-        return res.status(200).json({ ok: true, processed: false, reason: 'no_seller_metadata', type: event.type });
+        return res
+          .status(200)
+          .json({ ok: true, processed: false, reason: 'no_seller_metadata', type: event.type });
       }
       await syncSubscriptionMetadata({ isdk, sellerId, subscription });
     } else if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object;
       const sellerId = getSellerIdFromSubscription(subscription);
       if (!sellerId) {
-        return res.status(200).json({ ok: true, processed: false, reason: 'no_seller_metadata', type: event.type });
+        return res
+          .status(200)
+          .json({ ok: true, processed: false, reason: 'no_seller_metadata', type: event.type });
       }
       const updated = await syncSubscriptionMetadata({ isdk, sellerId, subscription });
       await notifySeller(isdk, sellerId, 'seller.subscription_canceled', updated);
@@ -303,7 +321,9 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: 'internal' });
       }
     } else {
-      return res.status(200).json({ ok: true, processed: false, reason: 'ignored_event_type', type: event.type });
+      return res
+        .status(200)
+        .json({ ok: true, processed: false, reason: 'ignored_event_type', type: event.type });
     }
   } catch (e) {
     // eslint-disable-next-line no-console

@@ -78,8 +78,8 @@ const AdminUsersView = () => {
           <span className={css.blockCountBadge}>{buyers.candidates.length}</span>
         </h3>
         <p className={css.sectionSubtitle}>
-          Compradores con ≥3 compras que todavía no publican ningún producto —
-          buenos prospectos para invitar a vender en Xololo.
+          Compradores con ≥3 compras que todavía no publican ningún producto — buenos prospectos
+          para invitar a vender en Xololo.
         </p>
         {buyers.candidates.length === 0 ? (
           <div className={css.emptyBox}>
@@ -116,8 +116,8 @@ const AdminUsersView = () => {
 
       <p className={css.footNote}>
         Xololo no tiene roles duros buyer/seller — cualquier usuario puede vender.
-        &quot;Activo&quot; = compró (tx no cancelada) en los últimos 60 días.
-        &quot;Dormido&quot; = compró antes, no en esa ventana.
+        &quot;Activo&quot; = compró (tx no cancelada) en los últimos 60 días. &quot;Dormido&quot; =
+        compró antes, no en esa ventana.
       </p>
     </>
   );

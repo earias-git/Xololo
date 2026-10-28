@@ -118,14 +118,18 @@ module.exports = async (req, res) => {
       sellerName =
         pd.storeName ||
         profile?.displayName ||
-        [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim() ||
+        [profile?.firstName, profile?.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim() ||
         null;
 
       // Datos extendidos para el StorePoster.
       const slug = pd.slug || null;
-      const rootUrl = (
-        process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx'
-      ).replace(/\/$/, '');
+      const rootUrl = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx').replace(
+        /\/$/,
+        ''
+      );
       const isDevRoot = /localhost|127\.0\.0\.1/.test(rootUrl);
       const storeUrl = slug
         ? isDevRoot
@@ -157,13 +161,7 @@ module.exports = async (req, res) => {
     try {
       response = await sdk.ownListings.query({
         include: ['images'],
-        'fields.listing': [
-          'title',
-          'state',
-          'price',
-          'publicData.listingType',
-          'metadata',
-        ],
+        'fields.listing': ['title', 'state', 'price', 'publicData.listingType', 'metadata'],
         'fields.image': ['variants.listing-card', 'variants.scaled-small'],
         perPage: 100,
       });
@@ -185,12 +183,13 @@ module.exports = async (req, res) => {
         (viewedTotals && (viewedTotals.count || viewedTotals.total)) ||
         (typeof viewedTotals === 'number' ? viewedTotals : 0);
       // Slug basado en título — Sharetribe suele usar el mismo patrón.
-      const slug = String(l.attributes?.title || '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '') || 'listing';
+      const slug =
+        String(l.attributes?.title || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[̀-ͯ]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '') || 'listing';
       return {
         id: l.id?.uuid,
         title: l.attributes?.title || 'Sin título',

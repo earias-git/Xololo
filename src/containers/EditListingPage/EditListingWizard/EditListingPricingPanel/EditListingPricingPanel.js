@@ -318,15 +318,14 @@ const EditListingPricingPanel = props => {
             // sección "Segunda mano destacada" del landing.
             // XOLOLO: para casual, siempre 'used' (único modo permitido),
             // sin depender de que values.condition esté hidratado en el form.
-            const isCasualSubmit =
-              getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
+            const isCasualSubmit = getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
             const conditionValue = isBooking
               ? null
               : isCasualSubmit
-                ? 'used'
-                : values?.condition === 'used'
-                  ? 'used'
-                  : 'new';
+              ? 'used'
+              : values?.condition === 'used'
+              ? 'used'
+              : 'new';
             const usedConditionValue =
               !isBooking && conditionValue === 'used' && values?.usedCondition
                 ? values.usedCondition

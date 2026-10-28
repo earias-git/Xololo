@@ -29,7 +29,9 @@ const AccountProgressClock = ({ currentUser, className, rootClassName }) => {
         <h3 className={css.title}>
           {allDone ? '¡Tu cuenta está lista! 🎉' : 'Completa tu cuenta'}
         </h3>
-        <span className={css.pct}>{doneCount}/{total}</span>
+        <span className={css.pct}>
+          {doneCount}/{total}
+        </span>
       </div>
       <div className={css.barTrack}>
         <div className={css.barFill} style={{ width: `${pct}%` }} />
@@ -47,10 +49,7 @@ const AccountProgressClock = ({ currentUser, className, rootClassName }) => {
                     primer payout; el seller debe entender por qué le
                     conviene completarlo cuanto antes. */}
                 {!r.done && r.key === 'legalDocs' ? (
-                  <span className={css.hint}>
-                    {' '}
-                    — necesario para cobrar tu primer payout
-                  </span>
+                  <span className={css.hint}> — necesario para cobrar tu primer payout</span>
                 ) : null}
               </span>
               {!r.done ? (

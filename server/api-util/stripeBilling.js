@@ -141,7 +141,9 @@ const syncSubscriptionMetadata = async ({ isdk, sellerId, subscription, plan, ex
       });
       // eslint-disable-next-line no-console
       console.log(
-        `[stripeBilling] gate aplicado para ${sellerId} (${existing.status || 'none'} → ${updated.status}):`,
+        `[stripeBilling] gate aplicado para ${sellerId} (${existing.status || 'none'} → ${
+          updated.status
+        }):`,
         gateResult
       );
     } catch (e) {

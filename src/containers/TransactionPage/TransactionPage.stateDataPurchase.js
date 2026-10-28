@@ -122,13 +122,7 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
   const isProviderBanned = transaction?.provider?.attributes?.banned;
   const _ = CONDITIONAL_RESOLVER_WILDCARD;
 
-  const {
-    processName,
-    processState,
-    states,
-    transitions,
-    leaveReviewProps,
-  } = processInfo;
+  const { processName, processState, states, transitions, leaveReviewProps } = processInfo;
 
   return new ConditionalResolver([processState, transactionRole])
     .cond([states.INQUIRY, CUSTOMER], () => {

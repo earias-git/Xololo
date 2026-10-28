@@ -404,9 +404,7 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
       const primarySellerId = pageData?.listing?.author?.id?.uuid;
       const paidListingIds = [
         pageData?.listing?.id?.uuid,
-        ...(pageData?.orderData?.additionalCartItems || [])
-          .map(x => x?.listingId)
-          .filter(Boolean),
+        ...(pageData?.orderData?.additionalCartItems || []).map(x => x?.listingId).filter(Boolean),
       ].filter(Boolean);
       if (primarySellerId) {
         try {
@@ -637,7 +635,8 @@ export const CheckoutPageWithPayment = props => {
   const xoloMethodsForCheckout = pageData?.listing
     ? getShippingMethodsFromListing(pageData.listing)
     : null;
-  const xoloCurrencyForFormatter = pageData?.listing?.attributes?.price?.currency || config.currency;
+  const xoloCurrencyForFormatter =
+    pageData?.listing?.attributes?.price?.currency || config.currency;
   const xoloCurrencyFormatter = subunits => {
     const n = Number(subunits) || 0;
     if (n === 0) return 'Gratis';
@@ -732,9 +731,10 @@ export const CheckoutPageWithPayment = props => {
     buildAddressString(sellerPd.commercialAddress) ||
     buildAddressString(sellerPd.legalAddress) ||
     null;
-  const listingLocation = showPickUpLocation && sellerPickupAddressStr
-    ? { address: sellerPickupAddressStr }
-    : listing?.attributes?.publicData?.location;
+  const listingLocation =
+    showPickUpLocation && sellerPickupAddressStr
+      ? { address: sellerPickupAddressStr }
+      : listing?.attributes?.publicData?.location;
   const showLocation = (isBooking || isNegotiation) && listingLocation?.address;
 
   const providerDisplayName = isNegotiation
@@ -775,202 +775,207 @@ export const CheckoutPageWithPayment = props => {
   // checkout adopta sus colores + logo grande arriba + footer con
   // mensajes de compra protegida. TopbarSimplified corporativo de
   // Xololo solo aparece cuando el seller no tiene branding.
-  const sellerHasBranding =
-    !!listing?.author?.attributes?.profile?.publicData?.brandPrimaryColor;
+  const sellerHasBranding = !!listing?.author?.attributes?.profile?.publicData?.brandPrimaryColor;
 
   return (
     <Page title={title} scrollingDisabled={scrollingDisabled}>
       <SellerBrandFrame seller={listing?.author}>
-      {sellerHasBranding ? null : <TopbarSimplified />}
-      <div className={css.contentContainer}>
-        <MobileListingImage
-          listingTitle={listingTitle}
-          author={listing?.author}
-          firstImage={firstImage}
-          layoutListingImageConfig={config.layout.listingImage}
-          showListingImage={showListingImage}
-          additionalItems={additionalItemsForSidebar}
-        />
-        <main className={css.orderFormContainer}>
-          <div className={css.headingContainer}>
-            <H3 as="h1" className={css.heading}>
-              {title}
-            </H3>
-            <H4 as="h2" className={css.detailsHeadingMobile}>
-              <FormattedMessage id="CheckoutPage.listingTitle" values={{ listingTitle }} />
-            </H4>
-          </div>
-          <MobileOrderBreakdown
-            speculateTransactionErrorMessage={errorMessages.speculateTransactionErrorMessage}
-            breakdown={breakdown}
-            priceVariantName={priceVariantName}
+        {sellerHasBranding ? null : <TopbarSimplified />}
+        <div className={css.contentContainer}>
+          <MobileListingImage
+            listingTitle={listingTitle}
+            author={listing?.author}
+            firstImage={firstImage}
+            layoutListingImageConfig={config.layout.listingImage}
+            showListingImage={showListingImage}
+            additionalItems={additionalItemsForSidebar}
           />
-          <section className={css.paymentContainer}>
-            {errorMessages.initiateOrderErrorMessage}
-            {errorMessages.listingNotFoundErrorMessage}
-            {errorMessages.speculateErrorMessage}
-            {errorMessages.retrievePaymentIntentErrorMessage}
-            {errorMessages.paymentExpiredMessage}
+          <main className={css.orderFormContainer}>
+            <div className={css.headingContainer}>
+              <H3 as="h1" className={css.heading}>
+                {title}
+              </H3>
+              <H4 as="h2" className={css.detailsHeadingMobile}>
+                <FormattedMessage id="CheckoutPage.listingTitle" values={{ listingTitle }} />
+              </H4>
+            </div>
+            <MobileOrderBreakdown
+              speculateTransactionErrorMessage={errorMessages.speculateTransactionErrorMessage}
+              breakdown={breakdown}
+              priceVariantName={priceVariantName}
+            />
+            <section className={css.paymentContainer}>
+              {errorMessages.initiateOrderErrorMessage}
+              {errorMessages.listingNotFoundErrorMessage}
+              {errorMessages.speculateErrorMessage}
+              {errorMessages.retrievePaymentIntentErrorMessage}
+              {errorMessages.paymentExpiredMessage}
 
-            {showPaymentForm ? (
-              <StripePaymentForm
-                className={css.paymentForm}
-                onSubmit={values => {
-                  // XOLOLO Envíos v2: gate de cobertura. Si el buyer
-                  // eligió localDelivery pero su dirección no está
-                  // cubierta, el StripePaymentForm ya mostró el banner
-                  // rojo — el submit debe fallar aquí (no llegar al
-                  // handleSubmit que dispara el pago).
-                  if (!localDeliveryCovered) return;
-                  // XOLOLO Envíos v2: el método seleccionado vive en
-                  // React state (no en el FinalForm). handleSubmit lee
-                  // el método desde values.formValues.selectedShippingMethod,
-                  // así que lo inyectamos DENTRO de formValues (nested)
-                  // — no en top-level de values.
-                  handleSubmit(
-                    {
-                      ...values,
-                      formValues: {
-                        ...(values.formValues || {}),
-                        selectedShippingMethod:
-                          xoloSelectedMethod || xoloDefaultMethod || undefined,
+              {showPaymentForm ? (
+                <StripePaymentForm
+                  className={css.paymentForm}
+                  onSubmit={values => {
+                    // XOLOLO Envíos v2: gate de cobertura. Si el buyer
+                    // eligió localDelivery pero su dirección no está
+                    // cubierta, el StripePaymentForm ya mostró el banner
+                    // rojo — el submit debe fallar aquí (no llegar al
+                    // handleSubmit que dispara el pago).
+                    if (!localDeliveryCovered) return;
+                    // XOLOLO Envíos v2: el método seleccionado vive en
+                    // React state (no en el FinalForm). handleSubmit lee
+                    // el método desde values.formValues.selectedShippingMethod,
+                    // así que lo inyectamos DENTRO de formValues (nested)
+                    // — no en top-level de values.
+                    handleSubmit(
+                      {
+                        ...values,
+                        formValues: {
+                          ...(values.formValues || {}),
+                          selectedShippingMethod:
+                            xoloSelectedMethod || xoloDefaultMethod || undefined,
+                        },
                       },
-                    },
-                    process,
-                    props,
-                    stripe,
-                    submitting,
-                    setSubmitting
-                  );
-                }}
-                inProgress={submitting}
-                formId="CheckoutPagePaymentForm"
-                providerDisplayName={providerDisplayName}
-                showInitialMessageInput={showInitialMessageInput}
-                initialValues={initialValuesForStripePayment}
-                initiateOrderError={initiateOrderError}
-                confirmCardPaymentError={confirmCardPaymentError}
-                confirmPaymentError={confirmPaymentError}
-                hasHandledCardPayment={hasPaymentIntentUserActionsDone}
-                loadingData={!stripeCustomerFetched}
-                defaultPaymentMethod={
-                  hasDefaultPaymentMethod(stripeCustomerFetched, currentUser)
-                    ? currentUser.stripeCustomer.defaultPaymentMethod
-                    : null
-                }
-                paymentIntent={paymentIntent}
-                onStripeInitialized={stripe => {
-                  setStripe(stripe);
-                  return onStripeInitialized(stripe, process, props);
-                }}
-                askShippingDetails={askShippingDetails}
-                showPickUpLocation={showPickUpLocation}
-                showLocation={showLocation}
-                listingLocation={listingLocation}
-                totalPrice={totalPrice}
-                locale={config.localization.locale}
-                stripePublishableKey={config.stripe.publishableKey}
-                marketplaceName={config.marketplaceName}
-                isBooking={isBookingProcessAlias(transactionProcessAlias)}
-                listingId={pageData?.listing?.id?.uuid}
-                listingShippingPricingMode={
-                  pageData?.listing?.attributes?.publicData?.shippingPricingMode
-                }
-                listingSellerCoversShipping={
-                  !!pageData?.listing?.attributes?.publicData?.sellerCoversShipping
-                }
-                primaryQuantity={pageData?.orderData?.quantity}
-                additionalCartItems={pageData?.orderData?.additionalCartItems}
-                xololoShippingMethods={xoloMethodsForCheckout}
-                xololoDefaultShippingMethod={xoloDefaultMethod}
-                xololoSelectedShippingMethod={xoloSelectedMethod}
-                xololoCurrencyFormatter={xoloCurrencyFormatter}
-                onLocalDeliveryCoverageChange={setLocalDeliveryCovered}
-                onShippingRateSelected={rate => {
-                  // XOLOLO Envíos v2: al elegir una paquetería, re-speculate
-                  // con el rate para que el shipping-fee aparezca en el
-                  // breakdown + total. Sin esto el buyer veía sólo el precio
-                  // de los productos aunque hubiera elegido FedEx/Estafeta.
-                  const currentMethod = xoloSelectedMethod || xoloDefaultMethod || undefined;
-                  const shippingDetails = {};
-                  const optionalPaymentParams = {};
-                  const nextOrderParams = getOrderParams(
-                    {
-                      ...pageData,
-                      orderData: {
-                        ...(pageData?.orderData || {}),
-                        selectedShippingMethod: currentMethod,
-                        selectedShippingRate: rate,
+                      process,
+                      props,
+                      stripe,
+                      submitting,
+                      setSubmitting
+                    );
+                  }}
+                  inProgress={submitting}
+                  formId="CheckoutPagePaymentForm"
+                  providerDisplayName={providerDisplayName}
+                  showInitialMessageInput={showInitialMessageInput}
+                  initialValues={initialValuesForStripePayment}
+                  initiateOrderError={initiateOrderError}
+                  confirmCardPaymentError={confirmCardPaymentError}
+                  confirmPaymentError={confirmPaymentError}
+                  hasHandledCardPayment={hasPaymentIntentUserActionsDone}
+                  loadingData={!stripeCustomerFetched}
+                  defaultPaymentMethod={
+                    hasDefaultPaymentMethod(stripeCustomerFetched, currentUser)
+                      ? currentUser.stripeCustomer.defaultPaymentMethod
+                      : null
+                  }
+                  paymentIntent={paymentIntent}
+                  onStripeInitialized={stripe => {
+                    setStripe(stripe);
+                    return onStripeInitialized(stripe, process, props);
+                  }}
+                  askShippingDetails={askShippingDetails}
+                  showPickUpLocation={showPickUpLocation}
+                  showLocation={showLocation}
+                  listingLocation={listingLocation}
+                  totalPrice={totalPrice}
+                  locale={config.localization.locale}
+                  stripePublishableKey={config.stripe.publishableKey}
+                  marketplaceName={config.marketplaceName}
+                  isBooking={isBookingProcessAlias(transactionProcessAlias)}
+                  listingId={pageData?.listing?.id?.uuid}
+                  listingShippingPricingMode={
+                    pageData?.listing?.attributes?.publicData?.shippingPricingMode
+                  }
+                  listingSellerCoversShipping={
+                    !!pageData?.listing?.attributes?.publicData?.sellerCoversShipping
+                  }
+                  primaryQuantity={pageData?.orderData?.quantity}
+                  additionalCartItems={pageData?.orderData?.additionalCartItems}
+                  xololoShippingMethods={xoloMethodsForCheckout}
+                  xololoDefaultShippingMethod={xoloDefaultMethod}
+                  xololoSelectedShippingMethod={xoloSelectedMethod}
+                  xololoCurrencyFormatter={xoloCurrencyFormatter}
+                  onLocalDeliveryCoverageChange={setLocalDeliveryCovered}
+                  onShippingRateSelected={rate => {
+                    // XOLOLO Envíos v2: al elegir una paquetería, re-speculate
+                    // con el rate para que el shipping-fee aparezca en el
+                    // breakdown + total. Sin esto el buyer veía sólo el precio
+                    // de los productos aunque hubiera elegido FedEx/Estafeta.
+                    const currentMethod = xoloSelectedMethod || xoloDefaultMethod || undefined;
+                    const shippingDetails = {};
+                    const optionalPaymentParams = {};
+                    const nextOrderParams = getOrderParams(
+                      {
+                        ...pageData,
+                        orderData: {
+                          ...(pageData?.orderData || {}),
+                          selectedShippingMethod: currentMethod,
+                          selectedShippingRate: rate,
+                        },
                       },
-                    },
-                    shippingDetails,
-                    optionalPaymentParams,
-                    config,
-                    {},
-                    null,
-                    rate,
-                    undefined,
-                    currentMethod
-                  );
-                  fetchSpeculatedTransactionIfNeeded(
-                    nextOrderParams,
-                    pageData,
-                    fetchSpeculatedTransaction
-                  );
-                }}
-                onXololoShippingMethodSelected={methodKey => {
-                  // XOLOLO Envíos v2:
-                  // 1) Guarda selección en React state (fuente de verdad).
-                  //    NO usamos formApi.change para evitar que el
-                  //    reinicializado del FinalForm nos pise el valor.
-                  // 2) Re-speculate la tx para que el breakdown refleje
-                  //    el nuevo costo (pickup=$0, localDelivery=$XX,
-                  //    freight=$0). Sin esto el buyer ve el default del
-                  //    server pero al cambiar seguía viendo el anterior.
-                  setXoloSelectedMethod(methodKey);
-                  const shippingDetails = {};
-                  const optionalPaymentParams = {};
-                  const nextOrderParams = getOrderParams(
-                    { ...pageData, orderData: { ...(pageData?.orderData || {}), selectedShippingMethod: methodKey } },
-                    shippingDetails,
-                    optionalPaymentParams,
-                    config,
-                    {},
-                    null,
-                    undefined,
-                    undefined,
-                    methodKey
-                  );
-                  fetchSpeculatedTransactionIfNeeded(
-                    nextOrderParams,
-                    pageData,
-                    fetchSpeculatedTransaction
-                  );
-                }}
-                isFuzzyLocation={config.maps.fuzzy.enabled}
-                transactionFieldConfigs={transactionFieldConfigs}
-                showTransactionFields={showTransactionFields}
-              />
-            ) : null}
-          </section>
-        </main>
+                      shippingDetails,
+                      optionalPaymentParams,
+                      config,
+                      {},
+                      null,
+                      rate,
+                      undefined,
+                      currentMethod
+                    );
+                    fetchSpeculatedTransactionIfNeeded(
+                      nextOrderParams,
+                      pageData,
+                      fetchSpeculatedTransaction
+                    );
+                  }}
+                  onXololoShippingMethodSelected={methodKey => {
+                    // XOLOLO Envíos v2:
+                    // 1) Guarda selección en React state (fuente de verdad).
+                    //    NO usamos formApi.change para evitar que el
+                    //    reinicializado del FinalForm nos pise el valor.
+                    // 2) Re-speculate la tx para que el breakdown refleje
+                    //    el nuevo costo (pickup=$0, localDelivery=$XX,
+                    //    freight=$0). Sin esto el buyer ve el default del
+                    //    server pero al cambiar seguía viendo el anterior.
+                    setXoloSelectedMethod(methodKey);
+                    const shippingDetails = {};
+                    const optionalPaymentParams = {};
+                    const nextOrderParams = getOrderParams(
+                      {
+                        ...pageData,
+                        orderData: {
+                          ...(pageData?.orderData || {}),
+                          selectedShippingMethod: methodKey,
+                        },
+                      },
+                      shippingDetails,
+                      optionalPaymentParams,
+                      config,
+                      {},
+                      null,
+                      undefined,
+                      undefined,
+                      methodKey
+                    );
+                    fetchSpeculatedTransactionIfNeeded(
+                      nextOrderParams,
+                      pageData,
+                      fetchSpeculatedTransaction
+                    );
+                  }}
+                  isFuzzyLocation={config.maps.fuzzy.enabled}
+                  transactionFieldConfigs={transactionFieldConfigs}
+                  showTransactionFields={showTransactionFields}
+                />
+              ) : null}
+            </section>
+          </main>
 
-        <DetailsSideCard
-          listing={listing}
-          listingTitle={listingTitle}
-          priceVariantName={priceVariantName}
-          author={listing?.author}
-          firstImage={firstImage}
-          layoutListingImageConfig={config.layout.listingImage}
-          speculateTransactionErrorMessage={errorMessages.speculateTransactionErrorMessage}
-          isInquiryProcess={false}
-          processName={processName}
-          breakdown={breakdown}
-          additionalItems={additionalItemsForSidebar}
-          showListingImage={showListingImage}
-          intl={intl}
-        />
-      </div>
+          <DetailsSideCard
+            listing={listing}
+            listingTitle={listingTitle}
+            priceVariantName={priceVariantName}
+            author={listing?.author}
+            firstImage={firstImage}
+            layoutListingImageConfig={config.layout.listingImage}
+            speculateTransactionErrorMessage={errorMessages.speculateTransactionErrorMessage}
+            isInquiryProcess={false}
+            processName={processName}
+            breakdown={breakdown}
+            additionalItems={additionalItemsForSidebar}
+            showListingImage={showListingImage}
+            intl={intl}
+          />
+        </div>
       </SellerBrandFrame>
     </Page>
   );

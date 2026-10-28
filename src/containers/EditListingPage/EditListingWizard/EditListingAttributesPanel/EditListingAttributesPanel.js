@@ -3,9 +3,7 @@ import classNames from 'classnames';
 
 import { FormattedMessage } from '../../../../util/reactIntl';
 import { LISTING_STATE_DRAFT } from '../../../../util/types';
-import {
-  getAttributesForListing,
-} from '../../../../config/listingAttributes';
+import { getAttributesForListing } from '../../../../config/listingAttributes';
 
 import { H3, ListingLink } from '../../../../components';
 
@@ -93,10 +91,7 @@ const buildPersistedAttributes = (values, categoryId, subcategoryId, isEvent) =>
     }
     const v = values[prefix];
     const isEmpty =
-      v === undefined ||
-      v === null ||
-      v === '' ||
-      (Array.isArray(v) && v.length === 0);
+      v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
     if (isEmpty) continue;
     let normalized;
     if (def.type === 'number') normalized = Number(v);
@@ -152,8 +147,8 @@ const EditListingAttributesPanel = props => {
           />
         </H3>
         <p className={css.noCategoryNotice}>
-          Para que podamos pedirte los atributos correctos, regresa al paso de
-          Detalles y elige una categoría. Luego vuelve aquí.
+          Para que podamos pedirte los atributos correctos, regresa al paso de Detalles y elige una
+          categoría. Luego vuelve aquí.
         </p>
       </main>
     );
@@ -201,7 +196,9 @@ const EditListingAttributesPanel = props => {
             },
           };
           // Preserva initialValues ante re-renders durante el submit XHR.
-          setState({ initialValues: buildInitialValues({ ...publicData, ...updateValues.publicData }) });
+          setState({
+            initialValues: buildInitialValues({ ...publicData, ...updateValues.publicData }),
+          });
           onSubmit(updateValues);
         }}
         saveActionMsg={submitButtonText}

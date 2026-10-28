@@ -3,10 +3,7 @@ import classNames from 'classnames';
 
 import { FormattedMessage } from '../../../../util/reactIntl';
 import { LISTING_STATE_DRAFT } from '../../../../util/types';
-import {
-  getAttributesForListing,
-  CATEGORY_TREE,
-} from '../../../../config/listingAttributes';
+import { getAttributesForListing, CATEGORY_TREE } from '../../../../config/listingAttributes';
 import { apiBaseUrl } from '../../../../util/api';
 
 import { H3, ListingLink } from '../../../../components';
@@ -87,7 +84,12 @@ const runImageAnalysis = async listingId => {
 
 // XOLOLO: llama al endpoint de sugerencias y devuelve
 // {titleSuggestions, descriptionSuggestions, seo} o null si falla.
-const fetchAiSuggestions = async ({ listingId, currentTitle, currentDescription, attributesSchema }) => {
+const fetchAiSuggestions = async ({
+  listingId,
+  currentTitle,
+  currentDescription,
+  attributesSchema,
+}) => {
   try {
     const res = await fetch(`${apiBaseUrl()}/api/ai/suggest-listing-text`, {
       method: 'POST',
@@ -154,8 +156,7 @@ const EditListingTextPanel = props => {
   // El pipeline de visión corre al subir fotos pero no siempre está hidratado
   // en este estado; para asegurar que la IA de texto tenga tags, lo
   // disparamos on-demand sincrono si falta.
-  const hasVisualAnalysis =
-    !!listing?.attributes?.publicData?.aiAnalysis?.aggregated?.tags;
+  const hasVisualAnalysis = !!listing?.attributes?.publicData?.aiAnalysis?.aggregated?.tags;
 
   const runAi = useCallback(async () => {
     if (!listing?.id?.uuid) return;
@@ -177,7 +178,13 @@ const EditListingTextPanel = props => {
     } else {
       setAi({ loading: false, settled: true, suggestions: null, error: result.error });
     }
-  }, [listing?.id?.uuid, state.initialValues.title, state.initialValues.description, attributesSchema, hasVisualAnalysis]);
+  }, [
+    listing?.id?.uuid,
+    state.initialValues.title,
+    state.initialValues.description,
+    attributesSchema,
+    hasVisualAnalysis,
+  ]);
 
   // XOLOLO: auto-trigger al mount SI (a) hay listing, (b) la descripción
   // está vacía o es muy corta (<30 chars = probablemente placeholder de
@@ -211,10 +218,9 @@ const EditListingTextPanel = props => {
         )}
       </H3>
       <p className={css.lead}>
-        Es el último paso antes de publicar. Ya cargaste fotos, características,
-        precio y entrega — la IA puede sugerirte un título y una descripción
-        atractivos basados en todo eso (próxima actualización). Mientras tanto
-        edita a mano abajo.
+        Es el último paso antes de publicar. Ya cargaste fotos, características, precio y entrega —
+        la IA puede sugerirte un título y una descripción atractivos basados en todo eso (próxima
+        actualización). Mientras tanto edita a mano abajo.
       </p>
 
       <EditListingTextForm

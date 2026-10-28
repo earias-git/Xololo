@@ -1,10 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { apiBaseUrl } from '../../util/api';
-import {
-  CLASSIFICATION_GROUPS,
-  getClassificationByCode,
-} from '../../util/xololoTaxClassification';
+import { CLASSIFICATION_GROUPS, getClassificationByCode } from '../../util/xololoTaxClassification';
 
 import css from './OpsConsolePage.module.css';
 
@@ -146,9 +143,7 @@ const TaxReviewsView = ({ onBack }) => {
   };
 
   const items = state.items || [];
-  const pendingCount = items.filter(
-    i => i.taxClassification?.reviewStatus === 'pending'
-  ).length;
+  const pendingCount = items.filter(i => i.taxClassification?.reviewStatus === 'pending').length;
 
   return (
     <div className={css.dashboard}>
@@ -159,9 +154,11 @@ const TaxReviewsView = ({ onBack }) => {
           </button>
           <h1 className={css.dashTitle}>Revisión fiscal de listings</h1>
           <p className={css.greeting}>
-            Clasificaciones especiales (exento, tasa 0%, actividad distinta)
-            declaradas por sellers. {pendingCount > 0 ? (
-              <strong>{pendingCount} pendiente{pendingCount === 1 ? '' : 's'}</strong>
+            Clasificaciones especiales (exento, tasa 0%, actividad distinta) declaradas por sellers.{' '}
+            {pendingCount > 0 ? (
+              <strong>
+                {pendingCount} pendiente{pendingCount === 1 ? '' : 's'}
+              </strong>
             ) : (
               'Sin pendientes.'
             )}
@@ -267,9 +264,9 @@ const TaxReviewsView = ({ onBack }) => {
                   {item.aiReview ? (
                     <>
                       <div
-                        className={`${css.aiVerdictPill} ${
-                          css[AI_VERDICT_META[item.aiReview.verdict]?.cls] || ''
-                        }`}
+                        className={`${css.aiVerdictPill} ${css[
+                          AI_VERDICT_META[item.aiReview.verdict]?.cls
+                        ] || ''}`}
                       >
                         {AI_VERDICT_META[item.aiReview.verdict]?.label || item.aiReview.verdict}
                         <span className={css.aiConfidence}>
@@ -279,7 +276,8 @@ const TaxReviewsView = ({ onBack }) => {
                       {item.aiReview.reasoning ? (
                         <p className={css.aiReasoning}>{item.aiReview.reasoning}</p>
                       ) : null}
-                      {Array.isArray(item.aiReview.redFlags) && item.aiReview.redFlags.length > 0 ? (
+                      {Array.isArray(item.aiReview.redFlags) &&
+                      item.aiReview.redFlags.length > 0 ? (
                         <ul className={css.aiRedFlags}>
                           {item.aiReview.redFlags.map((f, i) => (
                             <li key={i}>{f}</li>
@@ -313,9 +311,7 @@ const TaxReviewsView = ({ onBack }) => {
                     className={css.input}
                     placeholder="Nota opcional (razón del rechazo, pedido de evidencia…)"
                     value={note[item.listingId] || ''}
-                    onChange={e =>
-                      setNote(prev => ({ ...prev, [item.listingId]: e.target.value }))
-                    }
+                    onChange={e => setNote(prev => ({ ...prev, [item.listingId]: e.target.value }))}
                     disabled={busy}
                   />
                   <div className={css.taxReviewBtns}>

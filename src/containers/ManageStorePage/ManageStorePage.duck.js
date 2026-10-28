@@ -9,10 +9,7 @@ import { setCurrentUser } from '../../ducks/user.duck';
 // publicData vía sdk.currentUser.updateProfile — el user actualiza sus
 // propios campos (no necesita Integration API para esto).
 
-const saveStorePayloadCreator = (
-  publicData,
-  { dispatch, extra: sdk, rejectWithValue }
-) => {
+const saveStorePayloadCreator = (publicData, { dispatch, extra: sdk, rejectWithValue }) => {
   return sdk.currentUser
     .updateProfile(
       { publicData },
@@ -40,8 +37,7 @@ export const saveStoreThunk = createAsyncThunk(
   saveStorePayloadCreator
 );
 
-export const saveStore = publicData => dispatch =>
-  dispatch(saveStoreThunk(publicData)).unwrap();
+export const saveStore = publicData => dispatch => dispatch(saveStoreThunk(publicData)).unwrap();
 
 const initialState = {
   saveStoreInProgress: false,

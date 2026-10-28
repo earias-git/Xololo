@@ -44,17 +44,14 @@ const send = async ({ actor, event, template, context }) => {
   };
 
   try {
-    const res = await fetch(
-      `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(body),
-      }
-    );
+    const res = await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
     const data = await res.json().catch(() => null);
     if (!res.ok) {
       return {

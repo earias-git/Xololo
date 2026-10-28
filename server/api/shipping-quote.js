@@ -94,7 +94,9 @@ module.exports = async (req, res) => {
 
     const sdk = getIntegrationSdk();
     if (!sdk) {
-      return res.status(500).json({ error: 'internal', details: 'Integration API sin configurar.' });
+      return res
+        .status(500)
+        .json({ error: 'internal', details: 'Integration API sin configurar.' });
     }
 
     // 1) Cargar listing primario con su author, y los adicionales en paralelo.
@@ -108,9 +110,7 @@ module.exports = async (req, res) => {
         // validación same-seller de la línea 118 falla siempre porque
         // authorId === undefined !== primaryAuthorId (mismo bug que
         // ya arreglamos en initiate-privileged.js).
-        ...additionalCartRaw.map(x =>
-          sdk.listings.show({ id: x.listingId, include: ['author'] })
-        ),
+        ...additionalCartRaw.map(x => sdk.listings.show({ id: x.listingId, include: ['author'] })),
       ];
       const results = await Promise.all(promises);
       listingResp = results[0];
@@ -128,8 +128,7 @@ module.exports = async (req, res) => {
     // (xololoShippingMethods.skydropxCarrier.enabled).
     const isCarrierLegacy =
       listingPd.shippingEnabled && listingPd.shippingPricingMode === 'carrier';
-    const isCarrierV2 =
-      listingPd.xololoShippingMethods?.skydropxCarrier?.enabled === true;
+    const isCarrierV2 = listingPd.xololoShippingMethods?.skydropxCarrier?.enabled === true;
     if (!isCarrierLegacy && !isCarrierV2) {
       return res.status(409).json({
         error: 'listing_not_shippable',
@@ -168,9 +167,7 @@ module.exports = async (req, res) => {
     // carrito → aggregateParcel apila alturas + suma pesos + max largo/ancho.
     const parcelItems = [
       parcelDataFromListing(listing, primaryQty),
-      ...additionalListings.map((l, i) =>
-        parcelDataFromListing(l, additionalCartRaw[i].quantity)
-      ),
+      ...additionalListings.map((l, i) => parcelDataFromListing(l, additionalCartRaw[i].quantity)),
     ];
     let parcel;
     try {
@@ -197,8 +194,7 @@ module.exports = async (req, res) => {
     // bajo, downgrade silencioso a false — no vale la pena ofrecer SOS
     // de pesos sueltos.
     const insurance =
-      Boolean(insuranceFromBody) &&
-      declaredValue >= INSURANCE_MIN_DECLARED_VALUE_MXN;
+      Boolean(insuranceFromBody) && declaredValue >= INSURANCE_MIN_DECLARED_VALUE_MXN;
 
     // 7) Cotizar en Skydropx.
     // Skydropx requiere area_level1/2/3 en el origen también; usamos placeholders
@@ -219,12 +215,8 @@ module.exports = async (req, res) => {
         area_level3: String(destination.area_level3),
         // XOLOLO Junta 2026-10-26: dirección completa para zona extendida.
         street1: String(destination.street1 || '').trim(),
-        ...(destination.street2
-          ? { street2: String(destination.street2).trim() }
-          : {}),
-        ...(destination.reference
-          ? { reference: String(destination.reference).trim() }
-          : {}),
+        ...(destination.street2 ? { street2: String(destination.street2).trim() } : {}),
+        ...(destination.reference ? { reference: String(destination.reference).trim() } : {}),
       },
       parcel,
       insurance,

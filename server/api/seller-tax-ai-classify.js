@@ -28,11 +28,20 @@ const { sendEventNotifications } = require('../api-util/notifications');
 const TAX_CODE_META = {
   exento_9_iv: { label: 'Bienes muebles usados por particular', article: 'Art. 9 fracc. IV LIVA' },
   exento_9_iii: { label: 'Libro/revista/obra del propio autor', article: 'Art. 9 fracc. III LIVA' },
-  tasa_cero_2a_i_a: { label: 'Animales y vegetales no industrializados', article: 'Art. 2-A I-a LIVA' },
+  tasa_cero_2a_i_a: {
+    label: 'Animales y vegetales no industrializados',
+    article: 'Art. 2-A I-a LIVA',
+  },
   tasa_cero_2a_i_b: { label: 'Alimentos NO procesados', article: 'Art. 2-A I-b LIVA' },
   tasa_cero_2a_i_d: { label: 'Ixtle, palma y lechuguilla', article: 'Art. 2-A I-d LIVA' },
-  tasa_cero_2a_i_f: { label: 'Fertilizantes y plaguicidas agrícolas', article: 'Art. 2-A I-f LIVA' },
-  tasa_cero_2a_i_i: { label: 'Libros editados por el propio contribuyente', article: 'Art. 2-A I-i LIVA' },
+  tasa_cero_2a_i_f: {
+    label: 'Fertilizantes y plaguicidas agrícolas',
+    article: 'Art. 2-A I-f LIVA',
+  },
+  tasa_cero_2a_i_i: {
+    label: 'Libros editados por el propio contribuyente',
+    article: 'Art. 2-A I-i LIVA',
+  },
   tasa_cero_2a_i_j: { label: 'Toallas sanitarias, tampones y copas', article: 'Art. 2-A I-j LIVA' },
   exento_15_iv: { label: 'Enseñanza con RVOE o preescolar', article: 'Art. 15 IV LIVA' },
   exento_15_xiv: { label: 'Servicios médicos con cédula', article: 'Art. 15 XIV LIVA' },

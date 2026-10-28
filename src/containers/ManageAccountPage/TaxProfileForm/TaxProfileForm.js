@@ -49,10 +49,9 @@ const TaxProfileForm = props => (
             Tu perfil fiscal
           </H4>
           <p className={css.description}>
-            Esta información nos permite calcular correctamente tu pago neto por
-            cada venta. Se mantiene privada (sólo tú y los admins de Xololo la
-            vemos). Al guardarla firmas una declaración bajo protesta de decir
-            verdad.
+            Esta información nos permite calcular correctamente tu pago neto por cada venta. Se
+            mantiene privada (sólo tú y los admins de Xololo la vemos). Al guardarla firmas una
+            declaración bajo protesta de decir verdad.
           </p>
 
           {updateProfileError ? (
@@ -69,13 +68,11 @@ const TaxProfileForm = props => (
               label="Soy vendedor casual: sólo vendo artículos usados ocasionalmente, no es mi negocio"
             />
             <p className={css.rfcHelper}>
-              Si marcas esta casilla, Xololo te trata como particular bajo
-              Art. 9 IV LIVA: tus ventas de usado no causan IVA y no te
-              retiene ISR 113-A. No necesitas tienda ni pagas suscripción,
-              pero conservas la protección del pago hasta recibir y las
-              validaciones antifraude. Si en algún momento empiezas a
-              vender como negocio (habitualmente, con actividad empresarial)
-              debes desmarcarlo.
+              Si marcas esta casilla, Xololo te trata como particular bajo Art. 9 IV LIVA: tus
+              ventas de usado no causan IVA y no te retiene ISR 113-A. No necesitas tienda ni pagas
+              suscripción, pero conservas la protección del pago hasta recibir y las validaciones
+              antifraude. Si en algún momento empiezas a vender como negocio (habitualmente, con
+              actividad empresarial) debes desmarcarlo.
             </p>
           </div>
 
@@ -104,17 +101,17 @@ const TaxProfileForm = props => (
                 label="Ya tengo mi RFC vigente ante el SAT"
               />
               <p className={css.rfcHelper}>
-                Si lo dejas sin marcar, por ley Xololo debe retener 20% de ISR y
-                16% de IVA extra sobre cada venta hasta que lo registres. En
-                cuanto lo tengas, actualízalo aquí para dejar de pagar de más.
+                Si lo dejas sin marcar, por ley Xololo debe retener 20% de ISR y 16% de IVA extra
+                sobre cada venta hasta que lo registres. En cuanto lo tengas, actualízalo aquí para
+                dejar de pagar de más.
               </p>
             </div>
           ) : null}
 
           <p className={css.declaration}>
-            Al guardar, declaro bajo protesta de decir verdad que la información
-            es correcta y acepto que Xololo la use para calcular las retenciones
-            SAT que correspondan a mis ventas.
+            Al guardar, declaro bajo protesta de decir verdad que la información es correcta y
+            acepto que Xololo la use para calcular las retenciones SAT que correspondan a mis
+            ventas.
           </p>
 
           <Button

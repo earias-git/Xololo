@@ -29,11 +29,7 @@ import { deleteAccount, resetPassword, updateProfile } from './ManageAccountPage
 import css from './ManageAccountPage.module.css';
 import PrivateDetailsForm from './PrivateDetailsForm/PrivateDetailsForm';
 import TaxProfileForm from './TaxProfileForm/TaxProfileForm';
-import {
-  PERSON_TYPES,
-  buildTaxProfilePayload,
-  getTaxProfile,
-} from '../../util/xololoTaxProfile';
+import { PERSON_TYPES, buildTaxProfilePayload, getTaxProfile } from '../../util/xololoTaxProfile';
 import { SELLER_MODES, getSellerMode } from '../../util/xololoSellerMode';
 
 /**
@@ -273,11 +269,8 @@ const mapDispatchToProps = dispatch => ({
   onUpdateProfile: values => dispatch(updateProfile(values)),
 });
 
-const ManageAccountPage = compose(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )
-)(ManageAccountPageComponent);
+const ManageAccountPage = compose(connect(mapStateToProps, mapDispatchToProps))(
+  ManageAccountPageComponent
+);
 
 export default ManageAccountPage;

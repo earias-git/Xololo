@@ -137,8 +137,7 @@ const renderSvgToPngDataUrl = async (refEl, [widthPx, heightPx], embeddedFontCss
   // En vez de blob URL (que a veces falla silenciosamente por CSP
   // Fetch directive), usamos data: URL directa. Más confiable aunque
   // base64 agrega 33% de tamaño.
-  const svgDataUrl =
-    'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+  const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
 
   const img = await new Promise((resolve, reject) => {
     const i = new Image();
@@ -188,9 +187,7 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
   const [showCta, setShowCta] = useState(true);
   const [showTagline, setShowTagline] = useState(!!seller?.tagline);
   const [showVerified, setShowVerified] = useState(!!seller?.verified);
-  const [showStats, setShowStats] = useState(
-    seller?.ratingAvg != null && seller?.reviewCount > 0
-  );
+  const [showStats, setShowStats] = useState(seller?.ratingAvg != null && seller?.reviewCount > 0);
   const [showCategory, setShowCategory] = useState(!!seller?.primaryCategory);
   // Banner: seller puede elegir ninguno (banda sólida de color) o uno
   // de sus banners de storefront (bannerUrl / bannerUrl2 / bannerUrl3).
@@ -207,9 +204,7 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
         if (!cancelled) setShrunkLogoHref(shrunk);
       }
       if (banners.length > 0) {
-        const shrunk = await Promise.all(
-          banners.map(b => shrinkImageDataUrl(b, 1200))
-        );
+        const shrunk = await Promise.all(banners.map(b => shrinkImageDataUrl(b, 1200)));
         if (!cancelled) setShrunkBanners(shrunk);
       }
     })();
@@ -234,8 +229,7 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
   }, [fontFamily, fontWeight]);
 
   const storeUrl = useMemo(() => buildStoreUrl(seller), [seller]);
-  const template =
-    STORE_TEMPLATES.find(t => t.key === templateKey) || STORE_TEMPLATES[0];
+  const template = STORE_TEMPLATES.find(t => t.key === templateKey) || STORE_TEMPLATES[0];
 
   // QR → data URL
   useEffect(() => {
@@ -447,9 +441,7 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
             <div className={css.bannerRow}>
               <button
                 type="button"
-                className={`${css.bannerThumb} ${
-                  bannerIndex === -1 ? css.bannerThumbActive : ''
-                }`}
+                className={`${css.bannerThumb} ${bannerIndex === -1 ? css.bannerThumbActive : ''}`}
                 onClick={() => setBannerIndex(-1)}
                 title="Color sólido"
               >
@@ -460,9 +452,7 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
                 <button
                   key={i}
                   type="button"
-                  className={`${css.bannerThumb} ${
-                    bannerIndex === i ? css.bannerThumbActive : ''
-                  }`}
+                  className={`${css.bannerThumb} ${bannerIndex === i ? css.bannerThumbActive : ''}`}
                   onClick={() => setBannerIndex(i)}
                   title={`Banner ${i + 1}`}
                 >
@@ -534,9 +524,7 @@ const StorePosterEditor = ({ seller, sellerLogoDataUrl, sellerName, onClose }) =
                 <button
                   key={a.key}
                   type="button"
-                  className={`${css.alignBtn} ${
-                    logoAlign === a.key ? css.alignBtnActive : ''
-                  }`}
+                  className={`${css.alignBtn} ${logoAlign === a.key ? css.alignBtnActive : ''}`}
                   onClick={() => setLogoAlign(a.key)}
                   title={a.hint}
                 >
@@ -642,9 +630,7 @@ const ShareBar = ({
 
   const message = `Visita mi tienda ${storeName || ''} en Xololo`.trim();
   const shareUrl = storeUrl || (typeof window !== 'undefined' ? window.location.origin : '');
-  const canNativeShare =
-    typeof navigator !== 'undefined' &&
-    typeof navigator.share === 'function';
+  const canNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
   // Genera el PNG y lo convierte a File para Web Share API con imagen.
   const buildImageFile = async () => {
@@ -652,17 +638,13 @@ const ShareBar = ({
     if (!svgEl) return null;
     const dataUrl = await rasterizeWithFallback(svgEl, template.exportPx);
     const blob = await (await fetch(dataUrl)).blob();
-    return new File(
-      [blob],
-      `xololo-tienda-${slugifyFilename(storeName)}-${template.key}.png`,
-      { type: 'image/png' }
-    );
+    return new File([blob], `xololo-tienda-${slugifyFilename(storeName)}-${template.key}.png`, {
+      type: 'image/png',
+    });
   };
 
   const handleWhatsApp = () => {
-    const url = `https://wa.me/?text=${encodeURIComponent(
-      `${message}\n${shareUrl}`
-    )}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(`${message}\n${shareUrl}`)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -736,9 +718,7 @@ const ShareBar = ({
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(dataUrl);
-        onError(
-          '✓ Imagen descargada. Súbela desde la app de Instagram en tu teléfono.'
-        );
+        onError('✓ Imagen descargada. Súbela desde la app de Instagram en tu teléfono.');
       }
     } catch (e) {
       if (e?.name !== 'AbortError') {
@@ -762,11 +742,7 @@ const ShareBar = ({
       {open ? (
         <div className={css.sharePopover}>
           {canNativeShare ? (
-            <button
-              type="button"
-              className={css.shareOption}
-              onClick={handleNativeShare}
-            >
+            <button type="button" className={css.shareOption} onClick={handleNativeShare}>
               📱 Xololear con imagen
             </button>
           ) : null}
@@ -796,9 +772,7 @@ const ToggleChip = ({ label, active, onClick, disabled }) => (
     type="button"
     disabled={disabled}
     onClick={onClick}
-    className={`${css.chip} ${active ? css.chipActive : ''} ${
-      disabled ? css.chipDisabled : ''
-    }`}
+    className={`${css.chip} ${active ? css.chipActive : ''} ${disabled ? css.chipDisabled : ''}`}
   >
     {active ? '✓ ' : ''}
     {label}
@@ -818,9 +792,7 @@ const buildStoreShareUrl = (seller, source) => {
   if (typeof window === 'undefined') return '';
   const base =
     seller?.storeUrl ||
-    (seller?.slug
-      ? `${window.location.origin}/stores/${seller.slug}`
-      : window.location.origin);
+    (seller?.slug ? `${window.location.origin}/stores/${seller.slug}` : window.location.origin);
   try {
     const u = new URL(base);
     u.searchParams.set('utm_source', source);
@@ -851,9 +823,9 @@ const StorePromoShareButtons = ({ seller, sellerName }) => {
     const url = buildStoreShareUrl(seller, 'twitter');
     const text = buildShareText(sellerName);
     window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-        text
-      )}&url=${encodeURIComponent(url)}`,
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(
+        url
+      )}`,
       '_blank',
       'noopener,noreferrer,width=600,height=600'
     );
@@ -862,11 +834,7 @@ const StorePromoShareButtons = ({ seller, sellerName }) => {
   const shareWhatsApp = () => {
     const url = buildStoreShareUrl(seller, 'whatsapp');
     const text = `${buildShareText(sellerName)}\n${url}`;
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(text)}`,
-      '_blank',
-      'noopener,noreferrer'
-    );
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 
   const shareViaWebOrCopy = async (source, brandUrl) => {
@@ -1057,9 +1025,7 @@ const StorePoster = ({ seller, sellerLogoDataUrl, sellerName }) => {
         <div className={css.cardMain}>
           <h3 className={css.cardTitle}>{sellerName || 'Tu tienda'}</h3>
           {seller?.storeUrl ? (
-            <p className={css.cardUrl}>
-              {seller.storeUrl.replace(/^https?:\/\//, '')}
-            </p>
+            <p className={css.cardUrl}>{seller.storeUrl.replace(/^https?:\/\//, '')}</p>
           ) : null}
         </div>
       </div>
@@ -1078,9 +1044,7 @@ const StorePoster = ({ seller, sellerLogoDataUrl, sellerName }) => {
             <span aria-hidden>🏷️</span>
             <strong>Diseños para Imprimir</strong>
           </span>
-          <span className={css.designToggleBtn}>
-            {designOpen ? 'Cerrar' : 'Diseñar'}
-          </span>
+          <span className={css.designToggleBtn}>{designOpen ? 'Cerrar' : 'Diseñar'}</span>
         </button>
         {designOpen ? (
           <StorePosterEditor

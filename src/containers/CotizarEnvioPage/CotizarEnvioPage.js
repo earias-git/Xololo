@@ -108,27 +108,44 @@ const PartyForm = ({ label, value, onFieldChange, emailRequired }) => {
       <div className={css.row}>
         <label className={css.field}>
           <span>Nombre completo</span>
-          <input type="text" value={value.name}
-            onChange={e => onFieldChange('name', e.target.value)} required />
+          <input
+            type="text"
+            value={value.name}
+            onChange={e => onFieldChange('name', e.target.value)}
+            required
+          />
         </label>
         <label className={css.field}>
           <span>Teléfono (10 dígitos)</span>
-          <input type="tel" inputMode="tel" value={value.phone}
-            onChange={e => onFieldChange('phone', e.target.value)} required />
+          <input
+            type="tel"
+            inputMode="tel"
+            value={value.phone}
+            onChange={e => onFieldChange('phone', e.target.value)}
+            required
+          />
         </label>
         <label className={css.field}>
           <span>Email {emailRequired ? '(para la guía)' : '(opcional)'}</span>
-          <input type="email" value={value.email}
+          <input
+            type="email"
+            value={value.email}
             onChange={e => onFieldChange('email', e.target.value)}
-            required={emailRequired} />
+            required={emailRequired}
+          />
         </label>
       </div>
       <div className={css.row}>
         <label className={css.field}>
           <span>Código postal</span>
-          <input type="text" inputMode="numeric" maxLength={5} value={value.postalCode}
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={5}
+            value={value.postalCode}
             onChange={e => onFieldChange('postalCode', e.target.value.replace(/\D/g, ''))}
-            required />
+            required
+          />
           {lookup.status === 'loading' ? (
             <small className={css.hintMuted}>Buscando datos del CP…</small>
           ) : null}
@@ -140,20 +157,31 @@ const PartyForm = ({ label, value, onFieldChange, emailRequired }) => {
         </label>
         <label className={css.field} style={{ gridColumn: 'span 2' }}>
           <span>Calle</span>
-          <input type="text" value={value.street}
-            onChange={e => onFieldChange('street', e.target.value)} required />
+          <input
+            type="text"
+            value={value.street}
+            onChange={e => onFieldChange('street', e.target.value)}
+            required
+          />
         </label>
       </div>
       <div className={css.row}>
         <label className={css.field}>
           <span>No. exterior</span>
-          <input type="text" value={value.exterior}
-            onChange={e => onFieldChange('exterior', e.target.value)} required />
+          <input
+            type="text"
+            value={value.exterior}
+            onChange={e => onFieldChange('exterior', e.target.value)}
+            required
+          />
         </label>
         <label className={css.field}>
           <span>No. interior (opcional)</span>
-          <input type="text" value={value.interior}
-            onChange={e => onFieldChange('interior', e.target.value)} />
+          <input
+            type="text"
+            value={value.interior}
+            onChange={e => onFieldChange('interior', e.target.value)}
+          />
         </label>
         <label className={css.field} style={{ gridColumn: 'span 2' }}>
           <span>Colonia</span>
@@ -172,33 +200,50 @@ const PartyForm = ({ label, value, onFieldChange, emailRequired }) => {
             >
               <option value="">Selecciona tu colonia…</option>
               {colonies.map(c => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
               <option value="__other__">Otra colonia (escribir a mano)</option>
             </select>
           ) : (
-            <input type="text" value={value.colonia}
-              onChange={e => onFieldChange('colonia', e.target.value)} required />
+            <input
+              type="text"
+              value={value.colonia}
+              onChange={e => onFieldChange('colonia', e.target.value)}
+              required
+            />
           )}
         </label>
       </div>
       <div className={css.row}>
         <label className={css.field}>
           <span>Ciudad / Municipio</span>
-          <input type="text" value={value.city}
-            onChange={e => onFieldChange('city', e.target.value)} required />
+          <input
+            type="text"
+            value={value.city}
+            onChange={e => onFieldChange('city', e.target.value)}
+            required
+          />
         </label>
         <label className={css.field}>
           <span>Estado</span>
-          <input type="text" value={value.state}
-            onChange={e => onFieldChange('state', e.target.value)} required />
+          <input
+            type="text"
+            value={value.state}
+            onChange={e => onFieldChange('state', e.target.value)}
+            required
+          />
         </label>
       </div>
       <label className={css.field}>
         <span>Referencias (opcional)</span>
-        <input type="text" placeholder="entre tal y cual calle, color fachada…"
+        <input
+          type="text"
+          placeholder="entre tal y cual calle, color fachada…"
           value={value.references}
-          onChange={e => onFieldChange('references', e.target.value)} />
+          onChange={e => onFieldChange('references', e.target.value)}
+        />
       </label>
     </fieldset>
   );
@@ -235,7 +280,9 @@ const StripePaymentBlock = ({ clientSecret, amountMxn, onSucceeded, onCancel }) 
     paymentEl.mount(mountRef.current);
     setStatus('ready');
     return () => {
-      try { paymentEl.unmount(); } catch (_e) {}
+      try {
+        paymentEl.unmount();
+      } catch (_e) {}
     };
   }, [clientSecret]);
 
@@ -254,7 +301,10 @@ const StripePaymentBlock = ({ clientSecret, amountMxn, onSucceeded, onCancel }) 
         setStatus('error');
         return;
       }
-      if (paymentIntent && (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')) {
+      if (
+        paymentIntent &&
+        (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')
+      ) {
         setStatus('succeeded');
         onSucceeded?.(paymentIntent);
       } else {
@@ -282,8 +332,12 @@ const StripePaymentBlock = ({ clientSecret, amountMxn, onSucceeded, onCancel }) 
       <div ref={mountRef} className={css.stripeMount} />
       {error ? <p className={css.errorInline}>{error}</p> : null}
       <div className={css.purchaseActions}>
-        <button type="button" className={css.secondaryBtn} onClick={onCancel}
-          disabled={status === 'processing'}>
+        <button
+          type="button"
+          className={css.secondaryBtn}
+          onClick={onCancel}
+          disabled={status === 'processing'}
+        >
           ← Cancelar
         </button>
         <button
@@ -319,8 +373,7 @@ const CotizarEnvioPage = () => {
   const setQuoteField = (name, value) => setQuoteForm(f => ({ ...f, [name]: value }));
   const setPartyField = (side, name, value) =>
     setPurchaseForm(f => ({ ...f, [side]: { ...f[side], [name]: value } }));
-  const setPurchaseField = (name, value) =>
-    setPurchaseForm(f => ({ ...f, [name]: value }));
+  const setPurchaseField = (name, value) => setPurchaseForm(f => ({ ...f, [name]: value }));
 
   const canSubmitQuote = () =>
     isCP(quoteForm.originCp) &&
@@ -354,7 +407,11 @@ const CotizarEnvioPage = () => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setQuoteState({ status: 'error', data: null, error: data?.details || data?.error || 'Error' });
+        setQuoteState({
+          status: 'error',
+          data: null,
+          error: data?.details || data?.error || 'Error',
+        });
         return;
       }
       setQuoteState({ status: 'ok', data, error: null });
@@ -555,27 +612,51 @@ const CotizarEnvioPage = () => {
           <div className={css.row}>
             <label className={css.field}>
               <span>Peso (kg)</span>
-              <input type="number" min="0.1" step="0.1" placeholder="1.5"
+              <input
+                type="number"
+                min="0.1"
+                step="0.1"
+                placeholder="1.5"
                 value={quoteForm.weight}
-                onChange={e => setQuoteField('weight', e.target.value)} required />
+                onChange={e => setQuoteField('weight', e.target.value)}
+                required
+              />
             </label>
             <label className={css.field}>
               <span>Largo (cm)</span>
-              <input type="number" min="1" step="1" placeholder="30"
+              <input
+                type="number"
+                min="1"
+                step="1"
+                placeholder="30"
                 value={quoteForm.length}
-                onChange={e => setQuoteField('length', e.target.value)} required />
+                onChange={e => setQuoteField('length', e.target.value)}
+                required
+              />
             </label>
             <label className={css.field}>
               <span>Ancho (cm)</span>
-              <input type="number" min="1" step="1" placeholder="20"
+              <input
+                type="number"
+                min="1"
+                step="1"
+                placeholder="20"
                 value={quoteForm.width}
-                onChange={e => setQuoteField('width', e.target.value)} required />
+                onChange={e => setQuoteField('width', e.target.value)}
+                required
+              />
             </label>
             <label className={css.field}>
               <span>Alto (cm)</span>
-              <input type="number" min="1" step="1" placeholder="15"
+              <input
+                type="number"
+                min="1"
+                step="1"
+                placeholder="15"
                 value={quoteForm.height}
-                onChange={e => setQuoteField('height', e.target.value)} required />
+                onChange={e => setQuoteField('height', e.target.value)}
+                required
+              />
             </label>
           </div>
         </fieldset>
@@ -589,16 +670,22 @@ const CotizarEnvioPage = () => {
               onChange={e => setQuoteField('includeInsurance', e.target.checked)}
             />
             <span>
-              Quiero asegurar el paquete contra pérdida o daño (cobertura
-              hasta $100,000 MXN; el costo exacto se muestra al cotizar)
+              Quiero asegurar el paquete contra pérdida o daño (cobertura hasta $100,000 MXN; el
+              costo exacto se muestra al cotizar)
             </span>
           </label>
           {quoteForm.includeInsurance ? (
             <label className={css.field}>
               <span>Valor declarado del contenido (MXN)</span>
-              <input type="number" min="1" step="1" placeholder="2500"
+              <input
+                type="number"
+                min="1"
+                step="1"
+                placeholder="2500"
                 value={quoteForm.declaredValue}
-                onChange={e => setQuoteField('declaredValue', e.target.value)} required />
+                onChange={e => setQuoteField('declaredValue', e.target.value)}
+                required
+              />
             </label>
           ) : null}
         </fieldset>
@@ -614,13 +701,14 @@ const CotizarEnvioPage = () => {
 
       {quoteState.status === 'loading' ? (
         <div className={css.loadingEmpathic} role="status" aria-live="polite">
-          <div className={css.loadingEmoji} aria-hidden>☕</div>
+          <div className={css.loadingEmoji} aria-hidden>
+            ☕
+          </div>
           <div>
             <strong>Preparando tu cotización…</strong>
             <p>
-              Estamos consultando los precios en vivo de las paqueterías.
-              Esto puede tardar unos segundos — mientras, agárrate un café
-              o estira las piernas. ⏱️
+              Estamos consultando los precios en vivo de las paqueterías. Esto puede tardar unos
+              segundos — mientras, agárrate un café o estira las piernas. ⏱️
             </p>
           </div>
         </div>
@@ -634,7 +722,9 @@ const CotizarEnvioPage = () => {
 
       {quoteState.status === 'ok' && rates.length === 0 ? (
         <div className={css.emptyBox}>
-          <p>Ninguna paquetería devolvió tarifa para estos datos. Revisa el CP o las dimensiones.</p>
+          <p>
+            Ninguna paquetería devolvió tarifa para estos datos. Revisa el CP o las dimensiones.
+          </p>
         </div>
       ) : null}
 
@@ -642,12 +732,15 @@ const CotizarEnvioPage = () => {
         <section className={css.resultsRoot}>
           <h2 className={css.resultsTitle}>Opciones disponibles</h2>
           <p className={css.resultsHint}>
-            Precios incluyen todo. {quoteForm.includeInsurance ? 'Con seguro contra pérdida o daño.' : 'Sin seguro — puedes añadirlo volviendo a cotizar.'}
+            Precios incluyen todo.{' '}
+            {quoteForm.includeInsurance
+              ? 'Con seguro contra pérdida o daño.'
+              : 'Sin seguro — puedes añadirlo volviendo a cotizar.'}
           </p>
           {quoteState.data?.insurance?.coverageExceeded ? (
             <p className={css.coverageWarning}>
-              ⚠️ El seguro cubre hasta $100,000 MXN. Declaraste un valor
-              mayor — el excedente no quedará cubierto.
+              ⚠️ El seguro cubre hasta $100,000 MXN. Declaraste un valor mayor — el excedente no
+              quedará cubierto.
             </p>
           ) : null}
           <ul className={css.rateList}>
@@ -680,32 +773,29 @@ const CotizarEnvioPage = () => {
           <aside className={css.pricingExplainer}>
             <h3>¿Por qué varían los precios?</h3>
             <p>
-              Cada paquetería tiene varios servicios (Standard, Express,
-              Overnight, etc.) con diferente red logística, cobertura
-              geográfica, tipo de transporte (terrestre vs aéreo) y
-              condiciones de garantía. Un servicio "Express" puede ser
-              más caro aunque tarde parecido porque incluye recolección
-              a domicilio, cobertura más amplia o compromiso de entrega
-              en ventana específica.
+              Cada paquetería tiene varios servicios (Standard, Express, Overnight, etc.) con
+              diferente red logística, cobertura geográfica, tipo de transporte (terrestre vs aéreo)
+              y condiciones de garantía. Un servicio "Express" puede ser más caro aunque tarde
+              parecido porque incluye recolección a domicilio, cobertura más amplia o compromiso de
+              entrega en ventana específica.
             </p>
             <p>
-              Los precios y días los proporciona cada paquetería en
-              tiempo real — Xololo no los fija ni los garantiza. Verifica
-              siempre condiciones del servicio antes de comprar.
+              Los precios y días los proporciona cada paquetería en tiempo real — Xololo no los fija
+              ni los garantiza. Verifica siempre condiciones del servicio antes de comprar.
             </p>
             {quoteState.data?.unavailableCount > 0 ? (
               <p className={css.unavailableNote}>
                 <strong>
                   {quoteState.data.unavailableCount}{' '}
-                  {quoteState.data.unavailableCount === 1 ? 'servicio' : 'servicios'} no
-                  disponible{quoteState.data.unavailableCount === 1 ? '' : 's'} para esta ruta/paquete
+                  {quoteState.data.unavailableCount === 1 ? 'servicio' : 'servicios'} no disponible
+                  {quoteState.data.unavailableCount === 1 ? '' : 's'} para esta ruta/paquete
                   {quoteState.data.unavailableCarriers?.length > 0
                     ? ` (${quoteState.data.unavailableCarriers.join(', ')})`
-                    : ''}.
+                    : ''}
+                  .
                 </strong>{' '}
-                Las paqueterías no respondieron por restricciones de peso,
-                dimensiones o cobertura. Si necesitas una opción específica,
-                ajusta el paquete o contáctanos.
+                Las paqueterías no respondieron por restricciones de peso, dimensiones o cobertura.
+                Si necesitas una opción específica, ajusta el paquete o contáctanos.
               </p>
             ) : null}
           </aside>
@@ -729,7 +819,9 @@ const CotizarEnvioPage = () => {
       <div className={css.selectedRateSummary}>
         <div>
           <small>Paqueter&iacute;a seleccionada</small>
-          <strong>{selectedRate?.carrier} · {selectedRate?.service}</strong>
+          <strong>
+            {selectedRate?.carrier} · {selectedRate?.service}
+          </strong>
           {selectedRate?.days ? <span> · ~{selectedRate.days} días hábiles</span> : null}
         </div>
         <div className={css.selectedRateSide}>
@@ -755,8 +847,8 @@ const CotizarEnvioPage = () => {
               onChange={e => setPurchaseField('pickupMode', e.target.value)}
             />
             <span>
-              <strong>Drop-off en sucursal</strong> — imprimo la guía y entrego
-              el paquete en una sucursal del carrier (gratis).
+              <strong>Drop-off en sucursal</strong> — imprimo la guía y entrego el paquete en una
+              sucursal del carrier (gratis).
             </span>
           </label>
           <label className={css.radioField}>
@@ -768,8 +860,8 @@ const CotizarEnvioPage = () => {
               onChange={e => setPurchaseField('pickupMode', e.target.value)}
             />
             <span>
-              <strong>Pickup a domicilio</strong> — el carrier recoge en la
-              dirección del remitente (puede tener costo extra según carrier).
+              <strong>Pickup a domicilio</strong> — el carrier recoge en la dirección del remitente
+              (puede tener costo extra según carrier).
             </span>
           </label>
         </fieldset>
@@ -778,10 +870,13 @@ const CotizarEnvioPage = () => {
           <legend>Contenido del paquete</legend>
           <label className={css.field}>
             <span>Describe qué envías (requerido por SAT)</span>
-            <input type="text" placeholder="Ropa, libros, electrónica, artesanía…"
+            <input
+              type="text"
+              placeholder="Ropa, libros, electrónica, artesanía…"
               value={purchaseForm.contentDescription}
               onChange={e => setPurchaseField('contentDescription', e.target.value)}
-              required />
+              required
+            />
           </label>
         </fieldset>
 
@@ -831,20 +926,23 @@ const CotizarEnvioPage = () => {
 
   const renderStep3 = () => (
     <div className={css.successRoot}>
-      <div className={css.successEmoji} aria-hidden>🎉</div>
+      <div className={css.successEmoji} aria-hidden>
+        🎉
+      </div>
       <h2 className={css.successTitle}>¡Pago recibido!</h2>
 
       {guideStatus.phase === 'ready' ? (
         <>
           <p className={css.successText}>
-            Tu guía ya está lista. Descárgala e imprímela — después
-            entrégala pegada al paquete en la sucursal del carrier
-            (o entrégala al mensajero si elegiste pickup a domicilio).
+            Tu guía ya está lista. Descárgala e imprímela — después entrégala pegada al paquete en
+            la sucursal del carrier (o entrégala al mensajero si elegiste pickup a domicilio).
           </p>
           {guideStatus.trackingNumber ? (
             <p className={css.successText}>
               Número de rastreo:{' '}
-              <strong><code>{guideStatus.trackingNumber}</code></strong>
+              <strong>
+                <code>{guideStatus.trackingNumber}</code>
+              </strong>
             </p>
           ) : null}
           <div className={css.successCta}>
@@ -860,27 +958,27 @@ const CotizarEnvioPage = () => {
         </>
       ) : guideStatus.phase === 'timeout' ? (
         <p className={css.successText}>
-          Tu pago se recibió correctamente, pero la generación de la guía
-          está tardando más de lo normal. Te la enviaremos por correo a{' '}
-          <strong>{purchaseForm.from.email}</strong> en cuanto esté lista
-          (con el PDF adjunto). Si no la recibes en los próximos minutos,
-          escríbenos a soporte@xololo.mx con tu número de orden.
+          Tu pago se recibió correctamente, pero la generación de la guía está tardando más de lo
+          normal. Te la enviaremos por correo a <strong>{purchaseForm.from.email}</strong> en cuanto
+          esté lista (con el PDF adjunto). Si no la recibes en los próximos minutos, escríbenos a
+          soporte@xololo.mx con tu número de orden.
         </p>
       ) : (
         <>
           <p className={css.successText}>
-            Estamos generando tu guía con la paquetería seleccionada —
-            esto suele tardar menos de un minuto. La verás aquí abajo en
-            cuanto esté lista, y además la mandaremos con el PDF adjunto a{' '}
-            <strong>{purchaseForm.from.email}</strong>.
+            Estamos generando tu guía con la paquetería seleccionada — esto suele tardar menos de un
+            minuto. La verás aquí abajo en cuanto esté lista, y además la mandaremos con el PDF
+            adjunto a <strong>{purchaseForm.from.email}</strong>.
           </p>
           <div className={css.loadingEmpathic}>
-            <div className={css.loadingEmoji} aria-hidden>📬</div>
+            <div className={css.loadingEmoji} aria-hidden>
+              📬
+            </div>
             <div>
               <strong>Preparando tu guía…</strong>
               <p>
-                Skydropx y la paquetería están emitiendo tu etiqueta. En
-                un momento aparece aquí lista para descargar.
+                Skydropx y la paquetería están emitiendo tu etiqueta. En un momento aparece aquí
+                lista para descargar.
               </p>
             </div>
           </div>
@@ -906,9 +1004,7 @@ const CotizarEnvioPage = () => {
         <div className={css.root}>
           {purchaseState.status !== 'succeeded' ? (
             <header className={css.header}>
-              <h1 className={css.title}>
-                {step === 1 ? 'Cotiza tu envío' : 'Datos del envío'}
-              </h1>
+              <h1 className={css.title}>{step === 1 ? 'Cotiza tu envío' : 'Datos del envío'}</h1>
               <p className={css.subtitle}>
                 {step === 1
                   ? 'Compara precios entre Estafeta, FedEx, DHL, Paquetexpress y más — paga una sola guía al mejor precio. Sin registro para cotizar.'
@@ -927,9 +1023,7 @@ const CotizarEnvioPage = () => {
                 >
                   2. Datos
                 </li>
-                <li className={purchaseState.status === 'paying' ? css.stepActive : ''}>
-                  3. Pago
-                </li>
+                <li className={purchaseState.status === 'paying' ? css.stepActive : ''}>3. Pago</li>
               </ol>
             </header>
           ) : null}

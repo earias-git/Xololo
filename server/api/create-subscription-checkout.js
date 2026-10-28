@@ -79,7 +79,8 @@ module.exports = async (req, res) => {
 
     const profile = currentUser.attributes.profile || {};
     const email = currentUser.attributes.email;
-    const name = profile.displayName || `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
+    const name =
+      profile.displayName || `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
 
     // El onboarding fee es una sola vez de por vida — no volver a
     // cobrarlo si el seller ya lo pagó antes (pausó y se reactiva).

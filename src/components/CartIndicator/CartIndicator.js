@@ -106,9 +106,7 @@ const CartIndicator = props => {
       </MenuLabel>
       <MenuContent className={css.menuContent}>
         <MenuItem key="header">
-          <div className={css.menuHeader}>
-            Tus carritos ({nonEmpty.length} tiendas)
-          </div>
+          <div className={css.menuHeader}>Tus carritos ({nonEmpty.length} tiendas)</div>
         </MenuItem>
         {nonEmpty.map(cart => {
           const count = totalItemsInCart(cart);
@@ -119,9 +117,7 @@ const CartIndicator = props => {
                 name="CartPage"
                 params={{ sellerId: cart.sellerId }}
               >
-                <span className={css.menuSellerName}>
-                  {cart.sellerDisplayName || 'Tienda'}
-                </span>
+                <span className={css.menuSellerName}>{cart.sellerDisplayName || 'Tienda'}</span>
                 <span className={css.menuCount}>
                   {count} {count === 1 ? 'artículo' : 'artículos'}
                 </span>

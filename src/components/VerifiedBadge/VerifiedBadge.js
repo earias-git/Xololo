@@ -49,8 +49,7 @@ const VerifiedBadge = props => {
     title = 'Vendedor verificado por Xololo: suscripción activa, cobros configurados y documentos legales aprobados.',
   } = props;
 
-  const isVerified =
-    typeof verified === 'boolean' ? verified : isVerifiedFromSeller(seller);
+  const isVerified = typeof verified === 'boolean' ? verified : isVerifiedFromSeller(seller);
   if (!isVerified) return null;
 
   const classes = classNames(rootClassName || css.root, className, {

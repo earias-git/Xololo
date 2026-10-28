@@ -32,7 +32,12 @@ import {
 } from '../../util/xololoShippingMethods';
 import { deriveLegacyDeliveryMethod } from '../../components/OrderPanel/ProductOrderForm/XololoShippingMethodField';
 
-import { LayoutSingleColumn, Page, SellerBrandFrame, XololoShippingMethodSelector } from '../../components';
+import {
+  LayoutSingleColumn,
+  Page,
+  SellerBrandFrame,
+  XololoShippingMethodSelector,
+} from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
@@ -149,10 +154,11 @@ const CartPage = props => {
           <div className={css.emptyRoot}>
             <h1 className={css.emptyTitle}>Tu carrito está vacío</h1>
             <p className={css.emptyText}>
-              Cuando agregues productos aparecerán aquí para que los revises
-              antes de pagar.
+              Cuando agregues productos aparecerán aquí para que los revises antes de pagar.
             </p>
-            <a href="/" className={css.primaryBtn}>Ir al inicio</a>
+            <a href="/" className={css.primaryBtn}>
+              Ir al inicio
+            </a>
           </div>
         </LayoutSingleColumn>
       </Page>
@@ -175,12 +181,9 @@ const CartPage = props => {
   // evitamos que un listing "ghost" de fetches previos (race condition
   // entre re-fetches cuando el cart cambia) genere grupos vacíos.
   const cartListingIdSet = new Set((cart.items || []).map(i => i.listingId));
-  const allListingsInCart = allListings.filter(l =>
-    cartListingIdSet.has(l?.id?.uuid)
-  );
-  const compatibilityGroups = allListingsInCart.length > 0
-    ? groupListingsByCompatibility(allListingsInCart)
-    : [];
+  const allListingsInCart = allListings.filter(l => cartListingIdSet.has(l?.id?.uuid));
+  const compatibilityGroups =
+    allListingsInCart.length > 0 ? groupListingsByCompatibility(allListingsInCart) : [];
   const hasMultipleGroups = compatibilityGroups.length > 1;
 
   // XOLOLO: helper para leer la preferencia del buyer que dejó en
@@ -241,8 +244,7 @@ const CartPage = props => {
   };
   // Buyer debe elegir método si hay v2 methods intersecting.
   const methodChosenOrDefault = xoloSelectedMethod || xoloDefaultMethod;
-  const methodBlockingCheckout =
-    showXoloMethodSelector && !methodChosenOrDefault;
+  const methodBlockingCheckout = showXoloMethodSelector && !methodChosenOrDefault;
 
   const handleQty = (listingId, nextQty) => {
     dispatch(updateQuantity({ sellerId, listingId, quantity: Math.max(0, nextQty) }));
@@ -302,8 +304,7 @@ const CartPage = props => {
       // orderData.selectedShippingMethod. El deliveryMethod legacy se
       // deriva (pickup/shipping) para satisfacer el proceso Sharetribe.
       const chosenXoloMethod = chosenMethod;
-      const derivedDeliveryMethod =
-        deriveLegacyDeliveryMethod(chosenXoloMethod) || 'shipping';
+      const derivedDeliveryMethod = deriveLegacyDeliveryMethod(chosenXoloMethod) || 'shipping';
       const initialValues = {
         listing,
         orderData: {
@@ -372,8 +373,8 @@ const CartPage = props => {
               <h1 className={css.title}>Tu carrito</h1>
               <p className={css.subtitle}>
                 {totalItems} {totalItems === 1 ? 'producto' : 'productos'} de{' '}
-                <strong>{cart.sellerDisplayName}</strong>. Todos se envían juntos
-                para ahorrar en paquetería.
+                <strong>{cart.sellerDisplayName}</strong>. Todos se envían juntos para ahorrar en
+                paquetería.
               </p>
             </header>
 
@@ -393,10 +394,7 @@ const CartPage = props => {
                       )}
                     </div>
                     <div className={css.itemMain}>
-                      <a
-                        href={`/l/product/${item.listingId}`}
-                        className={css.itemTitle}
-                      >
+                      <a href={`/l/product/${item.listingId}`} className={css.itemTitle}>
                         {item.listingTitle}
                       </a>
                       <p className={css.itemUnitPrice}>
@@ -468,9 +466,8 @@ const CartPage = props => {
                     Necesitas hacer {compatibilityGroups.length} pedidos separados
                   </h4>
                   <p style={{ margin: 0, fontSize: 13, color: '#78350f', lineHeight: 1.5 }}>
-                    Los productos en tu carrito tienen métodos de entrega
-                    distintos. Cada grupo se paga por separado — no te
-                    preocupes, sigues comprando en una sola tienda.
+                    Los productos en tu carrito tienen métodos de entrega distintos. Cada grupo se
+                    paga por separado — no te preocupes, sigues comprando en una sola tienda.
                   </p>
                 </div>
                 {groupsWithCartItems.map(g => {
@@ -488,7 +485,9 @@ const CartPage = props => {
                         background: 'var(--colorWhite)',
                       }}
                     >
-                      <h5 style={{ margin: '0 0 12px 0', fontSize: 14, color: 'var(--colorGrey900)' }}>
+                      <h5
+                        style={{ margin: '0 0 12px 0', fontSize: 14, color: 'var(--colorGrey900)' }}
+                      >
                         Grupo {g.groupIndex + 1} · {g.cartItems.length}{' '}
                         {g.cartItems.length === 1 ? 'producto' : 'productos'}
                       </h5>
@@ -509,7 +508,12 @@ const CartPage = props => {
                               <img
                                 src={ci.listingImageUrl}
                                 alt={ci.listingTitle}
-                                style={{ width: 36, height: 36, borderRadius: 4, objectFit: 'cover' }}
+                                style={{
+                                  width: 36,
+                                  height: 36,
+                                  borderRadius: 4,
+                                  objectFit: 'cover',
+                                }}
                               />
                             ) : null}
                             <span style={{ flex: 1 }}>
@@ -576,10 +580,11 @@ const CartPage = props => {
                   currencyFormatter={xoloCurrencyFormatter}
                 />
                 {cart.items.length > 1 ? (
-                  <p style={{ fontSize: 12, color: 'var(--colorGrey500)', margin: '4px 4px 0 4px' }}>
-                    Todos los productos en tu carrito soportan estos
-                    métodos. La configuración de precio/zona/peso se
-                    toma del primer producto.
+                  <p
+                    style={{ fontSize: 12, color: 'var(--colorGrey500)', margin: '4px 4px 0 4px' }}
+                  >
+                    Todos los productos en tu carrito soportan estos métodos. La configuración de
+                    precio/zona/peso se toma del primer producto.
                   </p>
                 ) : null}
               </div>
@@ -598,14 +603,13 @@ const CartPage = props => {
                   : 'Al ir a checkout eliges paquetería + capturas dirección de envío. El costo final incluye tu envío ya cotizado.'}
               </p>
               <div className={css.actions}>
-                <a href={cart.sellerSlug ? `https://${cart.sellerSlug}.xololo.mx` : '/'} className={css.linkBtn}>
+                <a
+                  href={cart.sellerSlug ? `https://${cart.sellerSlug}.xololo.mx` : '/'}
+                  className={css.linkBtn}
+                >
                   ← Seguir comprando
                 </a>
-                <button
-                  type="button"
-                  className={css.linkBtn}
-                  onClick={handleClear}
-                >
+                <button type="button" className={css.linkBtn} onClick={handleClear}>
                   Vaciar carrito
                 </button>
                 <button

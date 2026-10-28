@@ -63,10 +63,7 @@ export const useBuyerLocation = () => {
   useEffect(() => {
     const current = readStorage();
     if (current?.source === 'manual') return; // respeta elección explícita
-    if (
-      current?.setAt &&
-      Date.now() - new Date(current.setAt).getTime() < IP_DETECT_TTL_MS
-    ) {
+    if (current?.setAt && Date.now() - new Date(current.setAt).getTime() < IP_DETECT_TTL_MS) {
       return; // detección IP reciente, no re-detectar
     }
     let cancelled = false;

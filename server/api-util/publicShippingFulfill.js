@@ -15,7 +15,12 @@
 // porque el user y los emails requieren configurar templates aparte.
 
 const { getStripeBilling } = require('./stripeBilling');
-const { createShipment, getShipment, SkydropxQuoteError, SkydropxTimeoutError } = require('./skydropx');
+const {
+  createShipment,
+  getShipment,
+  SkydropxQuoteError,
+  SkydropxTimeoutError,
+} = require('./skydropx');
 const { sendEventNotifications } = require('./notifications');
 
 // Rehidrata el payload compacto que guardamos en PI metadata al crear
@@ -307,10 +312,7 @@ const fulfillPublicShippingGuide = async pi => {
         // persistir en el PI metadata sólo afecta polling/UI; el
         // email (F3) y /ops igual pueden recuperarla desde Skydropx.
         // eslint-disable-next-line no-console
-        console.error(
-          '[public-shipping-fulfill] no se pudo actualizar PI metadata:',
-          e?.message
-        );
+        console.error('[public-shipping-fulfill] no se pudo actualizar PI metadata:', e?.message);
       }
     }
 
@@ -350,10 +352,7 @@ const fulfillPublicShippingGuide = async pi => {
     // webhook de Stripe — esto evita emails sin PDF ni link útil.
     if (!labelUrl) {
       // eslint-disable-next-line no-console
-      console.log(
-        '[public-shipping-fulfill] no email aún: label pendiente para',
-        pi.id
-      );
+      console.log('[public-shipping-fulfill] no email aún: label pendiente para', pi.id);
       return { ok: true, shipmentId, trackingNumber, labelUrl: null };
     }
 
@@ -409,10 +408,7 @@ const fulfillPublicShippingGuide = async pi => {
   } catch (e) {
     if (e instanceof SkydropxQuoteError) {
       // eslint-disable-next-line no-console
-      console.error(
-        '[public-shipping-fulfill] Skydropx rechazó shipment:',
-        e.details || e.message
-      );
+      console.error('[public-shipping-fulfill] Skydropx rechazó shipment:', e.details || e.message);
       return { ok: false, skipped: 'skydropx_error', error: e.message };
     }
     // eslint-disable-next-line no-console

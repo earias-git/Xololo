@@ -30,8 +30,8 @@ const PayoutDocsWarning = () => {
       </span>
       <div className={css.content}>
         <p className={css.title}>
-          <strong>Documentos legales pendientes.</strong> Puedes publicar y vender normalmente,
-          pero necesitas completarlos para recibir tu primer pago.
+          <strong>Documentos legales pendientes.</strong> Puedes publicar y vender normalmente, pero
+          necesitas completarlos para recibir tu primer pago.
         </p>
         <NamedLink name={LEGAL_DOCS_STEP.routeName} className={css.cta}>
           Subir documentos →

@@ -106,8 +106,8 @@ const SmartSearchPage = () => {
               <span className={css.sparkle}>✨</span> Buscador con IA
             </h1>
             <p className={css.subtitle}>
-              Describe en lenguaje natural lo que necesitas. Nuestra IA entiende
-              intención, no sólo palabras.
+              Describe en lenguaje natural lo que necesitas. Nuestra IA entiende intención, no sólo
+              palabras.
             </p>
           </header>
 
@@ -120,11 +120,7 @@ const SmartSearchPage = () => {
               onChange={e => setInput(e.target.value)}
               autoFocus
             />
-            <button
-              type="submit"
-              className={css.searchBtn}
-              disabled={loading || !input.trim()}
-            >
+            <button type="submit" className={css.searchBtn} disabled={loading || !input.trim()}>
               {loading ? 'Buscando…' : 'Buscar'}
             </button>
           </form>
@@ -176,8 +172,8 @@ const SmartSearchPage = () => {
                 ) : (
                   <p className={css.intentText}>
                     Encontramos <strong>{results.total}</strong>{' '}
-                    {results.total === 1 ? 'resultado' : 'resultados'} en{' '}
-                    {results.processingTimeMS} ms.
+                    {results.total === 1 ? 'resultado' : 'resultados'} en {results.processingTimeMS}{' '}
+                    ms.
                   </p>
                 )}
                 {results.interpretation?.keywords?.length ? (

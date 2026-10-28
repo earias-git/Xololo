@@ -418,7 +418,11 @@ const DesignEditor = ({ listing, sellerLogoDataUrl, sellerName, onClose }) => {
             {FONT_CATEGORIES.map(cat => (
               <optgroup key={cat.key} label={cat.label}>
                 {CURATED_FONTS.filter(f => f.category === cat.key).map(f => (
-                  <option key={f.family} value={f.family} style={{ fontFamily: `'${f.family}', sans-serif` }}>
+                  <option
+                    key={f.family}
+                    value={f.family}
+                    style={{ fontFamily: `'${f.family}', sans-serif` }}
+                  >
                     {f.family}
                   </option>
                 ))}

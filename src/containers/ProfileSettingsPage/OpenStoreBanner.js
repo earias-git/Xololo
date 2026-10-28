@@ -18,9 +18,7 @@ const OpenStoreBanner = ({ currentUser }) => {
     <section className={css.root}>
       <div className={css.text}>
         <h3 className={css.title}>Abre tu Tienda Virtual Xololo</h3>
-        <p className={css.subtitle}>
-          Es fácil y de bajo costo — ¡sin comisiones por venta!
-        </p>
+        <p className={css.subtitle}>Es fácil y de bajo costo — ¡sin comisiones por venta!</p>
       </div>
       <NamedLink name="ManageStorePage" className={css.cta}>
         Abrir mi tienda →

@@ -164,7 +164,9 @@ const DeliveryCodeInput = ({ transactionId, onVerified }) => {
   const refs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
 
   const setDigit = (i, value) => {
-    const clean = String(value).replace(/\D/g, '').slice(0, 1);
+    const clean = String(value)
+      .replace(/\D/g, '')
+      .slice(0, 1);
     const next = digits.slice();
     next[i] = clean;
     setDigits(next);
@@ -278,7 +280,13 @@ const DeliveryCodeInput = ({ transactionId, onVerified }) => {
 // ────────────────────────────────────────────────────────────────
 // FreightQuoteForm (seller): input monto + descripción + carrier.
 // ────────────────────────────────────────────────────────────────
-const FreightQuoteForm = ({ transactionId, initialAmount, initialDescription, initialCarrier, onQuoted }) => {
+const FreightQuoteForm = ({
+  transactionId,
+  initialAmount,
+  initialDescription,
+  initialCarrier,
+  onQuoted,
+}) => {
   const [amountMxn, setAmountMxn] = useState(initialAmount ? String(initialAmount / 100) : '');
   const [description, setDescription] = useState(initialDescription || '');
   const [carrier, setCarrier] = useState(initialCarrier || '');
@@ -321,8 +329,8 @@ const FreightQuoteForm = ({ transactionId, initialAmount, initialDescription, in
   return (
     <>
       <p className={css.subtitle}>
-        Cotiza el envío de esta orden. El comprador verá el monto y podrá autorizarlo y pagarlo
-        para que puedas despachar.
+        Cotiza el envío de esta orden. El comprador verá el monto y podrá autorizarlo y pagarlo para
+        que puedas despachar.
       </p>
       <div className={css.freightRow}>
         <div>
@@ -378,9 +386,7 @@ const FreightQuoteForm = ({ transactionId, initialAmount, initialDescription, in
               </div>
               <div className={`${css.feeRow} ${css.feeMuted}`}>
                 <span>Serv. Administrativos Xololo ({bd.labels.xololoAdmin})</span>
-                <span>
-                  −{money(bd.xololoAdminSubunits + bd.ivaXololoAdminSubunits, 'MXN')}
-                </span>
+                <span>−{money(bd.xololoAdminSubunits + bd.ivaXololoAdminSubunits, 'MXN')}</span>
               </div>
               <div className={`${css.feeRow} ${css.feeTotal}`}>
                 <span>Recibirás</span>
@@ -390,7 +396,11 @@ const FreightQuoteForm = ({ transactionId, initialAmount, initialDescription, in
           );
         })()}
       </div>
-      <ActionButton label="Enviar cotización al comprador" onClick={submit} inProgress={inProgress} />
+      <ActionButton
+        label="Enviar cotización al comprador"
+        onClick={submit}
+        inProgress={inProgress}
+      />
       {error ? <div className={css.error}>{error}</div> : null}
     </>
   );
@@ -526,15 +536,12 @@ const FreightAuthorizePayment = ({
         </div>
         <div className={`${css.feeRow} ${css.feeMuted}`}>
           <span>Motor de Cobro ({breakdown.labels.motorCobro})</span>
-          <span>
-            −{money(breakdown.motorCobroSubunits + breakdown.ivaMotorSubunits, currency)}
-          </span>
+          <span>−{money(breakdown.motorCobroSubunits + breakdown.ivaMotorSubunits, currency)}</span>
         </div>
         <div className={`${css.feeRow} ${css.feeMuted}`}>
           <span>Serv. Administrativos Xololo ({breakdown.labels.xololoAdmin})</span>
           <span>
-            −
-            {money(breakdown.xololoAdminSubunits + breakdown.ivaXololoAdminSubunits, currency)}
+            −{money(breakdown.xololoAdminSubunits + breakdown.ivaXololoAdminSubunits, currency)}
           </span>
         </div>
         <div className={`${css.feeRow} ${css.feeMuted}`}>

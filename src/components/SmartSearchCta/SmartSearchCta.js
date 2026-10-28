@@ -11,12 +11,14 @@ const SmartSearchCta = () => (
   <section className={css.wrapper} aria-label="Búsqueda con IA">
     <NamedLink name="SmartSearchPage" className={css.card}>
       <div className={css.left}>
-        <span className={css.sparkle} aria-hidden="true">✨</span>
+        <span className={css.sparkle} aria-hidden="true">
+          ✨
+        </span>
         <div>
           <h3 className={css.title}>Prueba el buscador con IA</h3>
           <p className={css.subtitle}>
-            Describe lo que buscas con tus palabras y nuestra IA encuentra los
-            productos y servicios más relevantes.
+            Describe lo que buscas con tus palabras y nuestra IA encuentra los productos y servicios
+            más relevantes.
           </p>
         </div>
       </div>

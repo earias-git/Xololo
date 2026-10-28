@@ -33,7 +33,11 @@ const LineItemAdditionalItemsMaybe = props => {
   return (
     <>
       {additionalItems.map((li, idx) => {
-        const quantity = li.units ? li.units.toString() : li.quantity ? li.quantity.toString() : null;
+        const quantity = li.units
+          ? li.units.toString()
+          : li.quantity
+          ? li.quantity.toString()
+          : null;
         const unitPrice = formatMoney(intl, li.unitPrice);
         const total = formatMoney(intl, li.lineTotal);
         const title = titles?.[idx];

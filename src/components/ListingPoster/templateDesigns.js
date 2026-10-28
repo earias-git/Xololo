@@ -42,7 +42,9 @@ export const LOGO_SIZE_DEFAULT = 110;
 const wrapTspans = (text, fontPx, maxWidthPx, maxLines) => {
   const avgCharWidth = fontPx * 0.55;
   const maxChars = Math.max(6, Math.floor(maxWidthPx / avgCharWidth));
-  const words = String(text || '').split(/\s+/).filter(Boolean);
+  const words = String(text || '')
+    .split(/\s+/)
+    .filter(Boolean);
   const lines = [];
   let line = '';
   for (const w of words) {
@@ -539,14 +541,7 @@ const LabelVerticalDesign = props => {
 
         {/* QR abajo izquierda + CTA abajo derecha */}
         {qrHref ? <image href={qrHref} x={40} y={880} width={120} height={120} /> : null}
-        <text
-          x={670}
-          y={920}
-          fontSize={18}
-          fontWeight={fontWeight}
-          textAnchor="end"
-          fill="#444444"
-        >
+        <text x={670} y={920} fontSize={18} fontWeight={fontWeight} textAnchor="end" fill="#444444">
           {cta}
         </text>
         <text x={670} y={960} fontSize={13} textAnchor="end" fill="#888888">

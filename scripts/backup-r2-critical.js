@@ -43,9 +43,7 @@ const client = new S3Client({
 });
 
 const args = process.argv.slice(2);
-const outDir = args.includes('--out')
-  ? args[args.indexOf('--out') + 1]
-  : path.resolve('./backups');
+const outDir = args.includes('--out') ? args[args.indexOf('--out') + 1] : path.resolve('./backups');
 
 const todayDir = path.join(outDir, new Date().toISOString().slice(0, 10));
 
@@ -81,7 +79,11 @@ const downloadKey = async key => {
   return Buffer.concat(chunks);
 };
 
-const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
+const sha256 = buf =>
+  crypto
+    .createHash('sha256')
+    .update(buf)
+    .digest('hex');
 
 const main = async () => {
   fs.mkdirSync(todayDir, { recursive: true });
@@ -121,10 +123,7 @@ const main = async () => {
     total_bytes: manifest.files.reduce((s, f) => s + f.size, 0),
     errors: manifest.errors.length,
   };
-  fs.writeFileSync(
-    path.join(todayDir, 'manifest.json'),
-    JSON.stringify(manifest, null, 2)
-  );
+  fs.writeFileSync(path.join(todayDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
   console.log(`\n[backup] done:`);
   console.log(`  files:  ${manifest.summary.total_files}`);

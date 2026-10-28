@@ -31,9 +31,7 @@ const QRCode = require('qrcode');
 
 // Secreto para FIRMAR (siempre el actual).
 const TICKET_SECRET = () =>
-  process.env.EVENT_TICKET_SECRET ||
-  process.env.OPERATOR_SESSION_SECRET ||
-  null;
+  process.env.EVENT_TICKET_SECRET || process.env.OPERATOR_SESSION_SECRET || null;
 
 // Secretos para VERIFICAR (actual + previo si existe).
 const TICKET_VERIFY_SECRETS = () => {
@@ -53,11 +51,9 @@ const TICKET_TTL_SECONDS = 180 * 24 * 60 * 60; // 180 días desde emisión
 const signTicketToken = ({ txId, listingId, buyerId }) => {
   const secret = TICKET_SECRET();
   if (!secret || !txId || !listingId || !buyerId) return null;
-  return jwt.sign(
-    { txId, listingId, buyerId, kind: 'event_ticket' },
-    secret,
-    { expiresIn: TICKET_TTL_SECONDS }
-  );
+  return jwt.sign({ txId, listingId, buyerId, kind: 'event_ticket' }, secret, {
+    expiresIn: TICKET_TTL_SECONDS,
+  });
 };
 
 /**
@@ -118,7 +114,9 @@ const buildTicketBodyHtml = ({ buyer, listing, event, qrDataUrl, quantity }) => 
     <div style="display:inline-block;padding:4px 12px;background:#1a73e8;color:#fff;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.6px;">🎫 BOLETO DIGITAL</div>
     <h2 style="margin:12px 0 6px;font-size:20px;line-height:1.3;">${title}</h2>
     <p style="margin:0;font-size:15px;line-height:1.5;">📅 <strong>${date}${dateEnd}</strong></p>
-    ${location ? `<p style="margin:4px 0 0;font-size:14px;line-height:1.5;">📍 ${location}</p>` : ''}
+    ${
+      location ? `<p style="margin:4px 0 0;font-size:14px;line-height:1.5;">📍 ${location}</p>` : ''
+    }
     <p style="margin:10px 0 0;font-size:13.5px;color:#444;">Asistente: <strong>${name}</strong> · ${qty}</p>
   </div>
 

@@ -143,8 +143,7 @@ export const emailFormatValid = message => value => {
 // Rechaza cualquier cosa que no llegue a 10 dígitos limpios, o
 // combinaciones que no empiecen con lada México cuando exceden 10.
 const PHONE_MX_RE = /^\d{10}$|^52\d{10}$|^521\d{10}$/;
-const normalizePhone = raw =>
-  String(raw || '').replace(/[\s\-().+]/g, '');
+const normalizePhone = raw => String(raw || '').replace(/[\s\-().+]/g, '');
 export const phoneMxFormatValid = message => value => {
   if (!value) return VALID; // dejamos que `required` se encargue si el campo es obligatorio
   const clean = normalizePhone(value);

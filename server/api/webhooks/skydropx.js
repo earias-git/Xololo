@@ -113,7 +113,9 @@ module.exports = async (req, res) => {
   // El body llega como Buffer (bodyParser.raw). Necesitamos ambos:
   // - Buffer para validar HMAC (bytes exactos)
   // - JSON parseado para procesar
-  const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body || {}));
+  const rawBody = Buffer.isBuffer(req.body)
+    ? req.body
+    : Buffer.from(JSON.stringify(req.body || {}));
 
   if (!isAuthenticated(req, rawBody)) {
     return res.status(401).json({ error: 'unauthorized' });

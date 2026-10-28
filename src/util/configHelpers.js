@@ -20,7 +20,10 @@ const printErrorIfHostedAssetIsMissing = props => {
 // Functions to create built-in specs for category setup.
 const depthFirstSearch = (category, iterator, depth = 0) => {
   const { subcategories = [] } = category;
-  return iterator(depth, subcategories.map(cat => depthFirstSearch(cat, iterator, depth + 1)));
+  return iterator(
+    depth,
+    subcategories.map(cat => depthFirstSearch(cat, iterator, depth + 1))
+  );
 };
 // Pick maximum depth from subcategories or default to given depth parameter
 const getMaxDepth = (depth, subcategories) =>
@@ -869,7 +872,9 @@ const isLegacyDeliveryField = fieldConfig => {
   const opts = Array.isArray(fieldConfig?.enumOptions) ? fieldConfig.enumOptions : [];
   const optLabels = opts.map(o => String(o?.label || '').toLowerCase());
   const hasPaqueteria = optLabels.some(l => l.includes('paqueter'));
-  const hasCodigoLocal = optLabels.some(l => l.includes('código local') || l.includes('codigo local'));
+  const hasCodigoLocal = optLabels.some(
+    l => l.includes('código local') || l.includes('codigo local')
+  );
   if (hasPaqueteria && hasCodigoLocal) return true;
   return false;
 };

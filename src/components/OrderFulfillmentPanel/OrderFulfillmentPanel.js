@@ -81,8 +81,7 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
           cart_parcel_incomplete:
             'Alguno de los productos del pedido no tiene peso o dimensiones definidos.',
           skydropx_rejected: 'Skydropx rechazó la guía. Detalle abajo.',
-          label_timeout:
-            'La guía se creó pero el PDF tarda. Recarga esta página en un minuto.',
+          label_timeout: 'La guía se creó pero el PDF tarda. Recarga esta página en un minuto.',
           internal: 'Error interno del servidor. Detalle abajo.',
         };
         setGenerationError(
@@ -97,9 +96,7 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
           ...(data.error ? { error: data.error } : {}),
           ...(data.details ? { details: data.details } : {}),
           ...(data.missing ? { missing: data.missing } : {}),
-          ...(data.offendingListingId
-            ? { offendingListingId: data.offendingListingId }
-            : {}),
+          ...(data.offendingListingId ? { offendingListingId: data.offendingListingId } : {}),
           httpStatus: res.status,
         };
         setGenerationErrorDetails(debugDetails);
@@ -151,8 +148,8 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
           ) : null}
         </div>
         <p className={css.tinyHint}>
-          Pega la guía impresa en el paquete siguiendo la Foto 3 que subiste, y
-          entrégalo al chofer del courier cuando pase a recoger.
+          Pega la guía impresa en el paquete siguiendo la Foto 3 que subiste, y entrégalo al chofer
+          del courier cuando pase a recoger.
         </p>
       </section>
     );
@@ -165,8 +162,8 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
       <div className={css.header}>
         <h3 className={css.title}>Preparar envío</h3>
         <p className={css.subtitle}>
-          El buyer eligió {xShipping.rate.carrier} · {xShipping.rate.service}. Sigue
-          los pasos para generar la guía.
+          El buyer eligió {xShipping.rate.carrier} · {xShipping.rate.service}. Sigue los pasos para
+          generar la guía.
         </p>
       </div>
 
@@ -183,9 +180,8 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
             fontSize: 13,
           }}
         >
-          <strong>📍 Entrega en sucursal</strong> — {xShipping.rate.carrier} no
-          hace recolección en domicilio. Deberás llevar el paquete con la guía
-          pegada a una sucursal del carrier.
+          <strong>📍 Entrega en sucursal</strong> — {xShipping.rate.carrier} no hace recolección en
+          domicilio. Deberás llevar el paquete con la guía pegada a una sucursal del carrier.
         </div>
       ) : null}
 
@@ -203,14 +199,10 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
         {!started ? (
           <>
             <p className={css.stepBody}>
-              Al confirmar, el buyer recibe una notificación "Tu vendedor está
-              preparando tu pedido" y el timeline avanza.
+              Al confirmar, el buyer recibe una notificación "Tu vendedor está preparando tu pedido"
+              y el timeline avanza.
             </p>
-            <button
-              type="button"
-              className={css.primaryCta}
-              onClick={() => setStarted(true)}
-            >
+            <button type="button" className={css.primaryCta} onClick={() => setStarted(true)}>
               Sí, empiezo a preparar
             </button>
           </>
@@ -256,8 +248,8 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
           {allPhotosDone ? (
             <>
               <p className={css.stepBody}>
-                Al generarla se crea la etiqueta PDF con {xShipping.rate.carrier} y
-                se activa el seguro SOS Protección hasta $100,000.
+                Al generarla se crea la etiqueta PDF con {xShipping.rate.carrier} y se activa el
+                seguro SOS Protección hasta $100,000.
               </p>
               <button
                 type="button"

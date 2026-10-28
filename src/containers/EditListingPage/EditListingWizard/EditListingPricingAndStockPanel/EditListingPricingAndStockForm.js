@@ -169,11 +169,7 @@ export const EditListingPricingAndStockForm = props => (
       // incluso si publicData.condition no está persistido (listings
       // viejos) o si react-final-form aún no hidrató values.condition.
       // Para eventos, la condición no aplica — es ticket a una fecha.
-      const effectiveCondition = isEvent
-        ? null
-        : isCasual
-          ? 'used'
-          : values?.condition;
+      const effectiveCondition = isEvent ? null : isCasual ? 'used' : values?.condition;
 
       const intl = useIntl();
       const priceValidators = getPriceValidators(
@@ -341,8 +337,8 @@ export const EditListingPricingAndStockForm = props => (
               🎫 Cupo del evento: <strong>{eventCapacity || '—'} personas</strong>
               <br />
               <small>
-                Lo declaraste en Características. Se usa automáticamente como
-                cantidad de boletos a la venta — no necesitas registrarlo aquí.
+                Lo declaraste en Características. Se usa automáticamente como cantidad de boletos a
+                la venta — no necesitas registrarlo aquí.
               </small>
             </div>
           ) : null}

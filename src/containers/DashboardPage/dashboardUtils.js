@@ -92,8 +92,18 @@ export const autoGranularity = (fromYmd, toYmd) => {
 //   [{ key, label, from, to, count, salesAmount, providerAmount, commissionAmount }]
 
 const monthLabels = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
 ];
 
 const bucketKeyFor = (date, granularity) => {
@@ -120,7 +130,9 @@ const labelFor = (bucketKey, granularity) => {
   }
   if (granularity === 'week') {
     const end = addDays(d, 6);
-    return `${d.getDate()} ${monthLabels[d.getMonth()]} – ${end.getDate()} ${monthLabels[end.getMonth()]}`;
+    return `${d.getDate()} ${monthLabels[d.getMonth()]} – ${end.getDate()} ${
+      monthLabels[end.getMonth()]
+    }`;
   }
   return `${monthLabels[d.getMonth()]} ${d.getFullYear()}`;
 };

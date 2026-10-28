@@ -41,7 +41,9 @@ const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 //   { error: 'internal', err }     → cualquier otra falla
 // Nunca throws: el caller decide cómo mapear a status HTTP o a fallback.
 const resolveSellerBySlug = async slug => {
-  const rawSlug = String(slug || '').trim().toLowerCase();
+  const rawSlug = String(slug || '')
+    .trim()
+    .toLowerCase();
   if (!rawSlug || !SLUG_RE.test(rawSlug)) {
     return { error: 'invalid_slug' };
   }

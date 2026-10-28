@@ -33,9 +33,7 @@ export const isLocalDeliveryCovered = (localDeliveryCfg, buyerAddress = {}) => {
   if (!covStates.includes(normState)) return false;
 
   const covMunis = localDeliveryCfg.coverageMunicipios || {};
-  const municipiosForState = Array.isArray(covMunis[normState])
-    ? covMunis[normState]
-    : [];
+  const municipiosForState = Array.isArray(covMunis[normState]) ? covMunis[normState] : [];
   // Sin restricción de municipios en el estado → cubierto.
   if (municipiosForState.length === 0) return true;
 

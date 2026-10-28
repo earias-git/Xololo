@@ -31,11 +31,20 @@ const { sendEventNotifications } = require('../api-util/notifications');
 const TAX_CODE_META = {
   exento_9_iv: { label: 'Bienes muebles usados por particular', article: 'Art. 9 fracc. IV LIVA' },
   exento_9_iii: { label: 'Libro/revista/obra del propio autor', article: 'Art. 9 fracc. III LIVA' },
-  tasa_cero_2a_i_a: { label: 'Animales y vegetales no industrializados', article: 'Art. 2-A I-a LIVA' },
+  tasa_cero_2a_i_a: {
+    label: 'Animales y vegetales no industrializados',
+    article: 'Art. 2-A I-a LIVA',
+  },
   tasa_cero_2a_i_b: { label: 'Alimentos NO procesados', article: 'Art. 2-A I-b LIVA' },
   tasa_cero_2a_i_d: { label: 'Ixtle, palma y lechuguilla', article: 'Art. 2-A I-d LIVA' },
-  tasa_cero_2a_i_f: { label: 'Fertilizantes y plaguicidas agrícolas', article: 'Art. 2-A I-f LIVA' },
-  tasa_cero_2a_i_i: { label: 'Libros editados por el propio contribuyente', article: 'Art. 2-A I-i LIVA' },
+  tasa_cero_2a_i_f: {
+    label: 'Fertilizantes y plaguicidas agrícolas',
+    article: 'Art. 2-A I-f LIVA',
+  },
+  tasa_cero_2a_i_i: {
+    label: 'Libros editados por el propio contribuyente',
+    article: 'Art. 2-A I-i LIVA',
+  },
   tasa_cero_2a_i_j: { label: 'Toallas sanitarias, tampones y copas', article: 'Art. 2-A I-j LIVA' },
   exento_15_iv: { label: 'Enseñanza con RVOE o preescolar', article: 'Art. 15 IV LIVA' },
   exento_15_xiv: { label: 'Servicios médicos con cédula', article: 'Art. 15 XIV LIVA' },
@@ -140,8 +149,7 @@ const list = async (req, res) => {
           profileByAuthor.set(id, {
             email: u?.attributes?.email || '',
             sellerMode: u?.attributes?.profile?.publicData?.sellerMode || 'store',
-            personType:
-              u?.attributes?.profile?.protectedData?.xololoTaxProfile?.personType || null,
+            personType: u?.attributes?.profile?.protectedData?.xololoTaxProfile?.personType || null,
           });
         } catch (_) {
           profileByAuthor.set(id, { email: '', sellerMode: 'store', personType: null });
@@ -201,7 +209,10 @@ const review = async (req, res) => {
     if (!existing || !existing.code) {
       return res
         .status(400)
-        .json({ error: 'invalid_request', details: 'El listing no tiene clasificación fiscal declarada.' });
+        .json({
+          error: 'invalid_request',
+          details: 'El listing no tiene clasificación fiscal declarada.',
+        });
     }
 
     const reviewedBy = req.operator?.email || null;
@@ -291,7 +302,9 @@ const aiClassify = async (req, res) => {
     const included = resp.data.included || [];
     const tc = l?.attributes?.publicData?.taxClassification;
     if (!tc || !tc.code) {
-      return res.status(400).json({ error: 'invalid_request', details: 'Listing sin clasificación.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'Listing sin clasificación.' });
     }
     // Idempotencia: si ya hay un aiReview reciente y no se pide force,
     // devolvemos el que hay.
@@ -305,7 +318,8 @@ const aiClassify = async (req, res) => {
     let personType = null;
     let sellerMode = 'store';
     if (authorInc) {
-      personType = authorInc.attributes?.profile?.protectedData?.xololoTaxProfile?.personType || null;
+      personType =
+        authorInc.attributes?.profile?.protectedData?.xololoTaxProfile?.personType || null;
       sellerMode = authorInc.attributes?.profile?.publicData?.sellerMode || 'store';
     }
     // Si el include no trajo protectedData, hacemos un show del user.
@@ -314,8 +328,7 @@ const aiClassify = async (req, res) => {
         const u = await isdk.users.show({ id: authorId });
         personType =
           u.data.data?.attributes?.profile?.protectedData?.xololoTaxProfile?.personType || null;
-        sellerMode =
-          u.data.data?.attributes?.profile?.publicData?.sellerMode || sellerMode;
+        sellerMode = u.data.data?.attributes?.profile?.publicData?.sellerMode || sellerMode;
       } catch (_) {
         /* ignore */
       }

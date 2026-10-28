@@ -41,8 +41,8 @@ export const ErrorBox = ({ error, code }) => {
       <div className={css.gateBlocked}>
         <h3>Acceso restringido</h3>
         <p>
-          Esta sección es sólo para operadores de Xololo. Si eres parte del equipo,
-          pide que tu email se agregue a <code>XOLOLO_ADMIN_EMAILS</code> en el server.
+          Esta sección es sólo para operadores de Xololo. Si eres parte del equipo, pide que tu
+          email se agregue a <code>XOLOLO_ADMIN_EMAILS</code> en el server.
         </p>
       </div>
     );

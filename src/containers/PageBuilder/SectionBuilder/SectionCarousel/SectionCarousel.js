@@ -112,7 +112,9 @@ const SectionCarousel = props => {
   }, []);
 
   const isAtEnd = slider => {
-    return slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - END_OF_SCROLL_THRESHOLD_PX;
+    return (
+      slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - END_OF_SCROLL_THRESHOLD_PX
+    );
   };
 
   const advanceSlide = () => {

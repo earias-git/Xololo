@@ -71,9 +71,7 @@ module.exports = async (req, res) => {
     const stripe = getStripeBilling();
     if (!stripe) {
       // eslint-disable-next-line no-console
-      console.error(
-        '[public-shipping-create-payment] STRIPE_SECRET_KEY ausente'
-      );
+      console.error('[public-shipping-create-payment] STRIPE_SECRET_KEY ausente');
       return res.status(500).json({ error: 'stripe_missing' });
     }
 
@@ -144,10 +142,7 @@ module.exports = async (req, res) => {
       const chunkSize = 450;
       const chunks = Math.ceil(payloadJson.length / chunkSize);
       for (let i = 0; i < chunks; i++) {
-        metadata[`xololoPayload${i + 1}`] = payloadJson.slice(
-          i * chunkSize,
-          (i + 1) * chunkSize
-        );
+        metadata[`xololoPayload${i + 1}`] = payloadJson.slice(i * chunkSize, (i + 1) * chunkSize);
       }
       metadata.xololoPayloadChunks = String(chunks);
     }

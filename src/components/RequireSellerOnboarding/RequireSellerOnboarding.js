@@ -41,7 +41,8 @@ const useHasPublishedListings = hasUser => {
     fetch(`${apiBaseUrl()}/api/seller-has-listings`, { credentials: 'include' })
       .then(res => (res.ok ? res.json() : Promise.reject(new Error('bad_status'))))
       .then(d => {
-        if (!cancelled) setState({ checked: true, hasListings: !!d?.hasPublishedListings, failed: false });
+        if (!cancelled)
+          setState({ checked: true, hasListings: !!d?.hasPublishedListings, failed: false });
       })
       .catch(() => {
         if (!cancelled) setState({ checked: true, hasListings: false, failed: true });

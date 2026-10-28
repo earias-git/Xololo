@@ -38,10 +38,7 @@ module.exports = async (req, res) => {
       setImmediate(() => {
         analyzeListing({ listingId, force }).catch(err => {
           // eslint-disable-next-line no-console
-          console.error(
-            `[ai-analyze-listing] async failed for ${listingId}:`,
-            err?.message
-          );
+          console.error(`[ai-analyze-listing] async failed for ${listingId}:`, err?.message);
         });
       });
       return res.status(202).json({ ok: true, mode: 'async', listingId });
@@ -55,9 +52,11 @@ module.exports = async (req, res) => {
     console.error('[ai-analyze-listing] error:', err?.message);
     const code = err?.message || 'internal';
     const status =
-      code === 'listing_not_found' ? 404 :
-      code === 'ai_not_configured' || code === 'integration_sdk_missing' ? 503 :
-      500;
+      code === 'listing_not_found'
+        ? 404
+        : code === 'ai_not_configured' || code === 'integration_sdk_missing'
+        ? 503
+        : 500;
     return res.status(status).json({ error: code });
   }
 };

@@ -91,9 +91,8 @@ const analyzeImage = async ({ imageUrl, listingTitle, listingType, category }) =
       status: result.moderation?.status || 'safe',
       category: result.moderation?.category || null,
       reasons: Array.isArray(result.moderation?.reasons) ? result.moderation.reasons : [],
-      confidence: typeof result.moderation?.confidence === 'number'
-        ? result.moderation.confidence
-        : 0,
+      confidence:
+        typeof result.moderation?.confidence === 'number' ? result.moderation.confidence : 0,
       notes: result.moderation?.notes || '',
     },
     autoDescription: result.autoDescription || '',
@@ -116,7 +115,9 @@ const dedupLower = arr => {
   const seen = new Set();
   const out = [];
   for (const v of arr || []) {
-    const s = String(v || '').trim().toLowerCase();
+    const s = String(v || '')
+      .trim()
+      .toLowerCase();
     if (s && !seen.has(s)) {
       seen.add(s);
       out.push(s);
@@ -343,9 +344,7 @@ const analyzeListing = async ({ listingId, force = false } = {}) => {
   }
 
   // 4. Merge con lo que ya existía.
-  const mergedPerImage = force
-    ? perImageUpdates
-    : { ...existingPerImage, ...perImageUpdates };
+  const mergedPerImage = force ? perImageUpdates : { ...existingPerImage, ...perImageUpdates };
 
   // 5. Agregar.
   const aggregated = aggregatePerImage(mergedPerImage);

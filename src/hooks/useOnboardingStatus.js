@@ -109,7 +109,16 @@ export const useOnboardingStatus = (currentUser, enabled = true) => {
   const legalDocs = useLightFetch('/api/seller-legal-docs', fetchesEnabled);
   const subscription = useLightFetch('/api/seller-subscription', fetchesEnabled);
 
-  const empty = { hasUser, loading: false, failed: false, results: [], doneCount: 0, total: 0, pct: 0, allDone: false };
+  const empty = {
+    hasUser,
+    loading: false,
+    failed: false,
+    results: [],
+    doneCount: 0,
+    total: 0,
+    pct: 0,
+    allDone: false,
+  };
   if (!hasUser || !enabled) {
     return empty;
   }
@@ -137,9 +146,7 @@ export const useOnboardingStatus = (currentUser, enabled = true) => {
 
   const results = [
     ...filteredSteps.map(step => ({ ...step, done: step.check(currentUser) })),
-    ...(isCasual
-      ? []
-      : [{ ...SUBSCRIPTION_STEP, done: subscription.data?.status === 'active' }]),
+    ...(isCasual ? [] : [{ ...SUBSCRIPTION_STEP, done: subscription.data?.status === 'active' }]),
     { ...LEGAL_DOCS_STEP, done: isLegalDocsStepDone(legalDocs.data) },
   ];
   const doneCount = results.filter(r => r.done).length;

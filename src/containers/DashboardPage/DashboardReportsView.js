@@ -77,9 +77,22 @@ const DashboardReportsView = () => {
           </div>
           {periodKey === 'custom' ? (
             <div className={css.customRange}>
-              <input type="date" value={customFrom} max={customTo} onChange={e => setCustomFrom(e.target.value)} aria-label="Desde" />
+              <input
+                type="date"
+                value={customFrom}
+                max={customTo}
+                onChange={e => setCustomFrom(e.target.value)}
+                aria-label="Desde"
+              />
               <span aria-hidden>→</span>
-              <input type="date" value={customTo} min={customFrom} max={ymdOf()} onChange={e => setCustomTo(e.target.value)} aria-label="Hasta" />
+              <input
+                type="date"
+                value={customTo}
+                min={customFrom}
+                max={ymdOf()}
+                onChange={e => setCustomTo(e.target.value)}
+                aria-label="Hasta"
+              />
               {customError ? <span className={css.customError}>{customError}</span> : null}
             </div>
           ) : null}
@@ -89,8 +102,7 @@ const DashboardReportsView = () => {
       <section className={css.chartSection}>
         <h3 className={css.sectionTitle}>Exportar ventas a CSV</h3>
         <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--colorGrey500)' }}>
-          Descarga las transacciones del período en formato compatible con Excel MX
-          (UTF-8 con BOM).
+          Descarga las transacciones del período en formato compatible con Excel MX (UTF-8 con BOM).
         </p>
         <div className={css.reportRow}>
           <div className={css.reportRowInfo}>
@@ -108,12 +120,7 @@ const DashboardReportsView = () => {
             )}
           </div>
           {downloadUrl ? (
-            <a
-              href={downloadUrl}
-              className={css.reportBtn}
-              download={filename}
-              rel="nofollow"
-            >
+            <a href={downloadUrl} className={css.reportBtn} download={filename} rel="nofollow">
               Descargar CSV
             </a>
           ) : (
@@ -122,7 +129,16 @@ const DashboardReportsView = () => {
             </button>
           )}
         </div>
-        <p style={{ margin: '12px 0 4px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--colorGrey500)', fontWeight: 500 }}>
+        <p
+          style={{
+            margin: '12px 0 4px',
+            fontSize: 11,
+            textTransform: 'uppercase',
+            letterSpacing: '0.03em',
+            color: 'var(--colorGrey500)',
+            fontWeight: 500,
+          }}
+        >
           Columnas incluidas
         </p>
         <div className={css.csvCols}>
@@ -212,9 +228,8 @@ const MonthlyEmailBlock = () => {
     <section className={css.chartSection}>
       <h3 className={css.sectionTitle}>Reporte mensual por email</h3>
       <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--colorGrey500)' }}>
-        Cada día 1 del mes te llegará un resumen del mes anterior — ventas totales,
-        top productos, comparativa vs mes previo. Puedes enviarte uno de prueba
-        ahora mismo.
+        Cada día 1 del mes te llegará un resumen del mes anterior — ventas totales, top productos,
+        comparativa vs mes previo. Puedes enviarte uno de prueba ahora mismo.
       </p>
       <div className={css.reportRow}>
         <div className={css.reportRowInfo}>
@@ -233,18 +248,14 @@ const MonthlyEmailBlock = () => {
         </button>
       </div>
       {status.state === 'ok' ? (
-        <p style={{ margin: '10px 0 0', fontSize: 13, color: '#065f46' }}>
-          ✓ {status.message}
-        </p>
+        <p style={{ margin: '10px 0 0', fontSize: 13, color: '#065f46' }}>✓ {status.message}</p>
       ) : null}
       {status.state === 'error' ? (
-        <p style={{ margin: '10px 0 0', fontSize: 13, color: '#991b1b' }}>
-          ✗ {status.message}
-        </p>
+        <p style={{ margin: '10px 0 0', fontSize: 13, color: '#991b1b' }}>✗ {status.message}</p>
       ) : null}
       <p className={css.alertsFoot} style={{ marginTop: 10 }}>
-        El envío programado del día 1 está gated por MONTHLY_REPORT_ENABLED en Render —
-        se activará una vez validado el template. Por ahora sólo el botón de prueba manda.
+        El envío programado del día 1 está gated por MONTHLY_REPORT_ENABLED en Render — se activará
+        una vez validado el template. Por ahora sólo el botón de prueba manda.
       </p>
     </section>
   );

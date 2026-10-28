@@ -122,13 +122,13 @@ export const LandingPageComponent = props => {
   const productsToShow = featuredProducts?.length
     ? featuredProducts
     : featuredLoading
-      ? []
-      : featuredProductsPlaceholder;
+    ? []
+    : featuredProductsPlaceholder;
   const servicesToShow = featuredServices?.length
     ? featuredServices
     : featuredLoading
-      ? []
-      : featuredServicesPlaceholder;
+    ? []
+    : featuredServicesPlaceholder;
   // XOLOLO: segunda mano NO cae a placeholders — si no hay inventario real
   // de usados aún, la sección completa se omite para no mostrar bikes nuevas
   // bajo un rótulo de "segunda mano".
@@ -234,11 +234,6 @@ const mapDispatchToProps = dispatch => ({
 // lifecycle hook.
 //
 // See: https://github.com/ReactTraining/react-router/issues/4671
-const LandingPage = compose(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )
-)(LandingPageComponent);
+const LandingPage = compose(connect(mapStateToProps, mapDispatchToProps))(LandingPageComponent);
 
 export default LandingPage;

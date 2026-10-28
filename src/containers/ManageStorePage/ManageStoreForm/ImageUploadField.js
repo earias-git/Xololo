@@ -109,9 +109,7 @@ const ImageUploadField = ({ name, kind, label, hint, aspectRatio }) => {
           fileInputRef.current?.click();
         };
 
-        const previewStyle = aspectRatio
-          ? { aspectRatio, background: '#f7f4ee' }
-          : undefined;
+        const previewStyle = aspectRatio ? { aspectRatio, background: '#f7f4ee' } : undefined;
 
         return (
           <div className={css.wrap}>
@@ -134,7 +132,9 @@ const ImageUploadField = ({ name, kind, label, hint, aspectRatio }) => {
                 />
               ) : (
                 <div className={css.dropzoneEmpty}>
-                  <span className={css.dropzoneIcon} aria-hidden="true">📁</span>
+                  <span className={css.dropzoneIcon} aria-hidden="true">
+                    📁
+                  </span>
                   <p className={css.dropzoneText}>
                     Arrastra tu imagen aquí o{' '}
                     <button type="button" onClick={openPicker} className={css.dropzoneBtn}>

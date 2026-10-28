@@ -53,9 +53,7 @@ const ListingCard = ({ listing, sellerLogoDataUrl, sellerName }) => {
         )}
         <div className={css.promoCardMain}>
           <h3 className={css.promoCardTitle}>{listing.title}</h3>
-          <p className={css.promoCardPrice}>
-            {formatSubunitsAsMxn(listing.priceSubunits)}
-          </p>
+          <p className={css.promoCardPrice}>{formatSubunitsAsMxn(listing.priceSubunits)}</p>
           {listing.viewCount > 0 ? (
             <p className={css.promoCardMeta}>{listing.viewCount} vistas</p>
           ) : null}

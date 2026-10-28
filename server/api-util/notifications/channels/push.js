@@ -58,9 +58,7 @@ const send = async ({ actor, event, template, context }) => {
   const failed = results.filter(r => r.status === 'rejected').length;
 
   // eslint-disable-next-line no-console
-  console.log(
-    `[notifications:push] → ${actor} · ${event} · ${sent}/${results.length} entregadas`
-  );
+  console.log(`[notifications:push] → ${actor} · ${event} · ${sent}/${results.length} entregadas`);
 
   return { sent, failed, mode: 'web_push' };
 };

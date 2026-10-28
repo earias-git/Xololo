@@ -105,9 +105,7 @@ const list = async (req, res) => {
           emailByAuthor.set(id, u?.attributes?.email || '');
           nameByAuthor.set(
             id,
-            u?.attributes?.profile?.displayName ||
-              u?.attributes?.profile?.firstName ||
-              ''
+            u?.attributes?.profile?.displayName || u?.attributes?.profile?.firstName || ''
           );
         } catch (_) {
           emailByAuthor.set(id, '');

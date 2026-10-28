@@ -106,8 +106,7 @@ const SubscriptionPageComponent = () => {
   // XOLOLO: seller casual no paga suscripción. El redirect va DESPUÉS de
   // los hooks para no romper rules-of-hooks; se evalúa al final antes
   // del render principal.
-  const isCasual =
-    !!currentUser?.id && getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
+  const isCasual = !!currentUser?.id && getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
 
   const load = () => {
     setState(s => ({ ...s, status: 'loading' }));
@@ -128,7 +127,10 @@ const SubscriptionPageComponent = () => {
     const sessionId = params.get('session_id');
 
     if (checkout === 'canceled') {
-      setBanner({ tone: 'info', text: 'El pago se canceló — puedes intentarlo de nuevo cuando quieras.' });
+      setBanner({
+        tone: 'info',
+        text: 'El pago se canceló — puedes intentarlo de nuevo cuando quieras.',
+      });
       history.replace({ pathname: location.pathname });
       return;
     }
@@ -137,7 +139,10 @@ const SubscriptionPageComponent = () => {
       confirmedRef.current = true;
       postJson(`${apiBaseUrl()}/api/seller-subscription`, { sessionId }).then(
         () => {
-          setBanner({ tone: 'success', text: '¡Suscripción activada! Ya puedes publicar en Xololo.' });
+          setBanner({
+            tone: 'success',
+            text: '¡Suscripción activada! Ya puedes publicar en Xololo.',
+          });
           history.replace({ pathname: location.pathname });
           load();
         },
@@ -188,7 +193,10 @@ const SubscriptionPageComponent = () => {
         topbar={
           <>
             <TopbarContainer />
-            <UserNav currentPage="SubscriptionPage" showManageListingsLink={showManageListingsLink} />
+            <UserNav
+              currentPage="SubscriptionPage"
+              showManageListingsLink={showManageListingsLink}
+            />
           </>
         }
         sideNav={null}
@@ -216,9 +224,7 @@ const SubscriptionPageComponent = () => {
           ) : isActive ? (
             <div className={css.activeCard}>
               <div className={css.activeHead}>
-                <span>
-                  Plan {sub.plan === 'annual' ? 'anual' : 'mensual'}
-                </span>
+                <span>Plan {sub.plan === 'annual' ? 'anual' : 'mensual'}</span>
                 {statusLabel ? (
                   <span className={`${css.statusPill} ${css[`statusPill--${statusLabel.tone}`]}`}>
                     {statusLabel.text}
@@ -247,14 +253,14 @@ const SubscriptionPageComponent = () => {
               </div>
               {sub?.onboardingFeePaid ? (
                 <p className={css.onboardingNoteOk}>
-                  ✓ Ya pagaste tu cuota de onboarding anteriormente — no se te va a cobrar de
-                  nuevo, sólo el plan que elijas.
+                  ✓ Ya pagaste tu cuota de onboarding anteriormente — no se te va a cobrar de nuevo,
+                  sólo el plan que elijas.
                 </p>
               ) : (
                 <p className={css.onboardingNote}>
                   Ambos planes incluyen una cuota única de onboarding de {ONBOARDING_FEE_LABEL}{' '}
-                  (hasta 3 horas de asesoría con un consultor Xololo) — se cobra junto con tu
-                  primer pago, no se repite después.
+                  (hasta 3 horas de asesoría con un consultor Xololo) — se cobra junto con tu primer
+                  pago, no se repite después.
                 </p>
               )}
             </>

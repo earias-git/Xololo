@@ -47,7 +47,9 @@ module.exports = async (req, res) => {
   try {
     const { transactionId } = req.body || {};
     if (!transactionId || typeof transactionId !== 'string') {
-      return res.status(400).json({ error: 'invalid_request', details: 'transactionId requerido.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'transactionId requerido.' });
     }
 
     const sdk = getSdk(req, res);
@@ -277,17 +279,16 @@ module.exports = async (req, res) => {
     }
 
     // Suma el valor declarado (declared_value) para SOS: primary + carrito.
-    const cartExtraValueMXN = (xCart?.items || []).reduce(
-      (sum, i) => sum + (Number(i.priceInSubunits) || 0) * (Number(i.quantity) || 1),
-      0
-    ) / 100;
+    const cartExtraValueMXN =
+      (xCart?.items || []).reduce(
+        (sum, i) => sum + (Number(i.priceInSubunits) || 0) * (Number(i.quantity) || 1),
+        0
+      ) / 100;
     const declaredValueTotal = listingPrice * primaryQty + cartExtraValueMXN;
 
     // Content del carta porte: concatena títulos truncando a 100 chars.
     const cartTitles = (xCart?.items || []).map(i => i.title).filter(Boolean);
-    const consignmentNoteContent = [listingTitle, ...cartTitles]
-      .join(', ')
-      .slice(0, 100);
+    const consignmentNoteContent = [listingTitle, ...cartTitles].join(', ').slice(0, 100);
 
     // XOLOLO: Skydropx impone límites cortos en varios campos del label:
     //   reference: 30 chars max (validado con rechazo real)
@@ -316,10 +317,7 @@ module.exports = async (req, res) => {
         area_level2: pickupAddr.city,
         area_level3: pickupAddr.colonia,
         phone: providerPd.whatsapp || '5555555555',
-        email:
-          providerProtectedData.email ||
-          provider?.attributes?.email ||
-          'vendedor@xololo.mx',
+        email: providerProtectedData.email || provider?.attributes?.email || 'vendedor@xololo.mx',
       },
       addressTo: {
         name: truncate(shippingDetails.name || 'Comprador', 30),
@@ -375,10 +373,7 @@ module.exports = async (req, res) => {
     // > $50 MXN, lo persistimos para que /ops/shipping-losses lo liste.
     let xololoShippingDiscrepancy = null;
     try {
-      const {
-        detectShippingLoss,
-        extractActualCost,
-      } = require('../api-util/shippingLossMonitor');
+      const { detectShippingLoss, extractActualCost } = require('../api-util/shippingLossMonitor');
       const actualCost = extractActualCost(shipAttrs);
       const discrepancy = detectShippingLoss({
         expectedShippingFeePublic: Number(xShipping.rate?.shippingFeePublic),
@@ -415,9 +410,7 @@ module.exports = async (req, res) => {
       id: transactionId,
       metadata: {
         xololoShippingGuide: guideData,
-        ...(xololoShippingDiscrepancy
-          ? { xololoShippingDiscrepancy }
-          : {}),
+        ...(xololoShippingDiscrepancy ? { xololoShippingDiscrepancy } : {}),
       },
     });
 

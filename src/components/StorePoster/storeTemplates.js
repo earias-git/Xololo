@@ -37,7 +37,12 @@ export const LOGO_ALIGNMENTS = [
 ];
 
 export const STORE_COLOR_SWATCHES = [
-  '#ff6b35', '#2d7a46', '#1e40af', '#be185d', '#f59e0b', '#111111',
+  '#ff6b35',
+  '#2d7a46',
+  '#1e40af',
+  '#be185d',
+  '#f59e0b',
+  '#111111',
 ];
 
 export const LOGO_SIZE_MIN = 120;
@@ -53,7 +58,9 @@ export const QR_SIZE_DEFAULT = 900;
 const wrapTspans = (text, fontPx, maxWidthPx, maxLines) => {
   const avgCharWidth = fontPx * 0.55;
   const maxChars = Math.max(6, Math.floor(maxWidthPx / avgCharWidth));
-  const words = String(text || '').split(/\s+/).filter(Boolean);
+  const words = String(text || '')
+    .split(/\s+/)
+    .filter(Boolean);
   const lines = [];
   let line = '';
   for (const w of words) {
@@ -104,15 +111,7 @@ const QrOrPlaceholder = ({ href, x, y, size }) => {
   );
 };
 
-const LogoOrText = ({
-  href,
-  sellerName,
-  align,
-  size,
-  bandY,
-  canvasW,
-  padding,
-}) => {
+const LogoOrText = ({ href, sellerName, align, size, bandY, canvasW, padding }) => {
   let x = padding;
   if (align === 'center') x = (canvasW - size) / 2;
   if (align === 'right') x = canvasW - padding - size;
@@ -129,15 +128,13 @@ const LogoOrText = ({
     );
   }
   // Si no hay logo, mostramos "inicial + nombre" como lockup compacto
-  const initial = (sellerName || '?').trim().charAt(0).toUpperCase();
+  const initial = (sellerName || '?')
+    .trim()
+    .charAt(0)
+    .toUpperCase();
   return (
     <g>
-      <circle
-        cx={x + size / 2}
-        cy={bandY + size / 2}
-        r={size / 2}
-        fill="#0e1a2f"
-      />
+      <circle cx={x + size / 2} cy={bandY + size / 2} r={size / 2} fill="#0e1a2f" />
       <text
         x={x + size / 2}
         y={bandY + size / 2 + size * 0.14}
@@ -154,21 +151,8 @@ const LogoOrText = ({
 
 const VerifiedPill = ({ x, y, scale = 1 }) => (
   <g transform={`translate(${x},${y}) scale(${scale})`}>
-    <rect
-      x={0}
-      y={0}
-      width={210}
-      height={46}
-      rx={23}
-      fill="#1e40af"
-    />
-    <text
-      x={18}
-      y={30}
-      fontSize={20}
-      fill="#ffffff"
-      fontWeight={700}
-    >
+    <rect x={0} y={0} width={210} height={46} rx={23} fill="#1e40af" />
+    <text x={18} y={30} fontSize={20} fill="#ffffff" fontWeight={700}>
       ✓ Xololo Verified
     </text>
   </g>
@@ -182,7 +166,13 @@ const StarsLine = ({ x, y, ratingAvg, reviewCount, fontPx, fill = '#111111' }) =
       <text x={x} y={y} fontSize={fontPx} fill="#e5e7eb">
         {stars}
       </text>
-      <text x={x} y={y} fontSize={fontPx} fill="#f59e0b" clipPath={`inset(0 ${100 - pct * 100}% 0 0)`}>
+      <text
+        x={x}
+        y={y}
+        fontSize={fontPx}
+        fill="#f59e0b"
+        clipPath={`inset(0 ${100 - pct * 100}% 0 0)`}
+      >
         {stars}
       </text>
       <text x={x + fontPx * 3.4} y={y} fontSize={fontPx * 0.6} fill={fill}>
@@ -237,8 +227,7 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
 
   const hasBand = true; // siempre hay banda (sólida o con banner atrás)
   const hasHeader = showLogo || (verified && showVerified);
-  const hasInfo =
-    (showStats && ratingAvg != null) || (showCategory && primaryCategory);
+  const hasInfo = (showStats && ratingAvg != null) || (showCategory && primaryCategory);
   const hasFooter = (showSlug && slug) || showCta;
 
   // Reparto proporcional (debe sumar 1). Si alguna zona no tiene nada,
@@ -249,10 +238,7 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
     info: hasInfo ? 0.08 : 0.0,
     footer: hasFooter ? 0.12 : 0.0,
   };
-  share.qr = Math.max(
-    0.25,
-    1 - share.header - share.band - share.info - share.footer
-  );
+  share.qr = Math.max(0.25, 1 - share.header - share.band - share.info - share.footer);
 
   const headerY = 0;
   const headerH = heightU * share.header;
@@ -273,12 +259,7 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
   // Nombre: tamaño proporcional a la banda (no al heightU global).
   const nameFontBase = bandH * 0.4;
   const nameFontPx = Math.max(40, nameFontBase);
-  const nameLines = wrapTspans(
-    storeName || 'Mi tienda',
-    nameFontPx,
-    widthU - padding * 2 - 40,
-    2
-  );
+  const nameLines = wrapTspans(storeName || 'Mi tienda', nameFontPx, widthU - padding * 2 - 40, 2);
 
   // Tagline debajo de la banda (fuera, para no empujar el nombre).
   // Vive en la zona de INFO (compartiendo con stats si están activos).
@@ -416,12 +397,7 @@ const buildDesign = ({ widthU, heightU, isHorizontal = false }) => props => {
 
       {/* QR zone: QR gigante centrado */}
       {showQr && effectiveQrSize > 0 ? (
-        <QrOrPlaceholder
-          href={qrHref}
-          x={qrX}
-          y={qrYCentered}
-          size={effectiveQrSize}
-        />
+        <QrOrPlaceholder href={qrHref} x={qrX} y={qrYCentered} size={effectiveQrSize} />
       ) : null}
 
       {/* FOOTER: slug + CTA */}

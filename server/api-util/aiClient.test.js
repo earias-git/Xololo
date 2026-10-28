@@ -53,12 +53,10 @@ describe('aiClient.chat', () => {
 
   test('retry en 429 y éxito en segundo intento', async () => {
     const err429 = Object.assign(new Error('rate limit'), { status: 429 });
-    createMock
-      .mockRejectedValueOnce(err429)
-      .mockResolvedValueOnce({
-        content: [{ type: 'text', text: 'ok' }],
-        usage: { input_tokens: 1, output_tokens: 1 },
-      });
+    createMock.mockRejectedValueOnce(err429).mockResolvedValueOnce({
+      content: [{ type: 'text', text: 'ok' }],
+      usage: { input_tokens: 1, output_tokens: 1 },
+    });
     const result = await aiClient.chat({
       messages: [{ role: 'user', content: 'x' }],
       purpose: 'retry-test',
@@ -70,18 +68,18 @@ describe('aiClient.chat', () => {
   test('no retry en 400 (no retryable)', async () => {
     const err400 = Object.assign(new Error('bad request'), { status: 400 });
     createMock.mockRejectedValue(err400);
-    await expect(
-      aiClient.chat({ messages: [{ role: 'user', content: 'x' }] })
-    ).rejects.toThrow('bad request');
+    await expect(aiClient.chat({ messages: [{ role: 'user', content: 'x' }] })).rejects.toThrow(
+      'bad request'
+    );
     expect(createMock).toHaveBeenCalledTimes(1);
   });
 
   test('propaga ai_not_configured si no hay cliente ni env var', async () => {
     aiClient.__resetForTests();
     delete process.env.ANTHROPIC_API_KEY;
-    await expect(
-      aiClient.chat({ messages: [{ role: 'user', content: 'x' }] })
-    ).rejects.toThrow('ai_not_configured');
+    await expect(aiClient.chat({ messages: [{ role: 'user', content: 'x' }] })).rejects.toThrow(
+      'ai_not_configured'
+    );
   });
 
   test('rechaza messages inválidos', async () => {
@@ -114,9 +112,7 @@ describe('aiClient.chatJson', () => {
 
   test('parsea JSON con texto preamble', async () => {
     createMock.mockResolvedValueOnce({
-      content: [
-        { type: 'text', text: 'Aquí tienes:\n{"a":1,"b":{"c":2}}\nEspero sea útil.' },
-      ],
+      content: [{ type: 'text', text: 'Aquí tienes:\n{"a":1,"b":{"c":2}}\nEspero sea útil.' }],
       usage: { input_tokens: 1, output_tokens: 1 },
     });
     const r = await aiClient.chatJson({ messages: [{ role: 'user', content: 'x' }] });
@@ -128,9 +124,9 @@ describe('aiClient.chatJson', () => {
       content: [{ type: 'text', text: 'No tengo nada que devolver' }],
       usage: { input_tokens: 1, output_tokens: 1 },
     });
-    await expect(
-      aiClient.chatJson({ messages: [{ role: 'user', content: 'x' }] })
-    ).rejects.toThrow('ai_invalid_json');
+    await expect(aiClient.chatJson({ messages: [{ role: 'user', content: 'x' }] })).rejects.toThrow(
+      'ai_invalid_json'
+    );
   });
 
   test('lanza ai_shape_mismatch si faltan claves esperadas', async () => {
@@ -191,9 +187,9 @@ describe('aiClient.vision', () => {
   });
 
   test('rechaza si no viene imagen', async () => {
-    await expect(
-      aiClient.vision({ instruction: 'ver' })
-    ).rejects.toThrow('ai_vision_requires_image');
+    await expect(aiClient.vision({ instruction: 'ver' })).rejects.toThrow(
+      'ai_vision_requires_image'
+    );
   });
 });
 

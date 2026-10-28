@@ -96,9 +96,10 @@ const send = async ({ actor, event, template, context }) => {
         text: rendered.bodyText || undefined,
         // XOLOLO feature #28: attachments para compras públicas de
         // guías. Shape Resend: {filename, content (base64), contentType}.
-        attachments: Array.isArray(context?.attachments) && context.attachments.length > 0
-          ? context.attachments
-          : undefined,
+        attachments:
+          Array.isArray(context?.attachments) && context.attachments.length > 0
+            ? context.attachments
+            : undefined,
       }),
     });
     const data = await res.json().catch(() => null);

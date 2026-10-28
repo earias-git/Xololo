@@ -73,11 +73,8 @@ const EnhancedCheckoutPage = props => {
   // sólo lo hidratamos como estado inicial. El estado permite todavía
   // que el buyer lo cambie en el checkout (fallback), pero por default
   // se muestra el ya elegido.
-  const initialMethodFromOrderData =
-    props.orderData?.selectedShippingMethod || null;
-  const [xoloSelectedMethod, setXoloSelectedMethod] = useState(
-    initialMethodFromOrderData
-  );
+  const initialMethodFromOrderData = props.orderData?.selectedShippingMethod || null;
+  const [xoloSelectedMethod, setXoloSelectedMethod] = useState(initialMethodFromOrderData);
   const config = useConfiguration();
   const routeConfiguration = useRouteConfiguration();
   const intl = useIntl();
@@ -302,12 +299,7 @@ const mapDispatchToProps = dispatch => ({
     dispatch(savePaymentMethod(stripeCustomer, stripePaymentMethodId)),
 });
 
-const CheckoutPage = compose(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )
-)(EnhancedCheckoutPage);
+const CheckoutPage = compose(connect(mapStateToProps, mapDispatchToProps))(EnhancedCheckoutPage);
 
 CheckoutPage.setInitialValues = (initialValues, saveToSessionStorage = false) => {
   if (saveToSessionStorage) {

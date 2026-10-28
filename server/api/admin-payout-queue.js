@@ -32,10 +32,7 @@
 
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { slotsForPersonType } = require('../api-util/legalDocSlots');
-const {
-  getSellerStripeAccountId,
-  createPayoutTransfer,
-} = require('../api-util/stripePayouts');
+const { getSellerStripeAccountId, createPayoutTransfer } = require('../api-util/stripePayouts');
 
 const CACHE_TTL_MS = 60 * 1000; // 1 min — datos de dinero esperando.
 let cache = null;

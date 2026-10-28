@@ -81,11 +81,7 @@ const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
   const hasAnyV2 = enabledV2.length > 0;
   const requestedV2 = orderData?.selectedShippingMethod;
   const chosenV2 =
-    hasAnyV2 && enabledV2.includes(requestedV2)
-      ? requestedV2
-      : hasAnyV2
-      ? enabledV2[0]
-      : null;
+    hasAnyV2 && enabledV2.includes(requestedV2) ? requestedV2 : hasAnyV2 ? enabledV2[0] : null;
 
   if (chosenV2) {
     if (chosenV2 === METHOD_PICKUP) {
@@ -111,19 +107,14 @@ const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
       const freeShipping = !!methodsV2.skydropxCarrier.sellerCoversShipping;
       const rate = orderData?.selectedShippingRate;
       const rateTotal = freeShipping ? 0 : Number(rate?.total);
-      const shouldAddLine =
-        freeShipping || (rate && Number.isFinite(rateTotal) && rateTotal >= 0);
+      const shouldAddLine = freeShipping || (rate && Number.isFinite(rateTotal) && rateTotal >= 0);
       if (shouldAddLine) {
         // XOLOLO Junta 2026-10-26: cuando el buyer contrató SOS, separamos
         // en 2 líneas: shipping-fee (paquetería) + shipping-insurance
         // (seguro). Así el buyer ve en qué pagó. Si no hay seguro, una
         // sola línea con el total como antes.
-        const insuranceTotal = freeShipping
-          ? 0
-          : Number(rate?.insuranceTotalPublic) || 0;
-        const feeTotal = freeShipping
-          ? 0
-          : Number(rate?.shippingFeePublic) || rateTotal;
+        const insuranceTotal = freeShipping ? 0 : Number(rate?.insuranceTotalPublic) || 0;
+        const feeTotal = freeShipping ? 0 : Number(rate?.shippingFeePublic) || rateTotal;
         if (insuranceTotal > 0) {
           extraLineItems.push({
             code: 'line-item/shipping-fee',
@@ -174,12 +165,8 @@ const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
 
       if (shouldAddLine) {
         // XOLOLO Junta 2026-10-26: desglose seguro aparte si lo contrató.
-        const insuranceTotal = freeShipping
-          ? 0
-          : Number(rate?.insuranceTotalPublic) || 0;
-        const feeTotal = freeShipping
-          ? 0
-          : Number(rate?.shippingFeePublic) || rateTotal;
+        const insuranceTotal = freeShipping ? 0 : Number(rate?.insuranceTotalPublic) || 0;
+        const feeTotal = freeShipping ? 0 : Number(rate?.shippingFeePublic) || rateTotal;
         if (insuranceTotal > 0) {
           extraLineItems.push({
             code: 'line-item/shipping-fee',
@@ -348,7 +335,12 @@ const getDateRangeQuantityAndLineItems = (orderData, code) => {
 // server/api-util/xololoFees.js (hardcoded, auditable en código) — no
 // depende de que Console esté configurado correctamente. Ver ese
 // archivo para el detalle de a.1/a.2/a.3 del modelo de negocio.
-exports.transactionLineItems = (listing, orderData, _providerCommissionUnused, _customerCommissionUnused) => {
+exports.transactionLineItems = (
+  listing,
+  orderData,
+  _providerCommissionUnused,
+  _customerCommissionUnused
+) => {
   const publicData = listing.attributes.publicData;
   // Note: the unitType needs to be one of the following:
   // day, night, hour, fixed, or item (these are related to payment processes)

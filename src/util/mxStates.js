@@ -70,7 +70,7 @@ export const normalizeMxState = raw => {
     durango: 'Durango',
     'estado de mexico': 'Estado de México',
     edomex: 'Estado de México',
-    'mexico': 'Estado de México',
+    mexico: 'Estado de México',
     guanajuato: 'Guanajuato',
     guerrero: 'Guerrero',
     hidalgo: 'Hidalgo',

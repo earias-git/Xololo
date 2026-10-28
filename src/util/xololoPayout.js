@@ -94,7 +94,8 @@ export const computeMarginalCommission = priceSubunits => {
   const breakdown = [];
   for (const tier of COMMISSION_TIERS) {
     if (remaining <= 0) break;
-    const span = tier.upToSubunits === Infinity ? remaining : Math.max(0, tier.upToSubunits - lastCap);
+    const span =
+      tier.upToSubunits === Infinity ? remaining : Math.max(0, tier.upToSubunits - lastCap);
     const applied = Math.min(remaining, span);
     const fee = applied * tier.pct;
     baseFloat += fee;
@@ -127,7 +128,7 @@ const RET_ISR_PCT_BY_ACTIVITY = {
   [TAX_ACTIVITIES.HOSPEDAJE]: 0.04,
 };
 
-const PCT_RET_ISR_NO_RFC = 0.20;
+const PCT_RET_ISR_NO_RFC = 0.2;
 
 // Tipo de persona del seller. Define si aplican retenciones por plataforma:
 //   - INDIVIDUAL (particular ocasional): NO contribuyente LISR 113-A, no se
@@ -234,7 +235,11 @@ export const computePayoutBreakdown = ({
   const isCasualMode = sellerMode === SELLER_MODE_CASUAL;
   const commission = isCasualMode
     ? computeMarginalCommission(price)
-    : { baseSubunits: FIXED_XOLOLO_STORE_SUBUNITS, breakdown: [], effectivePct: price > 0 ? FIXED_XOLOLO_STORE_SUBUNITS / price : 0 };
+    : {
+        baseSubunits: FIXED_XOLOLO_STORE_SUBUNITS,
+        breakdown: [],
+        effectivePct: price > 0 ? FIXED_XOLOLO_STORE_SUBUNITS / price : 0,
+      };
   const xololoAdminBase = commission.baseSubunits;
   const ivaXololoAdmin = round(xololoAdminBase * PCT_IVA);
   const xololoAdminTotal = xololoAdminBase + ivaXololoAdmin;
@@ -305,11 +310,14 @@ export const computePayoutBreakdown = ({
 
     // Labels para la UI (porcentajes legibles).
     labels: {
-      iva: ivaMode === IVA_MODES.GRAVADO ? '16%' : ivaMode === IVA_MODES.TASA_CERO ? '0%' : 'Exento',
+      iva:
+        ivaMode === IVA_MODES.GRAVADO ? '16%' : ivaMode === IVA_MODES.TASA_CERO ? '0%' : 'Exento',
       motorCobro: `${(PCT_MOTOR * 100).toFixed(1)}% + IVA`,
       xololoAdmin: isCasualMode
         ? `${(commission.effectivePct * 100).toFixed(1)}% efectivo + IVA · tramos marginales 9/6/3`
-        : `$${(FIXED_XOLOLO_STORE_SUBUNITS / 100).toFixed(2)} + IVA · cuota fija (plan con suscripción)`,
+        : `$${(FIXED_XOLOLO_STORE_SUBUNITS / 100).toFixed(
+            2
+          )} + IVA · cuota fija (plan con suscripción)`,
       retIsr: formatPct(retIsrPct),
       retIva: formatPct(retIvaPct),
     },

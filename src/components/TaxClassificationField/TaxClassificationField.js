@@ -116,10 +116,9 @@ const TaxClassificationField = props => {
       {isEnabled ? (
         <div className={css.body}>
           <p className={css.help}>
-            Por default aplicamos IVA 16% a tu producto. Si pertenece a los
-            supuestos de la Ley del IVA (Art. 2-A o Art. 9) o es un servicio
-            exento (Art. 15), elígelo aquí. Tu declaración entrará a revisión
-            de Xololo para proteger a toda la plataforma de clasificaciones
+            Por default aplicamos IVA 16% a tu producto. Si pertenece a los supuestos de la Ley del
+            IVA (Art. 2-A o Art. 9) o es un servicio exento (Art. 15), elígelo aquí. Tu declaración
+            entrará a revisión de Xololo para proteger a toda la plataforma de clasificaciones
             incorrectas ante el SAT.
           </p>
 
@@ -147,10 +146,9 @@ const TaxClassificationField = props => {
                 <p>{selectedEntry.description}</p>
               </div>
               <div className={css.reviewNotice}>
-                <strong>Nota:</strong> esta clasificación entrará a revisión por
-                Xololo antes de aplicarse. Mientras tanto tu listing se publica
-                y se calcula con IVA 16% default. Al aprobarse recibirás una
-                notificación y el payout mostrado abajo se recalculará.
+                <strong>Nota:</strong> esta clasificación entrará a revisión por Xololo antes de
+                aplicarse. Mientras tanto tu listing se publica y se calcula con IVA 16% default. Al
+                aprobarse recibirás una notificación y el payout mostrado abajo se recalculará.
               </div>
               <div className={css.acceptanceBlock}>
                 <FieldCheckbox
@@ -164,9 +162,8 @@ const TaxClassificationField = props => {
                 />
                 {!acceptanceChecked ? (
                   <p className={css.acceptanceHint}>
-                    Para publicar con clasificación especial, debes aceptar el
-                    manifiesto. Si no lo marcas, el listing se publicará con
-                    IVA 16% default.
+                    Para publicar con clasificación especial, debes aceptar el manifiesto. Si no lo
+                    marcas, el listing se publicará con IVA 16% default.
                   </p>
                 ) : null}
               </div>

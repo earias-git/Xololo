@@ -69,7 +69,10 @@ const extractStorefrontSlug = hostHeader => {
   if (!hostHeader || typeof hostHeader !== 'string') return null;
 
   // Quita puerto si viene en el Host (localhost:3000, xololo.mx:443, etc.)
-  const hostname = hostHeader.split(':')[0].toLowerCase().trim();
+  const hostname = hostHeader
+    .split(':')[0]
+    .toLowerCase()
+    .trim();
 
   if (!hostname) return null;
   if (isNonStorefrontHost(hostname)) return null;

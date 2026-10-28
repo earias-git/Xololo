@@ -427,9 +427,7 @@ export const InboxPageComponent = props => {
             variant='urgent' (rojo) para empujar el setup; si todavía
             no ha vendido, variant 'default' (amarillo informativo).
             El componente se auto-oculta si no tiene blockers. */}
-        {!isOrders ? (
-          <PayoutGateBanner variant={hasTransactions ? 'urgent' : 'default'} />
-        ) : null}
+        {!isOrders ? <PayoutGateBanner variant={hasTransactions ? 'urgent' : 'default'} /> : null}
         {/* XOLOLO F3 · Fase 1: dashboard hero para seller. Sólo en tab sales
             y cuando ya cargaron las tx (evita flash con la ausencia de datos). */}
         {!isOrders && !fetchInProgress && hasTransactions ? (

@@ -6,10 +6,7 @@ import { useConfiguration } from '../../context/configurationContext';
 import { useIntl } from '../../util/reactIntl';
 import { propTypes } from '../../util/types';
 import { ensureCurrentUser } from '../../util/data';
-import {
-  showCreateListingLinkForUser,
-  showPaymentDetailsForUser,
-} from '../../util/userHelpers';
+import { showCreateListingLinkForUser, showPaymentDetailsForUser } from '../../util/userHelpers';
 
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 
@@ -33,8 +30,16 @@ import css from './ManageStorePage.module.css';
 // poco en verse el cambio en el listado de tiendas destacadas del home.
 
 const CATEGORY_OPTIONS = new Set([
-  'artesanias', 'hogar', 'moda', 'belleza', 'alimentos',
-  'tecnologia', 'mascotas', 'papeleria', 'turismo', 'servicios-pro',
+  'artesanias',
+  'hogar',
+  'moda',
+  'belleza',
+  'alimentos',
+  'tecnologia',
+  'mascotas',
+  'papeleria',
+  'turismo',
+  'servicios-pro',
 ]);
 
 // XOLOLO: helpers de dirección estructurada. Cada dirección se guarda
@@ -45,7 +50,9 @@ const cleanAddress = raw => {
   const trim = v => (typeof v === 'string' ? v.trim() : '');
   const street = trim(raw?.street);
   const colonia = trim(raw?.colonia);
-  const postalCode = String(raw?.postalCode || '').replace(/[^\d]/g, '').slice(0, 5);
+  const postalCode = String(raw?.postalCode || '')
+    .replace(/[^\d]/g, '')
+    .slice(0, 5);
   const city = trim(raw?.city);
   const state = trim(raw?.state);
   // Si TODOS los campos están vacíos, devolvemos null (no persistimos).
@@ -62,9 +69,7 @@ const cleanValues = raw => {
   const commercialAddress = commercialSameAsLegal
     ? legalAddress
     : cleanAddress(raw.commercialAddress);
-  const pickupAddress = pickupSameAsLegal
-    ? legalAddress
-    : cleanAddress(raw.pickupAddress);
+  const pickupAddress = pickupSameAsLegal ? legalAddress : cleanAddress(raw.pickupAddress);
   // El CP de origen (para cotizar Skydropx) se hereda del pickupAddress.
   const originPostalCode = pickupAddress?.postalCode || legalAddress?.postalCode || null;
 
@@ -209,8 +214,8 @@ export const ManageStorePageComponent = props => {
         <div className={css.content}>
           <H3 as="h1">Mi tienda</H3>
           <p className={css.subheading}>
-            Personaliza cómo se ve tu storefront (subdominio) en Xololo. Los
-            cambios se aplican de inmediato en tu tienda pública.
+            Personaliza cómo se ve tu storefront (subdominio) en Xololo. Los cambios se aplican de
+            inmediato en tu tienda pública.
           </p>
           {storefrontHost ? (
             <p className={css.livePreview}>
@@ -254,11 +259,8 @@ const mapDispatchToProps = dispatch => ({
   onChange: () => dispatch(saveStoreClear()),
 });
 
-const ManageStorePage = compose(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )
-)(ManageStorePageComponent);
+const ManageStorePage = compose(connect(mapStateToProps, mapDispatchToProps))(
+  ManageStorePageComponent
+);
 
 export default ManageStorePage;

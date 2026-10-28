@@ -48,7 +48,9 @@ const formatDateMx = iso => {
     const d = new Date(iso);
     // dd/mm/yyyy hh:mm (24h) — sin dependencias, formato mexicano.
     const p = n => String(n).padStart(2, '0');
-    return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(
+      d.getMinutes()
+    )}`;
   } catch (e) {
     return '';
   }
@@ -138,7 +140,9 @@ module.exports = async (req, res) => {
   try {
     const { from, to } = req.query || {};
     if (!isValidIsoDate(from) || !isValidIsoDate(to)) {
-      return res.status(400).json({ error: 'invalid_request', details: 'from/to deben ser YYYY-MM-DD.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'from/to deben ser YYYY-MM-DD.' });
     }
     const fromDate = new Date(`${from}T00:00:00.000Z`);
     const toDate = new Date(`${to}T23:59:59.999Z`);

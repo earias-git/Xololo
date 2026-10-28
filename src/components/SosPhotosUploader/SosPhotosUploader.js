@@ -26,16 +26,14 @@ const PRE_SLOTS = [
     key: 'producto',
     title: '1. Producto sin embalar',
     hint:
-      'El artículo tal cual es, sin caja ni bubble wrap. Fondo neutro; ' +
-      'muéstralo completo.',
+      'El artículo tal cual es, sin caja ni bubble wrap. Fondo neutro; ' + 'muéstralo completo.',
     goodTip: 'Todo el producto se ve, iluminación pareja.',
     badTip: 'Producto cortado, con reflejo, o con manos tapándolo.',
   },
   {
     key: 'embalado',
     title: '2. Producto embalado',
-    hint:
-      'Ya empacado con toda la protección final (cinta, bubble wrap, caja).',
+    hint: 'Ya empacado con toda la protección final (cinta, bubble wrap, caja).',
     goodTip: 'Se ve el embalaje completo cerrado.',
     badTip: 'Embalaje abierto o incompleto.',
   },
@@ -47,8 +45,7 @@ const PRE_SLOTS = [
       'flexómetro debe salir en la MISMA toma que el paquete. ' +
       '⚠️ Sin esta foto NO se paga reclamo por sobrepesos.',
     goodTip: 'Regla claramente sobre el paquete mostrando la medida.',
-    badTip:
-      'Foto sin regla, o regla en otra foto por separado, o medidas ilegibles.',
+    badTip: 'Foto sin regla, o regla en otra foto por separado, o medidas ilegibles.',
     critical: true,
   },
   {
@@ -172,9 +169,7 @@ const SosPhotoSlot = ({ slot, transactionId, currentUrl, onUploaded }) => {
               📁 Elegir otra
             </button>
           </div>
-          {uploading ? (
-            <p className={css.uploadingHint}>Subiendo…</p>
-          ) : null}
+          {uploading ? <p className={css.uploadingHint}>Subiendo…</p> : null}
         </div>
       ) : (
         <div className={css.actionButtons}>
@@ -197,11 +192,7 @@ const SosPhotoSlot = ({ slot, transactionId, currentUrl, onUploaded }) => {
         </div>
       )}
 
-      <button
-        type="button"
-        className={css.tipsToggle}
-        onClick={() => setShowTips(s => !s)}
-      >
+      <button type="button" className={css.tipsToggle} onClick={() => setShowTips(s => !s)}>
         {showTips ? '− Ocultar tips' : '+ Ver ejemplos'}
       </button>
       {showTips ? (
@@ -261,14 +252,14 @@ const SosPhotosUploader = ({
 
   const subtitle = insuranceAccepted ? (
     <>
-      El buyer contrató Protección SOS. Estas fotos son <strong>requisito</strong>{' '}
-      para generar la guía y para que Skydropx pague cualquier reclamo.
+      El buyer contrató Protección SOS. Estas fotos son <strong>requisito</strong> para generar la
+      guía y para que Skydropx pague cualquier reclamo.
     </>
   ) : (
     <>
       El buyer <strong>no</strong> contrató Protección SOS, así que estas fotos son{' '}
-      <strong>opcionales</strong>. Pero las recomendamos: te sirven de evidencia
-      si hay disputa con la paquetería o un contracargo bancario.
+      <strong>opcionales</strong>. Pero las recomendamos: te sirven de evidencia si hay disputa con
+      la paquetería o un contracargo bancario.
     </>
   );
 
@@ -311,18 +302,12 @@ const SosPhotosUploader = ({
       <h5 className={css.stageHeader}>
         Después de generar e imprimir la guía
         {!labelGenerated ? (
-          <span className={css.stageHint}>
-            {' '}
-            — habilitado una vez que generes la guía
-          </span>
+          <span className={css.stageHint}> — habilitado una vez que generes la guía</span>
         ) : null}
       </h5>
       <div className={css.slotsGrid}>
         {POST_SLOTS.map(slot => (
-          <div
-            key={slot.key}
-            className={classNames({ [css.slotLocked]: !labelGenerated })}
-          >
+          <div key={slot.key} className={classNames({ [css.slotLocked]: !labelGenerated })}>
             <SosPhotoSlot
               slot={slot}
               transactionId={transactionId}

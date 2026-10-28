@@ -35,7 +35,12 @@ const parseList = flag => {
   const i = ARGS.indexOf(flag);
   if (i === -1) return null;
   const v = ARGS[i + 1];
-  return v ? v.split(',').map(s => s.trim()).filter(Boolean) : null;
+  return v
+    ? v
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+    : null;
 };
 
 const STATES = parseList('--states') || ['published'];
@@ -62,7 +67,9 @@ const main = async () => {
     await configureIndex();
     console.log('  ✓ searchableAttributes, facets y custom ranking aplicados.\n');
   } else {
-    console.log('(se aplicaría la configuración del índice: searchableAttributes, facets, custom ranking)\n');
+    console.log(
+      '(se aplicaría la configuración del índice: searchableAttributes, facets, custom ranking)\n'
+    );
   }
 
   if (CONFIGURE_ONLY) {

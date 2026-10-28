@@ -86,7 +86,10 @@ const getSessionId = () => {
     if (!sid) {
       // 16 random bytes en base36 — suficiente para colisiones nulas
       // dentro de un servidor durante un día.
-      sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      sid =
+        Math.random()
+          .toString(36)
+          .slice(2) + Date.now().toString(36);
       window.sessionStorage.setItem(SESSION_ID_KEY, sid);
     }
     return sid;

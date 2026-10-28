@@ -106,7 +106,8 @@ const shareViaWebOrCopy = async (listing, source, brandUrl) => {
   }
 };
 
-const shareInstagram = listing => shareViaWebOrCopy(listing, 'instagram', 'https://www.instagram.com');
+const shareInstagram = listing =>
+  shareViaWebOrCopy(listing, 'instagram', 'https://www.instagram.com');
 const shareTikTok = listing => shareViaWebOrCopy(listing, 'tiktok', 'https://www.tiktok.com');
 
 // -------- Componente --------
@@ -177,18 +178,14 @@ const PromoShareButtons = ({ listing }) => {
         <IconButton label="X / Twitter" emoji="𝕏" onClick={() => shareTwitter(listing)} />
         <IconButton label="Copiar link" emoji="🔗" onClick={handleCopyLink} />
       </div>
-      {copied === 'link' ? (
-        <p className={css.feedback}>✓ Link copiado al portapapeles</p>
-      ) : null}
+      {copied === 'link' ? <p className={css.feedback}>✓ Link copiado al portapapeles</p> : null}
       {copied === 'instagram' ? (
         <p className={css.feedback}>
           ✓ Post copiado. Abre Instagram y pega en tu Story o Publicación.
         </p>
       ) : null}
       {copied === 'tiktok' ? (
-        <p className={css.feedback}>
-          ✓ Post copiado. Abre TikTok y pega al crear tu publicación.
-        </p>
+        <p className={css.feedback}>✓ Post copiado. Abre TikTok y pega al crear tu publicación.</p>
       ) : null}
     </div>
   );

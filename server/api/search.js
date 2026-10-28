@@ -29,8 +29,16 @@ const { SEARCH_QUERY_UNDERSTAND_V1 } = require('../api-util/aiPrompts');
 const { recordAiCall } = require('../api-util/aiMetrics');
 
 const AVAILABLE_CATEGORIES = [
-  'artesanias', 'hogar', 'moda', 'belleza', 'alimentos',
-  'tecnologia', 'mascotas', 'papeleria', 'turismo', 'servicios-pro',
+  'artesanias',
+  'hogar',
+  'moda',
+  'belleza',
+  'alimentos',
+  'tecnologia',
+  'mascotas',
+  'papeleria',
+  'turismo',
+  'servicios-pro',
 ];
 const AVAILABLE_LISTING_TYPES = ['product', 'service', 'service-day'];
 
@@ -46,7 +54,10 @@ const toSlug = title =>
 
 const isComplexQuery = q => {
   if (!q) return false;
-  const words = q.trim().split(/\s+/).filter(Boolean);
+  const words = q
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
   if (words.length >= 3) return true;
   // Heurística: palabras naturales que sugieren intención.
   const intentWords = /\b(para|con|cerca|regalo|servicio|busco|quiero|necesito)\b/i;
@@ -57,8 +68,19 @@ const isComplexQuery = q => {
 // títulos — si la query es una de estas, pocos hits son normales y no
 // vale la pena gastar Haiku. Lista intencionalmente corta y conservadora.
 const COMMON_SINGLE_WORDS = new Set([
-  'planta', 'café', 'ropa', 'servicio', 'masaje', 'pintura', 'arte',
-  'flor', 'flores', 'libro', 'juguete', 'comida', 'bebida',
+  'planta',
+  'café',
+  'ropa',
+  'servicio',
+  'masaje',
+  'pintura',
+  'arte',
+  'flor',
+  'flores',
+  'libro',
+  'juguete',
+  'comida',
+  'bebida',
 ]);
 
 /**
@@ -177,9 +199,7 @@ module.exports = async (req, res) => {
       if (interp?.keywords?.length) {
         const effectiveCategory =
           categoryParam ||
-          (interp.categories?.length === 1 && !interp.ambiguous
-            ? interp.categories[0]
-            : null);
+          (interp.categories?.length === 1 && !interp.ambiguous ? interp.categories[0] : null);
         const effectiveListingType =
           listingTypeParam ||
           (interp.listingTypes?.length === 1 &&
@@ -201,9 +221,7 @@ module.exports = async (req, res) => {
         // que una pantalla vacía. Si ya había hits, exigimos no-ambiguous
         // para no empeorar lo que ya funcionaba.
         const expandedHits = expandedResult.nbHits || 0;
-        const better =
-          expandedHits > initialHits &&
-          (initialHits === 0 || !interp.ambiguous);
+        const better = expandedHits > initialHits && (initialHits === 0 || !interp.ambiguous);
         if (better) {
           result = expandedResult;
         } else {
@@ -214,9 +232,7 @@ module.exports = async (req, res) => {
 
     const effectiveCategory =
       categoryParam ||
-      (interp?.categories?.length === 1 && !interp.ambiguous
-        ? interp.categories[0]
-        : null);
+      (interp?.categories?.length === 1 && !interp.ambiguous ? interp.categories[0] : null);
     const effectiveListingType =
       listingTypeParam ||
       (interp?.listingTypes?.length === 1 &&

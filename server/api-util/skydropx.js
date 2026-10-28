@@ -98,7 +98,8 @@ const signRate = (rate, quotationId) => {
     rate.currency || 'MXN',
     issuedAt,
   ].join('|');
-  const hmac = crypto.createHmac('sha256', getRateSecret())
+  const hmac = crypto
+    .createHmac('sha256', getRateSecret())
     .update(payload)
     .digest('hex');
   return { signature: hmac, issuedAt };
@@ -129,7 +130,10 @@ const verifyRateSignature = (rate, quotationId) => {
   // Prueba con cada secreto (actual + previo durante rotación).
   const a = Buffer.from(rate.signature, 'hex');
   for (const secret of getRateVerifySecrets()) {
-    const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    const expected = crypto
+      .createHmac('sha256', secret)
+      .update(payload)
+      .digest('hex');
     const b = Buffer.from(expected, 'hex');
     if (a.length === b.length && crypto.timingSafeEqual(a, b)) {
       return { valid: true };
@@ -143,13 +147,23 @@ const verifyRateSignature = (rate, quotationId) => {
 // agendan pickup aunque el seller lo pida.
 // Match case-insensitive contra provider_name o provider_display_name.
 const CARRIERS_WITHOUT_PICKUP = new Set([
-  'jt_express', 'jyt', 'j&t', 'jt express',
-  '99min', '99minutos', '99_min', '99 minutos',
+  'jt_express',
+  'jyt',
+  'j&t',
+  'jt express',
+  '99min',
+  '99minutos',
+  '99_min',
+  '99 minutos',
 ]);
 
 const isDropoffOnlyCarrier = rate => {
-  const code = String(rate?.provider_name || '').toLowerCase().replace(/[\s_-]/g, '');
-  const name = String(rate?.provider_display_name || '').toLowerCase().replace(/[\s_-]/g, '');
+  const code = String(rate?.provider_name || '')
+    .toLowerCase()
+    .replace(/[\s_-]/g, '');
+  const name = String(rate?.provider_display_name || '')
+    .toLowerCase()
+    .replace(/[\s_-]/g, '');
   for (const needle of CARRIERS_WITHOUT_PICKUP) {
     const n = needle.toLowerCase().replace(/[\s_-]/g, '');
     if (code === n || name === n || code.includes(n) || name.includes(n)) return true;
@@ -301,17 +315,12 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
     });
     last = await pollRes.json().catch(() => ({}));
     if (!pollRes.ok) {
-      throw new SkydropxQuoteError(
-        `Polling de cotización falló (${pollRes.status})`,
-        last
-      );
+      throw new SkydropxQuoteError(`Polling de cotización falló (${pollRes.status})`, last);
     }
   }
 
   if (!last.is_completed) {
-    throw new SkydropxTimeoutError(
-      `Cotización ${quotationId} no completó en ${MAX_POLL_MS}ms`
-    );
+    throw new SkydropxTimeoutError(`Cotización ${quotationId} no completó en ${MAX_POLL_MS}ms`);
   }
 
   // XOLOLO: contabilizamos también los rates fallidos (success:false)
@@ -322,18 +331,11 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
     .map(r => ({
       carrier: r.provider_display_name || r.provider_name,
       service: r.provider_service_name,
-      reason:
-        r.error_messages?.[0] ||
-        r.message ||
-        r.error ||
-        'sin detalle',
+      reason: r.error_messages?.[0] || r.message || r.error || 'sin detalle',
     }));
   if (failedRatesSummary.length > 0) {
     // eslint-disable-next-line no-console
-    console.log(
-      '[skydropx.quote] failed rates:',
-      JSON.stringify(failedRatesSummary)
-    );
+    console.log('[skydropx.quote] failed rates:', JSON.stringify(failedRatesSummary));
   }
 
   const successRates = (last.rates || [])
@@ -375,14 +377,10 @@ const getQuotationRates = async ({ from, to, parcel, insurance = false, declared
       // XOLOLO Junta 2026-10-26: expone el total POST-margen Xololo del
       // seguro para que el breakdown pueda renderizarlo como línea
       // separada "shipping-insurance". Si no hay seguro = 0.
-      const insuranceTotalPublic = Number(
-        (insuranceCostReal * (1 + XOLOLO_MARGIN_PCT)).toFixed(2)
-      );
+      const insuranceTotalPublic = Number((insuranceCostReal * (1 + XOLOLO_MARGIN_PCT)).toFixed(2));
       // Y el total de envío sin seguro (ya con margen) para la línea
       // "shipping-fee". shippingFee + insuranceTotal = totalPublico.
-      const shippingFeePublic = Number(
-        (pricing.totalPublico - insuranceTotalPublic).toFixed(2)
-      );
+      const shippingFeePublic = Number((pricing.totalPublico - insuranceTotalPublic).toFixed(2));
 
       // XOLOLO Bug 2a: log del breakdown por rate para poder rastrear
       // "por qué salió $X" — Skydropx neto + SOS + margen = precio público.
@@ -586,25 +584,20 @@ const createShipment = async ({
       shipment_id: shipment?.id,
       total_pricing: shipment?.total_pricing || shipment?.attributes?.total_pricing,
       rate_total: shipment?.rate?.total || shipment?.attributes?.rate?.total,
-      service_pricing:
-        shipment?.service_pricing || shipment?.attributes?.service_pricing,
+      service_pricing: shipment?.service_pricing || shipment?.attributes?.service_pricing,
       insurance_cost:
         shipment?.insurance_cost ||
         shipment?.attributes?.insurance_cost ||
         shipment?.package_insurance_cost,
       // Capturamos cualquier campo que contenga la palabra 'price',
       // 'cost', 'total' o 'insurance' para no perder breakdown útil.
-      _rawKeys: shipment && typeof shipment === 'object'
-        ? Object.keys(shipment).filter(k =>
-            /price|cost|total|insurance|protection/i.test(k)
-          )
-        : [],
+      _rawKeys:
+        shipment && typeof shipment === 'object'
+          ? Object.keys(shipment).filter(k => /price|cost|total|insurance|protection/i.test(k))
+          : [],
     };
     // eslint-disable-next-line no-console
-    console.log(
-      '[skydropx.createShipment.pricing]',
-      JSON.stringify(pricingSnapshot)
-    );
+    console.log('[skydropx.createShipment.pricing]', JSON.stringify(pricingSnapshot));
   } catch (_e) {
     // El log nunca debe tumbar el flujo real.
   }
@@ -637,9 +630,7 @@ const getShipment = async (shipmentId, { poll = false, maxPollMs = 15000 } = {})
     // JSON:API-style con paquetes en `included`).
     const shipmentAttrs = data?.data?.attributes || {};
     const pkgs = (data?.included || []).filter(i => i.type === 'package');
-    const labelReady =
-      shipmentAttrs.label_url ||
-      pkgs.some(p => p.attributes?.label_url);
+    const labelReady = shipmentAttrs.label_url || pkgs.some(p => p.attributes?.label_url);
     if (labelReady) return data;
     await new Promise(r => setTimeout(r, 1500));
   }

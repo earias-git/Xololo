@@ -246,7 +246,8 @@ const LegalDocsPageComponent = () => {
             <>
               <div className={css.personTypeBar}>
                 <span>
-                  Registrado como <strong>{personType === 'fisica' ? 'Persona física' : 'Persona moral'}</strong>
+                  Registrado como{' '}
+                  <strong>{personType === 'fisica' ? 'Persona física' : 'Persona moral'}</strong>
                 </span>
                 <button
                   type="button"

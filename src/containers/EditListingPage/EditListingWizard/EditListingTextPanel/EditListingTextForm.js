@@ -4,11 +4,7 @@ import classNames from 'classnames';
 
 import { FormattedMessage, useIntl } from '../../../../util/reactIntl';
 import * as validators from '../../../../util/validators';
-import {
-  Form,
-  Button,
-  FieldTextInput,
-} from '../../../../components';
+import { Form, Button, FieldTextInput } from '../../../../components';
 
 import css from './EditListingTextPanel.module.css';
 
@@ -34,13 +30,14 @@ const AiSuggestionsBlock = ({ aiState, onRegenerate, formApi }) => {
     return (
       <div className={css.aiBox}>
         <div className={css.aiHeader}>
-          <span className={css.aiSparkle} aria-hidden="true">✨</span>
+          <span className={css.aiSparkle} aria-hidden="true">
+            ✨
+          </span>
           <span>La IA está analizando tus fotos y escribiendo tu anuncio…</span>
         </div>
         <p className={css.aiHint}>
-          Primero analiza las fotos (lo que las cámaras ven), después usa
-          tus características + categoría para armar título y descripción.
-          Tarda ~10-20 segundos.
+          Primero analiza las fotos (lo que las cámaras ven), después usa tus características +
+          categoría para armar título y descripción. Tarda ~10-20 segundos.
         </p>
       </div>
     );
@@ -64,12 +61,14 @@ const AiSuggestionsBlock = ({ aiState, onRegenerate, formApi }) => {
     return (
       <div className={css.aiBox}>
         <div className={css.aiHeader}>
-          <span className={css.aiSparkle} aria-hidden="true">✨</span>
+          <span className={css.aiSparkle} aria-hidden="true">
+            ✨
+          </span>
           <span>¿Quieres que la IA te sugiera título y descripción?</span>
         </div>
         <p className={css.aiHint}>
-          Analiza tus fotos + atributos declarados y propone 3 opciones
-          de cada uno. Puedes editar o aceptar con un click.
+          Analiza tus fotos + atributos declarados y propone 3 opciones de cada uno. Puedes editar o
+          aceptar con un click.
         </p>
         <button type="button" className={css.aiOptionBtn} onClick={onRegenerate}>
           ✨ Generar con IA
@@ -84,7 +83,9 @@ const AiSuggestionsBlock = ({ aiState, onRegenerate, formApi }) => {
   return (
     <div className={css.aiBox}>
       <div className={css.aiHeader}>
-        <span className={css.aiSparkle} aria-hidden="true">✨</span>
+        <span className={css.aiSparkle} aria-hidden="true">
+          ✨
+        </span>
         <span>Sugerencias de la IA — click en una para usarla</span>
       </div>
 
@@ -95,11 +96,7 @@ const AiSuggestionsBlock = ({ aiState, onRegenerate, formApi }) => {
             {titles.map((t, i) => (
               <li key={`t-${i}`} className={css.aiOption}>
                 <span className={css.aiOptionText}>{t}</span>
-                <button
-                  type="button"
-                  className={css.aiOptionBtn}
-                  onClick={() => applyTitle(t)}
-                >
+                <button type="button" className={css.aiOptionBtn} onClick={() => applyTitle(t)}>
                   Usar este
                 </button>
               </li>
@@ -217,26 +214,15 @@ const EditListingTextForm = props => {
               photoRecommendations.composition?.length > 0 ||
               photoRecommendations.trust?.length > 0) ? (
               <div className={css.recoBox}>
-                <p className={css.recoTitle}>
-                  📸 Recomendaciones de la IA sobre tus fotos
-                </p>
+                <p className={css.recoTitle}>📸 Recomendaciones de la IA sobre tus fotos</p>
                 {photoRecommendations.quality?.length > 0 ? (
-                  <RecoList
-                    label="Calidad"
-                    items={photoRecommendations.quality}
-                  />
+                  <RecoList label="Calidad" items={photoRecommendations.quality} />
                 ) : null}
                 {photoRecommendations.composition?.length > 0 ? (
-                  <RecoList
-                    label="Encuadre"
-                    items={photoRecommendations.composition}
-                  />
+                  <RecoList label="Encuadre" items={photoRecommendations.composition} />
                 ) : null}
                 {photoRecommendations.trust?.length > 0 ? (
-                  <RecoList
-                    label="Confianza"
-                    items={photoRecommendations.trust}
-                  />
+                  <RecoList label="Confianza" items={photoRecommendations.trust} />
                 ) : null}
                 <p className={css.recoHint}>
                   Puedes volver al paso Fotos para reemplazar o añadir imágenes.
@@ -247,18 +233,20 @@ const EditListingTextForm = props => {
             {/* XOLOLO (PR 4): bloque de sugerencias IA. Auto-corre al mount
                 del panel. El seller elige una opción con "Usar este" y
                 el input de abajo se hidrata. */}
-            <AiSuggestionsBlock
-              aiState={aiState}
-              onRegenerate={onRegenerateAi}
-              formApi={form}
-            />
+            <AiSuggestionsBlock aiState={aiState} onRegenerate={onRegenerateAi} formApi={form} />
 
             <FieldTextInput
               id={`${formId}.title`}
               name="title"
               type="text"
-              label={intl.formatMessage({ id: 'EditListingTextForm.titleLabel', defaultMessage: 'Título del anuncio' })}
-              placeholder={intl.formatMessage({ id: 'EditListingTextForm.titlePlaceholder', defaultMessage: 'Ej. Mancuernas hexagonales 20kg marca Reebok, nuevas' })}
+              label={intl.formatMessage({
+                id: 'EditListingTextForm.titleLabel',
+                defaultMessage: 'Título del anuncio',
+              })}
+              placeholder={intl.formatMessage({
+                id: 'EditListingTextForm.titlePlaceholder',
+                defaultMessage: 'Ej. Mancuernas hexagonales 20kg marca Reebok, nuevas',
+              })}
               maxLength={TITLE_MAX}
               validate={validators.composeValidators(required, maxLenTitle)}
               className={css.field}
@@ -268,8 +256,15 @@ const EditListingTextForm = props => {
               id={`${formId}.description`}
               name="description"
               type="textarea"
-              label={intl.formatMessage({ id: 'EditListingTextForm.descLabel', defaultMessage: 'Descripción del anuncio' })}
-              placeholder={intl.formatMessage({ id: 'EditListingTextForm.descPlaceholder', defaultMessage: 'Describe tu producto o servicio con detalle. Si usas IA, te sugerirá algo basado en tus fotos y características.' })}
+              label={intl.formatMessage({
+                id: 'EditListingTextForm.descLabel',
+                defaultMessage: 'Descripción del anuncio',
+              })}
+              placeholder={intl.formatMessage({
+                id: 'EditListingTextForm.descPlaceholder',
+                defaultMessage:
+                  'Describe tu producto o servicio con detalle. Si usas IA, te sugerirá algo basado en tus fotos y características.',
+              })}
               maxLength={DESCRIPTION_MAX}
               validate={maxLenDesc}
               className={css.field}

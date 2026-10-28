@@ -243,9 +243,7 @@ const classifyTaxDeclaration = async ctx => {
     const AUTO_APPROVE_THRESHOLD = 85;
     const noRedFlags = !data.redFlags || data.redFlags.length === 0;
     const shouldAutoApprove =
-      effectiveVerdict === 'likely_valid' &&
-      confidence >= AUTO_APPROVE_THRESHOLD &&
-      noRedFlags;
+      effectiveVerdict === 'likely_valid' && confidence >= AUTO_APPROVE_THRESHOLD && noRedFlags;
 
     return {
       verdict: effectiveVerdict,

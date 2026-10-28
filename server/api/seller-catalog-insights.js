@@ -111,9 +111,7 @@ const firstImageUrl = (listing, included) => {
   const imgRels = listing.relationships?.images?.data || [];
   const firstImgId = imgRels[0]?.id?.uuid;
   if (!firstImgId) return null;
-  const imgResource = (included || []).find(
-    r => r.type === 'image' && r.id.uuid === firstImgId
-  );
+  const imgResource = (included || []).find(r => r.type === 'image' && r.id.uuid === firstImgId);
   const variants = imgResource?.attributes?.variants || {};
   return (
     variants['listing-card']?.url ||
@@ -133,7 +131,9 @@ module.exports = async (req, res) => {
   try {
     const { from, to } = req.query || {};
     if (!isValidIsoDate(from) || !isValidIsoDate(to)) {
-      return res.status(400).json({ error: 'invalid_request', details: 'from/to deben ser YYYY-MM-DD.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'from/to deben ser YYYY-MM-DD.' });
     }
     const fromDate = new Date(`${from}T00:00:00.000Z`);
     const toDate = new Date(`${to}T23:59:59.999Z`);
@@ -166,19 +166,12 @@ module.exports = async (req, res) => {
             page,
             perPage: 100,
             include: ['listing'],
-            'fields.transaction': [
-              'createdAt',
-              'lastTransitionedAt',
-              'state',
-              'lineItems',
-            ],
+            'fields.transaction': ['createdAt', 'lastTransitionedAt', 'state', 'lineItems'],
             'fields.listing': ['title'],
           });
           const data = resp.data.data || [];
           for (const tx of data) {
-            const ca = tx.attributes?.createdAt
-              ? new Date(tx.attributes.createdAt).getTime()
-              : 0;
+            const ca = tx.attributes?.createdAt ? new Date(tx.attributes.createdAt).getTime() : 0;
             if (ca >= fromDate.getTime() && ca <= toDate.getTime()) {
               all.push(tx);
             }
@@ -268,10 +261,7 @@ module.exports = async (req, res) => {
       // Stock. En Sharetribe products, stock viene en `currentStock`
       // (relación separada) o en publicData según setup. Aquí leemos
       // attributes.publicData.stock si existe, fallback a attributes.stock.
-      const stock =
-        attrs.publicData?.stock ??
-        attrs.stock ??
-        null;
+      const stock = attrs.publicData?.stock ?? attrs.stock ?? null;
       if (typeof stock === 'number' && stock <= LOW_STOCK_THRESHOLD && stock > 0) {
         lowStock.push({ listingId, title, imageUrl, stock });
       }
@@ -281,7 +271,13 @@ module.exports = async (req, res) => {
       const updatedIso = attrs.updatedAt || attrs.createdAt;
       const daysSinceUpdate = daysBetween(updatedIso, now);
       if (daysSinceUpdate !== null && daysSinceUpdate > STALE_DAYS) {
-        stale.push({ listingId, title, imageUrl, updatedAt: updatedIso, daysSince: daysSinceUpdate });
+        stale.push({
+          listingId,
+          title,
+          imageUrl,
+          updatedAt: updatedIso,
+          daysSince: daysSinceUpdate,
+        });
       }
 
       // No sales: publicado > 30 días y sin ventas en el rango consultado.
@@ -292,7 +288,13 @@ module.exports = async (req, res) => {
         daysSinceCreated > NO_SALES_DAYS &&
         !salesByListing.has(listingId)
       ) {
-        noSales.push({ listingId, title, imageUrl, createdAt: createdIso, daysSince: daysSinceCreated });
+        noSales.push({
+          listingId,
+          title,
+          imageUrl,
+          createdAt: createdIso,
+          daysSince: daysSinceCreated,
+        });
       }
     }
 

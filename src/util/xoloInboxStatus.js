@@ -33,9 +33,7 @@ export const getXoloInboxStatusLabel = (tx, transactionRole, processState) => {
 
   if (mode === 'freight') {
     if (!freight.quotedAt) {
-      return isProvider
-        ? 'Pendiente enviar cotización de flete'
-        : 'Vendedor cotizando envío';
+      return isProvider ? 'Pendiente enviar cotización de flete' : 'Vendedor cotizando envío';
     }
     if (!freight.buyerAuthorizedAt) {
       return isProvider
@@ -75,7 +73,9 @@ export const getXoloInboxStatusLabel = (tx, transactionRole, processState) => {
     if (guide.currentStatus === 'delivered') {
       return 'Entregado — esperando reseña';
     }
-    return isProvider ? 'Guía generada' : `Envío en curso · ${guide.currentStatus || 'en tránsito'}`;
+    return isProvider
+      ? 'Guía generada'
+      : `Envío en curso · ${guide.currentStatus || 'en tránsito'}`;
   }
 
   return null;

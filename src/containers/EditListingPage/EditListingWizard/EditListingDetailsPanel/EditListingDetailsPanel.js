@@ -261,18 +261,16 @@ const getInitialValues = (
     existingListingTypeInfo,
     preselectedListingType,
   });
-  const shouldHydrateAsUsed =
-    publicData?.condition === 'used' && txInfo?.listingType === 'product';
+  const shouldHydrateAsUsed = publicData?.condition === 'used' && txInfo?.listingType === 'product';
   // XOLOLO: pseudo-tipo "Evento" — un listing marcado isEvent se persiste
   // como listingType='product' con metadata publicData.event={...}. Al
   // hidratar, mostramos "Evento" en el selector.
-  const shouldHydrateAsEvent =
-    publicData?.isEvent === true && txInfo?.listingType === 'product';
+  const shouldHydrateAsEvent = publicData?.isEvent === true && txInfo?.listingType === 'product';
   const txInfoHydrated = shouldHydrateAsEvent
     ? { ...txInfo, listingType: 'event-ticket' }
     : shouldHydrateAsUsed
-      ? { ...txInfo, listingType: 'product-used' }
-      : txInfo;
+    ? { ...txInfo, listingType: 'product-used' }
+    : txInfo;
 
   // Initial values for the form
   return {

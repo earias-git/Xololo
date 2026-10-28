@@ -53,13 +53,7 @@ const StarRow = ({ average }) => {
   );
 };
 
-const StoreHeaderStats = ({
-  sellerId,
-  slug,
-  className,
-  rootClassName,
-  reviewsHref,
-}) => {
+const StoreHeaderStats = ({ sellerId, slug, className, rootClassName, reviewsHref }) => {
   const [state, setState] = useState({ status: 'loading', data: null });
 
   useEffect(() => {
@@ -110,7 +104,9 @@ const StoreHeaderStats = ({
           <a
             href={reviewsHref}
             className={classNames(css.rating, css.ratingLink)}
-            aria-label={`${rating.average.toFixed(1)} de 5 en ${rating.count} reseñas — ver reseñas`}
+            aria-label={`${rating.average.toFixed(1)} de 5 en ${
+              rating.count
+            } reseñas — ver reseñas`}
           >
             {ratingContent}
           </a>

@@ -35,10 +35,7 @@ const XololearBand = props => {
   const cta = buildCta(currentUser);
 
   return (
-    <section
-      className={classNames(rootClassName || css.root, className)}
-      aria-label="Xololear"
-    >
+    <section className={classNames(rootClassName || css.root, className)} aria-label="Xololear">
       <div className={css.container}>
         <div className={css.band}>
           <header className={css.header}>
@@ -46,12 +43,12 @@ const XololearBand = props => {
               Social Sellers — Vendedores en redes <span aria-hidden="true">🔥</span>
             </p>
             <h2 className={css.title}>
-              <span className={css.verb}>Xololéalo{TRADEMARK_SYMBOL}.</span> Viraliza tus productos en 1 clic.
+              <span className={css.verb}>Xololéalo{TRADEMARK_SYMBOL}.</span> Viraliza tus productos
+              en 1 clic.
             </h2>
             <p className={css.description}>
-              QR, link profesional, botón Comprar y plantillas listas para IG
-              Stories, WhatsApp Status y bio de TikTok. Deja de perseguir
-              clientes — que los clientes vengan a ti.
+              QR, link profesional, botón Comprar y plantillas listas para IG Stories, WhatsApp
+              Status y bio de TikTok. Deja de perseguir clientes — que los clientes vengan a ti.
             </p>
           </header>
 

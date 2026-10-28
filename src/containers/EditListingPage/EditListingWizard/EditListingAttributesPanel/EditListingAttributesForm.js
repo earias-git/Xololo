@@ -9,13 +9,7 @@ import {
   listAttributes,
   getMissingRequiredAttributes,
 } from '../../../../config/listingAttributes';
-import {
-  Form,
-  Button,
-  FieldSelect,
-  FieldTextInput,
-  FieldCheckbox,
-} from '../../../../components';
+import { Form, Button, FieldSelect, FieldTextInput, FieldCheckbox } from '../../../../components';
 
 import css from './EditListingAttributesPanel.module.css';
 
@@ -44,13 +38,7 @@ const renderAttributeField = (attr, formId) => {
 
   if (attr.type === 'select') {
     return (
-      <FieldSelect
-        key={attr.key}
-        id={inputId}
-        name={inputName}
-        label={label}
-        className={css.field}
-      >
+      <FieldSelect key={attr.key} id={inputId} name={inputName} label={label} className={css.field}>
         <option value="">Elige una opción…</option>
         {(attr.options || []).map(opt => (
           <option key={opt} value={opt}>
@@ -214,17 +202,16 @@ const EditListingAttributesForm = props => {
               </FieldSelect>
             ) : (
               <p className={css.noSubNotice}>
-                Esta categoría no tiene sub-categorías. Los atributos de abajo son
-                generales para la categoría.
+                Esta categoría no tiene sub-categorías. Los atributos de abajo son generales para la
+                categoría.
               </p>
             )}
 
             {isEvent ? (
               <div className={css.eventNotice}>
-                <strong>🎫 Este anuncio es un Evento con fecha fija.</strong>{' '}
-                Llena los campos de fecha, hora y lugar — se usan para mostrar el
-                banner del evento en la ficha y para el boleto que recibe el buyer.
-                El cupo total se persiste como stock del listing.
+                <strong>🎫 Este anuncio es un Evento con fecha fija.</strong> Llena los campos de
+                fecha, hora y lugar — se usan para mostrar el banner del evento en la ficha y para
+                el boleto que recibe el buyer. El cupo total se persiste como stock del listing.
               </div>
             ) : null}
 
@@ -234,22 +221,23 @@ const EditListingAttributesForm = props => {
                   {isEvent ? 'Datos del evento' : 'Características del producto / servicio'}
                 </h3>
                 <p className={css.sectionLead}>
-                  Entre más datos nos des, mejor te sugerirá la IA el título y
-                  descripción. Los campos marcados con * son recomendados para que
-                  el buyer te encuentre fácil con filtros.
+                  Entre más datos nos des, mejor te sugerirá la IA el título y descripción. Los
+                  campos marcados con * son recomendados para que el buyer te encuentre fácil con
+                  filtros.
                 </p>
                 {attrs.map(a => renderAttributeField(a, formId))}
                 {missing.length > 0 ? (
                   <p className={css.missingHint}>
-                    Te faltan {missing.length} campo{missing.length === 1 ? '' : 's'} recomendado{missing.length === 1 ? '' : 's'}:{' '}
-                    {missing.join(', ')}. Puedes guardar y volver después.
+                    Te faltan {missing.length} campo{missing.length === 1 ? '' : 's'} recomendado
+                    {missing.length === 1 ? '' : 's'}: {missing.join(', ')}. Puedes guardar y volver
+                    después.
                   </p>
                 ) : null}
               </div>
             ) : (
               <p className={css.noAttrsNotice}>
-                Aún no tenemos atributos específicos para esta categoría. Puedes
-                saltarte este paso y continuar.
+                Aún no tenemos atributos específicos para esta categoría. Puedes saltarte este paso
+                y continuar.
               </p>
             )}
 
@@ -260,7 +248,12 @@ const EditListingAttributesForm = props => {
               disabled={submitDisabled}
               ready={submitReady}
             >
-              {saveActionMsg || <FormattedMessage id="EditListingAttributesForm.saveAttributes" defaultMessage="Guardar y continuar" />}
+              {saveActionMsg || (
+                <FormattedMessage
+                  id="EditListingAttributesForm.saveAttributes"
+                  defaultMessage="Guardar y continuar"
+                />
+              )}
             </Button>
           </Form>
         );

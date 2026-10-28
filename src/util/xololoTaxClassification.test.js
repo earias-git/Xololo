@@ -65,15 +65,11 @@ describe('xololoTaxClassification', () => {
     });
 
     it('returns null when reviewStatus is pending', () => {
-      expect(
-        resolveTaxOverride({ ...anApprovedShape, reviewStatus: 'pending' })
-      ).toBeNull();
+      expect(resolveTaxOverride({ ...anApprovedShape, reviewStatus: 'pending' })).toBeNull();
     });
 
     it('returns null when reviewStatus is rejected', () => {
-      expect(
-        resolveTaxOverride({ ...anApprovedShape, reviewStatus: 'rejected' })
-      ).toBeNull();
+      expect(resolveTaxOverride({ ...anApprovedShape, reviewStatus: 'rejected' })).toBeNull();
     });
 
     it('returns the ivaMode/taxActivity/ivaArticle only when approved', () => {
@@ -84,9 +80,7 @@ describe('xololoTaxClassification', () => {
     });
 
     it('returns null when the code no longer exists in the catalog', () => {
-      expect(
-        resolveTaxOverride({ code: 'removed_code', reviewStatus: 'approved' })
-      ).toBeNull();
+      expect(resolveTaxOverride({ code: 'removed_code', reviewStatus: 'approved' })).toBeNull();
     });
   });
 });

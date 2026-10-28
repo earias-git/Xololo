@@ -84,8 +84,12 @@ const main = async () => {
 
   console.log(`Listings publicados escaneados: ${listingsToConsider.length}`);
   console.log(`Listings sin análisis (o --force): ${needsAnalysis.length}`);
-  console.log(`Procesables en esta corrida (--limit=${LIMIT === Infinity ? '∞' : LIMIT}): ${toProcess.length}`);
-  console.log(`Costo estimado: ~$${estimateCostUsd(toProcess.length)} USD (asumiendo ~3 fotos/listing)`);
+  console.log(
+    `Procesables en esta corrida (--limit=${LIMIT === Infinity ? '∞' : LIMIT}): ${toProcess.length}`
+  );
+  console.log(
+    `Costo estimado: ~$${estimateCostUsd(toProcess.length)} USD (asumiendo ~3 fotos/listing)`
+  );
 
   if (toProcess.length > 0 && !APPLY) {
     console.log('\n--- Listings que se analizarían ---');
@@ -106,7 +110,10 @@ const main = async () => {
 
   // 3. Correr secuencialmente para evitar rate limit + hacer logs legibles.
   console.log(`\n--- Procesando ---`);
-  let ok = 0, failed = 0, blocked = 0, flagged = 0;
+  let ok = 0,
+    failed = 0,
+    blocked = 0,
+    flagged = 0;
   for (let i = 0; i < toProcess.length; i += 1) {
     const l = toProcess[i];
     const progress = `[${i + 1}/${toProcess.length}]`;

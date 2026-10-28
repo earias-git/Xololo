@@ -44,8 +44,8 @@ module.exports = async (req, res) => {
       averages,
       pricingReference: {
         model: 'claude-haiku-5-5',
-        inputUsdPer1M: 0.80,
-        outputUsdPer1M: 4.00,
+        inputUsdPer1M: 0.8,
+        outputUsdPer1M: 4.0,
       },
     });
   } catch (err) {

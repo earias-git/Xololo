@@ -85,15 +85,17 @@ const PayoutGateBanner = props => {
             {hasPending
               ? `Tienes ${pendingAmount} esperando — completa estos pasos para recibirlo`
               : effectivelyUrgent
-                ? 'Tienes dinero esperando — completa estos pasos para recibirlo'
-                : 'Antes de recibir tu primer pago'}
+              ? 'Tienes dinero esperando — completa estos pasos para recibirlo'
+              : 'Antes de recibir tu primer pago'}
           </p>
           <p className={css.subtitle}>
             {hasPending
-              ? `${pendingCount} ${pendingCount === 1 ? 'venta' : 'ventas'} con pago retenido en Xololo. Lo liberamos automáticamente cuando termines tu setup.`
+              ? `${pendingCount} ${
+                  pendingCount === 1 ? 'venta' : 'ventas'
+                } con pago retenido en Xololo. Lo liberamos automáticamente cuando termines tu setup.`
               : effectivelyUrgent
-                ? 'Xololo guarda el pago de forma segura hasta que termines tu setup.'
-                : 'Cuando llegue tu primera venta, Xololo retiene el dinero hasta que completes:'}
+              ? 'Xololo guarda el pago de forma segura hasta que termines tu setup.'
+              : 'Cuando llegue tu primera venta, Xololo retiene el dinero hasta que completes:'}
           </p>
         </div>
       </div>

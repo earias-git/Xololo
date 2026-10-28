@@ -40,11 +40,7 @@ const DISCREPANCY_THRESHOLD_ABS_MXN = 50;
  *   context: Object
  * }}
  */
-const detectShippingLoss = ({
-  expectedShippingFeePublic,
-  actualSkydropxCostMxn,
-  context = {},
-}) => {
+const detectShippingLoss = ({ expectedShippingFeePublic, actualSkydropxCostMxn, context = {} }) => {
   // Guard: necesitamos ambos valores presentes y positivos para comparar.
   // Number(null) === 0 → no sirve; chequeamos no-null/no-undefined.
   if (expectedShippingFeePublic == null || actualSkydropxCostMxn == null) {

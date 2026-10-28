@@ -95,9 +95,7 @@ const main = async () => {
           raw,
           displayName: u.attributes.profile.displayName,
         });
-        vlog(
-          `  [unmapped] ${u.attributes.email} userType=${JSON.stringify(raw)} — se omite`
-        );
+        vlog(`  [unmapped] ${u.attributes.email} userType=${JSON.stringify(raw)} — se omite`);
         continue;
       }
 
@@ -109,9 +107,7 @@ const main = async () => {
 
       summary.canonicalizable += 1;
       toUpdate.push({ user: u, from: raw, to: canonical });
-      vlog(
-        `  [fix]      ${u.attributes.email}  "${raw}" → "${canonical}"`
-      );
+      vlog(`  [fix]      ${u.attributes.email}  "${raw}" → "${canonical}"`);
     }
 
     log(`Página ${page}/${totalPages} procesada (${users.length} users).`);
@@ -127,7 +123,11 @@ const main = async () => {
   if (summary.unmapped > 0) {
     log(`\n--- Users unmapped (se omitirán, requieren revisión manual) ---`);
     unmappedUsers.forEach(u => {
-      log(`  ${u.email}  (id=${u.id})  userType=${JSON.stringify(u.raw)}  displayName="${u.displayName}"`);
+      log(
+        `  ${u.email}  (id=${u.id})  userType=${JSON.stringify(u.raw)}  displayName="${
+          u.displayName
+        }"`
+      );
     });
   }
 

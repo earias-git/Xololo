@@ -72,7 +72,8 @@ const defaultConfig = {
   // If phoneNumber is not set, the button is not rendered.
   whatsapp: {
     phoneNumber: process.env.REACT_APP_WHATSAPP_NUMBER,
-    defaultMessage: process.env.REACT_APP_WHATSAPP_DEFAULT_MESSAGE || 'Hola, tengo una pregunta sobre Xololo 👋',
+    defaultMessage:
+      process.env.REACT_APP_WHATSAPP_DEFAULT_MESSAGE || 'Hola, tengo una pregunta sobre Xololo 👋',
   },
 
   // If you want to change the language, remember to also change the

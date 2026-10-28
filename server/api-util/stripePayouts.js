@@ -51,7 +51,13 @@ const getSellerStripeAccountId = async (isdk, sellerId) => {
 
 // Ejecuta un transfer único a la cuenta Connect del seller.
 // `txId` se usa como idempotency key — reintento no duplica.
-const createPayoutTransfer = async ({ txId, sellerStripeAccountId, amountSubunits, currency = 'mxn', description }) => {
+const createPayoutTransfer = async ({
+  txId,
+  sellerStripeAccountId,
+  amountSubunits,
+  currency = 'mxn',
+  description,
+}) => {
   const stripe = getStripe();
   if (!stripe) {
     return { ok: false, code: 'stripe_not_configured' };

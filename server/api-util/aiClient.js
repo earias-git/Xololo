@@ -224,7 +224,15 @@ const chatJson = async ({ expectShape, ...opts }) => {
  * Helper visión: construye un mensaje con imagen (URL o base64) +
  * instrucción textual. El SDK v0.x usa este formato para content blocks.
  */
-const vision = async ({ system, imageUrl, imageBase64, mediaType, instruction, expectShape, ...rest }) => {
+const vision = async ({
+  system,
+  imageUrl,
+  imageBase64,
+  mediaType,
+  instruction,
+  expectShape,
+  ...rest
+}) => {
   if (!imageUrl && !imageBase64) throw new Error('ai_vision_requires_image');
   const imageBlock = imageUrl
     ? { type: 'image', source: { type: 'url', url: imageUrl } }

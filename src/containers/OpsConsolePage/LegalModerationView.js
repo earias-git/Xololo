@@ -142,8 +142,8 @@ const LegalModerationView = ({ onBack }) => {
 
           {items.length === 0 ? (
             <p className={css.empty}>
-              Sin listings flagueados. La IA no detectó contenido ilícito ni dual-use
-              en las publicaciones recientes.
+              Sin listings flagueados. La IA no detectó contenido ilícito ni dual-use en las
+              publicaciones recientes.
             </p>
           ) : (
             <div className={css.taxReviewList}>
@@ -203,7 +203,9 @@ const LegalModerationView = ({ onBack }) => {
                       ) : null}
                       <p className={css.taxReviewMeta}>
                         Moderado: {formatDate(m.moderatedAt)}
-                        {m.reviewedBy ? ` · decidido por ${m.reviewedBy} el ${formatDate(m.reviewedAt)}` : ''}
+                        {m.reviewedBy
+                          ? ` · decidido por ${m.reviewedBy} el ${formatDate(m.reviewedAt)}`
+                          : ''}
                       </p>
                     </section>
 

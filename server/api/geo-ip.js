@@ -61,12 +61,12 @@ const getClientIp = req => {
 // suelen coincidir; para variantes hacemos un mapa.
 const ESTADO_ALIAS = {
   'Coahuila de Zaragoza': 'Coahuila',
-  'México': 'Estado de México',
-  'Mexico': 'Estado de México',
+  México: 'Estado de México',
+  Mexico: 'Estado de México',
   'Michoacán de Ocampo': 'Michoacán',
   'Veracruz de Ignacio de la Llave': 'Veracruz',
   'Distrito Federal': 'Ciudad de México',
-  'CDMX': 'Ciudad de México',
+  CDMX: 'Ciudad de México',
 };
 
 const fetchWithTimeout = async (url, opts = {}) => {

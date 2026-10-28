@@ -79,7 +79,8 @@ module.exports = async (req, res) => {
       );
       return res.status(403).json({
         error: 'not_owner',
-        hint: 'El QR es de un evento de otro organizador. Debes estar logueado con la cuenta correcta para registrar check-ins.',
+        hint:
+          'El QR es de un evento de otro organizador. Debes estar logueado con la cuenta correcta para registrar check-ins.',
       });
     }
 

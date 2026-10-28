@@ -2,8 +2,7 @@
 // red (analyzeImage, analyzeListing) requieren mocks del SDK y están
 // cubiertas por el commit siguiente cuando montemos el endpoint E2E.
 
-const { aggregatePerImage, pickImagesToAnalyze, extractImageUrl } =
-  require('./listingAiAnalysis');
+const { aggregatePerImage, pickImagesToAnalyze, extractImageUrl } = require('./listingAiAnalysis');
 
 describe('aggregatePerImage', () => {
   test('devuelve defaults si no hay imágenes', () => {

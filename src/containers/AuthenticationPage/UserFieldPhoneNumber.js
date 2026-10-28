@@ -43,9 +43,7 @@ const UserFieldPhoneNumber = props => {
   );
   const validate = isRequired
     ? validators.composeValidators(
-        validators.required(
-          intl.formatMessage({ id: `${formName}.phoneNumberRequired` })
-        ),
+        validators.required(intl.formatMessage({ id: `${formName}.phoneNumberRequired` })),
         formatValidator
       )
     : formatValidator;

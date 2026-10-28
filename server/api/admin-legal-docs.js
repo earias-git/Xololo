@@ -92,7 +92,9 @@ const review = async (req, res) => {
     return res.status(400).json({ error: 'invalid_request', details: 'slot inválido.' });
   }
   if (status !== 'approved' && status !== 'rejected') {
-    return res.status(400).json({ error: 'invalid_request', details: "status debe ser 'approved' o 'rejected'." });
+    return res
+      .status(400)
+      .json({ error: 'invalid_request', details: "status debe ser 'approved' o 'rejected'." });
   }
 
   const isdk = getIntegrationSdk();
@@ -103,7 +105,9 @@ const review = async (req, res) => {
     const existing = resp.data.data.attributes?.profile?.metadata?.xololoLegalDocs || {};
     const docs = existing.docs || {};
     if (!docs[slotKey]) {
-      return res.status(400).json({ error: 'invalid_request', details: 'El seller no ha subido ese documento.' });
+      return res
+        .status(400)
+        .json({ error: 'invalid_request', details: 'El seller no ha subido ese documento.' });
     }
     const updatedDocs = {
       ...docs,

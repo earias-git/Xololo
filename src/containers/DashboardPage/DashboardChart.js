@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 import { formatSubunitsAsMxn } from './dashboardUtils';
 
@@ -79,9 +71,7 @@ const DashboardChart = ({ buckets, metricKey = 'salesAmount', metricIsMoney = tr
             width={48}
           />
           <Tooltip
-            content={
-              <CustomTooltip metricKey={metricKey} metricIsMoney={metricIsMoney} />
-            }
+            content={<CustomTooltip metricKey={metricKey} metricIsMoney={metricIsMoney} />}
             cursor={{ fill: 'rgba(35, 45, 64, 0.04)' }}
           />
           <Bar

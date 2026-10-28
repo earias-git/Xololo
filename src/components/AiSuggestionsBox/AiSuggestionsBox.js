@@ -126,12 +126,7 @@ const AiSuggestionsBox = ({
 
   // Auto-trigger cuando viene con ?autoSuggest=1 desde el paso Fotos.
   useEffect(() => {
-    if (
-      autoSuggest &&
-      canUse &&
-      !autoTriggeredRef.current &&
-      state.phase === 'idle'
-    ) {
+    if (autoSuggest && canUse && !autoTriggeredRef.current && state.phase === 'idle') {
       autoTriggeredRef.current = true;
       runSuggestFlow();
     }
@@ -146,8 +141,8 @@ const AiSuggestionsBox = ({
           <h4 className={css.heading}>Sugerencias con IA</h4>
         </div>
         <p className={css.hint}>
-          Guarda este paso una primera vez para activar las sugerencias
-          automáticas basadas en tus fotos.
+          Guarda este paso una primera vez para activar las sugerencias automáticas basadas en tus
+          fotos.
         </p>
       </div>
     );
@@ -162,11 +157,7 @@ const AiSuggestionsBox = ({
         <span className={css.sparkle}>✨</span>
         <h4 className={css.heading}>Sugerencias con IA</h4>
         {expanded && suggestions ? (
-          <button
-            type="button"
-            className={css.collapse}
-            onClick={() => setExpanded(false)}
-          >
+          <button type="button" className={css.collapse} onClick={() => setExpanded(false)}>
             Ocultar
           </button>
         ) : null}
@@ -175,10 +166,9 @@ const AiSuggestionsBox = ({
       {(!expanded || !suggestions) && !isBusy ? (
         <div className={css.intro}>
           <p className={css.hint}>
-            Nuestra IA analiza tus fotos y te sugiere títulos, descripciones y
-            metadata de SEO más efectivos. Si todavía no has subido fotos,
-            guarda este paso y hazlo en el paso <strong>Fotos</strong>; después
-            vuelve aquí.
+            Nuestra IA analiza tus fotos y te sugiere títulos, descripciones y metadata de SEO más
+            efectivos. Si todavía no has subido fotos, guarda este paso y hazlo en el paso{' '}
+            <strong>Fotos</strong>; después vuelve aquí.
           </p>
           <button
             type="button"
@@ -266,8 +256,8 @@ const AiSuggestionsBox = ({
                 <dd>{(suggestions.seo.keywordsLong || []).join(' · ')}</dd>
               </dl>
               <p className={css.footnote}>
-                Estos datos se usarán automáticamente para mejorar tu
-                posicionamiento en Google. No tienes que copiarlos.
+                Estos datos se usarán automáticamente para mejorar tu posicionamiento en Google. No
+                tienes que copiarlos.
               </p>
             </section>
           ) : null}

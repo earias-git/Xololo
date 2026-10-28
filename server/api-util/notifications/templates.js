@@ -69,12 +69,10 @@ const TEMPLATES = {
     },
     whatsapp: {
       buyer: {
-        text:
-          'Xololo: tu pedido con {seller.name} está confirmado. Sigue el estado: {order.url}',
+        text: 'Xololo: tu pedido con {seller.name} está confirmado. Sigue el estado: {order.url}',
       },
       seller: {
-        text:
-          'Xololo: ¡vendiste {listing.title}! Genera la guía en tu panel: {order.url}',
+        text: 'Xololo: ¡vendiste {listing.title}! Genera la guía en tu panel: {order.url}',
       },
     },
   },
@@ -214,8 +212,7 @@ const TEMPLATES = {
           'Xololo: ✅ tu pedido con {seller.name} fue entregado. ¿Todo bien? Confirma aquí: {order.url}',
       },
       seller: {
-        text:
-          'Xololo: ✅ entregaste tu venta. Pago se libera cuando el buyer confirme o en 48h.',
+        text: 'Xololo: ✅ entregaste tu venta. Pago se libera cuando el buyer confirme o en 48h.',
       },
     },
   },

@@ -99,8 +99,7 @@ const LayoutWrapperAccountSettingsSideNav = props => {
   // obligar a cada page a propagarlo via props.
   const isCasualReseller = useSelector(
     state =>
-      state.user?.currentUser?.attributes?.profile?.publicData?.sellerMode ===
-      'casual_reseller'
+      state.user?.currentUser?.attributes?.profile?.publicData?.sellerMode === 'casual_reseller'
   );
   const payoutDetailsMaybe = showPayoutDetails
     ? [
