@@ -148,6 +148,14 @@ const cartSlice = createSlice({
         listingImageUrl: item.listingImageUrl || null,
         price: item.price, // {amount, currency}
         quantity: Math.max(1, Number(item.quantity) || 1),
+        // XOLOLO Cart #21: snapshot de los 4 métodos de envío del listing
+        // al momento del add, para poder detectar incompatibilidades sin
+        // tener que re-fetchear el listing en cada mutation del carrito.
+        // Shape: resultado de getShippingMethodsFromListing (keys pickup,
+        // localDelivery, skydropxCarrier, freight). Backwards-compat:
+        // items guardados antes de #21 vienen sin este campo — el helper
+        // wouldCreateNewGroup los trata como "compatibles con cualquiera".
+        shippingMethods: item.shippingMethods || null,
         addedAt: nowIso,
       });
       state.bySellerId[sellerId] = {

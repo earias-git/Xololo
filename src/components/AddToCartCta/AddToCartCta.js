@@ -3,7 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 import { addToCart, selectCartItemCount, selectCartForSeller } from '../../ducks/cart.duck';
+import {
+  getShippingMethodsFromListing,
+  wouldCreateNewGroup,
+} from '../../util/xololoShippingMethods';
 
+import IncompatibleShippingModal from './IncompatibleShippingModal';
 import css from './AddToCartCta.module.css';
 
 // XOLOLO: componente que agrega un listing al carrito del seller.
@@ -28,6 +33,8 @@ const AddToCartCta = ({ listing, author, imageUrl, className, rootClassName }) =
   const dispatch = useDispatch();
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
+  // XOLOLO Cart #21: modal preventivo de Option D (envío incompatible).
+  const [splitWarning, setSplitWarning] = useState(null);
 
   const sellerId = author?.id?.uuid || listing?.relationships?.author?.data?.id?.uuid;
   const sellerDisplayName = author?.attributes?.profile?.displayName;
@@ -45,7 +52,13 @@ const AddToCartCta = ({ listing, author, imageUrl, className, rootClassName }) =
     ? { amount: Number(price.amount), currency: price.currency || 'MXN' }
     : null;
 
-  const handleAdd = () => {
+  // XOLOLO Cart #21: snapshot de métodos del listing para guardar en el
+  // cart item y para comparar contra lo que ya está en el carrito.
+  const listingShippingMethods = getShippingMethodsFromListing(listing);
+
+  // Dispara el addToCart real (post-confirmación del modal, o directo si
+  // no hubo incompatibilidad).
+  const doDispatchAdd = () => {
     dispatch(
       addToCart({
         sellerId,
@@ -57,6 +70,7 @@ const AddToCartCta = ({ listing, author, imageUrl, className, rootClassName }) =
           listingImageUrl: imageUrl || null,
           price: priceMoney,
           quantity,
+          shippingMethods: listingShippingMethods,
         },
       })
     );
@@ -71,6 +85,24 @@ const AddToCartCta = ({ listing, author, imageUrl, className, rootClassName }) =
     });
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 2500);
+  };
+
+  const handleAdd = () => {
+    // Si el nuevo item no comparte método con los items ya en el carrito
+    // del mismo seller, mostramos el modal preventivo. Items legacy (sin
+    // shippingMethods snapshot) no cuentan — wouldCreateNewGroup los
+    // ignora, así que el buyer no se topa con falsos positivos.
+    const check = wouldCreateNewGroup(currentCart?.items || [], listingShippingMethods);
+    if (check.wouldSplit) {
+      setSplitWarning(check);
+      return;
+    }
+    doDispatchAdd();
+  };
+
+  const handleModalConfirm = () => {
+    setSplitWarning(null);
+    doDispatchAdd();
   };
 
   return (
@@ -136,6 +168,16 @@ const AddToCartCta = ({ listing, author, imageUrl, className, rootClassName }) =
           🛒 Ver mi carrito ({currentCount}) →
         </a>
       ) : null}
+
+      <IncompatibleShippingModal
+        isOpen={!!splitWarning}
+        onClose={() => setSplitWarning(null)}
+        onConfirm={handleModalConfirm}
+        currentGroupKeys={splitWarning?.currentGroupKeys || []}
+        newItemKeys={splitWarning?.newItemKeys || []}
+        newItemTitle={listing.attributes?.title || 'Este producto'}
+        sellerDisplayName={sellerDisplayName}
+      />
     </div>
   );
 };

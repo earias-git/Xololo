@@ -276,3 +276,73 @@ export const methodLabel = key => {
       return key;
   }
 };
+
+/**
+ * XOLOLO Cart #21: devuelve las keys enabled de un shape de métodos.
+ * Útil para comparar con otro shape y detectar intersección vacía.
+ */
+export const enabledMethodKeys = methods => {
+  if (!methods) return [];
+  return ALL_METHODS.filter(k => methods?.[k]?.enabled === true);
+};
+
+/**
+ * XOLOLO Cart #21: decide si agregar un nuevo listing al carrito del
+ * seller forzaría a crear un segundo "grupo de compatibilidad" (Option D).
+ *
+ * Entrada:
+ *   - cartItems: array de items del cart.duck. Cada item puede traer
+ *     `shippingMethods` (shape de getShippingMethodsFromListing). Items
+ *     guardados antes de #21 no lo tienen — se asumen compatibles con
+ *     cualquier método para no bloquear al buyer con falsos positivos.
+ *   - newItemMethods: shape de métodos del listing que se intenta agregar.
+ *
+ * Reglas:
+ *   - Carrito vacío → false (nunca hay incompatibilidad).
+ *   - Nuevo item sin ningún método habilitado → true (no comparte con nada).
+ *   - Todos los items existentes sin shippingMethods → false (legacy; no
+ *     podemos juzgar sin re-fetchear, mejor dejar pasar silenciosamente).
+ *   - Al menos un item existente CON shippingMethods: se calcula la
+ *     intersección de keys enabled entre todos esos items + el nuevo. Si
+ *     la intersección es vacía → true (habrá 2+ grupos en checkout).
+ *
+ * @param {Array<Object>} cartItems
+ * @param {Object} newItemMethods
+ * @returns {{
+ *   wouldSplit: boolean,
+ *   currentGroupKeys: Array<string>,   // intersección de los items ya en cart (con methods)
+ *   newItemKeys: Array<string>,         // enabled keys del nuevo item
+ *   sharedKeys: Array<string>,          // intersección total si no hay split
+ * }}
+ */
+export const wouldCreateNewGroup = (cartItems, newItemMethods) => {
+  const items = Array.isArray(cartItems) ? cartItems : [];
+  const newItemKeys = enabledMethodKeys(newItemMethods);
+
+  const itemsWithMethods = items.filter(
+    i => i && i.shippingMethods && typeof i.shippingMethods === 'object'
+  );
+  if (itemsWithMethods.length === 0) {
+    // Carrito vacío o todos legacy sin snapshot — no podemos juzgar.
+    return {
+      wouldSplit: false,
+      currentGroupKeys: [],
+      newItemKeys,
+      sharedKeys: newItemKeys,
+    };
+  }
+
+  // Intersección de los items existentes con snapshot.
+  const currentGroupKeys = ALL_METHODS.filter(key =>
+    itemsWithMethods.every(i => i.shippingMethods?.[key]?.enabled === true)
+  );
+  // Intersección total (incluyendo el nuevo item).
+  const sharedKeys = currentGroupKeys.filter(k => newItemKeys.includes(k));
+
+  return {
+    wouldSplit: sharedKeys.length === 0,
+    currentGroupKeys,
+    newItemKeys,
+    sharedKeys,
+  };
+};
