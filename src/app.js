@@ -27,6 +27,7 @@ import { IncludeScripts } from './util/includeScripts';
 
 import { MaintenanceMode, WhatsAppButton } from './components';
 import CartUserSync from './components/CartUserSync/CartUserSync';
+import HeartbeatBridge from './components/HeartbeatBridge/HeartbeatBridge';
 
 // routing
 import routeConfiguration from './routing/routeConfiguration';
@@ -291,6 +292,9 @@ export const ClientApp = props => {
                 user logueado (evita que un browser compartido muestre
                 el carrito de otra cuenta). */}
             <CartUserSync />
+            {/* XOLOLO OPS Users 360 · Fase A: dispara /api/me/heartbeat
+                para medir última actividad del user con dedupe 60s. */}
+            <HeartbeatBridge />
           </HelmetProvider>
         </Provider>
       </IntlProvider>

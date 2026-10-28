@@ -45,6 +45,7 @@ const sellerLegalDocs = require('./api/seller-legal-docs');
 const adminLegalDocs = require('./api/admin-legal-docs');
 const adminTaxReviews = require('./api/admin-tax-reviews');
 const adminCheck = require('./api/admin-check');
+const meHeartbeat = require('./api/me-heartbeat');
 const adminPayoutQueue = require('./api/admin-payout-queue');
 const adminLegalModeration = require('./api/admin-legal-moderation');
 const adminBackfillVerified = require('./api/admin-backfill-verified');
@@ -222,6 +223,10 @@ router.post('/admin/legal-docs/review', bodyParser.json(), adminLegalDocs.review
 // y si pasa el gate admin. No requiere ser admin. Útil para debug cuando
 // alguien recibe not_admin sin entender por qué.
 router.get('/admin-check', adminCheck);
+// XOLOLO OPS Users 360 · Fase A: heartbeat del user para la columna
+// "última actividad". El propio endpoint maneja la auth con el SDK del
+// marketplace y hace el bump async (fire-and-forget).
+router.post('/me/heartbeat', limits.generic, meHeartbeat);
 // XOLOLO: tax-reviews + ai-classify ahora autenticados vía
 // requireOperator (sistema moderno con MFA + roles), no requireAdmin
 // (env var legacy que no reconocía operators de la tabla).
