@@ -55,6 +55,7 @@ const opsUsersActions = require('./api/ops-users-actions');
 const opsUsersBulk = require('./api/ops-users-bulk');
 const opsAuditLog = require('./api/ops-audit-log');
 const team = require('./api/team');
+const teamAs = require('./api/team-as');
 const { requirePermission, requireAnyWorkspace } = require('./api-util/teamAuth');
 const adminPayoutQueue = require('./api/admin-payout-queue');
 const adminLegalModeration = require('./api/admin-legal-moderation');
@@ -369,6 +370,58 @@ router.get(
 );
 router.post('/team/switch-workspace', limits.generic, bodyParser.json(), team.switchWs);
 router.get('/team/meta', limits.generic, team.meta);
+
+// XOLOLO Tier Empresarial · E5 — wrappers "actuar como".
+// Cada acción ejecuta vía Integration SDK bajo la identidad del admin.
+router.post(
+  '/team/as/listing/create',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.create'),
+  teamAs.createListing
+);
+router.post(
+  '/team/as/listing/update',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.edit'),
+  teamAs.updateListing
+);
+router.post(
+  '/team/as/listing/close',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.delete'),
+  teamAs.closeListing
+);
+router.post(
+  '/team/as/listing/open',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.edit'),
+  teamAs.openListing
+);
+router.post(
+  '/team/as/tx/transition',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('orders.manage'),
+  teamAs.transitionTx
+);
+router.post(
+  '/team/as/tx/message',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('orders.manage'),
+  teamAs.sendTxMessage
+);
+router.post(
+  '/team/as/store/settings',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('store.settings'),
+  teamAs.updateStoreSettings
+);
 
 // XOLOLO: tax-reviews + ai-classify ahora autenticados vía
 // requireOperator (sistema moderno con MFA + roles), no requireAdmin
