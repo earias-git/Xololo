@@ -54,6 +54,8 @@ const opsUsersExport = require('./api/ops-users-export');
 const opsUsersActions = require('./api/ops-users-actions');
 const opsUsersBulk = require('./api/ops-users-bulk');
 const opsAuditLog = require('./api/ops-audit-log');
+const team = require('./api/team');
+const { requirePermission, requireAnyWorkspace } = require('./api-util/teamAuth');
 const adminPayoutQueue = require('./api/admin-payout-queue');
 const adminLegalModeration = require('./api/admin-legal-moderation');
 const adminBackfillVerified = require('./api/admin-backfill-verified');
@@ -312,6 +314,61 @@ router.get(
   adminAuth.requireOperator(),
   opsAuditLog
 );
+
+// XOLOLO Tier Empresarial · E2 — gestión del equipo del seller.
+// Rate limit bucket genérico; cada acción está protegida por
+// requirePermission('team') excepto accept-invite + switch-workspace
+// que leen currentUser directamente.
+router.post(
+  '/team/invite',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('team'),
+  team.invite
+);
+router.post('/team/accept-invite', limits.generic, bodyParser.json(), team.accept);
+router.get(
+  '/team/collaborators',
+  limits.generic,
+  requireAnyWorkspace,
+  team.listCollaborators
+);
+router.post(
+  '/team/update-permissions',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('team'),
+  team.updatePerms
+);
+router.post(
+  '/team/pause',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('team'),
+  team.pause
+);
+router.post(
+  '/team/resume',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('team'),
+  team.resume
+);
+router.post(
+  '/team/remove',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('team'),
+  team.remove
+);
+router.get(
+  '/team/actions',
+  limits.generic,
+  requirePermission('team'),
+  team.listActions
+);
+router.post('/team/switch-workspace', limits.generic, bodyParser.json(), team.switchWs);
+router.get('/team/meta', limits.generic, team.meta);
 
 // XOLOLO: tax-reviews + ai-classify ahora autenticados vía
 // requireOperator (sistema moderno con MFA + roles), no requireAdmin

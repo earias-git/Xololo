@@ -15,6 +15,10 @@ const {
   recordTeamAction,
   emptyTeamMetadata,
   emptyWorkspacesPublicData,
+  PERMISSIONS,
+  ALL_PERMISSIONS,
+  ROLES,
+  ROLE_PRESETS,
 } = require('./teamStore');
 
 // ============================================================
@@ -54,6 +58,42 @@ const seedUser = (email, { displayName, slug } = {}) => ({
       metadata: {},
     },
   },
+});
+
+describe('taxonomy mirror (server vs src/util/xololoTeam)', () => {
+  // Guardrails de drift. Si estos tests fallan es porque alguien tocó
+  // uno de los dos stores (server/api-util/teamStore.js o
+  // src/util/xololoTeam.js) sin tocar el otro.
+  it('ALL_PERMISSIONS tiene exactamente 10 permisos y los esperados', () => {
+    expect(ALL_PERMISSIONS.length).toBe(10);
+    expect(ALL_PERMISSIONS).toEqual(
+      expect.arrayContaining([
+        'listings.create',
+        'listings.edit',
+        'listings.delete',
+        'promote',
+        'shipping',
+        'orders.view',
+        'orders.manage',
+        'finance',
+        'store.settings',
+        'team',
+      ])
+    );
+  });
+
+  it('ROLE_PRESETS.admin es NO editable con todos los permisos', () => {
+    expect(ROLE_PRESETS[ROLES.ADMIN].editable).toBe(false);
+    expect([...ROLE_PRESETS[ROLES.ADMIN].permissions].sort()).toEqual(
+      [...ALL_PERMISSIONS].sort()
+    );
+  });
+
+  it('MANAGER excluye team y finance', () => {
+    const perms = ROLE_PRESETS[ROLES.MANAGER].permissions;
+    expect(perms).not.toContain(PERMISSIONS.TEAM);
+    expect(perms).not.toContain(PERMISSIONS.FINANCE);
+  });
 });
 
 describe('readTeam / readWorkspaces defaults', () => {

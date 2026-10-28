@@ -31,6 +31,98 @@ const STATUS = {
 
 const MAX_ACTIONS = 500;
 
+// --------- MIRROR DEL TAXONOMY (sync con src/util/xololoTeam.js) ---------
+// Mismo patrón que xololoShippingMethods / lineItemMoney: duplicamos la
+// data porque el server es CommonJS y el cliente ESM. Si cambias uno,
+// cambia el otro.
+
+const PERMISSIONS = {
+  LISTINGS_CREATE: 'listings.create',
+  LISTINGS_EDIT: 'listings.edit',
+  LISTINGS_DELETE: 'listings.delete',
+  PROMOTE: 'promote',
+  SHIPPING: 'shipping',
+  ORDERS_VIEW: 'orders.view',
+  ORDERS_MANAGE: 'orders.manage',
+  FINANCE: 'finance',
+  STORE_SETTINGS: 'store.settings',
+  TEAM: 'team',
+};
+
+const ALL_PERMISSIONS = Object.values(PERMISSIONS);
+
+const ROLES = {
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  CATALOG: 'catalog',
+  LOGISTICS: 'logistics',
+  FINANCE: 'finance',
+  CUSTOM: 'custom',
+};
+
+const ROLE_PRESETS = {
+  [ROLES.ADMIN]: {
+    label: 'Admin (dueño)',
+    hint: 'Acceso completo. No se puede cambiar — es el titular de la cuenta.',
+    permissions: ALL_PERMISSIONS,
+    editable: false,
+  },
+  [ROLES.MANAGER]: {
+    label: 'Manager',
+    hint: 'Opera todo salvo gestión de equipo y finanzas.',
+    permissions: ALL_PERMISSIONS.filter(
+      p => p !== PERMISSIONS.TEAM && p !== PERMISSIONS.FINANCE
+    ),
+    editable: true,
+  },
+  [ROLES.CATALOG]: {
+    label: 'Catálogo / Vendedor',
+    hint: 'Publicar y editar productos, promover la tienda, ver órdenes.',
+    permissions: [
+      PERMISSIONS.LISTINGS_CREATE,
+      PERMISSIONS.LISTINGS_EDIT,
+      PERMISSIONS.LISTINGS_DELETE,
+      PERMISSIONS.PROMOTE,
+      PERMISSIONS.ORDERS_VIEW,
+    ],
+    editable: true,
+  },
+  [ROLES.LOGISTICS]: {
+    label: 'Logística',
+    hint: 'Paquetería, generar guías, gestionar órdenes.',
+    permissions: [
+      PERMISSIONS.SHIPPING,
+      PERMISSIONS.ORDERS_MANAGE,
+      PERMISSIONS.ORDERS_VIEW,
+    ],
+    editable: true,
+  },
+  [ROLES.FINANCE]: {
+    label: 'Finanzas',
+    hint: 'Payouts, cobros y facturación. Lectura de órdenes.',
+    permissions: [PERMISSIONS.FINANCE, PERMISSIONS.ORDERS_VIEW],
+    editable: true,
+  },
+  [ROLES.CUSTOM]: {
+    label: 'Custom',
+    hint: 'Permisos personalizados elegidos uno por uno.',
+    permissions: [],
+    editable: true,
+  },
+};
+
+const getPermissionsForRole = roleName => {
+  const preset = ROLE_PRESETS[roleName];
+  if (!preset) return [];
+  return [...preset.permissions];
+};
+
+const validatePermissions = permissions => {
+  if (!Array.isArray(permissions)) return { ok: false, invalid: [], reason: 'not_array' };
+  const invalid = permissions.filter(p => !ALL_PERMISSIONS.includes(p));
+  return { ok: invalid.length === 0, invalid };
+};
+
 const emptyTeamMetadata = () => ({
   collaborators: [],
   seats: { used: 0, included: 2, extraPaid: 0 },
@@ -360,6 +452,14 @@ const recordTeamAction = async ({ isdk, adminId, actor, action, target, result }
 module.exports = {
   STATUS,
   MAX_ACTIONS,
+  // Taxonomy mirror
+  PERMISSIONS,
+  ALL_PERMISSIONS,
+  ROLES,
+  ROLE_PRESETS,
+  getPermissionsForRole,
+  validatePermissions,
+  // Store ops
   emptyTeamMetadata,
   emptyWorkspacesPublicData,
   readTeam,
