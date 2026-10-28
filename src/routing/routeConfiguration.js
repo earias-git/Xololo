@@ -47,6 +47,7 @@ const SearchPageWithGrid = loadable(() => import(/* webpackChunkName: "SearchPag
 const StripePayoutPage = loadable(() => import(/* webpackChunkName: "StripePayoutPage" */ '../containers/StripePayoutPage/StripePayoutPage'));
 const ManageStorePage = loadable(() => import(/* webpackChunkName: "ManageStorePage" */ '../containers/ManageStorePage/ManageStorePage'));
 const PromoteToCasualPage = loadable(() => import(/* webpackChunkName: "PromoteToCasualPage" */ '../containers/PromoteToCasualPage/PromoteToCasualPage'));
+const AcceptInvitePage = loadable(() => import(/* webpackChunkName: "AcceptInvitePage" */ '../containers/AcceptInvitePage/AcceptInvitePage'));
 const EventCheckInPage = loadable(() => import(/* webpackChunkName: "EventCheckInPage" */ '../containers/EventCheckInPage/EventCheckInPage'));
 const TermsOfServicePage = loadable(() => import(/* webpackChunkName: "TermsOfServicePage" */ '../containers/TermsOfServicePage/TermsOfServicePage'));
 const TransactionPage = loadable(() => import(/* webpackChunkName: "TransactionPage" */ '../containers/TransactionPage/TransactionPage'));
@@ -420,6 +421,14 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       name: 'PromoteToCasualPage',
       auth: true,
       component: PromoteToCasualPage,
+    },
+    {
+      // XOLOLO Tier Empresarial · E4: página que acepta invitaciones
+      // al equipo de otro seller. Lee ?token= del email de invitación.
+      path: '/accept-invite',
+      name: 'AcceptInvitePage',
+      auth: true,
+      component: AcceptInvitePage,
     },
     {
       // XOLOLO: página de check-in de eventos. Seller logueado escanea

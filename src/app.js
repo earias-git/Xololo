@@ -29,6 +29,8 @@ import { MaintenanceMode, WhatsAppButton } from './components';
 import CartUserSync from './components/CartUserSync/CartUserSync';
 import HeartbeatBridge from './components/HeartbeatBridge/HeartbeatBridge';
 import SuspensionBanner from './components/SuspensionBanner/SuspensionBanner';
+import WorkspaceRibbon from './components/WorkspaceRibbon/WorkspaceRibbon';
+import WorkspaceSwitcher from './components/WorkspaceSwitcher/WorkspaceSwitcher';
 
 // routing
 import routeConfiguration from './routing/routeConfiguration';
@@ -300,6 +302,12 @@ export const ClientApp = props => {
                 por OPS. Visible en todas las páginas; las acciones críticas
                 (publicar / pagar) rechazan server-side. */}
             <SuspensionBanner />
+            {/* XOLOLO Tier Empresarial · E4: ribbon fijo cuando el user
+                está operando como una tienda donde fue invitado. */}
+            <WorkspaceRibbon />
+            {/* XOLOLO Tier Empresarial · E4: floating switcher visible
+                si el user tiene N workspaces activos (colaborador). */}
+            <WorkspaceSwitcher />
           </HelmetProvider>
         </Provider>
       </IntlProvider>
