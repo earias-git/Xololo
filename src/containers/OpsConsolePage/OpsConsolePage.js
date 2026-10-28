@@ -13,6 +13,7 @@ import PayoutQueueView from './PayoutQueueView';
 import LegalModerationView from './LegalModerationView';
 import BackfillVerifiedView from './BackfillVerifiedView';
 import UsersView from './UsersView';
+import AuditLogView from './AuditLogView';
 
 import css from './OpsConsolePage.module.css';
 
@@ -340,8 +341,8 @@ const MODULE_CARDS = [
     key: 'audit_log',
     label: 'Audit log',
     emoji: '📋',
-    hint: 'Registro de todas las acciones',
-    route: null,
+    hint: 'Registro cronológico de todas las acciones ops cross-user (suspend, impersonate, resync, notas…) con filtros por operator / acción / rango.',
+    route: '/ops/audit-log',
   },
 ];
 
@@ -579,6 +580,8 @@ const OpsConsolePage = () => {
     content = <BackfillVerifiedView onBack={backToDashboard} />;
   } else if (location.pathname === '/ops/users') {
     content = <UsersView onBack={backToDashboard} />;
+  } else if (location.pathname === '/ops/audit-log') {
+    content = <AuditLogView onBack={backToDashboard} />;
   } else {
     content = (
       <Dashboard operator={session.operator} onLogout={session.logout} onNavigate={navigate} />

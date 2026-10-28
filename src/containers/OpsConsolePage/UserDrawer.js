@@ -157,6 +157,7 @@ const UserDrawer = ({ userId, onClose, onReload }) => {
               userId={userId}
               flags={d.flags}
               auditLog={d.auditLog || []}
+              data={d}
               onActionDone={() => {
                 load();
                 onReload?.();
@@ -647,54 +648,271 @@ const NotesTab = ({ userId, initialNotes, onChange }) => {
 };
 
 // ============================================================
-// Tab: Moderación
+// Tab: Moderación (con acciones Fase C)
 // ============================================================
 
-const ModerationTab = ({ userId, flags, auditLog, onActionDone }) => (
-  <>
-    <section className={css.section}>
-      <h3 className={css.sectionTitle}>Flags activos</h3>
-      {flags?.length ? (
-        <ul className={css.flagList}>
-          {flags.map((f, i) => (
-            <li key={i} className={`${css.flag} ${css[`flag_${f.severity}`]}`}>
-              <strong>{f.key}</strong>
-              <p>{f.reason}</p>
-              {f.raisedAt ? <small>desde {timeAgo(f.raisedAt)}</small> : null}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className={css.muted}>Sin flags. Perfil limpio.</p>
-      )}
-    </section>
+const ModerationTab = ({ userId, flags, auditLog, data, onActionDone }) => {
+  const [action, setAction] = useState(null); // 'suspend'|'unsuspend'|'resync'|'impersonate'|null
+  const [reason, setReason] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const suspension = data?.summary?.suspension;
+  const isSuspended = !!suspension?.suspended;
 
-    <section className={css.section}>
-      <h3 className={css.sectionTitle}>Acciones ops recientes</h3>
-      {auditLog?.length ? (
-        <ul className={css.auditSummaryList}>
-          {auditLog.slice(0, 5).map(a => (
-            <li key={a.id}>
-              <strong>{a.action}</strong>
-              <small> por {a.by?.name || a.by?.email || '—'}, {timeAgo(a.at)}</small>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className={css.muted}>Sin acciones ops registradas aún.</p>
-      )}
-    </section>
+  const closeModal = () => {
+    setAction(null);
+    setReason('');
+    setTotpCode('');
+    setErr(null);
+    setBusy(false);
+  };
 
-    <section className={css.section}>
-      <h3 className={css.sectionTitle}>Acciones destructivas</h3>
-      <p className={css.muted}>
-        Suspender, forzar re-sync del badge, impersonar — llegan en Fase C. Por ahora los procesas
-        desde los módulos existentes de OPS (Backfill Verified, Tax Reviews, Payout Queue).
-      </p>
-      <code className={css.codeHint}>userId: {userId}</code>
-    </section>
-  </>
-);
+  const confirm = async () => {
+    setBusy(true);
+    setErr(null);
+    let path = '';
+    let body = {};
+    if (action === 'suspend') { path = `/api/admin/ops/users/${userId}/suspend`; body = { reason }; }
+    else if (action === 'unsuspend') { path = `/api/admin/ops/users/${userId}/unsuspend`; body = { reason }; }
+    else if (action === 'resync') { path = `/api/admin/ops/users/${userId}/resync-badge`; body = {}; }
+    else if (action === 'impersonate') { path = `/api/admin/ops/users/${userId}/impersonate`; body = { reason, totpCode }; }
+    const r = await api(path, { method: 'POST', body });
+    setBusy(false);
+    if (!r.ok) {
+      const code = r.data?.error || 'error';
+      const msg = {
+        reason_required: 'El motivo debe tener al menos 10 caracteres.',
+        reason_too_long: 'Motivo demasiado largo.',
+        invalid_totp_format: 'El código TOTP debe tener 6 dígitos.',
+        invalid_totp: 'Código TOTP incorrecto.',
+        operator_mfa_not_enrolled: 'Debes activar MFA en tu cuenta para impersonar.',
+      }[code] || `Error: ${code}`;
+      setErr(msg);
+      return;
+    }
+    if (action === 'impersonate' && r.data?.redirectUrl) {
+      window.location.href = r.data.redirectUrl;
+      return;
+    }
+    closeModal();
+    onActionDone?.();
+  };
+
+  return (
+    <>
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>Estado del user</h3>
+        {isSuspended ? (
+          <div className={`${css.flag} ${css.flag_error}`}>
+            <strong>⛔ Suspendido</strong>
+            <p>{suspension.reason}</p>
+            <small>
+              por {suspension.by?.email || '—'} · {timeAgo(suspension.at)}
+            </small>
+          </div>
+        ) : (
+          <p className={css.muted}>Activo — sin suspensiones.</p>
+        )}
+      </section>
+
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>Flags activos</h3>
+        {flags?.length ? (
+          <ul className={css.flagList}>
+            {flags.map((f, i) => (
+              <li key={i} className={`${css.flag} ${css[`flag_${f.severity}`]}`}>
+                <strong>{f.key}</strong>
+                <p>{f.reason}</p>
+                {f.raisedAt ? <small>desde {timeAgo(f.raisedAt)}</small> : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={css.muted}>Sin flags. Perfil limpio.</p>
+        )}
+      </section>
+
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>Acciones ops recientes</h3>
+        {auditLog?.length ? (
+          <ul className={css.auditSummaryList}>
+            {auditLog.slice(0, 5).map(a => (
+              <li key={a.id}>
+                <strong>{a.action}</strong>
+                <small>
+                  {' '}
+                  por {a.by?.name || a.by?.email || '—'}, {timeAgo(a.at)}
+                </small>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={css.muted}>Sin acciones ops registradas aún.</p>
+        )}
+      </section>
+
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>Acciones</h3>
+        <div className={css.actionBar}>
+          <button
+            type="button"
+            className={css.secondaryBtn}
+            onClick={() => setAction('resync')}
+          >
+            🔁 Resync Verified badge
+          </button>
+          {isSuspended ? (
+            <button
+              type="button"
+              className={css.secondaryBtn}
+              onClick={() => setAction('unsuspend')}
+            >
+              ✓ Levantar suspensión
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={css.dangerBtn}
+              onClick={() => setAction('suspend')}
+            >
+              ⛔ Suspender
+            </button>
+          )}
+          <button
+            type="button"
+            className={css.dangerBtn}
+            onClick={() => setAction('impersonate')}
+          >
+            👁 Ingresar como este user (MFA)
+          </button>
+        </div>
+      </section>
+
+      {action ? (
+        <ActionModal
+          action={action}
+          reason={reason}
+          setReason={setReason}
+          totpCode={totpCode}
+          setTotpCode={setTotpCode}
+          busy={busy}
+          err={err}
+          onClose={closeModal}
+          onConfirm={confirm}
+        />
+      ) : null}
+    </>
+  );
+};
+
+const ACTION_LABELS = {
+  suspend: {
+    title: 'Suspender user',
+    confirm: 'Suspender',
+    danger: true,
+    needsReason: true,
+    needsTotp: false,
+    hint: 'El user no podrá publicar listings nuevos ni completar transacciones. Documenta el motivo.',
+  },
+  unsuspend: {
+    title: 'Levantar suspensión',
+    confirm: 'Reactivar',
+    danger: false,
+    needsReason: true,
+    needsTotp: false,
+    hint: 'Documenta por qué levantas la suspensión (quedará en el audit log).',
+  },
+  resync: {
+    title: 'Resincronizar badge Verified',
+    confirm: 'Correr resync',
+    danger: false,
+    needsReason: false,
+    needsTotp: false,
+    hint: 'Re-evalúa los 4 criterios (sub activa, Stripe conectado, perfil completo, docs legales aprobados) y actualiza el badge si cambió.',
+  },
+  impersonate: {
+    title: 'Ingresar como este user',
+    confirm: 'Impersonar',
+    danger: true,
+    needsReason: true,
+    needsTotp: true,
+    hint: 'Vas a entrar al marketplace con la identidad del user. La acción queda registrada en el audit log junto al motivo. Re-ingresa tu código MFA para confirmar.',
+  },
+};
+
+const ActionModal = ({
+  action,
+  reason,
+  setReason,
+  totpCode,
+  setTotpCode,
+  busy,
+  err,
+  onClose,
+  onConfirm,
+}) => {
+  const cfg = ACTION_LABELS[action];
+  const canSubmit =
+    !busy &&
+    (!cfg.needsReason || reason.trim().length >= 10) &&
+    (!cfg.needsTotp || /^\d{6}$/.test(totpCode.replace(/\s+/g, '')));
+
+  return (
+    <div className={css.modalBackdrop} onClick={onClose} role="presentation">
+      <div className={css.modalCard} onClick={e => e.stopPropagation()} role="dialog">
+        <h3 className={css.modalTitle}>{cfg.title}</h3>
+        <p className={css.muted}>{cfg.hint}</p>
+
+        {cfg.needsReason ? (
+          <label className={css.modalLabel}>
+            Motivo (mín. 10 caracteres)
+            <textarea
+              className={css.noteTextarea}
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              rows={3}
+              maxLength={500}
+              autoFocus
+            />
+          </label>
+        ) : null}
+
+        {cfg.needsTotp ? (
+          <label className={css.modalLabel}>
+            Tu código MFA (6 dígitos)
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              className={css.modalInput}
+              value={totpCode}
+              onChange={e => setTotpCode(e.target.value)}
+              maxLength={6}
+              placeholder="123456"
+            />
+          </label>
+        ) : null}
+
+        {err ? <p className={css.error}>{err}</p> : null}
+
+        <div className={css.modalActions}>
+          <button type="button" className={css.secondaryBtn} onClick={onClose} disabled={busy}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className={cfg.danger ? css.dangerBtn : css.notePrimaryBtn}
+            onClick={onConfirm}
+            disabled={!canSubmit}
+          >
+            {busy ? 'Procesando…' : cfg.confirm}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ============================================================
 // Helpers

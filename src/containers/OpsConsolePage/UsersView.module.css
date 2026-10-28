@@ -921,3 +921,170 @@
 .docLink:hover {
   text-decoration: underline;
 }
+
+/* --------- Fase C: action bar + modal + dangerBtn --------- */
+
+.actionBar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dangerBtn {
+  min-height: 36px;
+  padding: 8px 14px;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dangerBtn:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
+.dangerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 110;
+  padding: 20px;
+}
+
+.modalCard {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.modalLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--colorGrey700);
+}
+
+.modalInput {
+  padding: 10px 12px;
+  border: 1px solid var(--colorGrey200);
+  border-radius: 8px;
+  font-size: 18px;
+  font-family: 'SFMono-Regular', Menlo, monospace;
+  letter-spacing: 4px;
+  text-align: center;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* --------- Fase C: bulk toolbar en tabla roster --------- */
+
+.bulkBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #eff6ff;
+  border-bottom: 1px solid #bfdbfe;
+  font-size: 13px;
+  color: #1e3a8a;
+}
+
+.bulkCount {
+  font-weight: 700;
+}
+
+.bulkClear {
+  background: none;
+  border: none;
+  color: #1e3a8a;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.rowCheckbox {
+  width: 36px;
+  text-align: center;
+}
+
+.rowCheckbox input {
+  cursor: pointer;
+  transform: scale(1.1);
+}
+
+/* --------- Fase C: Audit log viewer --------- */
+
+.auditFilters {
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  background: var(--colorGrey50);
+  border-radius: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.auditFilters input,
+.auditFilters select {
+  padding: 7px 10px;
+  border: 1px solid var(--colorGrey200);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.auditPanel {
+  background: #fff;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.auditPanel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.auditPanel th,
+.auditPanel td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--colorGrey50);
+}
+
+.auditPanel th {
+  background: var(--colorGrey50);
+  font-size: 11px;
+  text-transform: uppercase;
+}

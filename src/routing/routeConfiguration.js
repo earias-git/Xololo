@@ -407,6 +407,12 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: OpsConsolePage,
     },
     {
+      // XOLOLO Task #41 (Fase C): audit log global de acciones OPS.
+      path: '/ops/audit-log',
+      name: 'OpsAuditLogPage',
+      component: OpsConsolePage,
+    },
+    {
       // XOLOLO: puente para que un buyer logueado se convierta en
       // vendedor casual con 1 click + aceptación de T&C. Después de
       // activar, redirige a /l/new.

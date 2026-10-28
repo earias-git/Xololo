@@ -111,7 +111,20 @@ const UsersView = ({ onBack }) => {
   const history = useHistory();
   const [data, setData] = useState({ loading: true, roster: null, error: null });
   const [selectedUserId, setSelectedUserId] = useState(null);
+  // Fase C: bulk selection + bulk note modal.
+  const [selected, setSelected] = useState(new Set());
+  const [showBulkModal, setShowBulkModal] = useState(false);
   const abortRef = useRef(null);
+
+  const toggleSelected = id => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const clearSelected = () => setSelected(new Set());
 
   // Lee filtros de la URL. Shape: ?q=&type=&verified=&sub=&legal=&state=&activity=&page=&pageSize=&sort=&dir=
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -384,9 +397,45 @@ const UsersView = ({ onBack }) => {
             <div className={css.error}>Error: {data.error}</div>
           ) : (
             <>
+              {selected.size > 0 ? (
+                <div className={css.bulkBar}>
+                  <span>
+                    <span className={css.bulkCount}>{selected.size}</span> seleccionado
+                    {selected.size === 1 ? '' : 's'}
+                  </span>
+                  <button
+                    type="button"
+                    className={css.notePrimaryBtn}
+                    onClick={() => setShowBulkModal(true)}
+                  >
+                    📝 Agregar nota a todos
+                  </button>
+                  <button type="button" className={css.bulkClear} onClick={clearSelected}>
+                    Limpiar selección
+                  </button>
+                </div>
+              ) : null}
               <table className={css.table}>
                 <thead>
                   <tr>
+                    <th className={css.rowCheckbox}>
+                      <input
+                        type="checkbox"
+                        checked={
+                          roster?.users?.length > 0 &&
+                          roster.users.every(u => selected.has(u.id))
+                        }
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setSelected(new Set(roster.users.map(u => u.id)));
+                          } else {
+                            clearSelected();
+                          }
+                        }}
+                        onClick={e => e.stopPropagation()}
+                        aria-label="Seleccionar toda la página"
+                      />
+                    </th>
                     <th>Usuario</th>
                     <th>Tipo</th>
                     <th>Verified</th>
@@ -420,6 +469,17 @@ const UsersView = ({ onBack }) => {
                   {roster?.users?.length ? (
                     roster.users.map(u => (
                       <tr key={u.id} className={css.row} onClick={() => onRowClick(u.id)}>
+                        <td
+                          className={css.rowCheckbox}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected.has(u.id)}
+                            onChange={() => toggleSelected(u.id)}
+                            aria-label={`Seleccionar ${u.displayName || u.email}`}
+                          />
+                        </td>
                         <td className={css.userCell}>
                           <div className={css.userName}>
                             {u.displayName ||
@@ -483,7 +543,7 @@ const UsersView = ({ onBack }) => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={9} className={css.empty}>
+                      <td colSpan={10} className={css.empty}>
                         Sin coincidencias con los filtros.
                       </td>
                     </tr>
@@ -523,6 +583,105 @@ const UsersView = ({ onBack }) => {
       {selectedUserId ? (
         <UserDrawer userId={selectedUserId} onClose={closeDrawer} onReload={load} />
       ) : null}
+
+      {showBulkModal ? (
+        <BulkNoteModal
+          userIds={[...selected]}
+          onClose={() => setShowBulkModal(false)}
+          onDone={() => {
+            setShowBulkModal(false);
+            clearSelected();
+            load();
+          }}
+        />
+      ) : null}
+    </div>
+  );
+};
+
+const BulkNoteModal = ({ userIds, onClose, onDone }) => {
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const [result, setResult] = useState(null);
+
+  const submit = async () => {
+    if (!text.trim() || busy) return;
+    setBusy(true);
+    setErr(null);
+    const r = await api('/api/admin/ops/users/bulk-note', {
+      method: 'POST',
+      body: { userIds, text },
+    });
+    setBusy(false);
+    if (!r.ok) {
+      setErr(r.data?.error || 'error');
+      return;
+    }
+    setResult(r.data);
+  };
+
+  if (result) {
+    return (
+      <div className={css.modalBackdrop} onClick={onDone} role="presentation">
+        <div className={css.modalCard} onClick={e => e.stopPropagation()}>
+          <h3 className={css.modalTitle}>Nota aplicada</h3>
+          <p>
+            ✓ {result.succeeded} de {result.total} users. {result.failed > 0 ? `${result.failed} fallaron.` : ''}
+          </p>
+          {result.errors?.length ? (
+            <ul className={css.flagList}>
+              {result.errors.map((e, i) => (
+                <li key={i} className={`${css.flag} ${css.flag_error}`}>
+                  <small>
+                    {e.userId}: {e.error}
+                  </small>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div className={css.modalActions}>
+            <button type="button" className={css.notePrimaryBtn} onClick={onDone}>
+              Listo
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={css.modalBackdrop} onClick={onClose} role="presentation">
+      <div className={css.modalCard} onClick={e => e.stopPropagation()}>
+        <h3 className={css.modalTitle}>Nota masiva ({userIds.length} users)</h3>
+        <p className={css.muted}>
+          La misma nota se agregará al perfil de cada user seleccionado. Queda registrada en el
+          audit log con <code>bulk_note_added</code>.
+        </p>
+        <textarea
+          className={css.noteTextarea}
+          value={text}
+          onChange={e => setText(e.target.value)}
+          rows={4}
+          maxLength={5000}
+          placeholder="Ej. 'Sellers con 0 ventas en Q3 2026 — campaña de reactivación.'"
+          autoFocus
+        />
+        {err ? <p className={css.error}>Error: {err}</p> : null}
+        <div className={css.modalActions}>
+          <button type="button" className={css.secondaryBtn} onClick={onClose} disabled={busy}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className={css.notePrimaryBtn}
+            onClick={submit}
+            disabled={!text.trim() || busy}
+          >
+            {busy ? 'Aplicando…' : `Agregar nota a ${userIds.length}`}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
