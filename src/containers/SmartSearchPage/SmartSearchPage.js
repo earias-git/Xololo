@@ -150,7 +150,7 @@ const SmartSearchPage = () => {
 
           {loading ? (
             <div className={css.loadingBox}>
-              <p>🤖 La IA está interpretando tu búsqueda…</p>
+              <p>🔍 Buscando en el catálogo…</p>
             </div>
           ) : null}
 

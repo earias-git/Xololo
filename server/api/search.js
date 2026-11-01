@@ -292,18 +292,43 @@ module.exports = async (req, res) => {
       q &&
       (result.hits[0].title || '').toLowerCase().includes(q.trim().toLowerCase());
 
-    // 2. Activamos Haiku si:
-    //    (a) 0 hits y la query no es vacía — caso clásico, siempre.
-    //    (b) <= 2 hits Y la query es compleja (frase con intención
-    //        natural que Algolia no supo expandir).
-    //    (c) query es palabra única "inusual" (probable regionalismo
-    //        como "matera", "pollera", "colectivo") Y ningún top-hit
-    //        contiene la palabra textual — sugiere que Algolia matcheó
-    //        por typo-tolerance (ruido) o no matcheó bien.
+    // 2. Si Algolia dio pocos/0 hits en query simple, probar Sharetribe
+    // keywords ANTES de ir a Haiku. Cubre listings no indexados en
+    // Algolia (drift del indexer) sin gastar tokens de IA.
+    //
+    // Reglas acordadas con el usuario (2026-11-01):
+    //   - Query simple (1-2 palabras literales) → Algolia + Sharetribe.
+    //     IA NUNCA se dispara aquí por costo.
+    //   - Query compleja (3+ palabras, con "para", "con", "cerca"
+    //     "regalo", etc.) → sí vale la pena IA desde el inicio.
+    let usedSharetribeFallback = false;
+    let sharetribeHits = null;
+    if (q && !isComplexQuery(q) && initialHits <= 2) {
+      sharetribeHits = await sharetribeKeywordFallback(sdkForEnrich, {
+        q,
+        hitsPerPage,
+        category: categoryParam || null,
+        listingType: listingTypeParam || null,
+      });
+      if (sharetribeHits && sharetribeHits.length > initialHits) {
+        usedSharetribeFallback = true;
+      } else {
+        sharetribeHits = null;
+      }
+    }
+
+    // 3. Activamos Haiku SOLO si:
+    //    (a) query es compleja (frase con intención natural) y Algolia
+    //        no encontró lo suficiente — vale la pena interpretar.
+    //    (b) query es palabra única "inusual" sin match literal en top-hit
+    //        — probable regionalismo (ej. "matera", "pollera").
+    //
+    // Si Sharetribe keywords ya rescató resultados, NO vamos a IA
+    // (ahorro de tokens, acordado con el usuario).
     const shouldEscalate =
       q &&
-      (initialHits === 0 ||
-        (initialHits <= 2 && isComplexQuery(q)) ||
+      !usedSharetribeFallback &&
+      ((initialHits <= 2 && isComplexQuery(q)) ||
         (isUnusualSingleWord(q) && !topHitHasExactMatch));
 
     if (shouldEscalate) {
@@ -352,28 +377,30 @@ module.exports = async (req, res) => {
         ? interp.listingTypes[0]
         : null);
 
-    // 3. Fallback a Sharetribe keywords search cuando Algolia + IA
-    // dieron 0 hits. Cubre listings nuevos aún no indexados en Algolia
-    // o errores del indexer que dejaron títulos fuera del índice.
-    let listingsOut = (result.hits || []).map(serializeHit);
-    let usedSharetribeFallback = false;
+    // 4. Elegir el resultado final:
+    //    - Si Sharetribe keywords rescató más hits (bug "cerdo"), usa esos.
+    //    - Si no, los hits de Algolia (posiblemente expandidos por IA).
+    //    - Último fallback: si no hay ninguno y la query no es vacía,
+    //      intenta Sharetribe una vez más (por si IA tampoco cubrió).
+    let listingsOut = usedSharetribeFallback
+      ? sharetribeHits
+      : (result.hits || []).map(serializeHit);
     if (listingsOut.length === 0 && q) {
-      const fallback = await sharetribeKeywordFallback(sdkForEnrich, {
+      const lastResort = await sharetribeKeywordFallback(sdkForEnrich, {
         q,
         hitsPerPage,
         category: effectiveCategory,
         listingType: effectiveListingType,
       });
-      if (fallback && fallback.length > 0) {
-        listingsOut = fallback;
+      if (lastResort && lastResort.length > 0) {
+        listingsOut = lastResort;
         usedSharetribeFallback = true;
       }
     }
 
-    // 4. Enriquecer covers faltantes con lookup directo (cubre listings
-    // indexados antes de que sus variants de imagen quedaran listas).
-    // Solo en resultados de Algolia — el fallback de Sharetribe ya trae
-    // la cover resuelta.
+    // 5. Enriquecer covers faltantes con lookup directo. Solo necesario
+    // en resultados de Algolia — el fallback de Sharetribe ya trae la
+    // cover resuelta desde included.images.
     if (!usedSharetribeFallback && listingsOut.some(x => !x.cover)) {
       listingsOut = await enrichCoversFromSharetribe(sdkForEnrich, listingsOut);
     }
