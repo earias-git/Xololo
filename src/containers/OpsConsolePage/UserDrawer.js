@@ -133,6 +133,17 @@ const UserDrawer = ({ userId, onClose, onReload }) => {
             label="Notas"
             count={d?.notes?.length}
           />
+          {/* XOLOLO Tier Empresarial · E7: tab Equipo visible solo si
+              el seller es Enterprise o ya tiene colaboradores. */}
+          {d?.summary?.subscriptionTier === 'enterprise' ||
+          (d?.team?.collaborators?.length || 0) > 0 ? (
+            <TabBtn
+              active={tab === 'team'}
+              onClick={() => setTab('team')}
+              label="Equipo"
+              count={(d?.team?.collaborators || []).filter(c => c.status !== 'removed').length}
+            />
+          ) : null}
         </nav>
 
         <div className={css.drawerBody}>
@@ -152,6 +163,8 @@ const UserDrawer = ({ userId, onClose, onReload }) => {
             <ActivityTab data={d} />
           ) : tab === 'notes' ? (
             <NotesTab userId={userId} initialNotes={d.notes || []} onChange={load} />
+          ) : tab === 'team' ? (
+            <TeamTab team={d.team} subscription={d.subscription} />
           ) : (
             <ModerationTab
               userId={userId}
@@ -917,6 +930,124 @@ const ActionModal = ({
 // ============================================================
 // Helpers
 // ============================================================
+
+// ============================================================
+// Tab: Equipo (OPS read-only view)
+// ============================================================
+
+const ROLE_LABEL_SHORT = {
+  admin: 'Admin',
+  manager: 'Manager',
+  catalog: 'Catálogo',
+  logistics: 'Logística',
+  finance: 'Finanzas',
+  custom: 'Custom',
+};
+
+const COLLAB_STATUS_LABEL = {
+  invited: 'Invitado',
+  active: 'Activo',
+  paused: 'Pausado',
+  removed: 'Removido',
+};
+
+const TeamTab = ({ team, subscription }) => {
+  const collaborators = (team?.collaborators || []).filter(c => c.status !== 'removed');
+  const seats = team?.seats || { used: 0, included: 2, extraPaid: 0 };
+  const auditEntries = (team?.actions || []).slice(0, 20);
+
+  return (
+    <>
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>Resumen Enterprise</h3>
+        <dl className={css.dl}>
+          <dt>Tier</dt>
+          <dd>
+            {subscription?.tier === 'enterprise' ? (
+              <span className={`${css.badge} ${css.sub_active}`}>Enterprise</span>
+            ) : (
+              <span className={css.muted}>No es Enterprise</span>
+            )}
+          </dd>
+          <dt>Plan</dt>
+          <dd>{subscription?.plan || '—'}</dd>
+          <dt>Seats usados</dt>
+          <dd>
+            {seats.used}/{seats.included + seats.extraPaid}
+            {seats.extraPaid > 0 ? ` (${seats.extraPaid} extra pagados)` : ''}
+          </dd>
+          <dt>Colaboradores activos</dt>
+          <dd>{collaborators.filter(c => c.status === 'active').length}</dd>
+        </dl>
+      </section>
+
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>Colaboradores ({collaborators.length})</h3>
+        {collaborators.length === 0 ? (
+          <p className={css.muted}>
+            {subscription?.tier === 'enterprise'
+              ? 'Enterprise sin colaboradores todavía.'
+              : 'Sin colaboradores.'}
+          </p>
+        ) : (
+          <table className={css.innerTable}>
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Permisos</th>
+                <th>Status</th>
+                <th>Desde</th>
+              </tr>
+            </thead>
+            <tbody>
+              {collaborators.map(c => (
+                <tr key={c.collaboratorId}>
+                  <td>
+                    <strong>{c.email}</strong>
+                  </td>
+                  <td>{ROLE_LABEL_SHORT[c.roleName] || c.roleName}</td>
+                  <td>{c.permissions?.length || 0}</td>
+                  <td>
+                    <span className={`${css.badge} ${css[`sub_${c.status}`] || ''}`}>
+                      {COLLAB_STATUS_LABEL[c.status] || c.status}
+                    </span>
+                  </td>
+                  <td>
+                    {c.acceptedAt
+                      ? timeAgo(c.acceptedAt)
+                      : c.invitedAt
+                      ? `inv. ${timeAgo(c.invitedAt)}`
+                      : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className={css.section}>
+        <h3 className={css.sectionTitle}>Historial del equipo ({auditEntries.length})</h3>
+        {auditEntries.length === 0 ? (
+          <p className={css.muted}>Sin acciones registradas.</p>
+        ) : (
+          <ul className={css.auditSummaryList}>
+            {auditEntries.map(a => (
+              <li key={a.id}>
+                <strong>{a.action}</strong>
+                <small>
+                  {' '}
+                  por {a.actor?.email || '—'}, {timeAgo(a.at)}
+                </small>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+};
 
 const TabBtn = ({ active, onClick, label, count }) => (
   <button type="button" className={active ? css.tabActive : css.tab} onClick={onClick}>

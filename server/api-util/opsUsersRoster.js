@@ -207,6 +207,10 @@ const buildUserRosterEntry = (
     verifiedAt: publicData.xololoVerifiedAt || null,
     stripeConnected: attrs.stripeConnected === true,
     subscriptionStatus: subscription?.status || null,
+    subscriptionTier: subscription?.tier || null,
+    teamCollaboratorsCount: Array.isArray(metadata.xololoTeam?.collaborators)
+      ? metadata.xololoTeam.collaborators.filter(c => c.status !== 'removed').length
+      : 0,
     legal,
     state: addr.state,
     city: addr.city,

@@ -493,6 +493,12 @@ const UsersView = ({ onBack }) => {
                           <span className={`${css.badge} ${css[`type_${u.type}`]}`}>
                             {TYPE_LABEL[u.type] || u.type}
                           </span>
+                          {u.subscriptionTier === 'enterprise' ? (
+                            <span className={css.enterpriseBadge} title={`${u.teamCollaboratorsCount} colaborador${u.teamCollaboratorsCount === 1 ? '' : 'es'}`}>
+                              🏢 Enterprise
+                              {u.teamCollaboratorsCount > 0 ? ` · ${u.teamCollaboratorsCount}` : ''}
+                            </span>
+                          ) : null}
                         </td>
                         <td>
                           {u.verified ? (

@@ -24,6 +24,7 @@ const {
 } = require('../api-util/opsUsersRoster');
 const { getAdminEmails } = require('../api-util/adminGate');
 const { readOpsBlock } = require('../api-util/opsAudit');
+const { readTeam } = require('../api-util/teamStore');
 
 const MAX_LISTINGS = 200;
 const MAX_TX_LISTED = 100;
@@ -285,6 +286,8 @@ module.exports = async (req, res) => {
           cancelAt: subMeta.cancelAt || null,
           lastInvoiceAt: subMeta.lastInvoiceAt || null,
           plan: subMeta.plan || null,
+          tier: subMeta.tier || null,
+          seatsExtraPaid: Number(subMeta.seatsExtraPaid) || 0,
         }
       : null;
 
@@ -304,6 +307,14 @@ module.exports = async (req, res) => {
     };
 
     const ops = readOpsBlock(user);
+    // XOLOLO Tier Empresarial · E7: expone también el bloque team del
+    // admin. Si el seller no es Enterprise o no tiene colaboradores
+    // aún, el readTeam retorna el empty default — el UI decide si
+    // mostrar la tab o no.
+    const team = readTeam(user);
+    // Agrega el tier a summary para que el UI pueda renderizar un
+    // badge "Enterprise" sin tener que re-fetch de seller-subscription.
+    summary.subscriptionTier = subscription?.tier || subMeta?.tier || null;
     return res.json({
       summary,
       listings: listings.map(buildListingSummary),
@@ -313,6 +324,7 @@ module.exports = async (req, res) => {
       flags: buildFlags(user),
       notes: ops.notes || [],
       auditLog: ops.audit || [],
+      team,
     });
   } catch (e) {
     // eslint-disable-next-line no-console
