@@ -90,6 +90,157 @@ const PlanCard = ({ plan, onSubscribe, loading }) => (
   </div>
 );
 
+// XOLOLO Tier Empresarial · E6.5 — card de upgrade in-place para
+// sellers Starter activos. Backend: POST /api/subscription/upgrade-to-enterprise.
+const ENTERPRISE_PRICING = {
+  annual: { monthly: '$399 MXN/mes', total: '$4,788/año', seat: '$69/mes por extra' },
+  monthly: { monthly: '$499 MXN/mes', total: null, seat: '$99/mes por extra' },
+};
+
+const COMPARISON_ROWS = [
+  { label: 'Storefront con slug', starter: true, enterprise: true },
+  { label: 'Verified badge', starter: true, enterprise: true },
+  { label: 'Promote / Xololear', starter: true, enterprise: true },
+  { label: 'Catálogo recurrente', starter: true, enterprise: true },
+  { label: 'Colaboradores con permisos granulares', starter: false, enterprise: 'Hasta 2 incluidos + extras' },
+  { label: 'Audit log cross-user del equipo', starter: false, enterprise: true },
+  { label: 'Roles preset (Manager, Logística, Finanzas…)', starter: false, enterprise: true },
+  { label: 'Panel Equipo en Dashboard', starter: false, enterprise: true },
+];
+
+const Check = () => <span style={{ color: '#059669', fontWeight: 700 }}>✓</span>;
+const Dash = () => <span style={{ color: '#9ca3af' }}>—</span>;
+
+const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const pricing = ENTERPRISE_PRICING[billing] || ENTERPRISE_PRICING.monthly;
+
+  const submit = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`${apiBaseUrl()}/api/subscription/upgrade-to-enterprise`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json().catch(() => ({}));
+      setBusy(false);
+      if (!res.ok) {
+        const msg =
+          {
+            no_active_starter: 'No encontramos una suscripción Starter activa para hacer upgrade.',
+            already_enterprise: 'Tu cuenta ya es Empresarial.',
+            starter_item_not_found_in_stripe:
+              'No pudimos encontrar tu plan actual en Stripe. Contacta a soporte.',
+            stripe_billing_missing:
+              'Stripe no está configurado en este entorno. Contacta a soporte.',
+          }[data?.error] || `Error: ${data?.error || 'desconocido'}`;
+        setError(msg);
+        return;
+      }
+      setSuccess('✓ ¡Listo! Tu cuenta ahora es Empresarial. Ya puedes invitar colaboradores desde tu Dashboard.');
+      setConfirming(false);
+      setTimeout(() => onDone?.(), 1200);
+    } catch (e) {
+      setBusy(false);
+      setError(`Error: ${e.message}`);
+    }
+  };
+
+  return (
+    <div className={css.upgradeCard}>
+      <div className={css.upgradeHeader}>
+        <div>
+          <h3 className={css.upgradeTitle}>
+            <span aria-hidden="true">🏢</span> Upgrade a Empresarial
+          </h3>
+          <p className={css.upgradeLead}>
+            Suma colaboradores a tu tienda con permisos granulares. Mismo payout, mismas facturas —
+            tú sigues siendo el titular.
+          </p>
+        </div>
+        <div className={css.upgradePricing}>
+          <strong className={css.upgradePrice}>{pricing.monthly}</strong>
+          {pricing.total ? <small>{pricing.total}</small> : null}
+          <small className={css.upgradeSeat}>+ {pricing.seat}</small>
+        </div>
+      </div>
+
+      <table className={css.compareTable}>
+        <thead>
+          <tr>
+            <th />
+            <th>Starter actual</th>
+            <th className={css.compareHighlight}>Empresarial</th>
+          </tr>
+        </thead>
+        <tbody>
+          {COMPARISON_ROWS.map((row, i) => (
+            <tr key={i}>
+              <td>{row.label}</td>
+              <td className={css.compareCell}>
+                {row.starter === true ? <Check /> : row.starter === false ? <Dash /> : row.starter}
+              </td>
+              <td className={`${css.compareCell} ${css.compareHighlight}`}>
+                {row.enterprise === true ? (
+                  <Check />
+                ) : row.enterprise === false ? (
+                  <Dash />
+                ) : (
+                  row.enterprise
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {error ? <p className={css.upgradeError}>{error}</p> : null}
+      {success ? <p className={css.upgradeSuccess}>{success}</p> : null}
+
+      {!success ? (
+        <div className={css.upgradeActions}>
+          {!confirming ? (
+            <button type="button" className={css.upgradeCta} onClick={() => setConfirming(true)}>
+              Upgrade a Empresarial →
+            </button>
+          ) : (
+            <>
+              <p className={css.upgradeConfirmText}>
+                Se cobrará prorrateado el cambio de plan en tu próxima factura (Stripe calcula el
+                ajuste automáticamente). ¿Confirmar?
+              </p>
+              <div className={css.upgradeConfirmButtons}>
+                <button
+                  type="button"
+                  className={css.upgradeSecondary}
+                  onClick={() => setConfirming(false)}
+                  disabled={busy}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className={css.upgradeCta}
+                  onClick={submit}
+                  disabled={busy}
+                >
+                  {busy ? 'Procesando…' : 'Sí, upgradea mi plan'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 const SubscriptionPageComponent = () => {
   const config = useConfiguration();
   const intl = useIntl();
@@ -222,23 +373,37 @@ const SubscriptionPageComponent = () => {
           ) : state.status === 'error' ? (
             <p className={css.errorBox}>No pudimos cargar tu suscripción. {state.error}</p>
           ) : isActive ? (
-            <div className={css.activeCard}>
-              <div className={css.activeHead}>
-                <span>Plan {sub.plan === 'annual' ? 'anual' : 'mensual'}</span>
-                {statusLabel ? (
-                  <span className={`${css.statusPill} ${css[`statusPill--${statusLabel.tone}`]}`}>
-                    {statusLabel.text}
+            <>
+              <div className={css.activeCard}>
+                <div className={css.activeHead}>
+                  <span>
+                    Plan {sub.plan === 'annual' ? 'anual' : 'mensual'}
+                    {sub.tier === 'enterprise' ? (
+                      <span className={css.tierBadge}>🏢 Empresarial</span>
+                    ) : null}
                   </span>
+                  {statusLabel ? (
+                    <span className={`${css.statusPill} ${css[`statusPill--${statusLabel.tone}`]}`}>
+                      {statusLabel.text}
+                    </span>
+                  ) : null}
+                </div>
+                {sub.currentPeriodEnd ? (
+                  <p className={css.activeDetail}>
+                    {sub.cancelAtPeriodEnd
+                      ? `Se pausa y no se renueva el ${formatDate(sub.currentPeriodEnd)}.`
+                      : `Se renueva automáticamente el ${formatDate(sub.currentPeriodEnd)}.`}
+                  </p>
                 ) : null}
               </div>
-              {sub.currentPeriodEnd ? (
-                <p className={css.activeDetail}>
-                  {sub.cancelAtPeriodEnd
-                    ? `Se pausa y no se renueva el ${formatDate(sub.currentPeriodEnd)}.`
-                    : `Se renueva automáticamente el ${formatDate(sub.currentPeriodEnd)}.`}
-                </p>
+
+              {sub.tier !== 'enterprise' ? (
+                <UpgradeToEnterpriseCard
+                  billing={sub.plan === 'annual' ? 'annual' : 'monthly'}
+                  onDone={load}
+                />
               ) : null}
-            </div>
+            </>
           ) : (
             <>
               <div className={css.planGrid}>

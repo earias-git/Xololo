@@ -64,6 +64,7 @@ const adminBackfillVerified = require('./api/admin-backfill-verified');
 const adminAuth = require('./api/admin-auth');
 const adminOperators = require('./api/admin-operators');
 const createSubscriptionCheckout = require('./api/create-subscription-checkout');
+const upgradeToEnterprise = require('./api/upgrade-to-enterprise');
 const sellerSubscription = require('./api/seller-subscription');
 const sellerPayoutGate = require('./api/seller-payout-gate');
 const sellerPendingPayouts = require('./api/seller-pending-payouts');
@@ -583,6 +584,12 @@ router.get('/admin/ai-metrics', adminAuth.requireOperator(), adminAiMetrics);
 // XOLOLO Track C: Stripe Billing — suscripción de sellers.
 // Crea el Checkout Session (plan + onboarding fee en un solo pago).
 router.post('/create-subscription-checkout', bodyParser.json(), createSubscriptionCheckout);
+router.post(
+  '/subscription/upgrade-to-enterprise',
+  limits.payment,
+  bodyParser.json(),
+  upgradeToEnterprise
+);
 // GET status propio / POST confirma un Checkout Session recién pagado.
 router.get('/seller-subscription', sellerSubscription);
 router.post('/seller-subscription', bodyParser.json(), sellerSubscription);
