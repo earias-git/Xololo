@@ -27,6 +27,7 @@ const SectionBuilder = loadable(
 import FallbackPage, { fallbackSections } from './FallbackPage';
 import { ASSET_NAME } from './TermsOfServicePage.duck';
 import SosConsentAddendum from './SosConsentAddendum';
+import TeamConsentAddendum from './TeamConsentAddendum';
 
 // This "content-only" component can be used in modals etc.
 const TermsOfServiceContent = props => {
@@ -73,7 +74,12 @@ const TermsOfServicePageComponent = props => {
       error={error}
       fallbackPage={<FallbackPage />}
       featuredListings={getFeaturedListingsProps(camelize(ASSET_NAME), props)}
-      afterSections={<SosConsentAddendum />}
+      afterSections={
+        <>
+          <SosConsentAddendum />
+          <TeamConsentAddendum />
+        </>
+      }
     />
   );
 };

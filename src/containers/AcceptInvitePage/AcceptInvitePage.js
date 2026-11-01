@@ -73,6 +73,7 @@ const AcceptInvitePage = () => {
   const payload = token ? decodePayload(token) : null;
 
   const [state, setState] = useState({ busy: false, error: null, done: false });
+  const [consentAccepted, setConsentAccepted] = useState(false);
 
   if (!token) {
     return (
@@ -167,11 +168,22 @@ const AcceptInvitePage = () => {
             </section>
           ) : null}
 
-          <p className={css.legal}>
-            Al aceptar entiendes que operarás esa tienda siguiendo las instrucciones del administrador,
-            que todas tus acciones quedan registradas en el audit log, y que el administrador puede
-            revocar tu acceso en cualquier momento.
-          </p>
+          <label className={css.consentLabel}>
+            <input
+              type="checkbox"
+              checked={consentAccepted}
+              onChange={e => setConsentAccepted(e.target.checked)}
+            />
+            <span className={css.consentText}>
+              Entiendo y acepto que operaré la tienda{' '}
+              <strong>{payload?.adminEmail || 'del administrador'}</strong> siguiendo
+              sus instrucciones. Mis acciones quedan registradas en el audit log del
+              equipo y pueden ser revisadas por el administrador o por OPS. Mi acceso
+              puede ser revocado en cualquier momento. Los pagos de las ventas que
+              yo gestione se depositan en la cuenta del administrador — nunca en la
+              mía.
+            </span>
+          </label>
 
           {state.error ? <p className={css.error}>{state.error}</p> : null}
           {state.done ? (
@@ -184,7 +196,7 @@ const AcceptInvitePage = () => {
                 type="button"
                 onClick={accept}
                 inProgress={state.busy}
-                disabled={state.busy || emailMismatch}
+                disabled={state.busy || emailMismatch || !consentAccepted}
               >
                 {state.busy ? (
                   <>

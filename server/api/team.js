@@ -62,6 +62,11 @@ const {
   verifyInviteToken,
 } = require('../api-util/teamInviteToken');
 const { sendTeamInviteEmail } = require('../api-util/teamInviteEmail');
+const {
+  sendTeamAcceptedEmail,
+  sendTeamPausedEmail,
+  sendTeamRemovedEmail,
+} = require('../api-util/teamNotifyEmail');
 
 const MARKETPLACE_ROOT_URL =
   process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx';
@@ -272,6 +277,24 @@ const accept = async (req, res) => {
     target: { collaboratorId },
   });
 
+  // XOLOLO E8: email de confirmación al admin.
+  // Fire-and-forget — no retrasamos la response del colaborador.
+  (async () => {
+    try {
+      const adminResp = await isdk.users.show({ id: adminId });
+      const adminEmail = adminResp.data.data?.attributes?.email;
+      await sendTeamAcceptedEmail({
+        adminEmail,
+        collaboratorEmail: userEmail,
+        collaboratorDisplayName:
+          currentUser.attributes?.profile?.displayName || null,
+        dashboardUrl: `${MARKETPLACE_ROOT_URL.replace(/\/$/, '')}/dashboard?section=equipo`,
+      });
+    } catch (_e) {
+      // non-fatal
+    }
+  })();
+
   return res.json({ collaborator });
 };
 
@@ -358,6 +381,41 @@ const statusAction = (fn, actionName) => async (req, res) => {
       action: `team.${actionName}`,
       target: { collaboratorId },
     });
+
+    // XOLOLO E8: notificación al colaborador en pause / remove.
+    // Fire-and-forget. No se envía en resume (es good news silent).
+    if (actionName === 'pause' || actionName === 'remove') {
+      (async () => {
+        try {
+          const adminResp = await isdk.users.show({ id: adminId });
+          const collabResp = await isdk.users.show({ id: collaboratorId });
+          const adminDisplayName =
+            adminResp.data.data?.attributes?.profile?.displayName ||
+            adminResp.data.data?.attributes?.email;
+          const sellerDisplayName =
+            adminResp.data.data?.attributes?.profile?.displayName ||
+            adminResp.data.data?.attributes?.profile?.publicData?.slug ||
+            'la tienda';
+          const collaboratorEmail = collabResp.data.data?.attributes?.email;
+          if (actionName === 'pause') {
+            await sendTeamPausedEmail({
+              collaboratorEmail,
+              adminDisplayName,
+              sellerDisplayName,
+            });
+          } else {
+            await sendTeamRemovedEmail({
+              collaboratorEmail,
+              adminDisplayName,
+              sellerDisplayName,
+            });
+          }
+        } catch (_e) {
+          // non-fatal
+        }
+      })();
+    }
+
     return res.json({ collaborator });
   } catch (e) {
     if (e.message === 'collaborator_not_found') {

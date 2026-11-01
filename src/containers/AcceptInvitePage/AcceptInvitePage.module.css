@@ -58,6 +58,30 @@
   line-height: 1.5;
 }
 
+.consentLabel {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border: 1px solid var(--colorGrey100);
+  border-left: 3px solid var(--marketplaceColor);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.consentLabel input {
+  margin-top: 4px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.consentText {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--colorGrey700);
+}
+
 .warning {
   padding: 12px 14px;
   background: #fef3c7;
