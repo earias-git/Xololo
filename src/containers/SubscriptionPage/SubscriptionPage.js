@@ -111,12 +111,62 @@ const COMPARISON_ROWS = [
 const Check = () => <span style={{ color: '#059669', fontWeight: 700 }}>✓</span>;
 const Dash = () => <span style={{ color: '#9ca3af' }}>—</span>;
 
+const formatMoney = (amount, currency = 'MXN') => {
+  const sign = amount < 0 ? '-' : '';
+  const abs = Math.abs(Number(amount) || 0);
+  return `${sign}$${abs.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+};
+
+const formatPreviewDate = iso => {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+};
+
 const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
-  const [confirming, setConfirming] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const [preview, setPreview] = useState(null); // { today, nextRenewal, ... }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const pricing = ENTERPRISE_PRICING[billing] || ENTERPRISE_PRICING.monthly;
+
+  const translateError = code =>
+    ({
+      no_active_starter: 'No encontramos una suscripción Starter activa para hacer upgrade.',
+      already_enterprise: 'Tu cuenta ya es Empresarial.',
+      starter_item_not_found_in_stripe:
+        'No pudimos encontrar tu plan actual en Stripe. Contacta a soporte.',
+      stripe_billing_missing: 'Stripe no está configurado en este entorno. Contacta a soporte.',
+    }[code] || `Error: ${code || 'desconocido'}`);
+
+  const openPreview = async () => {
+    setPreviewing(true);
+    setPreview(null);
+    setError(null);
+    try {
+      const res = await fetch(`${apiBaseUrl()}/api/subscription/upgrade-preview`, {
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(translateError(data?.error));
+        return;
+      }
+      setPreview(data);
+    } catch (e) {
+      setError(`Error: ${e.message}`);
+    }
+  };
+
+  const cancelPreview = () => {
+    setPreviewing(false);
+    setPreview(null);
+    setError(null);
+  };
 
   const submit = async () => {
     setBusy(true);
@@ -131,21 +181,14 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
       const data = await res.json().catch(() => ({}));
       setBusy(false);
       if (!res.ok) {
-        const msg =
-          {
-            no_active_starter: 'No encontramos una suscripción Starter activa para hacer upgrade.',
-            already_enterprise: 'Tu cuenta ya es Empresarial.',
-            starter_item_not_found_in_stripe:
-              'No pudimos encontrar tu plan actual en Stripe. Contacta a soporte.',
-            stripe_billing_missing:
-              'Stripe no está configurado en este entorno. Contacta a soporte.',
-          }[data?.error] || `Error: ${data?.error || 'desconocido'}`;
-        setError(msg);
+        setError(translateError(data?.error));
         return;
       }
-      setSuccess('✓ ¡Listo! Tu cuenta ahora es Empresarial. Ya puedes invitar colaboradores desde tu Dashboard.');
-      setConfirming(false);
-      setTimeout(() => onDone?.(), 1200);
+      setSuccess(
+        '✓ ¡Listo! Tu cuenta ahora es Empresarial. Ya puedes invitar colaboradores desde tu Dashboard.'
+      );
+      setPreviewing(false);
+      setTimeout(() => onDone?.(), 1500);
     } catch (e) {
       setBusy(false);
       setError(`Error: ${e.message}`);
@@ -200,41 +243,104 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
         </tbody>
       </table>
 
-      {error ? <p className={css.upgradeError}>{error}</p> : null}
       {success ? <p className={css.upgradeSuccess}>{success}</p> : null}
 
-      {!success ? (
+      {!success && !previewing ? (
         <div className={css.upgradeActions}>
-          {!confirming ? (
-            <button type="button" className={css.upgradeCta} onClick={() => setConfirming(true)}>
-              Upgrade a Empresarial →
-            </button>
-          ) : (
+          <button type="button" className={css.upgradeCta} onClick={openPreview}>
+            Upgrade a Empresarial →
+          </button>
+        </div>
+      ) : null}
+
+      {!success && previewing ? (
+        <div className={css.previewPanel}>
+          <h4 className={css.previewTitle}>Preview del cambio</h4>
+
+          {!preview && !error ? (
+            <p className={css.muted}>Calculando el ajuste con Stripe…</p>
+          ) : null}
+
+          {error ? <p className={css.upgradeError}>{error}</p> : null}
+
+          {preview ? (
             <>
-              <p className={css.upgradeConfirmText}>
-                Se cobrará prorrateado el cambio de plan en tu próxima factura (Stripe calcula el
-                ajuste automáticamente). ¿Confirmar?
+              {preview.daysRemaining != null ? (
+                <p className={css.previewContext}>
+                  Te quedan <strong>{preview.daysRemaining} días</strong> del ciclo{' '}
+                  {preview.starterPlan === 'annual' ? 'anual' : 'mensual'} actual.
+                </p>
+              ) : null}
+
+              <table className={css.previewTable}>
+                <tbody>
+                  {preview.today.lines.map((line, i) => (
+                    <tr key={i} className={line.isCredit ? css.previewCredit : ''}>
+                      <td>{line.description}</td>
+                      <td className={css.previewAmount}>
+                        {formatMoney(line.amount, preview.today.currency)}
+                      </td>
+                    </tr>
+                  ))}
+                  {preview.today.tax ? (
+                    <tr>
+                      <td>Impuestos</td>
+                      <td className={css.previewAmount}>
+                        {formatMoney(preview.today.tax, preview.today.currency)}
+                      </td>
+                    </tr>
+                  ) : null}
+                  <tr className={css.previewTotalRow}>
+                    <td>
+                      <strong>A pagar HOY</strong>
+                    </td>
+                    <td className={css.previewAmount}>
+                      <strong>
+                        {formatMoney(preview.today.total, preview.today.currency)}
+                      </strong>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <p className={css.previewNext}>
+                Próxima factura:{' '}
+                <strong>
+                  {formatMoney(preview.nextRenewal.amount, preview.nextRenewal.currency)}
+                </strong>{' '}
+                el <strong>{formatPreviewDate(preview.nextRenewal.date)}</strong>.
               </p>
-              <div className={css.upgradeConfirmButtons}>
-                <button
-                  type="button"
-                  className={css.upgradeSecondary}
-                  onClick={() => setConfirming(false)}
-                  disabled={busy}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className={css.upgradeCta}
-                  onClick={submit}
-                  disabled={busy}
-                >
-                  {busy ? 'Procesando…' : 'Sí, upgradea mi plan'}
-                </button>
-              </div>
+
+              <p className={css.previewLegal}>
+                Al confirmar aceptas que se emita el cargo adicional de hoy en tu
+                método de pago registrado. El CFDI se emitirá manualmente mientras
+                terminamos de configurar el PAC — nuestro equipo te lo hace llegar.
+              </p>
             </>
-          )}
+          ) : null}
+
+          <div className={css.upgradeConfirmButtons}>
+            <button
+              type="button"
+              className={css.upgradeSecondary}
+              onClick={cancelPreview}
+              disabled={busy}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className={css.upgradeCta}
+              onClick={submit}
+              disabled={busy || !preview}
+            >
+              {busy
+                ? 'Procesando…'
+                : preview
+                ? `Sí, hacer upgrade por ${formatMoney(preview.today.total, preview.today.currency)}`
+                : 'Cargando…'}
+            </button>
+          </div>
         </div>
       ) : null}
     </div>

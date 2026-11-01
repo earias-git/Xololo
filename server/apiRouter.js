@@ -65,6 +65,7 @@ const adminAuth = require('./api/admin-auth');
 const adminOperators = require('./api/admin-operators');
 const createSubscriptionCheckout = require('./api/create-subscription-checkout');
 const upgradeToEnterprise = require('./api/upgrade-to-enterprise');
+const upgradePreview = require('./api/upgrade-preview');
 const sellerSubscription = require('./api/seller-subscription');
 const sellerPayoutGate = require('./api/seller-payout-gate');
 const sellerPendingPayouts = require('./api/seller-pending-payouts');
@@ -590,6 +591,7 @@ router.post(
   bodyParser.json(),
   upgradeToEnterprise
 );
+router.get('/subscription/upgrade-preview', limits.generic, upgradePreview);
 // GET status propio / POST confirma un Checkout Session recién pagado.
 router.get('/seller-subscription', sellerSubscription);
 router.post('/seller-subscription', bodyParser.json(), sellerSubscription);
