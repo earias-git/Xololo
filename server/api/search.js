@@ -1,11 +1,35 @@
 // XOLOLO Fase 2 — endpoint de búsqueda. Reemplaza al viejo /api/smart-search.
 //
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  XOLOLO LOCKED — ADR-001 (2026-11-01)                               ║
+// ║                                                                      ║
+// ║  Orden del flujo acordado explícitamente con el usuario. NO          ║
+// ║  reorganizar sin:                                                    ║
+// ║    1. Leer docs/decisions/ADR-001-search-order.md                    ║
+// ║    2. Confirmar con el usuario que la nueva propuesta es intencional ║
+// ║    3. Correr `yarn smoke` — debe quedar verde                        ║
+// ║                                                                      ║
+// ║  Orden:                                                              ║
+// ║    1) Algolia (siempre, cubre 90%)                                   ║
+// ║    2) Sharetribe listings.query({keywords}) si Algolia ≤ 2 hits Y    ║
+// ║       query es SIMPLE (1-2 palabras literales)                       ║
+// ║    3) IA (Haiku) SOLO si query es compleja o palabra inusual         ║
+// ║    4) Last-resort Sharetribe                                         ║
+// ║    5) Enriquecer covers faltantes con sdk.listings.show batch        ║
+// ║                                                                      ║
+// ║  Para query simple de 1-2 palabras (cerdo, mezcal, velero):          ║
+// ║  **IA NUNCA se dispara**. Costo tokens: $0. Prioridad del usuario.   ║
+// ║                                                                      ║
+// ║  Smoke tests: server/smoke/search.smoke.test.js                      ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+//
 // Flujo:
 //   1. Query simple (1-2 palabras): Algolia directo.
-//   2. Query compleja (3+ palabras o frases con contexto): Haiku interpreta
+//   2. Si Algolia da ≤ 2 hits en query simple → Sharetribe keywords.
+//   3. Query compleja (3+ palabras o frases con contexto): Haiku interpreta
 //      → convierte intent en keywords/categorías/listingTypes → Algolia con
 //      filtros derivados.
-//   3. Si Haiku falla, fallback a Algolia con la query cruda.
+//   4. Si Haiku falla, fallback a Sharetribe con la query cruda.
 //
 // Contrato:
 //   GET /api/search?q=<query>&hitsPerPage=<N>&page=<N>&category=<slug>&listingType=<type>
