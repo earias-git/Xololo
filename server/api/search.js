@@ -27,6 +27,8 @@ const { search, isConfigured: algoliaReady } = require('../api-util/algoliaClien
 const { chatJson, isConfigured: aiReady } = require('../api-util/aiClient');
 const { SEARCH_QUERY_UNDERSTAND_V1 } = require('../api-util/aiPrompts');
 const { recordAiCall } = require('../api-util/aiMetrics');
+const { getSdk } = require('../api-util/sdk');
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 
 const AVAILABLE_CATEGORIES = [
   'artesanias',
@@ -142,6 +144,106 @@ const serializeHit = hit => ({
   hasAiAnalysis: !!hit.hasAiAnalysis,
 });
 
+// XOLOLO fix 2026-11-01: cover faltante en hits de Algolia (listings
+// indexados antes de que las variants de imagen estuvieran listas).
+// Enriquece con lookup directo a Sharetribe. Batched en paralelo —
+// máximo MAX_ENRICH para no explotar latencia.
+const MAX_ENRICH = 20;
+const COVER_VARIANTS = ['listing-card-2x', 'listing-card', 'scaled-medium'];
+
+const extractCoverFromSdkListing = (listing, included) => {
+  const refs = listing?.relationships?.images?.data || [];
+  if (refs.length === 0) return null;
+  const img = included.find(i => i.type === 'image' && i.id?.uuid === refs[0].id?.uuid);
+  const variants = img?.attributes?.variants || {};
+  for (const v of COVER_VARIANTS) {
+    if (variants[v]?.url) return variants[v].url;
+  }
+  return null;
+};
+
+const extractAuthorFromSdkListing = (listing, included) => {
+  const ref = listing?.relationships?.author?.data;
+  if (!ref) return null;
+  const user = included.find(i => i.type === 'user' && i.id?.uuid === ref.id?.uuid);
+  return user?.attributes?.profile?.displayName || null;
+};
+
+const enrichCoversFromSharetribe = async (sdk, serialized) => {
+  if (!sdk) return serialized;
+  const needsCover = serialized.filter(x => !x.cover).slice(0, MAX_ENRICH);
+  if (needsCover.length === 0) return serialized;
+  const lookups = await Promise.allSettled(
+    needsCover.map(x =>
+      sdk.listings
+        .show({
+          id: x.id,
+          include: ['images'],
+          'fields.image': COVER_VARIANTS.map(v => `variants.${v}`),
+        })
+        .catch(() => null)
+    )
+  );
+  const coverById = new Map();
+  lookups.forEach((r, i) => {
+    if (r.status !== 'fulfilled' || !r.value) return;
+    const data = r.value.data?.data;
+    const included = r.value.data?.included || [];
+    if (!data) return;
+    const url = extractCoverFromSdkListing(data, included);
+    if (url) coverById.set(needsCover[i].id, url);
+  });
+  return serialized.map(x => (x.cover || !coverById.has(x.id) ? x : { ...x, cover: coverById.get(x.id) }));
+};
+
+// XOLOLO fix 2026-11-01: Algolia a veces no indexa listings nuevos
+// o moderation flag impide verlos. Si initialHits === 0 con una query
+// textual directa, caemos a Sharetribe listings.query({ keywords })
+// que busca en title + description nativamente.
+const sharetribeKeywordFallback = async (sdk, { q, hitsPerPage, category, listingType }) => {
+  if (!sdk || !q) return null;
+  try {
+    const params = {
+      keywords: q,
+      perPage: Math.min(hitsPerPage, 24),
+      include: ['images', 'author'],
+      'fields.listing': ['title', 'price', 'publicData', 'metadata', 'state'],
+      'fields.image': COVER_VARIANTS.map(v => `variants.${v}`),
+      'fields.user': ['profile.displayName'],
+    };
+    if (category) params.pub_categoryLevel1 = category;
+    if (listingType) params.pub_listingType = listingType;
+    const resp = await sdk.listings.query(params);
+    const listings = (resp.data.data || []).filter(
+      l => l.attributes?.state === 'published'
+    );
+    const included = resp.data.included || [];
+    return listings.map(l => {
+      const attrs = l.attributes || {};
+      const pd = attrs.publicData || {};
+      const price = attrs.price || null;
+      return {
+        id: l.id?.uuid,
+        title: attrs.title || '',
+        slug: pd.slug || toSlug(attrs.title),
+        href: `/l/${pd.slug || toSlug(attrs.title)}/${l.id?.uuid}`,
+        cover: extractCoverFromSdkListing(l, included),
+        price: price?.amount != null ? price.amount / 100 : null,
+        currency: price?.currency || 'MXN',
+        category: pd.categoryLevel1 || pd.category || null,
+        listingType: pd.listingType || pd.transactionProcessAlias || null,
+        authorName: extractAuthorFromSdkListing(l, included),
+        autoDescription: pd.autoDescription || '',
+        hasAiAnalysis: !!(attrs.metadata?.xololoAiAnalysis || pd.aiAnalysis),
+      };
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[search.fallback] sharetribe keywords search failed:', e?.message);
+    return null;
+  }
+};
+
 module.exports = async (req, res) => {
   try {
     const q = String(req.query.q || '').trim();
@@ -162,6 +264,16 @@ module.exports = async (req, res) => {
       if (listingType) f.push(`listingType:${listingType}`);
       return f;
     };
+
+    // SDK para enriquecer covers faltantes y fallback por keywords.
+    // Usamos el SDK publico (sin auth): /api/search no requiere login.
+    const sdkForEnrich = (() => {
+      try {
+        return getSdk(req, res);
+      } catch (_e) {
+        return null;
+      }
+    })();
 
     // 1. SIEMPRE intentamos Algolia primero con la query cruda. Barato
     // ($0) y rápido (5-50ms). La mayoría de queries directas se
@@ -240,6 +352,32 @@ module.exports = async (req, res) => {
         ? interp.listingTypes[0]
         : null);
 
+    // 3. Fallback a Sharetribe keywords search cuando Algolia + IA
+    // dieron 0 hits. Cubre listings nuevos aún no indexados en Algolia
+    // o errores del indexer que dejaron títulos fuera del índice.
+    let listingsOut = (result.hits || []).map(serializeHit);
+    let usedSharetribeFallback = false;
+    if (listingsOut.length === 0 && q) {
+      const fallback = await sharetribeKeywordFallback(sdkForEnrich, {
+        q,
+        hitsPerPage,
+        category: effectiveCategory,
+        listingType: effectiveListingType,
+      });
+      if (fallback && fallback.length > 0) {
+        listingsOut = fallback;
+        usedSharetribeFallback = true;
+      }
+    }
+
+    // 4. Enriquecer covers faltantes con lookup directo (cubre listings
+    // indexados antes de que sus variants de imagen quedaran listas).
+    // Solo en resultados de Algolia — el fallback de Sharetribe ya trae
+    // la cover resuelta.
+    if (!usedSharetribeFallback && listingsOut.some(x => !x.cover)) {
+      listingsOut = await enrichCoversFromSharetribe(sdkForEnrich, listingsOut);
+    }
+
     return res.status(200).json({
       ok: true,
       query: q,
@@ -255,13 +393,14 @@ module.exports = async (req, res) => {
           }
         : null,
       usedAi: !!interp,
+      usedSharetribeFallback,
       filters: {
         category: effectiveCategory,
         listingType: effectiveListingType,
       },
-      listings: (result.hits || []).map(serializeHit),
-      count: result.hits?.length || 0,
-      total: result.nbHits || 0,
+      listings: listingsOut,
+      count: listingsOut.length,
+      total: usedSharetribeFallback ? listingsOut.length : result.nbHits || 0,
       processingTimeMS: result.processingTimeMS,
     });
   } catch (err) {
