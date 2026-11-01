@@ -83,10 +83,19 @@ module.exports = async (req, res) => {
     ]);
     const starterPrice = prices[starterLookup];
     const enterprisePrice = prices[enterprisePlanLookup];
-    if (!starterPrice || !enterprisePrice) {
+    const seatPrice = prices[seatLookup];
+    const missing = [];
+    if (!starterPrice) missing.push(starterLookup);
+    if (!enterprisePrice) missing.push(enterprisePlanLookup);
+    if (!seatPrice) missing.push(seatLookup);
+    if (missing.length > 0) {
       // eslint-disable-next-line no-console
-      console.error('[upgrade-preview] Prices faltantes — corre yarn setup-stripe-billing');
-      return res.status(500).json({ error: 'internal' });
+      console.error('[upgrade-preview] Prices faltantes en Stripe:', missing.join(', '));
+      return res.status(503).json({
+        error: 'prices_not_configured',
+        missing,
+        hint: 'Corre `yarn setup-stripe-billing` en el entorno para crear los Prices Enterprise.',
+      });
     }
 
     // Lee la sub Stripe para encontrar el item del Starter.
@@ -99,22 +108,41 @@ module.exports = async (req, res) => {
     }
 
     const prorationDate = Math.floor(Date.now() / 1000);
-    // createPreview es la API moderna; retrieveUpcoming también funciona
-    // pero está marcada como legacy en el SDK Stripe v18+.
-    const previewFn =
-      typeof stripe.invoices.createPreview === 'function'
-        ? stripe.invoices.createPreview.bind(stripe.invoices)
-        : stripe.invoices.retrieveUpcoming.bind(stripe.invoices);
+    // createPreview es la API moderna del SDK v18+; retrieveUpcoming
+    // es la legacy pero compatible. Elegimos la primera disponible.
+    const usesCreatePreview = typeof stripe.invoices.createPreview === 'function';
+    const usesRetrieveUpcoming = typeof stripe.invoices.retrieveUpcoming === 'function';
+    if (!usesCreatePreview && !usesRetrieveUpcoming) {
+      // eslint-disable-next-line no-console
+      console.error('[upgrade-preview] SDK Stripe sin createPreview ni retrieveUpcoming');
+      return res.status(500).json({
+        error: 'stripe_sdk_outdated',
+        detail: 'El SDK de Stripe no expone createPreview ni retrieveUpcoming',
+      });
+    }
 
-    const upcoming = await previewFn({
-      customer: stripeSub.customer,
-      subscription: stripeSub.id,
-      subscription_details: {
-        items: [{ id: starterItem.id, price: enterprisePrice.id, quantity: 1 }],
-        proration_behavior: 'always_invoice',
-        proration_date: prorationDate,
-      },
-    });
+    // El shape del argumento difiere ligeramente entre ambas APIs:
+    //   - retrieveUpcoming (legacy): subscription_items + subscription_proration_date
+    //   - createPreview (moderno):   subscription_details.{items, proration_date, proration_behavior}
+    const upcoming = usesCreatePreview
+      ? await stripe.invoices.createPreview({
+          customer: stripeSub.customer,
+          subscription: stripeSub.id,
+          subscription_details: {
+            items: [{ id: starterItem.id, price: enterprisePrice.id, quantity: 1 }],
+            proration_behavior: 'always_invoice',
+            proration_date: prorationDate,
+          },
+        })
+      : await stripe.invoices.retrieveUpcoming({
+          customer: stripeSub.customer,
+          subscription: stripeSub.id,
+          subscription_items: [
+            { id: starterItem.id, price: enterprisePrice.id, quantity: 1 },
+          ],
+          subscription_proration_behavior: 'always_invoice',
+          subscription_proration_date: prorationDate,
+        });
 
     // Lineas del preview — Stripe devuelve una por cada partida prorratada:
     //   type: 'invoiceitem' con amount negativo = saldo a favor del plan viejo
@@ -157,7 +185,12 @@ module.exports = async (req, res) => {
     });
   } catch (e) {
     // eslint-disable-next-line no-console
-    console.error('[upgrade-preview] error:', e?.message || e);
-    return res.status(500).json({ error: 'internal', detail: e?.message });
+    console.error('[upgrade-preview] error:', e?.message || e, e?.type || '', e?.code || '');
+    return res.status(500).json({
+      error: 'internal',
+      detail: e?.message || null,
+      stripeType: e?.type || null,
+      stripeCode: e?.code || null,
+    });
   }
 };

@@ -134,14 +134,18 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
   const [success, setSuccess] = useState(null);
   const pricing = ENTERPRISE_PRICING[billing] || ENTERPRISE_PRICING.monthly;
 
-  const translateError = code =>
+  const translateError = (code, data) =>
     ({
       no_active_starter: 'No encontramos una suscripción Starter activa para hacer upgrade.',
       already_enterprise: 'Tu cuenta ya es Empresarial.',
       starter_item_not_found_in_stripe:
         'No pudimos encontrar tu plan actual en Stripe. Contacta a soporte.',
       stripe_billing_missing: 'Stripe no está configurado en este entorno. Contacta a soporte.',
-    }[code] || `Error: ${code || 'desconocido'}`);
+      prices_not_configured:
+        'El plan Empresarial aún no está disponible: faltan Prices en Stripe. Nuestro equipo ya fue notificado.',
+      stripe_sdk_outdated:
+        'Hay un problema técnico con nuestra integración de Stripe. Contacta a soporte.',
+    }[code] || (data?.detail ? `Error: ${data.detail}` : `Error: ${code || 'desconocido'}`));
 
   const openPreview = async () => {
     setPreviewing(true);
@@ -153,7 +157,7 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(translateError(data?.error));
+        setError(translateError(data?.error, data));
         return;
       }
       setPreview(data);
@@ -181,7 +185,7 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
       const data = await res.json().catch(() => ({}));
       setBusy(false);
       if (!res.ok) {
-        setError(translateError(data?.error));
+        setError(translateError(data?.error, data));
         return;
       }
       setSuccess(
