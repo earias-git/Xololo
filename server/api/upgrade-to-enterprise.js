@@ -7,6 +7,12 @@
 //
 // POST /api/subscription/upgrade-to-enterprise
 // Auth: user logueado. Mismo ciclo (annual|monthly) que el Starter.
+//
+// Body (JSON, opcional):
+//   { seatsExtra: N }  colaboradores adicionales más allá de los 2
+//                      incluidos. Default 0. Clamp [0, 20]. Se agrega
+//                      como segundo line_item con quantity=N en Stripe.
+//
 //   200 → { ok, tier: 'enterprise', seats, invoiceId? }
 //   409 → { error: 'no_active_starter' | 'already_enterprise' }
 //   500 → { error: 'stripe_billing_missing' | 'internal' }
@@ -22,6 +28,11 @@ const { PLANS, ENTERPRISE_PLANS, ENTERPRISE_SEATS } = require('../api-util/billi
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+
+  const seatsExtraRaw = Number(req.body?.seatsExtra ?? 0);
+  const seatsExtra = Number.isFinite(seatsExtraRaw)
+    ? Math.min(20, Math.max(0, Math.floor(seatsExtraRaw)))
+    : 0;
 
   let sellerId;
   try {
@@ -85,13 +96,19 @@ module.exports = async (req, res) => {
     }
 
     // Switch in-place con prorated invoice inmediata. Reemplazamos el
-    // item del plan Starter por el Enterprise. El seat line_item se
-    // agrega al momento con quantity=0 (Stripe lo acepta y no cobra;
-    // se bumpea con /team/buy-seat cuando el admin invita más de 2).
+    // item del plan Starter por el Enterprise + agregamos el seat line
+    // con quantity=seatsExtra (0 por default). Si el seller eligió
+    // extras en el selector pre-preview, se cobran prorrateados en la
+    // misma invoice. Más tarde /team/buy-seat bumpea la quantity.
+    const subItems = [
+      { id: starterItem.id, price: enterprisePrice.id, quantity: 1 },
+    ];
+    if (seatsExtra > 0) {
+      subItems.push({ price: seatPrice.id, quantity: seatsExtra });
+    }
+
     const updated = await stripe.subscriptions.update(sub.stripeSubscriptionId, {
-      items: [
-        { id: starterItem.id, price: enterprisePrice.id, quantity: 1 },
-      ],
+      items: subItems,
       proration_behavior: 'always_invoice',
       metadata: {
         xololoSellerId: sellerId,
@@ -110,27 +127,31 @@ module.exports = async (req, res) => {
       extra: {
         tier: 'enterprise',
         seatPriceId: seatPrice.id,
-        seatsExtraPaid: 0,
+        seatsExtraPaid: seatsExtra,
       },
     });
 
-    // Seed metadata.xololoTeam si no existe.
+    // Seed metadata.xololoTeam con los seats comprados. Si ya existe un
+    // team record, respeta collaborators/actions y actualiza seats.
     try {
       const refreshed = await isdk.users.show({ id: sellerId });
       const md = refreshed.data.data.attributes?.profile?.metadata || {};
-      if (!md.xololoTeam || !md.xololoTeam.seats) {
-        await isdk.users.updateProfile({
-          id: sellerId,
-          metadata: {
-            xololoTeam: {
-              collaborators: md.xololoTeam?.collaborators || [],
-              seats: { used: 0, included: 2, extraPaid: 0 },
-              actions: md.xololoTeam?.actions || [],
-              updatedAt: new Date().toISOString(),
+      const prevTeam = md.xololoTeam || {};
+      await isdk.users.updateProfile({
+        id: sellerId,
+        metadata: {
+          xololoTeam: {
+            collaborators: prevTeam.collaborators || [],
+            seats: {
+              used: prevTeam.seats?.used || 0,
+              included: 2,
+              extraPaid: seatsExtra,
             },
+            actions: prevTeam.actions || [],
+            updatedAt: new Date().toISOString(),
           },
-        });
-      }
+        },
+      });
     } catch (_e) {
       // non-fatal
     }
@@ -139,7 +160,7 @@ module.exports = async (req, res) => {
       ok: true,
       tier: 'enterprise',
       billing,
-      seats: { used: 0, included: 2, extraPaid: 0 },
+      seats: { used: 0, included: 2, extraPaid: seatsExtra },
       latestInvoice: updated.latest_invoice || null,
     });
   } catch (e) {

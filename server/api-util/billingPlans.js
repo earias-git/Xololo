@@ -46,11 +46,17 @@ const ONBOARDING_FEE = {
 // Mismo patrón que PLANS: lookupKey + yarn setup-stripe-billing crea
 // los Prices en Stripe automáticamente.
 //
-// Pricing acordado:
+// Pricing acordado (ajustado Nov 2026):
 //   Enterprise mensual: $499 MXN/mes
-//   Enterprise anual: $399 MXN/mes = $4,788/año
+//   Enterprise anual: $299 MXN/mes = $3,588/año (bajamos desde $399/$4,788)
 //   Seat extra mensual: $99 MXN/mes
 //   Seat extra anual: $69 MXN/mes = $828/año
+//
+// NOTA: cambiar un `unitAmount` aquí NO reemplaza el Price en Stripe
+// automáticamente. Prices son inmutables: hay que archivar el viejo con
+// el mismo lookup_key y correr `yarn setup-stripe-billing` — Stripe
+// vuelve el nuevo Price activo para ese lookup_key. Si hubiera sellers
+// ya suscritos al Price viejo seguirían a ese monto hasta su renovación.
 //
 // En el Checkout, el plan base va con quantity=1 y el seat Price va
 // con quantity=0 inicialmente — se bumpea con /api/team/buy-seat.
@@ -62,7 +68,7 @@ const ENTERPRISE_PLANS = {
     productName: 'Xololo Empresarial · Suscripción anual',
     productDescription:
       'Suscripción Empresarial anual: hasta 2 colaboradores incluidos + permisos granulares + audit log cross-user. Se renueva automáticamente.',
-    unitAmount: 478800, // $4,788.00 MXN (= $399/mes anual)
+    unitAmount: 358800, // $3,588.00 MXN (= $299/mes anual) — bajado desde 478800 en Nov 2026
     currency: CURRENCY,
     recurring: { interval: 'year' },
     tier: 'enterprise',

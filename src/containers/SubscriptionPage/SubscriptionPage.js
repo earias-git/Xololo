@@ -92,9 +92,20 @@ const PlanCard = ({ plan, onSubscribe, loading }) => (
 
 // XOLOLO Tier Empresarial · E6.5 — card de upgrade in-place para
 // sellers Starter activos. Backend: POST /api/subscription/upgrade-to-enterprise.
+//
+// Flujo UI (3 pasos):
+//   1. Card con tabla comparativa + CTA "Upgrade a Empresarial →"
+//   2. Selector de seats extras (0 por default, 2 incluidos siempre)
+//   3. Preview del cargo prorrateado + confirmación final
 const ENTERPRISE_PRICING = {
-  annual: { monthly: '$399 MXN/mes', total: '$4,788/año', seat: '$69/mes por extra' },
+  annual: { monthly: '$299 MXN/mes', total: '$3,588/año', seat: '$69/mes por extra' },
   monthly: { monthly: '$499 MXN/mes', total: null, seat: '$99/mes por extra' },
+};
+
+// Label para el badge del tier activo.
+const TIER_LABEL = {
+  starter: 'Starter',
+  enterprise: 'Empresarial',
 };
 
 const COMPARISON_ROWS = [
@@ -126,9 +137,16 @@ const formatPreviewDate = iso => {
   });
 };
 
+const MAX_SEATS_EXTRA = 20;
+
 const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
-  const [previewing, setPreviewing] = useState(false);
-  const [preview, setPreview] = useState(null); // { today, nextRenewal, ... }
+  // step: 'compare' → tabla comparativa + CTA (default)
+  //       'seats'   → selector de colaboradores extras
+  //       'preview' → preview del cargo prorrateado
+  const [step, setStep] = useState('compare');
+  const [seatsExtra, setSeatsExtra] = useState(0);
+  const [preview, setPreview] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -147,27 +165,42 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
         'Hay un problema técnico con nuestra integración de Stripe. Contacta a soporte.',
     }[code] || (data?.detail ? `Error: ${data.detail}` : `Error: ${code || 'desconocido'}`));
 
-  const openPreview = async () => {
-    setPreviewing(true);
+  const goToSeats = () => {
+    setStep('seats');
+    setError(null);
+  };
+
+  const goToPreview = async () => {
+    setStep('preview');
+    setLoadingPreview(true);
     setPreview(null);
     setError(null);
     try {
-      const res = await fetch(`${apiBaseUrl()}/api/subscription/upgrade-preview`, {
-        credentials: 'include',
-      });
+      const res = await fetch(
+        `${apiBaseUrl()}/api/subscription/upgrade-preview?seatsExtra=${seatsExtra}`,
+        { credentials: 'include' }
+      );
       const data = await res.json().catch(() => ({}));
+      setLoadingPreview(false);
       if (!res.ok) {
         setError(translateError(data?.error, data));
         return;
       }
       setPreview(data);
     } catch (e) {
+      setLoadingPreview(false);
       setError(`Error: ${e.message}`);
     }
   };
 
-  const cancelPreview = () => {
-    setPreviewing(false);
+  const backToSeats = () => {
+    setStep('seats');
+    setPreview(null);
+    setError(null);
+  };
+
+  const cancelAll = () => {
+    setStep('compare');
     setPreview(null);
     setError(null);
   };
@@ -180,7 +213,7 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ seatsExtra }),
       });
       const data = await res.json().catch(() => ({}));
       setBusy(false);
@@ -188,11 +221,15 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
         setError(translateError(data?.error, data));
         return;
       }
+      const extrasMsg =
+        seatsExtra > 0
+          ? ` Compraste ${seatsExtra} ${seatsExtra === 1 ? 'colaborador adicional' : 'colaboradores adicionales'}.`
+          : '';
       setSuccess(
-        '✓ ¡Listo! Tu cuenta ahora es Empresarial. Ya puedes invitar colaboradores desde tu Dashboard.'
+        `✓ ¡Listo! Tu cuenta ahora es Empresarial.${extrasMsg} Ya puedes invitar colaboradores desde tu Dashboard.`
       );
-      setPreviewing(false);
-      setTimeout(() => onDone?.(), 1500);
+      setStep('compare');
+      setTimeout(() => onDone?.(), 1800);
     } catch (e) {
       setBusy(false);
       setError(`Error: ${e.message}`);
@@ -249,19 +286,83 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
 
       {success ? <p className={css.upgradeSuccess}>{success}</p> : null}
 
-      {!success && !previewing ? (
+      {/* Paso 1: tabla comparativa + CTA inicial */}
+      {!success && step === 'compare' ? (
         <div className={css.upgradeActions}>
-          <button type="button" className={css.upgradeCta} onClick={openPreview}>
+          <button type="button" className={css.upgradeCta} onClick={goToSeats}>
             Upgrade a Empresarial →
           </button>
         </div>
       ) : null}
 
-      {!success && previewing ? (
+      {/* Paso 2: selector de colaboradores extras */}
+      {!success && step === 'seats' ? (
+        <div className={css.seatsPanel}>
+          <h4 className={css.seatsTitle}>¿Cuántos colaboradores adicionales quieres?</h4>
+          <p className={css.seatsIntro}>
+            Empresarial incluye <strong>2 colaboradores sin costo extra</strong>. Si necesitas
+            más, puedes agregarlos ahora y pagarlos prorrateados junto con el upgrade. También
+            puedes comprarlos más tarde desde tu Dashboard.
+          </p>
+
+          <div className={css.seatsStepper}>
+            <button
+              type="button"
+              className={css.seatsStepBtn}
+              onClick={() => setSeatsExtra(n => Math.max(0, n - 1))}
+              disabled={seatsExtra <= 0}
+              aria-label="Quitar un colaborador"
+            >
+              −
+            </button>
+            <div className={css.seatsCount}>
+              <strong>{seatsExtra}</strong>
+              <small>
+                {seatsExtra === 0
+                  ? 'solo los 2 incluidos'
+                  : seatsExtra === 1
+                  ? 'colaborador extra'
+                  : 'colaboradores extras'}
+              </small>
+            </div>
+            <button
+              type="button"
+              className={css.seatsStepBtn}
+              onClick={() => setSeatsExtra(n => Math.min(MAX_SEATS_EXTRA, n + 1))}
+              disabled={seatsExtra >= MAX_SEATS_EXTRA}
+              aria-label="Agregar un colaborador"
+            >
+              +
+            </button>
+          </div>
+
+          <p className={css.seatsHint}>
+            Total del equipo: hasta <strong>{2 + seatsExtra}</strong> colaboradores · costo
+            extra: <strong>{pricing.seat}</strong>
+          </p>
+
+          <div className={css.upgradeConfirmButtons}>
+            <button
+              type="button"
+              className={css.upgradeSecondary}
+              onClick={cancelAll}
+              disabled={busy}
+            >
+              Cancelar
+            </button>
+            <button type="button" className={css.upgradeCta} onClick={goToPreview}>
+              Ver preview del cargo →
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Paso 3: preview del cargo prorrateado + confirmación */}
+      {!success && step === 'preview' ? (
         <div className={css.previewPanel}>
           <h4 className={css.previewTitle}>Preview del cambio</h4>
 
-          {!preview && !error ? (
+          {loadingPreview ? (
             <p className={css.muted}>Calculando el ajuste con Stripe…</p>
           ) : null}
 
@@ -273,6 +374,17 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
                 <p className={css.previewContext}>
                   Te quedan <strong>{preview.daysRemaining} días</strong> del ciclo{' '}
                   {preview.starterPlan === 'annual' ? 'anual' : 'mensual'} actual.
+                  {seatsExtra > 0 ? (
+                    <>
+                      {' '}
+                      Incluye{' '}
+                      <strong>
+                        {seatsExtra}{' '}
+                        {seatsExtra === 1 ? 'colaborador extra' : 'colaboradores extras'}
+                      </strong>
+                      .
+                    </>
+                  ) : null}
                 </p>
               ) : null}
 
@@ -312,7 +424,16 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
                 <strong>
                   {formatMoney(preview.nextRenewal.amount, preview.nextRenewal.currency)}
                 </strong>{' '}
-                el <strong>{formatPreviewDate(preview.nextRenewal.date)}</strong>.
+                el <strong>{formatPreviewDate(preview.nextRenewal.date)}</strong>
+                {seatsExtra > 0 && preview.nextRenewal.seatsAmount ? (
+                  <>
+                    {' '}
+                    (plan {formatMoney(preview.nextRenewal.planAmount, preview.nextRenewal.currency)}{' '}
+                    + {seatsExtra} seats{' '}
+                    {formatMoney(preview.nextRenewal.seatsAmount, preview.nextRenewal.currency)})
+                  </>
+                ) : null}
+                .
               </p>
 
               <p className={css.previewLegal}>
@@ -327,10 +448,10 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
             <button
               type="button"
               className={css.upgradeSecondary}
-              onClick={cancelPreview}
+              onClick={backToSeats}
               disabled={busy}
             >
-              Cancelar
+              ← Cambiar colaboradores
             </button>
             <button
               type="button"
@@ -488,6 +609,8 @@ const SubscriptionPageComponent = () => {
                 <div className={css.activeHead}>
                   <span>
                     Plan {sub.plan === 'annual' ? 'anual' : 'mensual'}
+                    {' · '}
+                    <strong>{TIER_LABEL[sub.tier] || TIER_LABEL.starter}</strong>
                     {sub.tier === 'enterprise' ? (
                       <span className={css.tierBadge}>🏢 Empresarial</span>
                     ) : null}

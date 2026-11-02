@@ -2,12 +2,13 @@
 // Products/Prices de Stripe Billing para las suscripciones de sellers.
 //
 // Idempotente: para cada plan busca primero un Price ACTIVO con su
-// lookup_key (server/api-util/billingPlans.js); si ya existe, no toca
-// nada — lo reporta y sigue. Sólo crea Product+Price cuando no hay
-// ninguno con ese lookup_key todavía. Correr de nuevo después de un
-// cambio de monto NO actualiza el Price existente (Stripe Prices son
-// inmutables) — hay que archivar el viejo a mano en el Dashboard y
-// dejar que este script cree el nuevo con el mismo lookup_key.
+// lookup_key (server/api-util/billingPlans.js). Comportamiento:
+//   - Mismo monto que la definición → skip
+//   - Monto diferente → archiva el Price viejo (active:false, libera el
+//     lookup_key) y crea uno nuevo con el monto actualizado. Los sellers
+//     ya suscritos al Price viejo mantienen su monto hasta renovar
+//     (Stripe no re-cobra retroactivamente).
+//   - No existe → crea Product + Price.
 //
 // Requiere STRIPE_SECRET_KEY en .env — cuenta Stripe de Xololo para
 // BILLING, separada de la que usa Sharetribe Connect para los pagos
@@ -31,22 +32,52 @@ const ensurePrice = async (stripe, def) => {
   const existing = await stripe.prices.list({
     lookup_keys: [def.lookupKey],
     active: true,
-    limit: 1,
+    limit: 10,
   });
-  if (existing.data.length > 0) {
-    const price = existing.data[0];
-    console.log(`[skip] ${def.lookupKey} ya existe → price ${price.id} (product ${price.product})`);
-    return price;
+
+  // Caso 1: ya hay un Price activo con el monto correcto → skip.
+  const match = existing.data.find(p => p.unit_amount === def.unitAmount);
+  if (match) {
+    console.log(`[skip] ${def.lookupKey} ya existe → price ${match.id} (product ${match.product})`);
+    return match;
   }
 
-  const product = await stripe.products.create({
-    name: def.productName,
-    description: def.productDescription,
-    metadata: { xololoLookupKey: def.lookupKey },
-  });
+  // Caso 2: hay Price(s) activo(s) pero con monto distinto → archiva(los) y
+  // libera el lookup_key para que el nuevo lo pueda tomar. Sellers ya
+  // suscritos a esos Prices viejos mantienen su monto hasta renovar.
+  if (existing.data.length > 0) {
+    for (const p of existing.data) {
+      console.log(
+        `[archive] ${def.lookupKey} tenía ${p.id} con unit_amount=${p.unit_amount} (nuevo: ${def.unitAmount}) → archivando`
+      );
+      await stripe.prices.update(p.id, { active: false, lookup_key: '' });
+    }
+  }
+
+  // Caso 3: busca si ya existe el Product (por metadata.xololoLookupKey) para
+  // no crear duplicados cuando sólo re-emitimos el Price.
+  let productId = null;
+  if (existing.data.length > 0 && existing.data[0].product) {
+    productId = existing.data[0].product;
+  } else {
+    const prodSearch = await stripe.products.search({
+      query: `metadata['xololoLookupKey']:'${def.lookupKey}' AND active:'true'`,
+      limit: 1,
+    });
+    if (prodSearch.data.length > 0) productId = prodSearch.data[0].id;
+  }
+
+  if (!productId) {
+    const product = await stripe.products.create({
+      name: def.productName,
+      description: def.productDescription,
+      metadata: { xololoLookupKey: def.lookupKey },
+    });
+    productId = product.id;
+  }
 
   const price = await stripe.prices.create({
-    product: product.id,
+    product: productId,
     currency: def.currency,
     unit_amount: def.unitAmount,
     lookup_key: def.lookupKey,
@@ -54,7 +85,7 @@ const ensurePrice = async (stripe, def) => {
   });
 
   console.log(
-    `[created] ${def.lookupKey} → product ${product.id}, price ${price.id} (${(
+    `[created] ${def.lookupKey} → product ${productId}, price ${price.id} (${(
       def.unitAmount / 100
     ).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}${
       def.recurring ? `/${def.recurring.interval}` : ' una sola vez'

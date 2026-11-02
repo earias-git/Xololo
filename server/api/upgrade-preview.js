@@ -1,14 +1,22 @@
 // XOLOLO Tier Empresarial · E6.6 — preview del cargo prorrateado del
 // upgrade Starter → Enterprise.
 //
-// GET /api/subscription/upgrade-preview
+// GET /api/subscription/upgrade-preview?seatsExtra=N
 // Auth: user logueado. Sin side effects — solo consulta Stripe.
+//
+// Query:
+//   seatsExtra  (opcional, default 0, max 20): colaboradores adicionales
+//     que el seller quiere contratar durante el upgrade. Se simulan
+//     como quantity del seat Price. Los 2 primeros nunca se cobran
+//     porque `seats.included=2` cubre los primeros 2 colaboradores.
 //
 // Flujo:
 //   1. Lee stripeSubscriptionId del seller.
 //   2. Resuelve prices Enterprise del mismo billing cycle.
-//   3. Llama stripe.invoices.createPreview() simulando el swap de items.
-//   4. Devuelve breakdown líneas: saldo a favor + cargo nuevo + total.
+//   3. Llama stripe.invoices.createPreview() simulando el swap:
+//        - plan Starter → plan Enterprise (quantity 1)
+//        - + seat Enterprise (quantity = seatsExtra, 0 si no hay)
+//   4. Devuelve breakdown líneas: saldo a favor + cargos nuevos + total.
 //
 //   200 → {
 //     ok: true,
@@ -38,6 +46,13 @@ const centsToPesos = c => Number(c) / 100;
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
+
+  // seatsExtra: colaboradores adicionales (más allá de los 2 incluidos).
+  // Se castea defensivo: Number con fallback a 0, clamp [0, 20].
+  const seatsExtraRaw = Number(req.query?.seatsExtra ?? 0);
+  const seatsExtra = Number.isFinite(seatsExtraRaw)
+    ? Math.min(20, Math.max(0, Math.floor(seatsExtraRaw)))
+    : 0;
 
   let sellerId;
   try {
@@ -121,6 +136,16 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Construye los items a simular: swap plan + (opcional) seat line con
+    // quantity=seatsExtra. Stripe acepta un segundo item nuevo (sin `id`)
+    // junto con el swap del existente.
+    const itemsForSimulation = [
+      { id: starterItem.id, price: enterprisePrice.id, quantity: 1 },
+    ];
+    if (seatsExtra > 0) {
+      itemsForSimulation.push({ price: seatPrice.id, quantity: seatsExtra });
+    }
+
     // El shape del argumento difiere ligeramente entre ambas APIs:
     //   - retrieveUpcoming (legacy): subscription_items + subscription_proration_date
     //   - createPreview (moderno):   subscription_details.{items, proration_date, proration_behavior}
@@ -129,7 +154,7 @@ module.exports = async (req, res) => {
           customer: stripeSub.customer,
           subscription: stripeSub.id,
           subscription_details: {
-            items: [{ id: starterItem.id, price: enterprisePrice.id, quantity: 1 }],
+            items: itemsForSimulation,
             proration_behavior: 'always_invoice',
             proration_date: prorationDate,
           },
@@ -137,9 +162,7 @@ module.exports = async (req, res) => {
       : await stripe.invoices.retrieveUpcoming({
           customer: stripeSub.customer,
           subscription: stripeSub.id,
-          subscription_items: [
-            { id: starterItem.id, price: enterprisePrice.id, quantity: 1 },
-          ],
+          subscription_items: itemsForSimulation,
           subscription_proration_behavior: 'always_invoice',
           subscription_proration_date: prorationDate,
         });
@@ -166,6 +189,12 @@ module.exports = async (req, res) => {
       ? Math.max(0, Math.ceil((periodEnd - prorationDate) / 86400))
       : null;
 
+    // Monto de renovación: plan + (seatsExtra × seat.unit_amount). Los 2
+    // primeros colaboradores son gratis (included), seatsExtra cuenta
+    // solo los que exceden eso.
+    const nextRenewalPlan = enterprisePrice.unit_amount || 0;
+    const nextRenewalSeats = seatsExtra * (seatPrice.unit_amount || 0);
+
     return res.json({
       ok: true,
       today: {
@@ -176,10 +205,14 @@ module.exports = async (req, res) => {
         currency: (upcoming.currency || 'mxn').toUpperCase(),
       },
       nextRenewal: {
-        amount: centsToPesos(enterprisePrice.unit_amount || 0),
+        amount: centsToPesos(nextRenewalPlan + nextRenewalSeats),
+        planAmount: centsToPesos(nextRenewalPlan),
+        seatsAmount: centsToPesos(nextRenewalSeats),
         currency: (enterprisePrice.currency || 'mxn').toUpperCase(),
         date: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
       },
+      seatsExtra,
+      seatUnitAmount: centsToPesos(seatPrice.unit_amount || 0),
       starterPlan: billing,
       daysRemaining,
     });
