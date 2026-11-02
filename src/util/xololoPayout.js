@@ -37,26 +37,31 @@
 const PCT_IVA = 0.16;
 const PCT_MOTOR = 0.036;
 
-// XOLOLO: cuota fija de servicios administrativos para seller con tienda
-// (sellerMode='store'). $14 MXN + IVA 16% por transacción. Rationale:
-// el store seller ya paga suscripción mensual ($169), por lo que la
-// comisión por venta es una cuota administrativa simbólica, no una
-// comisión escalonada. Modelo original de Xololo pre-casual_reseller.
-const FIXED_XOLOLO_STORE_SUBUNITS = 1400; // $14.00 MXN
+// XOLOLO: cuota administrativa plana por venta — $14 MXN + IVA 16% por
+// transacción. Aplica a TODOS los sellers (store y casual_reseller),
+// cubre procesamiento, verificación, pago protegido y soporte.
+// Se cobra siempre, sin importar el monto de la venta.
+const FIXED_ADMIN_FEE_SUBUNITS = 1400; // $14.00 MXN
+
+// Alias retrocompatible — algunos callers externos siguen importando el
+// nombre viejo. No tocar sin un barrido primero.
+const FIXED_XOLOLO_STORE_SUBUNITS = FIXED_ADMIN_FEE_SUBUNITS;
 
 // XOLOLO: identificador del modo seller casual. Debe mantenerse en sync
 // con SELLER_MODES.CASUAL_RESELLER de xololoSellerMode (literal string
 // para evitar ciclo de imports).
 const SELLER_MODE_CASUAL = 'casual_reseller';
 
-// XOLOLO: comisión de servicios administrativos de Xololo para el
-// seller casual (segunda mano particular, sin suscripción). Se calcula
-// con tramos MARGINALES sobre el precio del listing — cada porción del
+// XOLOLO: COMISIÓN POR VENTA de Xololo para el seller casual
+// (segunda mano particular, sin suscripción). Es ADICIONAL al cargo
+// administrativo plano de $14 + IVA (que todos pagan). Se calcula con
+// tramos MARGINALES sobre el precio del listing — cada porción del
 // precio dentro de un tramo se cobra con la tasa de ese tramo (como ISR).
 //
 // IMPORTANTE: esta tabla aplica SOLO al modo casual_reseller. Para
-// sellers con tienda (sellerMode='store') la comisión por venta es una
-// cuota fija ($14 + IVA) porque ellos ya pagan la suscripción mensual.
+// sellers con tienda (Starter y Empresarial) la comisión por venta es
+// 0% — ya está incluida en la suscripción mensual. Ambos tipos de
+// seller siguen pagando el cargo administrativo plano de $14 + IVA.
 //
 // Rationale del escalonado marginal: el casual NO paga suscripción,
 // entonces la comisión por venta es su único canal de contribución a
@@ -226,24 +231,38 @@ export const computePayoutBreakdown = ({
   const ivaMotor = round(motorCobroBase * PCT_IVA);
   const motorCobroTotal = motorCobroBase + ivaMotor;
 
-  // XOLOLO: comisión de servicios administrativos. Dos modelos
-  // mutuamente excluyentes según sellerMode:
-  //   - store (default): cuota fija $14 + IVA. El seller ya paga la
-  //     suscripción mensual (Starter o Empresarial), por eso la comisión
-  //     por venta es simbólica.
-  //   - casual_reseller: tabla marginal 6/4/2% + IVA. El casual no paga
-  //     suscripción, entonces la comisión por venta es su contribución.
+  // XOLOLO: dos conceptos separados.
+  //
+  //   1) CARGO ADMINISTRATIVO PLANO ($14 + IVA): todos los sellers lo
+  //      pagan por venta, independientemente del plan o del monto.
+  //      Cubre procesamiento, verificación, pago protegido y soporte.
+  //
+  //   2) COMISIÓN POR VENTA (% sobre el monto): varía por sellerMode:
+  //        - store (Starter/Empresarial): 0% — incluida en suscripción.
+  //        - casual_reseller: tabla marginal 6/4/2% — es la contribución
+  //          del casual, que no paga suscripción.
+  //
+  //   Ambos se descuentan del payout del seller y cada uno causa su
+  //   propio IVA 16% (Xololo es contribuyente de IVA aun cuando el bien
+  //   vendido esté exento por Art. 9 IV LIVA).
   const isCasualMode = sellerMode === SELLER_MODE_CASUAL;
+
+  // (1) Admin plano
+  const adminFlatBase = FIXED_ADMIN_FEE_SUBUNITS;
+  const ivaAdminFlat = round(adminFlatBase * PCT_IVA);
+  const adminFlatTotal = adminFlatBase + ivaAdminFlat;
+
+  // (2) Comisión por venta
   const commission = isCasualMode
     ? computeMarginalCommission(price)
-    : {
-        baseSubunits: FIXED_XOLOLO_STORE_SUBUNITS,
-        breakdown: [],
-        effectivePct: price > 0 ? FIXED_XOLOLO_STORE_SUBUNITS / price : 0,
-      };
-  const xololoAdminBase = commission.baseSubunits;
-  const ivaXololoAdmin = round(xololoAdminBase * PCT_IVA);
-  const xololoAdminTotal = xololoAdminBase + ivaXololoAdmin;
+    : { baseSubunits: 0, breakdown: [], effectivePct: 0 };
+  const commissionBase = commission.baseSubunits;
+  const ivaCommission = round(commissionBase * PCT_IVA);
+  const commissionTotal = commissionBase + ivaCommission;
+
+  // Total combinado — expuesto como xololoAdminSubunits para
+  // retrocompatibilidad con los componentes que ya lo consumen.
+  const xololoAdminTotal = adminFlatTotal + commissionTotal;
 
   // Retenciones de plataforma. Lógica legal estricta:
   //   - Particular (ocasional, no empresa): no es contribuyente LISR 113-A.
@@ -295,9 +314,18 @@ export const computePayoutBreakdown = ({
 
     // Fees Xololo
     motorCobroSubunits: motorCobroTotal,
+    // Suma total (admin plano + comisión por venta) — mantiene
+    // compatibilidad con componentes que ya leían este campo.
     xololoAdminSubunits: xololoAdminTotal,
     xololoAdminBreakdown: commission.breakdown,
     xololoAdminEffectivePct: commission.effectivePct,
+    // Desglose nuevo: separa el cargo administrativo plano (siempre
+    // $14 + IVA) de la comisión por venta (6/4/2 marginal para casual,
+    // 0 para store).
+    adminFlatSubunits: adminFlatTotal,
+    commissionSubunits: commissionTotal,
+    commissionBreakdown: commission.breakdown,
+    commissionEffectivePct: commission.effectivePct,
 
     // Retenciones
     retIsrSubunits: retIsr,
@@ -315,10 +343,16 @@ export const computePayoutBreakdown = ({
         ivaMode === IVA_MODES.GRAVADO ? '16%' : ivaMode === IVA_MODES.TASA_CERO ? '0%' : 'Exento',
       motorCobro: `${(PCT_MOTOR * 100).toFixed(1)}% + IVA`,
       xololoAdmin: isCasualMode
-        ? `${(commission.effectivePct * 100).toFixed(1)}% efectivo + IVA · tramos marginales 6/4/2`
-        : `$${(FIXED_XOLOLO_STORE_SUBUNITS / 100).toFixed(
+        ? `$${(FIXED_ADMIN_FEE_SUBUNITS / 100).toFixed(2)} + IVA (admin) + ${(
+            commission.effectivePct * 100
+          ).toFixed(1)}% + IVA (comisión 6/4/2 marginal)`
+        : `$${(FIXED_ADMIN_FEE_SUBUNITS / 100).toFixed(
             2
-          )} + IVA · cuota fija (plan con suscripción)`,
+          )} + IVA · comisión 0% (incluida en suscripción)`,
+      adminFlat: `$${(FIXED_ADMIN_FEE_SUBUNITS / 100).toFixed(2)} + IVA`,
+      commission: isCasualMode
+        ? `${(commission.effectivePct * 100).toFixed(1)}% efectivo + IVA · tramos 6/4/2`
+        : '0% (incluida en suscripción)',
       retIsr: formatPct(retIsrPct),
       retIva: formatPct(retIvaPct),
     },

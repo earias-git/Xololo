@@ -193,53 +193,78 @@ describe('xololoPayout', () => {
     });
   });
 
-  describe('computePayoutBreakdown — comisión según sellerMode', () => {
-    it('applies the marginal commission ONLY for casual_reseller', () => {
-      const bd = computePayoutBreakdown({
-        priceSubunits: 7500000, // $75,000
-        ivaMode: IVA_MODES.EXENTO,
-        sellerMode: 'casual_reseller',
-      });
-      // base: $4,000 → + 16% IVA = $4,640 (464,000 subunits)
-      expect(bd.xololoAdminSubunits).toBe(464000);
-      expect(bd.xololoAdminEffectivePct).toBeCloseTo(0.0533333, 5);
-      expect(bd.xololoAdminBreakdown).toHaveLength(2);
-    });
+  describe('computePayoutBreakdown — cargos según sellerMode', () => {
+    // Modelo: todos pagan admin plano ($14+IVA=1624). Solo casual paga
+    // además la comisión marginal 6/4/2 + IVA sobre el precio.
 
-    it('applies FIXED $14 + IVA for store seller (default), regardless of price', () => {
-      // Rationale: seller con tienda ya paga suscripción; la comisión por
-      // venta es simbólica. $14 base + 16% IVA = $16.24 → 1624 subunits.
+    it('store: solo cargo admin $14 + IVA; comisión 0', () => {
       const bdStore75k = computePayoutBreakdown({
         priceSubunits: 7500000,
         ivaMode: IVA_MODES.GRAVADO,
         sellerMode: 'store',
       });
+      expect(bdStore75k.adminFlatSubunits).toBe(1624);
+      expect(bdStore75k.commissionSubunits).toBe(0);
       expect(bdStore75k.xololoAdminSubunits).toBe(1624);
 
       const bdStore5k = computePayoutBreakdown({
-        priceSubunits: 500000, // $5,000
+        priceSubunits: 500000,
         ivaMode: IVA_MODES.GRAVADO,
         sellerMode: 'store',
       });
+      expect(bdStore5k.adminFlatSubunits).toBe(1624);
+      expect(bdStore5k.commissionSubunits).toBe(0);
       expect(bdStore5k.xololoAdminSubunits).toBe(1624);
     });
 
-    it('defaults to store cuota fija when sellerMode is omitted', () => {
+    it('defaults to store when sellerMode is omitted', () => {
       const bd = computePayoutBreakdown({
         priceSubunits: 500000,
         ivaMode: IVA_MODES.GRAVADO,
       });
+      expect(bd.commissionSubunits).toBe(0);
       expect(bd.xololoAdminSubunits).toBe(1624);
     });
 
-    it('casual_reseller en $5,000 cobra 6% + IVA = $348 (34800 subunits)', () => {
-      // 500000 * 6% = 30000; + 16% IVA → 34800
+    it('casual_reseller @ $75,000: admin $14 + comisión escalonada', () => {
+      const bd = computePayoutBreakdown({
+        priceSubunits: 7500000,
+        ivaMode: IVA_MODES.EXENTO,
+        sellerMode: 'casual_reseller',
+      });
+      // admin: $14 + IVA = 1624
+      // comisión: $4,000 + 16% IVA = $4,640 (464000)
+      // total: 1624 + 464000 = 465624
+      expect(bd.adminFlatSubunits).toBe(1624);
+      expect(bd.commissionSubunits).toBe(464000);
+      expect(bd.xololoAdminSubunits).toBe(465624);
+      expect(bd.commissionEffectivePct).toBeCloseTo(0.0533333, 5);
+      expect(bd.commissionBreakdown).toHaveLength(2);
+    });
+
+    it('casual_reseller @ $5,000: admin + 6% comisión + IVA', () => {
       const bd = computePayoutBreakdown({
         priceSubunits: 500000,
         ivaMode: IVA_MODES.EXENTO,
         sellerMode: 'casual_reseller',
       });
-      expect(bd.xololoAdminSubunits).toBe(34800);
+      // admin: 1624; comisión: 500000*6%=30000 + IVA 4800 = 34800
+      // total: 1624 + 34800 = 36424
+      expect(bd.adminFlatSubunits).toBe(1624);
+      expect(bd.commissionSubunits).toBe(34800);
+      expect(bd.xololoAdminSubunits).toBe(36424);
+    });
+
+    it('casual_reseller @ $0: admin igual se cobra, comisión 0', () => {
+      // Edge case: aunque el precio sea 0, el admin plano aplica porque
+      // es por transacción, no proporcional al precio.
+      const bd = computePayoutBreakdown({
+        priceSubunits: 0,
+        ivaMode: IVA_MODES.EXENTO,
+        sellerMode: 'casual_reseller',
+      });
+      expect(bd.adminFlatSubunits).toBe(1624);
+      expect(bd.commissionSubunits).toBe(0);
     });
   });
 });

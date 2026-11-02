@@ -61,11 +61,22 @@ module.exports = (req, res) => {
       const { providerCommission, customerCommission } =
         commissionAsset?.type === 'jsonAsset' ? commissionAsset.attributes.data : {};
 
+      // XOLOLO Nov 2026: resolve authorPublicData para que el breakdown
+      // speculative incluya la comisión casual_reseller si aplica.
+      const includedUsers = [
+        ...(showListingResponse.data.included || []),
+        ...additionalResponses.flatMap(r => r.data.included || []),
+      ].filter(i => i.type === 'user');
+      const authorEntity = includedUsers.find(u => u.id?.uuid === primaryAuthorId);
+      const authorPublicDataForFees =
+        authorEntity?.attributes?.profile?.publicData || null;
+
       const lineItems = transactionLineItems(
         listing,
         { ...orderData, additionalCartItems },
         providerCommission,
-        customerCommission
+        customerCommission,
+        authorPublicDataForFees
       );
 
       // Because we are using returned lineItems directly in this template we need to use the helper function

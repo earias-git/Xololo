@@ -226,8 +226,14 @@ tener listings cayendo en distintos niveles.
 | Excedente sobre $100,000 | 2% |
 
 > **Nota (Nov 2026):** las tasas se bajaron de 9/6/3 a 6/4/2 para que el
-> casual reseller tenga un modelo más competitivo. El código y los tests
-> ya reflejan los valores nuevos; esta sección documenta el cambio.
+> casual reseller tenga un modelo más competitivo, Y el modelo se separó
+> en dos conceptos: (1) **cargo administrativo plano $14 + IVA** por
+> transacción, que aplica a TODOS los sellers (incluido casual), y (2)
+> **comisión por venta** escalonada 6/4/2 que solo paga el casual (store
+> paga 0% porque la comisión por venta está incluida en la suscripción).
+> El motor REAL de cobro (`server/api-util/lineItems.js`) ya aplica
+> ambas líneas por separado: `line-item/xololo-service-fee` ($14 + IVA)
+> y `line-item/xololo-casual-commission` (6/4/2 + IVA, solo casual).
 
 La base se calcula como escalonado marginal (cada porción del precio
 dentro de un tramo paga la tasa de ese tramo, como ISR). Al cargo se
@@ -367,11 +373,12 @@ IVA Exento (Art. 9 IV LIVA)                         $0.00
 ────────────────────────────────────────────────────────
 Precio total del producto                       $1,500.00
 − Motor de cobro (3.6% + IVA)                    −$62.64
-− Serv admin Xololo (6% + IVA · marginal)       −$104.40
+− Cargo administrativo ($14 + IVA · plano)       −$16.24
+− Comisión por venta (6% + IVA · marginal)      −$104.40
 − Retención ISR (particular, no 113-A)              $0.00
 − Retención IVA (bien exento)                       $0.00
 ────────────────────────────────────────────────────────
-Seller recibe                                   $1,332.96
+Seller recibe                                   $1,316.72
 ```
 
 ---

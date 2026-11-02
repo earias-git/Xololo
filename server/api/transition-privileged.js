@@ -20,12 +20,24 @@ const { sendShippingCoordinationMessage } = require('../api-util/shippingCoordin
 
 const { Money } = sharetribeSdk.types;
 
-const transactionPromise = (sdk, id) => sdk.transactions.show({ id, include: ['listing'] });
+const transactionPromise = (sdk, id) =>
+  // XOLOLO Nov 2026: incluir listing.author.profilePublicData para que
+  // transactionLineItems reciba sellerMode y aplique la comisión casual.
+  sdk.transactions.show({ id, include: ['listing', 'listing.author'] });
 const getListingRelationShip = transactionShowAPIData => {
   const { data, included } = transactionShowAPIData;
   const { relationships } = data;
   const { listing: listingRef } = relationships;
   return included.find(i => i.id.uuid === listingRef.data.id.uuid);
+};
+const getListingAuthorPublicData = transactionShowAPIData => {
+  const { data, included } = transactionShowAPIData || {};
+  if (!data || !included) return null;
+  const listingRef = data.relationships?.listing?.data;
+  const listingEntity = included.find(i => i.type === 'listing' && i.id?.uuid === listingRef?.id?.uuid);
+  const authorRef = listingEntity?.relationships?.author?.data;
+  const authorEntity = authorRef ? included.find(i => i.type === 'user' && i.id?.uuid === authorRef.id?.uuid) : null;
+  return authorEntity?.attributes?.profile?.publicData || null;
 };
 
 // When a provider is making an offer, make sure that customer related
@@ -127,6 +139,7 @@ module.exports = (req, res) => {
       const [showTransactionResponse, fetchAssetsResponse] = responses;
       const transaction = showTransactionResponse.data.data;
       const listing = getListingRelationShip(showTransactionResponse.data);
+      const authorPublicDataForFees = getListingAuthorPublicData(showTransactionResponse.data);
       const commissionAsset = fetchAssetsResponse.data.data[0];
 
       const existingMetadata = transaction?.attributes?.metadata;
@@ -147,7 +160,8 @@ module.exports = (req, res) => {
         listing,
         getFullOrderData(orderData, bodyParams, currency, existingOffers),
         providerCommission,
-        customerCommission
+        customerCommission,
+        authorPublicDataForFees
       );
 
       metadataMaybe = getUpdatedMetadata(orderData, transitionName, existingMetadata);

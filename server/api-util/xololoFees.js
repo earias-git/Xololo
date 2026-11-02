@@ -39,6 +39,78 @@ const FIXED_SERVICE_FEE_SUBUNITS = Math.round(FIXED_SERVICE_FEE_MXN * (1 + IVA_R
 const LINE_ITEM_XOLOLO_SERVICE_FEE = 'line-item/xololo-service-fee';
 
 // ============================================================
+// XOLOLO: Comisión por venta para casual_reseller.
+//
+// Modelo (Nov 2026, decisión earias):
+//   - Todos los sellers pagan el cargo administrativo plano
+//     ($14 + IVA = FIXED_SERVICE_FEE_SUBUNITS) por transacción.
+//   - Sellers con tienda (Starter/Empresarial) pagan 0% comisión por
+//     venta — está incluida en su suscripción mensual.
+//   - casual_reseller paga una comisión ESCALONADA MARGINAL sobre el
+//     precio del listing, además del cargo plano. Esta tabla se cobra
+//     como una línea aparte `line-item/xololo-casual-commission`.
+//
+// Tasa marginal por tramo:
+//   - Hasta  $50,000  : 6%
+//   - $50,001-$100,000: 4%
+//   - Más de $100,000 : 2%
+//
+// Al cargo se le suma IVA 16% (Xololo es contribuyente del IVA).
+//
+// Mirror auditable de COMMISSION_TIERS en src/util/xololoPayout.js
+// (que es la fuente canónica para el preview UI). Mantener en sync.
+// ============================================================
+
+const CASUAL_COMMISSION_TIERS = [
+  { upToSubunits: 5000000, pct: 0.06 },   // $50,000
+  { upToSubunits: 10000000, pct: 0.04 },  // $100,000
+  { upToSubunits: Infinity, pct: 0.02 },
+];
+
+const LINE_ITEM_XOLOLO_CASUAL_COMMISSION = 'line-item/xololo-casual-commission';
+
+const SELLER_MODE_CASUAL = 'casual_reseller';
+
+/**
+ * Calcula la comisión por venta del casual_reseller (base sin IVA)
+ * aplicando tramos marginales. Devuelve subunits enteros.
+ *
+ * @param {number} priceSubunits - precio del listing en centavos
+ * @returns {number} comisión base en subunits (sin IVA)
+ */
+const computeCasualCommissionSubunits = priceSubunits => {
+  const p = Math.max(0, Number(priceSubunits) || 0);
+  let remaining = p;
+  let lastCap = 0;
+  let feeFloat = 0;
+  for (const tier of CASUAL_COMMISSION_TIERS) {
+    if (remaining <= 0) break;
+    const span =
+      tier.upToSubunits === Infinity ? remaining : Math.max(0, tier.upToSubunits - lastCap);
+    const applied = Math.min(remaining, span);
+    feeFloat += applied * tier.pct;
+    remaining -= applied;
+    lastCap = tier.upToSubunits;
+  }
+  return Math.round(feeFloat);
+};
+
+/**
+ * Comisión por venta del casual con IVA ya incluido, lista para una
+ * line-item de Sharetribe. Devuelve 0 si el seller NO es casual_reseller.
+ *
+ * @param {number} priceSubunits
+ * @param {string} sellerMode - 'store' | 'casual_reseller'
+ * @returns {number} subunits totales (base + IVA 16%)
+ */
+const computeCasualCommissionWithIvaSubunits = (priceSubunits, sellerMode) => {
+  if (sellerMode !== SELLER_MODE_CASUAL) return 0;
+  const base = computeCasualCommissionSubunits(priceSubunits);
+  const iva = Math.round(base * IVA_RATE);
+  return base + iva;
+};
+
+// ============================================================
 // XOLOLO Fase 1 (hoja Arquitectura técnica §2) — Catálogo nuevo
 // de cargos del sistema de penalidades y disputas. Decisiones
 // cerradas 2026-10-06 con earias (ver Google Sheets "Políticas
@@ -87,6 +159,13 @@ module.exports = {
   PROVIDER_COMMISSION_PERCENTAGE,
   FIXED_SERVICE_FEE_SUBUNITS,
   LINE_ITEM_XOLOLO_SERVICE_FEE,
+
+  // Comisión casual_reseller
+  CASUAL_COMMISSION_TIERS,
+  LINE_ITEM_XOLOLO_CASUAL_COMMISSION,
+  SELLER_MODE_CASUAL,
+  computeCasualCommissionSubunits,
+  computeCasualCommissionWithIvaSubunits,
 
   // Fase 1 — nuevos
   LINE_ITEM_PENALTY_LEVEL_1,

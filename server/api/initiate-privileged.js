@@ -417,11 +417,18 @@ module.exports = (req, res) => {
         additionalCartItems,
       };
 
+      // XOLOLO Nov 2026: pasar authorPublicData para que lineItems
+      // sepa si el seller es casual_reseller y aplicar la comisión
+      // escalonada 6/4/2 encima del cargo administrativo plano.
+      const authorPublicDataForFees =
+        authorEntity?.attributes?.profile?.publicData || null;
+
       lineItems = transactionLineItems(
         listing,
         fullOrderData,
         providerCommission,
-        customerCommission
+        customerCommission,
+        authorPublicDataForFees
       );
       metadataMaybe = getMetadata(orderData, transitionName);
       // XOLOLO: construimos el snapshot de shipping desde publicData del

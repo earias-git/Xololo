@@ -9,6 +9,9 @@ const {
   PROVIDER_COMMISSION_PERCENTAGE,
   FIXED_SERVICE_FEE_SUBUNITS,
   LINE_ITEM_XOLOLO_SERVICE_FEE,
+  LINE_ITEM_XOLOLO_CASUAL_COMMISSION,
+  SELLER_MODE_CASUAL,
+  computeCasualCommissionWithIvaSubunits,
 } = require('./xololoFees');
 const {
   METHOD_PICKUP,
@@ -339,8 +342,14 @@ exports.transactionLineItems = (
   listing,
   orderData,
   _providerCommissionUnused,
-  _customerCommissionUnused
+  _customerCommissionUnused,
+  authorPublicData = null
 ) => {
+  // XOLOLO Nov 2026: sellerMode decide si aplica la comisión por venta
+  // escalonada del casual_reseller. Si no viene authorPublicData (callers
+  // viejos antes del refactor), asumimos 'store' — $14 + IVA plano + 0%.
+  const sellerMode = authorPublicData?.sellerMode || 'store';
+  const isCasualReseller = sellerMode === SELLER_MODE_CASUAL;
   const publicData = listing.attributes.publicData;
   // Note: the unitType needs to be one of the following:
   // day, night, hour, fixed, or item (these are related to payment processes)
@@ -472,12 +481,44 @@ exports.transactionLineItems = (
   // ya lo usa el 3.6%+IVA de abajo. quantity:-1 con unitPrice positivo
   // = mismo patrón que Sharetribe usa para "minimum commission" (línea
   // 388-395 de lineItemHelpers.js) para lograr un monto fijo negativo.
+  //
+  // IMPORTANTE (Nov 2026): este cargo administrativo aplica a TODOS los
+  // sellers (Starter, Empresarial, casual_reseller). El casual_reseller
+  // paga ADEMÁS una comisión por venta escalonada 6/4/2 — se agrega como
+  // línea separada xololoCasualCommissionLineItem más abajo.
   const xololoServiceFeeLineItem = {
     code: LINE_ITEM_XOLOLO_SERVICE_FEE,
     unitPrice: new Money(FIXED_SERVICE_FEE_SUBUNITS, currency),
     quantity: -1,
     includeFor: ['provider'],
   };
+
+  // XOLOLO Nov 2026: comisión por venta del casual_reseller — 6/4/2
+  // marginal + IVA 16% sobre el precio total del order (sin shipping,
+  // sin otros fees). Solo se agrega cuando el sellerMode es casual;
+  // para store (Starter/Empresarial) la comisión por venta es 0% y
+  // está incluida en la suscripción.
+  //
+  // La base del cálculo es el `commissionOrder.unitPrice` que ya
+  // integra la suma de los items del carrito (ver línea 460). Con eso
+  // el casual con 2 items en el carrito paga la escalera UNA sola vez
+  // sobre el total agregado, lo cual es consistente con la UX del
+  // preview /planes (una venta = una transacción = una comisión).
+  const casualCommissionBaseSubunits = commissionOrder?.unitPrice?.amount
+    ? Number(commissionOrder.unitPrice.amount)
+    : 0;
+  const casualCommissionTotalSubunits = isCasualReseller
+    ? computeCasualCommissionWithIvaSubunits(casualCommissionBaseSubunits, sellerMode)
+    : 0;
+  const xololoCasualCommissionLineItem =
+    isCasualReseller && casualCommissionTotalSubunits > 0
+      ? {
+          code: LINE_ITEM_XOLOLO_CASUAL_COMMISSION,
+          unitPrice: new Money(casualCommissionTotalSubunits, currency),
+          quantity: -1,
+          includeFor: ['provider'],
+        }
+      : null;
 
   // Let's keep the base price (order) as first line item and provider and customer commissions as last.
   // Note: the order matters only if OrderBreakdown component doesn't recognize line-item.
@@ -495,6 +536,7 @@ exports.transactionLineItems = (
       currency
     ),
     xololoServiceFeeLineItem,
+    ...(xololoCasualCommissionLineItem ? [xololoCasualCommissionLineItem] : []),
   ];
 
   return lineItems;
