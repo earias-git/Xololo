@@ -64,21 +64,21 @@ const SELLER_MODE_CASUAL = 'casual_reseller';
 // que vende un bien de valor alto ocasional. Marginal (vs. plana por
 // tramos) evita saltos absurdos en los bordes.
 //
-// Tramos marginales:
-//   - Hasta  $50,000     (primeros 5000000 subunits):  9% sobre esa porción
-//   - Entre  $50,001-$100,000 (siguientes 5000000):    6% sobre esa porción
-//   - Más de $100,000:                                 3% sobre lo que exceda
+// Tramos marginales (ajustados Nov 2026 — bajamos de 9/6/3 a 6/4/2):
+//   - Hasta  $50,000     (primeros 5000000 subunits):  6% sobre esa porción
+//   - Entre  $50,001-$100,000 (siguientes 5000000):    4% sobre esa porción
+//   - Más de $100,000:                                 2% sobre lo que exceda
 //
 // Al cargo total se le suma IVA 16% (Xololo es contribuyente del IVA
 // aunque el bien vendido esté exento por Art. 9 IV LIVA).
 //
 // Ejemplos:
-//   $75,000  → 50000*9% + 25000*6% = 4500 + 1500 = 6000  (efectivo 8.0%)
-//   $150,000 → 50000*9% + 50000*6% + 50000*3% = 9000      (efectivo 6.0%)
+//   $75,000  → 50000*6% + 25000*4% = 3000 + 1000 = 4000   (efectivo ~5.33%)
+//   $150,000 → 50000*6% + 50000*4% + 50000*2% = 6000       (efectivo 4.0%)
 export const COMMISSION_TIERS = [
-  { upToSubunits: 5000000, pct: 0.09, label: 'Primeros $50,000' },
-  { upToSubunits: 10000000, pct: 0.06, label: '$50,001 - $100,000' },
-  { upToSubunits: Infinity, pct: 0.03, label: 'Más de $100,000' },
+  { upToSubunits: 5000000, pct: 0.06, label: 'Primeros $50,000' },
+  { upToSubunits: 10000000, pct: 0.04, label: '$50,001 - $100,000' },
+  { upToSubunits: Infinity, pct: 0.02, label: 'Más de $100,000' },
 ];
 
 /**
@@ -192,8 +192,8 @@ const formatPct = pct => {
  *   Default false hasta que Xololo se registre como plataforma tecnológica.
  * @param {string} [params.sellerMode='store'] - 'store' | 'casual_reseller'.
  *   Determina cómo se cobra la comisión Xololo: 'store' paga $14 fijo
- *   + IVA (seller con suscripción, modelo pre-casual); 'casual_reseller'
- *   paga la tabla marginal 9/6/3% + IVA (sin suscripción).
+ *   + IVA (seller con suscripción, incluye Starter y Empresarial);
+ *   'casual_reseller' paga la tabla marginal 6/4/2% + IVA (sin suscripción).
  */
 export const computePayoutBreakdown = ({
   priceSubunits,
@@ -229,8 +229,9 @@ export const computePayoutBreakdown = ({
   // XOLOLO: comisión de servicios administrativos. Dos modelos
   // mutuamente excluyentes según sellerMode:
   //   - store (default): cuota fija $14 + IVA. El seller ya paga la
-  //     suscripción mensual, por eso la comisión por venta es simbólica.
-  //   - casual_reseller: tabla marginal 9/6/3% + IVA. El casual no paga
+  //     suscripción mensual (Starter o Empresarial), por eso la comisión
+  //     por venta es simbólica.
+  //   - casual_reseller: tabla marginal 6/4/2% + IVA. El casual no paga
   //     suscripción, entonces la comisión por venta es su contribución.
   const isCasualMode = sellerMode === SELLER_MODE_CASUAL;
   const commission = isCasualMode
@@ -314,7 +315,7 @@ export const computePayoutBreakdown = ({
         ivaMode === IVA_MODES.GRAVADO ? '16%' : ivaMode === IVA_MODES.TASA_CERO ? '0%' : 'Exento',
       motorCobro: `${(PCT_MOTOR * 100).toFixed(1)}% + IVA`,
       xololoAdmin: isCasualMode
-        ? `${(commission.effectivePct * 100).toFixed(1)}% efectivo + IVA · tramos marginales 9/6/3`
+        ? `${(commission.effectivePct * 100).toFixed(1)}% efectivo + IVA · tramos marginales 6/4/2`
         : `$${(FIXED_XOLOLO_STORE_SUBUNITS / 100).toFixed(
             2
           )} + IVA · cuota fija (plan con suscripción)`,

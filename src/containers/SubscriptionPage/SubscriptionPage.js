@@ -429,7 +429,7 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
                   <>
                     {' '}
                     (plan {formatMoney(preview.nextRenewal.planAmount, preview.nextRenewal.currency)}{' '}
-                    + {seatsExtra} seats{' '}
+                    + {seatsExtra} {seatsExtra === 1 ? 'seat' : 'seats'}{' '}
                     {formatMoney(preview.nextRenewal.seatsAmount, preview.nextRenewal.currency)})
                   </>
                 ) : null}

@@ -35,7 +35,7 @@ real que se le aplica al bien y la UX que ve el usuario.
 > paga IVA y causa retención si aplica.
 
 La **comisión Xololo** (serv. administrativos) sigue siendo del
-producto, no del seller: una tabla **marginal** 9/6/3% por tramos de
+producto, no del seller: una tabla **marginal** 6/4/2% por tramos de
 precio del listing. Siempre causa IVA porque Xololo es contribuyente
 del IVA aunque el bien vendido esté exento.
 
@@ -221,9 +221,13 @@ tener listings cayendo en distintos niveles.
 
 | Tramo del precio | Tasa marginal |
 |------------------|---------------|
-| Primeros $50,000 | 9% |
-| Siguientes $50,000 (hasta $100,000) | 6% |
-| Excedente sobre $100,000 | 3% |
+| Primeros $50,000 | 6% |
+| Siguientes $50,000 (hasta $100,000) | 4% |
+| Excedente sobre $100,000 | 2% |
+
+> **Nota (Nov 2026):** las tasas se bajaron de 9/6/3 a 6/4/2 para que el
+> casual reseller tenga un modelo más competitivo. El código y los tests
+> ya reflejan los valores nuevos; esta sección documenta el cambio.
 
 La base se calcula como escalonado marginal (cada porción del precio
 dentro de un tramo paga la tasa de ese tramo, como ISR). Al cargo se
@@ -240,12 +244,12 @@ lo quiere renderizar.
 
 | Precio del listing | Base (sin IVA) | + IVA | Efectiva |
 |---|---|---|---|
-| $500 | $45.00 | $52.20 | 9.00% |
-| $25,000 | $2,250 | $2,610 | 9.00% |
-| $75,000 | $6,000 | $6,960 | **8.00%** |
-| $150,000 | $9,000 | $10,440 | **6.00%** |
-| $350,000 | $15,000 | $17,400 | **4.29%** |
-| $1,000,000 | $34,500 | $40,020 | **3.45%** |
+| $500 | $30.00 | $34.80 | 6.00% |
+| $25,000 | $1,500 | $1,740 | 6.00% |
+| $75,000 | $4,000 | $4,640 | **5.33%** |
+| $150,000 | $6,000 | $6,960 | **4.00%** |
+| $350,000 | $10,000 | $11,600 | **2.86%** |
+| $1,000,000 | $23,000 | $26,680 | **2.30%** |
 
 ### 4.3. Rationale 🟢
 
@@ -255,7 +259,7 @@ lo quiere renderizar.
   sube la comisión en pesos.
 - La curva baja al subir el ticket para que Xololo capture valor en
   ventas chicas sin ser prohibitivo en tickets altos.
-- La asíntota es 3%, no 0% — el servicio administrativo tiene un
+- La asíntota es 2%, no 0% — el servicio administrativo tiene un
   costo marginal real por transacción (Facturapi, soporte,
   antifraude).
 
@@ -363,11 +367,11 @@ IVA Exento (Art. 9 IV LIVA)                         $0.00
 ────────────────────────────────────────────────────────
 Precio total del producto                       $1,500.00
 − Motor de cobro (3.6% + IVA)                    −$62.64
-− Serv admin Xololo (9% + IVA · marginal)       −$156.60
+− Serv admin Xololo (6% + IVA · marginal)       −$104.40
 − Retención ISR (particular, no 113-A)              $0.00
 − Retención IVA (bien exento)                       $0.00
 ────────────────────────────────────────────────────────
-Seller recibe                                   $1,280.76
+Seller recibe                                   $1,332.96
 ```
 
 ---
@@ -376,7 +380,7 @@ Seller recibe                                   $1,280.76
 
 | Archivo | Casos | Qué protege |
 |---------|------:|-------------|
-| `xololoPayout.test.js` | 20 | Tabla marginal (sin cliff, asíntota 3%). IVA GRAVADO/EXENTO/TASA_CERO. Retención ISR 0/1/2.1/4/20% según personType × hasRfc × actividad. Gate `applyWithholdings`. |
+| `xololoPayout.test.js` | 23 | Tabla marginal 6/4/2 (sin cliff, asíntota 2%). IVA GRAVADO/EXENTO/TASA_CERO. Retención ISR 0/1/2.1/4/20% según personType × hasRfc × actividad. Gate `applyWithholdings`. Cuota fija $14 + IVA para `sellerMode='store'`. |
 | `xololoSellerMode.test.js` | 15 | `resolveUsedGoodsOverride` sólo activa Art. 9 IV con USED+INDIVIDUAL; `getUsedGoodsNotice` emite kind correcto. |
 | `xololoTaxProfile.test.js` | 7 | Default conservador PF empresarial + hasRfc. Hidratación parcial, timestamps ISO. |
 | `xololoTaxClassification.test.js` | 7 | Catálogo bien formado. `CLASSIFICATION_GROUPS` cubre cada código exactamente una vez. `resolveTaxOverride` sólo pasa con `approved`. |
