@@ -503,6 +503,43 @@ const SubscriptionPageComponent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // XOLOLO /planes → signup → aquí: si hay un pendingSignupPlan guardado
+  // en sessionStorage por AuthenticationPage, dispara el checkout del
+  // plan correspondiente automáticamente al cargar la página. El seller
+  // llega con el plan ya seleccionado y solo tiene que confirmar en
+  // Stripe. Para Enterprise mostramos un banner en vez de autodisparar,
+  // porque el flow requiere elegir seats extras.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (state.status !== 'ok' || !sub) return;
+    if (sub.status === 'active') return; // ya tiene suscripción
+    let pending = null;
+    try {
+      const raw = window.sessionStorage.getItem('xololoPendingSignupPlan');
+      pending = raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      /* ignore */
+    }
+    if (!pending?.planKey || !pending?.cycle) return;
+
+    // Consume el valor para no re-disparar en re-mounts.
+    try {
+      window.sessionStorage.removeItem('xololoPendingSignupPlan');
+    } catch (_) {}
+
+    if (pending.planKey === 'starter') {
+      // Dispara el checkout Starter directo con el ciclo elegido.
+      startCheckout(pending.cycle);
+    } else if (pending.planKey === 'enterprise') {
+      setBanner({
+        tone: 'info',
+        text:
+          'Elegiste Empresarial. Suscríbete primero al plan Starter para activar tu cuenta — después puedes hacer upgrade a Empresarial en 1 click desde esta misma página (botón "Upgrade a Empresarial" abajo).',
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.status, sub]);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const checkout = params.get('checkout');

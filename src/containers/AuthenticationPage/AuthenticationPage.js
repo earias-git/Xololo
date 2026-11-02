@@ -253,17 +253,49 @@ export const AuthenticationPageComponent = props => {
   const isLogin = tab === 'login';
   // XOLOLO: lee ?sellerMode=casual_reseller del query para pre-seleccionar
   // el radio del SignupForm. Se dispara desde el banner "Vende lo que ya
-  // no usas" del landing. Sólo se acepta ese valor; cualquier otro cae a null.
+  // no usas" del landing y desde los CTAs de /planes.
+  // También acepta sellerMode=store para prevenir que el radio quede en
+  // casual por default cuando el user llega desde "Suscribirme Starter"
+  // o "Suscribirme Empresarial" en /planes. Cualquier otro valor cae a null.
   const sellerModeFromQuery = (() => {
     try {
       const search = location?.search || '';
       const params = new URLSearchParams(search);
       const v = params.get('sellerMode');
-      return v === 'casual_reseller' ? 'casual_reseller' : null;
+      if (v === 'casual_reseller') return 'casual_reseller';
+      if (v === 'store') return 'store';
+      return null;
     } catch (_) {
       return null;
     }
   })();
+
+  // XOLOLO /planes: si el signup viene de /planes con plan y tier,
+  // los persistimos en sessionStorage para que SubscriptionPage los
+  // recupere post-signup y pre-seleccione el plan en el checkout.
+  // Se corre una sola vez al montar — subsequent re-renders no sobreescriben.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const search = location?.search || '';
+      const params = new URLSearchParams(search);
+      const plan = params.get('plan');
+      const tier = params.get('tier');
+      if (plan === 'annual' || plan === 'monthly') {
+        window.sessionStorage.setItem(
+          'xololoPendingSignupPlan',
+          JSON.stringify({
+            planKey: tier === 'enterprise' ? 'enterprise' : 'starter',
+            cycle: plan,
+            savedAt: Date.now(),
+          })
+        );
+      }
+    } catch (_) {
+      /* sessionStorage puede fallar en private mode — ignorar */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const userTypeInPushState = location.state?.userType || null;
   const userTypeInAuthInfo = isConfirm && authInfo?.userType ? authInfo?.userType : null;

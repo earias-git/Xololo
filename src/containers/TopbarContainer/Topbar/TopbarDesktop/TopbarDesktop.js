@@ -75,6 +75,16 @@ const CotizarEnvioLink = () => (
   </NamedLink>
 );
 
+// XOLOLO: link a la página pública /planes (tabla comparativa de los
+// 3 tipos de seller + CTAs de signup pre-cargados). Visible SIEMPRE —
+// un visitante nuevo lo lee antes del signup y un seller existente
+// puede comparar su plan actual contra el upgrade.
+const PlanesLink = () => (
+  <NamedLink id="planes-link" name="PlanesPage" className={css.cotizarEnvioLink}>
+    <FormattedMessage id="TopbarDesktop.planes" defaultMessage="Planes" />
+  </NamedLink>
+);
+
 const InboxLink = ({ notificationCount, inboxTab }) => {
   const notificationDot = notificationCount > 0 ? <div className={css.notificationDot} /> : null;
   return (
@@ -260,6 +270,9 @@ const TopbarDesktop = props => {
           colocado a la izquierda de "Publicar anuncio" para que lo vean
           sellers y visitantes por igual. */}
       <CotizarEnvioLink />
+
+      {/* XOLOLO: link a /planes (comparativa de los 3 tipos de seller). */}
+      <PlanesLink />
 
       <CustomLinksMenu
         currentPage={currentPage}

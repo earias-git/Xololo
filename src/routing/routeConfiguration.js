@@ -28,6 +28,7 @@ const LandingPage = loadable(() => import(/* webpackChunkName: "LandingPage" */ 
 const SmartSearchPage = loadable(() => import(/* webpackChunkName: "SmartSearchPage" */ '../containers/SmartSearchPage/SmartSearchPage'));
 const CotizarEnvioPage = loadable(() => import(/* webpackChunkName: "CotizarEnvioPage" */ '../containers/CotizarEnvioPage/CotizarEnvioPage'));
 const TiendasVerifiedPage = loadable(() => import(/* webpackChunkName: "TiendasVerifiedPage" */ '../containers/TiendasVerifiedPage/TiendasVerifiedPage'));
+const PlanesPage = loadable(() => import(/* webpackChunkName: "PlanesPage" */ '../containers/PlanesPage/PlanesPage'));
 const ListingPageCoverPhoto = loadable(() => import(/* webpackChunkName: "ListingPageCoverPhoto" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCoverPhoto'));
 const ListingPageCarousel = loadable(() => import(/* webpackChunkName: "ListingPageCarousel" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCarousel'));
 const ManageListingsPage = loadable(() => import(/* webpackChunkName: "ManageListingsPage" */ '../containers/ManageListingsPage/ManageListingsPage'));
@@ -121,6 +122,14 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/tiendas-verified',
       name: 'TiendasVerifiedPage',
       component: TiendasVerifiedPage,
+    },
+    // XOLOLO: página pública /planes con tabla comparativa de los 3
+    // tipos de seller (Segunda Mano, Starter, Empresarial) + CTAs que
+    // llevan a signup con sellerMode y plan pre-seleccionados.
+    {
+      path: '/planes',
+      name: 'PlanesPage',
+      component: PlanesPage,
     },
     {
       path: '/p/:pageId',

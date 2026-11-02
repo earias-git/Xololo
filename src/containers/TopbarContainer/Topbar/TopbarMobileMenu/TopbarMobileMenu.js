@@ -109,6 +109,14 @@ const TopbarMobileMenu = props => {
     </NamedLink>
   );
 
+  // XOLOLO: link a /planes desde el menú móvil (comparativa de los 3
+  // tipos de seller + CTAs de signup pre-cargados).
+  const planesMobileLink = (
+    <NamedLink className={css.navigationLink} name="PlanesPage">
+      <FormattedMessage id="TopbarMobileMenu.planes" defaultMessage="Planes" />
+    </NamedLink>
+  );
+
   if (!isAuthenticated) {
     const signup = (
       <NamedLink name="SignupPage" className={css.signupLink}>
@@ -142,6 +150,7 @@ const TopbarMobileMenu = props => {
 
           <ul className={css.customLinksWrapper}>
             <li className={css.navigationLink}>{cotizarEnvioMobileLink}</li>
+            <li className={css.navigationLink}>{planesMobileLink}</li>
             {extraLinks}
           </ul>
 
@@ -215,6 +224,7 @@ const TopbarMobileMenu = props => {
         </ul>
         <ul className={css.customLinksWrapper}>
           <li className={css.navigationLink}>{cotizarEnvioMobileLink}</li>
+          <li className={css.navigationLink}>{planesMobileLink}</li>
           {extraLinks}
         </ul>
         <div className={css.spacer} />
