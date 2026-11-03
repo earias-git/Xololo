@@ -1,0 +1,82 @@
+lesson: "modulo-01/leccion-06"
+title: "Xololear tu anuncio (solo técnico)"
+pass_threshold: 0.80
+questions:
+  - id: q1
+    type: single
+    question: >
+      El botón "Xololear" aparece en:
+    options:
+      - "La página de inicio del marketplace"
+      - "El perfil de cada cliente"
+      - "Cada anuncio activo en Mis anuncios"
+      - "Solo en el plan Empresarial"
+    correct: 2
+    feedback: >
+      Correcto. Cada anuncio activo en Mis anuncios tiene su botón
+      "Xololear" al lado del botón "Editar". Está disponible para los 3
+      planes (Segunda Mano, Starter, Empresarial).
+
+  - id: q2
+    type: single
+    question: >
+      Al hacer clic en "Xololear" se abre una ventana con:
+    options:
+      - "Un editor de texto para escribir una publicación"
+      - "3 formatos pre-generados: cuadrado, vertical y horizontal"
+      - "Una lista de hashtags recomendados"
+      - "El historial de ventas del anuncio"
+    correct: 1
+    feedback: >
+      Correcto. 3 formatos listos: cuadrado 1:1 (Instagram/Facebook
+      feed), vertical 9:16 (Stories, Reels, TikTok) y horizontal 16:9
+      (WhatsApp con preview). Cada uno incluye tu foto, título, precio,
+      logo y link acortado.
+
+  - id: q3
+    type: multiple
+    question: >
+      ¿Qué incluye cada pieza visual que genera Xololear? Marca TODAS
+      las que apliquen.
+    options:
+      - "Foto principal de tu anuncio"
+      - "Título del anuncio"
+      - "Precio"
+      - "Logo de tu negocio"
+      - "Link acortado al anuncio"
+      - "Tu RFC visible"
+      - "Datos personales del cliente"
+    correct: [0, 1, 2, 3, 4]
+    feedback: >
+      Correcto. La pieza incluye foto, título, precio, logo y link
+      acortado. NO incluye tu RFC ni datos personales del cliente
+      (nada que no debería ser público).
+
+  - id: q4
+    type: true_false
+    question: >
+      "Puedo re-generar hasta 10 versiones distintas de la misma pieza
+      por anuncio por día si la primera no me convenció."
+    correct: true
+    feedback: >
+      Verdadero. El botón "Generar otra versión" te produce piezas con
+      distinta foto base, colores y layout. Hasta 10 por anuncio al día
+      — más que suficiente para encontrar una que te guste.
+
+  - id: q5
+    type: single
+    question: >
+      Esta lección cubre SOLO la mecánica del botón. La estrategia
+      completa de redes (qué red elegir, qué copy funciona, cuándo
+      publicar, cómo medir resultados) se ve en:
+    options:
+      - "Esta misma lección en el video extendido"
+      - "El Módulo 2 completo (11 lecciones de promoción digital)"
+      - "El Módulo 4 de Verified"
+      - "Una consultoría pagada aparte"
+    correct: 1
+    feedback: >
+      Correcto. El Módulo 2 "Promoción digital en RRSS" es el que
+      cubre la estrategia completa. Lo separamos a propósito: una cosa
+      es saber dar clic al botón, otra muy distinta es saber usarlo
+      bien para generar ventas reales.

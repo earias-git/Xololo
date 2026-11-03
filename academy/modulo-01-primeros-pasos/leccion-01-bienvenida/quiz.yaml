@@ -1,0 +1,61 @@
+# Quiz · Lección 1
+# Formato compatible con import a Moodle GIFT/XML con un script
+# conversor (pending). Mientras tanto este YAML es la fuente de verdad.
+#
+# Reglas:
+# - type: single (una sola respuesta correcta) o multiple (varias) o
+#   true_false
+# - correct: índice(s) de las opciones correctas (empieza en 0)
+# - feedback: mensaje que ve el estudiante tras responder, explicando
+
+lesson: "modulo-01/leccion-01"
+title: "Bienvenida y filosofía Cliente primero"
+pass_threshold: 0.80  # 80% para pasar
+questions:
+  - id: q1
+    type: single
+    question: >
+      En Xololo, el orden de prioridades que define cómo tomamos las
+      decisiones es:
+    options:
+      - "Xololo → Consultor → Negocio → Cliente"
+      - "Cliente → Negocio → Consultor → Xololo"
+      - "Negocio → Cliente → Xololo → Consultor"
+      - "Consultor → Cliente → Negocio → Xololo"
+    correct: 1
+    feedback: >
+      Correcto. El cliente va primero porque es la razón de que tu
+      negocio exista. Después tú (negocio), después nuestros consultores
+      y al final Xololo. Si una decisión le conviene a Xololo pero
+      perjudica al cliente o a tu negocio, está mal tomada.
+
+  - id: q2
+    type: true_false
+    question: >
+      "Describir un producto con una foto más favorable que la realidad
+      es una buena práctica porque aumenta las ventas iniciales."
+    correct: false
+    feedback: >
+      Falso. Exagerar es la causa número uno de reseñas negativas y
+      devoluciones. Un cliente que recibe menos de lo que esperaba se
+      va y escribe mala reseña. Describir honestamente construye
+      reputación; exagerar la quema.
+
+  - id: q3
+    type: multiple
+    question: >
+      Según el compromiso del titular que vas a firmar en esta lección,
+      ¿a qué te comprometes? Marca TODAS las que apliquen.
+    options:
+      - "Describir honestamente lo que vendo"
+      - "Garantizar envío gratis siempre"
+      - "Entregar cuando prometí"
+      - "Responder a mis clientes con respeto"
+      - "Dar siempre descuento al que lo pida"
+      - "Resolver cualquier problema sin excusas"
+    correct: [0, 2, 3, 5]
+    feedback: >
+      Correcto. El compromiso incluye honestidad, puntualidad, respeto
+      en la comunicación y resolución sin excusas. NO incluye envío
+      gratis obligatorio ni descuentos automáticos — esas son decisiones
+      comerciales tuyas, no compromisos éticos.

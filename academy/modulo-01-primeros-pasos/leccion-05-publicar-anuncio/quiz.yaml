@@ -1,0 +1,92 @@
+lesson: "modulo-01/leccion-05"
+title: "Publica tu primer anuncio"
+pass_threshold: 0.80
+questions:
+  - id: q1
+    type: single
+    question: >
+      Según los datos internos de Xololo, un anuncio con 5 fotos vende:
+    options:
+      - "Lo mismo que uno con 1 foto, lo que importa es el precio"
+      - "El doble que uno con 1 sola foto"
+      - "La mitad porque abrumá al cliente"
+      - "Solo si son fotos profesionales con equipo caro"
+    correct: 1
+    feedback: >
+      Correcto. 5 fotos en luz natural con fondo neutro duplican las
+      ventas de un anuncio con 1 sola foto. No necesitas equipo
+      profesional — un celular, luz de ventana y un fondo blanco son
+      suficientes.
+
+  - id: q2
+    type: single
+    question: >
+      La fórmula recomendada para el título de un anuncio es:
+    options:
+      - "SOLO MAYÚSCULAS y signos de exclamación"
+      - "[Qué es] + [Marca o característica] + [Variante o condición]"
+      - "El precio en el título para que destaque"
+      - "Promesas tipo 'la mejor del mercado'"
+    correct: 1
+    feedback: >
+      Correcto. Un cliente busca "licuadora Oster" o "chamarra piel
+      vintage" — tu título debe contener esas palabras tal como se
+      escriben. Las mayúsculas gritadas y los adjetivos vacíos no
+      ayudan al SEO y bajan la confianza.
+
+  - id: q3
+    type: single
+    question: >
+      Si vendes una licuadora nueva en caja a $400 (precio final) en
+      plan Starter, ¿cuál es el error MÁS COMÚN al calcular el precio?
+    options:
+      - "Olvidar que el precio ya incluye IVA"
+      - "Olvidar sumar las comisiones de Xololo y Stripe al calcular el margen"
+      - "Olvidar poner el peso del producto"
+      - "Olvidar activar Skydropx"
+    correct: 1
+    feedback: >
+      Correcto. El error más común es: Costo $200 + Margen $200 = $400,
+      sin considerar que el admin ($16.24) + Stripe (~$17) te comen $33
+      del margen real. Usa la calculadora de payout ANTES de publicar
+      para saber exactamente cuánto recibes.
+
+  - id: q4
+    type: true_false
+    question: >
+      "Si no estoy seguro del IVA de mi producto, lo mejor es marcarlo
+      como Exento para evitar cobrar IVA de más."
+    correct: false
+    feedback: >
+      Falso. Marcar Exento cuando debería ser Gravado 16% es evadir IVA
+      sin saberlo, y el SAT puede exigirte pago retroactivo con
+      recargos. Si no estás seguro, usa el default que te sugiere
+      Xololo según la categoría, o consulta con tu contador.
+
+  - id: q5
+    type: single
+    question: >
+      Si declaras un peso incorrecto en tu anuncio y tienes Skydropx:
+    options:
+      - "No pasa nada, Skydropx lo corrige automáticamente"
+      - "El cliente paga la diferencia al recibir el paquete"
+      - "La paquetería te cobra el ajuste por diferencia de peso a TI, no al cliente"
+      - "Xololo absorbe la diferencia"
+    correct: 2
+    feedback: >
+      Correcto. El cliente ya pagó la cotización que vio con el peso
+      que TÚ declaraste. Si el peso real es mayor, la paquetería te
+      cobra el ajuste directamente a ti como vendedor. Pesa en báscula
+      y mide dimensiones reales, con 10-15% de margen por seguridad.
+
+  - id: q6
+    type: true_false
+    question: >
+      "Para mi primer anuncio es buena idea usar variantes de talla y
+      color para aprender bien el sistema."
+    correct: false
+    feedback: >
+      Falso. Para tu PRIMER anuncio, mantén simple: 1 sola variante.
+      Las variantes son útiles cuando ya tienes el flujo dominado, pero
+      meter complejidad al principio aumenta el riesgo de errores.
+      Aprende a vender uno antes de vender 10 variantes del mismo.

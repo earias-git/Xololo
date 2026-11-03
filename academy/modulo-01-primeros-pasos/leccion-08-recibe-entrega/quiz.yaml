@@ -1,0 +1,97 @@
+lesson: "modulo-01/leccion-08"
+title: "Recibe, prepara y entrega al cliente"
+pass_threshold: 0.80
+questions:
+  - id: q1
+    type: single
+    question: >
+      Según los datos de Xololo, el tiempo ideal para la primera
+      respuesta a un cliente que te acaba de comprar es:
+    options:
+      - "24-48 horas, no hay prisa"
+      - "Menos de 1 hora"
+      - "1 semana"
+      - "Solo cuando ya tengas lista la guía de envío"
+    correct: 1
+    feedback: >
+      Correcto. Menos de 1 hora. Los negocios que responden en esa
+      ventana tienen 85% reseñas de 5 ⭐; los que tardan más de 24h
+      bajan a 45%. El cliente está activo con la tarjeta en la mano.
+
+  - id: q2
+    type: true_false
+    question: >
+      "Si descubro que no tengo stock real del producto que compraron,
+      lo mejor es enviar algo similar sin avisar para no decepcionar
+      al cliente."
+    correct: false
+    feedback: >
+      Falso. NUNCA improvises con otra cosa. Avisa de inmediato al
+      cliente, ofrece opciones (reembolso + disculpa, cambio por
+      producto similar con su autorización, espera a nuevo stock). El
+      cliente valora la honestidad; odia la sorpresa negativa.
+
+  - id: q3
+    type: single
+    question: >
+      Si un paquete lleva más de 3 días del tiempo estimado sin
+      movimiento en Skydropx:
+    options:
+      - "Esperas a que el cliente reclame primero"
+      - "Tú contactas al cliente primero para informarle que estás investigando"
+      - "Haces un nuevo envío inmediatamente"
+      - "Reportas al cliente como abusivo"
+    correct: 1
+    feedback: >
+      Correcto. TÚ contactas primero. "Vi que tu paquete está detenido
+      en X, ya reporté al transportista, te mantengo al tanto." No
+      esperes al reclamo — la proactividad es la diferencia entre una
+      queja y una reseña de 5 ⭐.
+
+  - id: q4
+    type: single
+    question: >
+      Un cliente te dice que la paquetería marcó "entregado" pero él
+      no recibió el paquete. ¿Qué haces primero?
+    options:
+      - "Lo acusas de mentiroso y cierras el caso"
+      - "Le pides que verifique con vecinos/portero/familia (es la causa #1 real)"
+      - "Reembolsas inmediatamente sin preguntar"
+      - "Lo bloqueas en Xololo"
+    correct: 1
+    feedback: >
+      Correcto. La causa más común es que lo recibió un vecino,
+      portero o familiar. Pides que verifique primero. Si realmente no
+      llegó, abres reclamo con paquetería + ticket a soporte Xololo
+      para activar disputa de pago protegido.
+
+  - id: q5
+    type: true_false
+    question: >
+      "Si pido reseña diciendo 'por favor déjame 5 estrellas', obtengo
+      mejor reputación."
+    correct: false
+    feedback: >
+      Falso. Pide reseña HONESTA, no 5 estrellas. Los clientes
+      distinguen el intento de inflar y las plataformas detectan
+      patrones sospechosos. La reseña honesta es tu activo real. Y
+      resuelve ANTES cualquier queja — una reseña de 3 estrellas
+      resuelta se vuelve una de 5.
+
+  - id: q6
+    type: multiple
+    question: >
+      Si un producto llega dañado, ¿qué información debes pedir al
+      cliente? Marca TODAS las que apliquen.
+    options:
+      - "Fotos del producto dañado"
+      - "Fotos del empaque"
+      - "Hora exacta en que lo abrió"
+      - "Descripción breve de qué está mal"
+      - "Su RFC y domicilio fiscal"
+    correct: [0, 1, 3]
+    feedback: >
+      Correcto. Fotos de producto y empaque, más descripción. Esto te
+      permite distinguir si fue daño de paquetería (empaque dañado)
+      vs tuyo (empaque intacto, producto defectuoso). RFC/domicilio no
+      aplican aquí — son datos innecesarios.

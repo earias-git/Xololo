@@ -1,0 +1,79 @@
+lesson: "modulo-01/leccion-03"
+title: "Elegir tu plan"
+pass_threshold: 0.80
+questions:
+  - id: q1
+    type: single
+    question: >
+      La diferencia principal entre Starter y Empresarial es:
+    options:
+      - "El plan Empresarial tiene mejores precios por venta"
+      - "Empresarial incluye colaboradores con permisos granulares; Starter no"
+      - "Starter no permite emitir CFDI"
+      - "Empresarial no tiene vitrina con slug"
+    correct: 1
+    feedback: >
+      Correcto. Ambos planes pagan exactamente lo mismo por venta ($14
+      + IVA, con 0% de comisión). La diferencia es que Empresarial trae
+      2 colaboradores incluidos, audit log cross-user, y panel Equipo.
+
+  - id: q2
+    type: single
+    question: >
+      En una venta de $5,000, ¿qué recibe un vendedor en Segunda Mano
+      vs uno en Starter?
+    options:
+      - "Lo mismo, los planes no afectan el payout"
+      - "Starter recibe $348 más por venta (ahorra la comisión escalonada)"
+      - "Segunda Mano recibe más porque es gratis"
+      - "Depende solo del método de envío"
+    correct: 1
+    feedback: >
+      Correcto. En Segunda Mano se cobra 6% + IVA de comisión por venta
+      (unos $348 en $5,000). En Starter esa comisión es 0% porque ya
+      pagas la suscripción. Ambos pagan el mismo cargo administrativo
+      plano de $14 + IVA.
+
+  - id: q3
+    type: true_false
+    question: >
+      "Si empiezo en Starter y luego hago upgrade a Empresarial, tengo
+      que pagar el onboarding de $499 otra vez."
+    correct: false
+    feedback: >
+      Falso. El onboarding de $499 se cobra UNA sola vez en tu primer
+      pago de suscripción. Si ya lo pagaste como Starter, no se cobra
+      de nuevo al hacer upgrade. Solo pagas la diferencia prorrateada
+      del plan.
+
+  - id: q4
+    type: single
+    question: >
+      Si vendo cosas usadas mías de forma ocasional, el plan natural
+      para mí es:
+    options:
+      - "Empresarial, porque me conviene desde el principio"
+      - "Starter, para tener CFDI aunque no lo necesite"
+      - "Segunda Mano, porque es ocasional y no requiere RFC"
+      - "Ninguno, Xololo no es para vendedores particulares"
+    correct: 2
+    feedback: >
+      Correcto. Segunda Mano está diseñado específicamente para el
+      particular ocasional (Art. 9 fracc IV LIVA): sin suscripción,
+      sin CFDI, sin retenciones. Pagas solo cuando vendes.
+
+  - id: q5
+    type: single
+    question: >
+      El cargo administrativo por venta ($14 + IVA) aplica a:
+    options:
+      - "Solo Segunda Mano"
+      - "Solo Starter y Empresarial"
+      - "Los 3 planes (Segunda Mano, Starter, Empresarial)"
+      - "Solo si el cliente paga con TDC"
+    correct: 2
+    feedback: >
+      Correcto. El cargo administrativo plano de $14 + IVA por venta
+      aplica a los 3 planes y en cualquier método de pago. Es la cuota
+      de Xololo por procesar la transacción, verificar, pago protegido
+      y soporte.

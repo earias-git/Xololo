@@ -1,0 +1,81 @@
+lesson: "modulo-01/leccion-09"
+title: "Dashboard y métricas clave de tu negocio"
+pass_threshold: 0.80
+questions:
+  - id: q1
+    type: single
+    question: >
+      Si tu tasa de conversión está en 0.5%, el problema más probable es:
+    options:
+      - "Tienes demasiado tráfico"
+      - "Algo en tu vitrina asusta al cliente (rating, precio, fotos, confianza)"
+      - "Debes bajar el precio al 10% para todo"
+      - "El algoritmo de Xololo te penaliza"
+    correct: 1
+    feedback: >
+      Correcto. Conversión < 1% indica que la gente llega pero no
+      compra. Las causas típicas son: rating bajo (asusta), precio
+      fuera de rango, fotos malas, descripción confusa, o falta de
+      Verified badge. Investiga antes de meter más tráfico.
+
+  - id: q2
+    type: single
+    question: >
+      Si tienes 10 visitas al mes y 0 ventas, tu problema NO es
+      conversión. Tu problema es:
+    options:
+      - "Precio demasiado alto"
+      - "Tráfico — no te está encontrando suficiente gente"
+      - "El cliente te odia"
+      - "La paquetería"
+    correct: 1
+    feedback: >
+      Correcto. Con solo 10 visitas no tienes datos estadísticamente
+      significativos para hablar de conversión. Tu problema es
+      tráfico. Enfócate en: Xololear más, mejorar el SEO del título,
+      revisar categoría, obtener el badge Verified.
+
+  - id: q3
+    type: single
+    question: >
+      El rating "excelente" al que debes aspirar es:
+    options:
+      - "Cualquier cosa arriba de 2 ⭐"
+      - "Mínimo 3.5 ⭐"
+      - "≥ 4.5 ⭐"
+      - "5.0 ⭐ perfecto o nada"
+    correct: 2
+    feedback: >
+      Correcto. ≥ 4.5 ⭐ es la meta sana. 4.0-4.4 es "normal pero
+      mejorable". < 4.0 es alerta — pausa nuevos anuncios y resuelve
+      lo que falla antes de atraer más clientes. 5.0 perfecto no es
+      necesario (y suele ser sospechoso para los clientes).
+
+  - id: q4
+    type: true_false
+    question: >
+      "Lo mejor es cambiar 10 cosas a la vez cada semana para mejorar
+      rápido."
+    correct: false
+    feedback: >
+      Falso. Si cambias 10 cosas a la vez y mejoran los números, no
+      sabes cuál funcionó. La regla es UNA variable a la vez: cambia,
+      espera 1 semana, mide, decide. Después pasa a la siguiente
+      variable.
+
+  - id: q5
+    type: single
+    question: >
+      La tasa de recompra ideal depende del tipo de negocio, pero un
+      rango típico sano es:
+    options:
+      - "0%, nadie recompra"
+      - "10-25% en 90 días"
+      - "100%, todos vuelven"
+      - "Solo aplica a Empresarial"
+    correct: 1
+    feedback: >
+      Correcto. 10-25% en 90 días es un rango sano para productos
+      recurrentes. Menos de 10% indica que tu producto es de compra
+      única o tu experiencia no engancha. Más de 25% es excelente —
+      estos clientes son tu oro.

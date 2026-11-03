@@ -1,0 +1,254 @@
+lesson: "modulo-01/leccion-10"
+title: "Quiz FINAL del Módulo 1"
+pass_threshold: 0.80  # 16 de 20
+is_final_module_quiz: true
+questions:
+  # ==================== LECCIÓN 1: Filosofía ====================
+  - id: q1
+    type: single
+    question: >
+      El orden de prioridades que define las decisiones en Xololo es:
+    options:
+      - "Xololo → Consultor → Negocio → Cliente"
+      - "Cliente → Negocio → Consultor → Xololo"
+      - "Negocio → Cliente → Xololo → Consultor"
+      - "Consultor → Cliente → Negocio → Xololo"
+    correct: 1
+    feedback: >
+      El cliente va primero porque es la razón de que tu negocio exista.
+
+  - id: q2
+    type: true_false
+    question: >
+      "Describir un producto con una foto más favorable que la realidad
+      es una buena práctica porque aumenta las ventas iniciales."
+    correct: false
+    feedback: >
+      Falso. Exagerar es la causa #1 de reseñas negativas.
+
+  # ==================== LECCIÓN 2: Verificación ====================
+  - id: q3
+    type: single
+    question: >
+      Si eres Segunda Mano (particular ocasional), los documentos
+      legales que necesitas subir son:
+    options:
+      - "INE, comprobante domicilio, CSF y acta constitutiva"
+      - "Solo INE"
+      - "INE y comprobante de domicilio"
+      - "Acta constitutiva y poder notarial"
+    correct: 2
+    feedback: >
+      Segunda Mano solo requiere INE y comprobante de domicilio.
+
+  - id: q4
+    type: true_false
+    question: >
+      "Puedo seguir con las siguientes lecciones del módulo aunque mis
+      documentos aún no estén aprobados."
+    correct: true
+    feedback: >
+      Verdadero. Aprobación corre en paralelo (<24h hábiles).
+
+  # ==================== LECCIÓN 3: Elegir plan ====================
+  - id: q5
+    type: single
+    question: >
+      La diferencia principal entre Starter y Empresarial es:
+    options:
+      - "Empresarial tiene mejores precios por venta"
+      - "Empresarial incluye colaboradores con permisos granulares; Starter no"
+      - "Starter no permite emitir CFDI"
+      - "Empresarial no tiene vitrina con slug"
+    correct: 1
+    feedback: >
+      Ambos pagan lo mismo por venta. Empresarial agrega 2 colaboradores
+      + audit log + panel equipo.
+
+  - id: q6
+    type: true_false
+    question: >
+      "Si empiezo en Starter y luego hago upgrade a Empresarial, tengo
+      que pagar el onboarding de $499 otra vez."
+    correct: false
+    feedback: >
+      Falso. El onboarding se cobra UNA sola vez.
+
+  # ==================== LECCIÓN 4: Vitrina ====================
+  - id: q7
+    type: single
+    question: >
+      Al elegir el slug (`xololo.mx/u/tu-slug`) de tu vitrina, la regla
+      más importante es:
+    options:
+      - "Que sea lo más corto posible"
+      - "Que incluya tu nombre completo"
+      - "Que sea fácil de dictar, escribir sin error y con identidad"
+      - "Que use guiones bajos"
+    correct: 2
+    feedback: >
+      Dictable, escribible sin error, con identidad propia.
+
+  - id: q8
+    type: single
+    question: >
+      Una buena descripción de 200 caracteres debe:
+    options:
+      - "Hablar de misión, visión y valores"
+      - "Decir qué vendes, dónde operas, y una ventaja concreta"
+      - "Usar palabras como 'líderes' y 'calidad superior'"
+      - "Dejar al cliente adivinar"
+    correct: 1
+    feedback: >
+      Fórmula: qué + dónde + diferenciador + promesa concreta.
+
+  # ==================== LECCIÓN 5: Anuncio ====================
+  - id: q9
+    type: single
+    question: >
+      Un anuncio con 5 fotos (en luz natural, fondo neutro) vs uno con
+      1 sola foto:
+    options:
+      - "Vende lo mismo, el precio es lo que importa"
+      - "Vende el DOBLE"
+      - "Vende la mitad"
+      - "Solo si son fotos profesionales"
+    correct: 1
+    feedback: >
+      Datos internos de Xololo: 5 fotos duplican las ventas.
+
+  - id: q10
+    type: single
+    question: >
+      El error MÁS COMÚN al calcular el precio es:
+    options:
+      - "Olvidar que el precio ya incluye IVA"
+      - "Olvidar sumar comisiones de Xololo y Stripe al calcular margen"
+      - "Olvidar poner el peso"
+      - "Olvidar activar Skydropx"
+    correct: 1
+    feedback: >
+      Costo+Margen SIN comisiones te deja menos margen real.
+
+  - id: q11
+    type: single
+    question: >
+      Si declaras peso incorrecto en Skydropx:
+    options:
+      - "Skydropx lo corrige automáticamente"
+      - "El cliente paga la diferencia al recibir"
+      - "La paquetería te cobra el ajuste por diferencia de peso a TI"
+      - "Xololo absorbe la diferencia"
+    correct: 2
+    feedback: >
+      El cliente ya pagó. Tú absorbes el ajuste. Pesa en báscula.
+
+  # ==================== LECCIÓN 6: Xololear ====================
+  - id: q12
+    type: single
+    question: >
+      Al hacer clic en "Xololear" se abre una ventana con:
+    options:
+      - "Un editor de texto para escribir publicación"
+      - "3 formatos pre-generados: cuadrado, vertical y horizontal"
+      - "Una lista de hashtags recomendados"
+      - "El historial de ventas del anuncio"
+    correct: 1
+    feedback: >
+      3 formatos listos: 1:1, 9:16, 16:9. Cada uno con foto, título,
+      precio, logo y link.
+
+  # ==================== LECCIÓN 7: Cobros ====================
+  - id: q13
+    type: single
+    question: >
+      El cargo administrativo plano ($14 + IVA por venta) aplica a:
+    options:
+      - "Solo Empresarial"
+      - "Solo Starter y Empresarial"
+      - "Los 3 planes (Segunda Mano, Starter, Empresarial)"
+      - "Solo si el cliente paga con TDC"
+    correct: 2
+    feedback: >
+      $14 + IVA aplica a los 3 planes, igual siempre.
+
+  - id: q14
+    type: true_false
+    question: >
+      "Como Segunda Mano se me retienen ISR 113-A y IVA porque son
+      impuestos federales obligatorios."
+    correct: false
+    feedback: >
+      Falso. Segunda Mano NO tiene retenciones (Art. 9 fracc IV LIVA).
+
+  - id: q15
+    type: true_false
+    question: >
+      "Si no tengo configurada mi cuenta bancaria en Stripe, el payout
+      igual se me deposita."
+    correct: false
+    feedback: >
+      Falso. Sin cuenta bancaria, el payout NO se dispara. Configúrala
+      HOY.
+
+  # ==================== LECCIÓN 8: Entrega ====================
+  - id: q16
+    type: single
+    question: >
+      El tiempo ideal para la primera respuesta a un cliente que te
+      acaba de comprar es:
+    options:
+      - "24-48 horas"
+      - "Menos de 1 hora"
+      - "1 semana"
+      - "Solo cuando tengas la guía lista"
+    correct: 1
+    feedback: >
+      < 1 hora. 85% reseñas 5⭐ vs 45% si tardas >24h.
+
+  - id: q17
+    type: true_false
+    question: >
+      "Si descubro que no tengo stock real, lo mejor es enviar algo
+      similar sin avisar."
+    correct: false
+    feedback: >
+      Falso. NUNCA improvises. Avisa inmediatamente con opciones.
+
+  - id: q18
+    type: single
+    question: >
+      Un cliente dice que no recibió el paquete pero la paquetería
+      marcó "entregado". ¿Qué haces PRIMERO?
+    options:
+      - "Lo acusas de mentiroso"
+      - "Le pides que verifique con vecinos/portero/familia"
+      - "Reembolsas inmediatamente"
+      - "Lo bloqueas"
+    correct: 1
+    feedback: >
+      La causa #1 real es que lo recibió un vecino, portero o familia.
+
+  # ==================== LECCIÓN 9: Dashboard ====================
+  - id: q19
+    type: single
+    question: >
+      Si tu tasa de conversión está en 0.5%, el problema más probable es:
+    options:
+      - "Tienes demasiado tráfico"
+      - "Algo en tu vitrina asusta (rating, precio, fotos, confianza)"
+      - "Debes bajar el precio al 10%"
+      - "El algoritmo te penaliza"
+    correct: 1
+    feedback: >
+      Conversión < 1% = problema de confianza/propuesta, no de tráfico.
+
+  - id: q20
+    type: true_false
+    question: >
+      "Lo mejor es cambiar 10 cosas a la vez cada semana para mejorar
+      rápido."
+    correct: false
+    feedback: >
+      Falso. UNA variable a la vez. Si cambias 10 y mejora, no sabes
+      cuál funcionó.

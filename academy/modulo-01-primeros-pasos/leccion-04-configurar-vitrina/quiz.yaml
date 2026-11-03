@@ -1,0 +1,80 @@
+lesson: "modulo-01/leccion-04"
+title: "Configura la vitrina de tu negocio"
+pass_threshold: 0.80
+questions:
+  - id: q1
+    type: single
+    question: >
+      Al elegir el slug (`xololo.mx/u/tu-slug`) de tu vitrina, la regla
+      más importante es:
+    options:
+      - "Que sea lo más corto posible, aunque no se entienda"
+      - "Que incluya tu nombre completo con apellidos"
+      - "Que sea fácil de dictar, fácil de escribir y tenga identidad"
+      - "Que use guiones bajos para resaltar"
+    correct: 2
+    feedback: >
+      Correcto. El slug vive en tus tarjetas, redes y correos. Debe ser
+      dictable, escribible sin error y con identidad propia. No usar
+      guiones bajos (no están permitidos) ni nombres genéricos.
+
+  - id: q2
+    type: single
+    question: >
+      Una buena descripción de 200 caracteres para tu vitrina debe:
+    options:
+      - "Hablar de misión, visión y valores de la empresa"
+      - "Decir qué vendes, dónde operas, y una ventaja concreta"
+      - "Usar palabras como 'líderes' y 'calidad superior'"
+      - "Dejar al cliente adivinar para generar curiosidad"
+    correct: 1
+    feedback: >
+      Correcto. Fórmula: qué + dónde + cuánto tiempo o diferenciador +
+      promesa concreta. Evita adjetivos vacíos ("líderes", "calidad
+      superior"). Los hechos convencen; los adjetivos no.
+
+  - id: q3
+    type: true_false
+    question: >
+      "Está bien poner 'responde en 1 hora' en mis horarios aunque en
+      realidad tarde 2 días — así atraigo más clientes al principio."
+    correct: false
+    feedback: >
+      Falso. Xololo mide tu tiempo real de respuesta y lo publica en tu
+      vitrina. Si mientes, el indicador rojo aparece de todas formas y
+      pierdes credibilidad. Mejor horario realista que falsa promesa.
+
+  - id: q4
+    type: single
+    question: >
+      Para que tu negocio pueda vender fuera de tu ciudad, el método de
+      envío que debes activar es:
+    options:
+      - "Solo recoger en tienda"
+      - "Entrega local únicamente"
+      - "Skydropx (paquetería profesional nacional)"
+      - "Ninguno, Xololo lo hace automático"
+    correct: 2
+    feedback: >
+      Correcto. Skydropx es la única opción que te permite llegar al
+      resto del país. Entrega local y recoger en tienda son solo para
+      clientes cercanos. Para arrancar, activa al menos Skydropx y
+      agrega los demás si aplican.
+
+  - id: q5
+    type: multiple
+    question: >
+      ¿Qué le dice una vitrina MAL configurada a un cliente que la
+      visita por primera vez? Marca TODAS las que apliquen.
+    options:
+      - "No les importa cómo se ven, tampoco les importará mi pedido"
+      - "No se tomaron el tiempo de armar esto"
+      - "Tienen años de experiencia en el rubro"
+      - "Son profesionales confiables"
+      - "Mienten en lo chico, mentirán en lo grande (si los horarios no son reales)"
+    correct: [0, 1, 4]
+    feedback: >
+      Correcto. Una vitrina mal configurada transmite descuido,
+      inversión mínima y falta de rigor. Un cliente infiere que así
+      tratará su pedido. Es por eso que tu vitrina es una "conversación
+      silenciosa" — comunica aun cuando no dice nada.

@@ -1,0 +1,93 @@
+lesson: "modulo-01/leccion-07"
+title: "Cómo cobra Xololo y cómo te pagamos"
+pass_threshold: 0.80
+questions:
+  - id: q1
+    type: single
+    question: >
+      El cargo administrativo plano de Xololo ($14 + IVA por venta)
+      aplica a:
+    options:
+      - "Solo plan Empresarial"
+      - "Solo Starter y Empresarial"
+      - "Los 3 planes (Segunda Mano, Starter, Empresarial)"
+      - "Solo si el cliente paga con TDC"
+    correct: 2
+    feedback: >
+      Correcto. El cargo administrativo plano aplica a los 3 planes y
+      es siempre el mismo monto ($14 + IVA = $16.24) sin importar el
+      precio, el método de envío o el método de pago del cliente.
+
+  - id: q2
+    type: single
+    question: >
+      En una venta de $5,000 como Starter o Empresarial, lo que recibes
+      netos es aproximadamente:
+    options:
+      - "$5,000 — no hay cargos"
+      - "$4,774.96 (después de admin $16.24 + Stripe $208.80)"
+      - "$4,426.96 (igual que Segunda Mano)"
+      - "$4,000 (20% de comisión)"
+    correct: 1
+    feedback: >
+      Correcto. Starter/Empresarial pagan admin $16.24 + Stripe $208.80
+      = $225.04 descontados → $4,774.96 netos. En Segunda Mano se suma
+      la comisión 6% + IVA ($348), dejando $4,426.96 netos.
+
+  - id: q3
+    type: true_false
+    question: >
+      "Como Segunda Mano se me retiene ISR 113-A y IVA de cada venta
+      porque son impuestos federales obligatorios."
+    correct: false
+    feedback: >
+      Falso. Segunda Mano (particular ocasional vendiendo bien usado)
+      NO tiene retenciones. El Art. 9 fracc IV LIVA exenta de IVA y el
+      ISR 113-A no te aplica porque no eres contribuyente del régimen
+      de plataformas digitales.
+
+  - id: q4
+    type: single
+    question: >
+      El payout a tu cuenta bancaria se dispara cuando:
+    options:
+      - "El cliente paga con TDC"
+      - "Publicas el anuncio"
+      - "El cliente confirma recepción, o pasan 7 días desde la entrega sin reclamo"
+      - "Al inicio de cada mes"
+    correct: 2
+    feedback: >
+      Correcto. El dinero queda retenido en Xololo (pago protegido)
+      hasta que el cliente confirma recepción O pasan 7 días desde
+      que la paquetería marcó entregado. Después, Stripe deposita en
+      tu cuenta bancaria en 2-3 días hábiles.
+
+  - id: q5
+    type: true_false
+    question: >
+      "Si no tengo configurada mi cuenta bancaria en Stripe, el payout
+      igual se me deposita automáticamente al email que registré."
+    correct: false
+    feedback: >
+      Falso. Sin cuenta bancaria configurada el payout NO se dispara.
+      La venta se completa, el cliente recibe, pero el dinero se queda
+      esperando en Xololo hasta que configures la cuenta. Es el paso
+      más olvidado de sellers nuevos — configúrala HOY desde Mi cuenta
+      → Formas de pago.
+
+  - id: q6
+    type: single
+    question: >
+      Si eres Starter y vendes un producto gravado 16%, Xololo emite
+      CFDI por:
+    options:
+      - "Solo la venta al cliente"
+      - "Solo el cargo administrativo Xololo"
+      - "Ambos: la venta al cliente Y el cargo administrativo Xololo"
+      - "Nada, el seller lo emite por su cuenta"
+    correct: 2
+    feedback: >
+      Correcto. En Starter y Empresarial, Xololo emite 2 CFDIs: uno a
+      nombre del cliente por la venta (con tu RFC como emisor), y otro
+      a tu nombre por lo que te cobramos (admin). Ambos quedan en tu
+      dashboard.

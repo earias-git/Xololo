@@ -1,0 +1,79 @@
+lesson: "modulo-01/leccion-02"
+title: "Tu cuenta y verificación de tu negocio"
+pass_threshold: 0.80
+questions:
+  - id: q1
+    type: single
+    question: >
+      Las 3 capas de información de tu cuenta son:
+    options:
+      - "Datos personales, datos de contacto, datos de tu negocio"
+      - "Nombre, correo, contraseña"
+      - "Documentos, fotos, videos"
+      - "Público, privado, confidencial"
+    correct: 0
+    feedback: >
+      Correcto. Datos personales (visibles al cliente), datos de contacto
+      (solo Xololo y paqueterías) y datos de tu negocio (solo Xololo para
+      verificación). Son independientes entre sí.
+
+  - id: q2
+    type: single
+    question: >
+      Si tu negocio es Segunda Mano (particular ocasional), los
+      documentos legales que necesitas subir son:
+    options:
+      - "INE, comprobante de domicilio, constancia fiscal y acta constitutiva"
+      - "Solo INE"
+      - "INE y comprobante de domicilio"
+      - "Acta constitutiva y poder notarial"
+    correct: 2
+    feedback: >
+      Correcto. Segunda Mano solo requiere INE y comprobante de domicilio.
+      No necesitas RFC porque el Art. 9 fracción IV de la LIVA exenta de
+      IVA a quienes venden bienes usados de forma ocasional.
+
+  - id: q3
+    type: true_false
+    question: >
+      "Puedo seguir con las siguientes lecciones del módulo aunque mis
+      documentos aún no estén aprobados."
+    correct: true
+    feedback: >
+      Verdadero. La aprobación de documentos puede tomar hasta 24h en
+      días hábiles. Mientras tanto puedes avanzar en el Módulo 1. Solo
+      el badge Xololo Verified se activa cuando queden aprobados; el
+      resto de tu negocio funciona desde que subes los documentos.
+
+  - id: q4
+    type: multiple
+    question: >
+      ¿Por qué Xololo te pide documentos legales? Marca TODAS las que
+      apliquen.
+    options:
+      - "Para proteger al cliente, dándole un responsable real detrás del negocio"
+      - "Para protegerte a ti, evitando que alguien use tus datos sin autorización"
+      - "Para cumplir con requisitos fiscales del SAT"
+      - "Para vendérselos a otras empresas"
+      - "Para compartirlos públicamente en tu vitrina"
+    correct: [0, 1, 2]
+    feedback: >
+      Correcto. Las tres razones legítimas son protección al cliente,
+      protección a ti y cumplimiento fiscal. Los documentos se guardan
+      cifrados y nunca se comparten con clientes, otros negocios, ni se
+      venden a terceros.
+
+  - id: q5
+    type: single
+    question: >
+      Una buena foto de perfil para tu negocio en Xololo:
+    options:
+      - "Tiene que ser una selfie casual, mejor si estás con amigos"
+      - "Puede ser un meme gracioso para destacar"
+      - "Muestra tu cara real o el logo de tu negocio, con buena luz y fondo neutro"
+      - "Lo mejor es no poner foto para proteger tu privacidad"
+    correct: 2
+    feedback: >
+      Correcto. Un negocio con foto genera hasta 40% más clics que uno
+      sin foto. La regla es simple: tu cara real o tu logo, con luz
+      suficiente, fondo neutro, sin memes ni famosos.
