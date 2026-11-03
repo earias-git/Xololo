@@ -322,18 +322,30 @@ export const listingMatchesBuyerState = (listing, buyerState, authorsById) => {
 // no un objeto físico). Lo re-canalizamos a la sección Servicios.
 const isEventListing = listing => listing?.attributes?.publicData?.isEvent === true;
 
-// XOLOLO Task #17: filtra listings al estado del buyer con fallback.
-// Si !buyerState, devuelve la lista tal cual (sin ubicación → oferta
-// global). Si hay buyerState Y hay matches → devuelve sólo los locales.
-// Si hay buyerState pero NO hay matches → cae a la lista completa en
-// vez de vaciar el riel (bug detectado 2026-10-27: el riel se vaciaba
-// y el landing mostraba placeholders).
+// XOLOLO Task #17: reordena listings poniendo primero los que matchean
+// con el estado del buyer y completa con el resto. NO filtra: si el
+// buyer está en CDMX y hay 7 listings de los cuales 1 es de CDMX, el
+// riel muestra ese 1 primero + los otros 6 después (hasta VISIBLE_PER_RAIL),
+// no sólo el local. Sin buyerState → orden original del server (fecha).
+//
+// Bug previo (fix 2026-11-03): esta función hacía `filter`, no `sort`.
+// Resultado: con 7 servicios y buyer en estado con 1 match, el riel
+// mostraba 1 solo "Servicio popular". Confunde al visitante y oculta
+// inventario real. La promesa del task #17 era priorizar lo local, no
+// esconder lo global.
 const filterByBuyerState = (listingsArr, buyerState, authorsById) => {
-  if (!buyerState || !listingsArr?.length) return listingsArr || [];
-  const filtered = listingsArr.filter(l => listingMatchesBuyerState(l, buyerState, authorsById));
-  // Fallback: si no hay locales, muestra la oferta global en vez de
-  // dejar el riel vacío (que cae a placeholders).
-  return filtered.length > 0 ? filtered : listingsArr;
+  if (!listingsArr?.length) return listingsArr || [];
+  if (!buyerState) return listingsArr;
+  const locals = [];
+  const rest = [];
+  listingsArr.forEach(l => {
+    if (listingMatchesBuyerState(l, buyerState, authorsById)) {
+      locals.push(l);
+    } else {
+      rest.push(l);
+    }
+  });
+  return [...locals, ...rest];
 };
 
 // XOLOLO: factory selector. Cuando buyerState está presente, los
