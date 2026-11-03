@@ -503,6 +503,28 @@ const SubscriptionPageComponent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // XOLOLO: derivados del estado (declarados arriba porque los useEffect
+  // y el render los referencian). Antes `const sub = state.data` vivía
+  // justo antes del return y el useEffect de pendingSignupPlan lo listaba
+  // en su array de deps → ReferenceError TDZ en cada render → página en
+  // blanco. Fix 2026-11-03.
+  const sub = state.data;
+  const isActive = sub?.status === 'active';
+  const statusLabel = sub?.status ? STATUS_LABELS[sub.status] : null;
+
+  const startCheckout = async planKey => {
+    setCheckoutLoading(planKey);
+    try {
+      const data = await postJson(`${apiBaseUrl()}/api/create-subscription-checkout`, {
+        plan: planKey,
+      });
+      window.location.href = data.url;
+    } catch (e) {
+      setBanner({ tone: 'error', text: `No se pudo iniciar el pago: ${e.message}` });
+      setCheckoutLoading(null);
+    }
+  };
+
   // XOLOLO /planes → signup → aquí: si hay un pendingSignupPlan guardado
   // en sessionStorage por AuthenticationPage, dispara el checkout del
   // plan correspondiente automáticamente al cargar la página. El seller
@@ -577,19 +599,6 @@ const SubscriptionPageComponent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
-  const startCheckout = async planKey => {
-    setCheckoutLoading(planKey);
-    try {
-      const data = await postJson(`${apiBaseUrl()}/api/create-subscription-checkout`, {
-        plan: planKey,
-      });
-      window.location.href = data.url;
-    } catch (e) {
-      setBanner({ tone: 'error', text: `No se pudo iniciar el pago: ${e.message}` });
-      setCheckoutLoading(null);
-    }
-  };
-
   const showManageListingsLink = showCreateListingLinkForUser(config, currentUser);
   const { showPayoutDetails, showPaymentMethods } = showPaymentDetailsForUser(config, currentUser);
   const accountSettingsNavProps = {
@@ -597,10 +606,6 @@ const SubscriptionPageComponent = () => {
     showPaymentMethods,
     showPayoutDetails,
   };
-
-  const sub = state.data;
-  const isActive = sub?.status === 'active';
-  const statusLabel = sub?.status ? STATUS_LABELS[sub.status] : null;
 
   if (isCasual) {
     return <NamedRedirect name="ManageAccountPage" />;
