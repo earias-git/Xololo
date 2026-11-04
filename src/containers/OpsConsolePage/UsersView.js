@@ -244,7 +244,7 @@ const UsersView = ({ onBack }) => {
           <div className={css.searchGroup}>
             <input
               type="search"
-              placeholder="🔍 nombre, email, slug…"
+              placeholder="🔍 nombre, email, nombre público…"
               className={css.search}
               value={filters.q}
               onChange={e => patchFilters({ q: e.target.value })}

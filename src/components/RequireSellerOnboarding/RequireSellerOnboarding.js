@@ -21,7 +21,7 @@ import css from './RequireSellerOnboarding.module.css';
 // él ya vendía) — eso lo cubre el aviso informativo de
 // AccountProgressClock, no un bloqueo.
 //
-// "¿Tiene listings publicadas?" se resuelve vía /api/seller-has-listings
+// "¿Tiene anuncios publicados?" se resuelve vía /api/seller-has-listings
 // (Integration API server-side) — NO vía el flag currentUserHasListings
 // de Redux (sdk.ownListings.query() client-side), que resultó no
 // confiable en este ambiente (nunca se dispara por el debounce de

@@ -123,7 +123,7 @@ const validateSlug = value => {
     .toLowerCase()
     .trim();
   if (!SLUG_PATTERN.test(v)) return 'Solo letras minúsculas, números y guiones. 2-40 caracteres.';
-  if (RESERVED_SLUGS.has(v)) return 'Este slug está reservado. Elige otro.';
+  if (RESERVED_SLUGS.has(v)) return 'Este nombre público está reservado. Elige otro.';
   return undefined;
 };
 

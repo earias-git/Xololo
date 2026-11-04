@@ -109,14 +109,14 @@ const TIER_LABEL = {
 };
 
 const COMPARISON_ROWS = [
-  { label: 'Storefront con slug', starter: true, enterprise: true },
-  { label: 'Verified badge', starter: true, enterprise: true },
-  { label: 'Promote / Xololear', starter: true, enterprise: true },
+  { label: 'Tienda en línea con nombre público', starter: true, enterprise: true },
+  { label: 'Sello Verified', starter: true, enterprise: true },
+  { label: 'Xololear (promoción)', starter: true, enterprise: true },
   { label: 'Catálogo recurrente', starter: true, enterprise: true },
   { label: 'Colaboradores con permisos granulares', starter: false, enterprise: 'Hasta 2 incluidos + extras' },
-  { label: 'Audit log cross-user del equipo', starter: false, enterprise: true },
+  { label: 'Bitácora cross-user del equipo', starter: false, enterprise: true },
   { label: 'Roles preset (Manager, Logística, Finanzas…)', starter: false, enterprise: true },
-  { label: 'Panel Equipo en Dashboard', starter: false, enterprise: true },
+  { label: 'Panel Equipo en Mi panel', starter: false, enterprise: true },
 ];
 
 const Check = () => <span style={{ color: '#059669', fontWeight: 700 }}>✓</span>;
@@ -154,7 +154,7 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
 
   const translateError = (code, data) =>
     ({
-      no_active_starter: 'No encontramos una suscripción Starter activa para hacer upgrade.',
+      no_active_starter: 'No encontramos una suscripción Starter activa para cambiar de plan.',
       already_enterprise: 'Tu cuenta ya es Empresarial.',
       starter_item_not_found_in_stripe:
         'No pudimos encontrar tu plan actual en Stripe. Contacta a soporte.',
@@ -241,11 +241,11 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
       <div className={css.upgradeHeader}>
         <div>
           <h3 className={css.upgradeTitle}>
-            <span aria-hidden="true">🏢</span> Upgrade a Empresarial
+            <span aria-hidden="true">🏢</span> Cambiar a Empresarial
           </h3>
           <p className={css.upgradeLead}>
-            Suma colaboradores a tu tienda con permisos granulares. Mismo payout, mismas facturas —
-            tú sigues siendo el titular.
+            Suma colaboradores a tu tienda con permisos granulares. Mismos depósitos, mismas
+            facturas — tú sigues siendo el titular.
           </p>
         </div>
         <div className={css.upgradePricing}>
@@ -290,7 +290,7 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
       {!success && step === 'compare' ? (
         <div className={css.upgradeActions}>
           <button type="button" className={css.upgradeCta} onClick={goToSeats}>
-            Upgrade a Empresarial →
+            Cambiar a Empresarial →
           </button>
         </div>
       ) : null}
@@ -301,8 +301,8 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
           <h4 className={css.seatsTitle}>¿Cuántos colaboradores adicionales quieres?</h4>
           <p className={css.seatsIntro}>
             Empresarial incluye <strong>2 colaboradores sin costo extra</strong>. Si necesitas
-            más, puedes agregarlos ahora y pagarlos prorrateados junto con el upgrade. También
-            puedes comprarlos más tarde desde tu Dashboard.
+            más, puedes agregarlos ahora y pagarlos prorrateados junto con el cambio de plan.
+            También puedes comprarlos más tarde desde Mi panel.
           </p>
 
           <div className={css.seatsStepper}>
@@ -462,7 +462,7 @@ const UpgradeToEnterpriseCard = ({ billing, onDone }) => {
               {busy
                 ? 'Procesando…'
                 : preview
-                ? `Sí, hacer upgrade por ${formatMoney(preview.today.total, preview.today.currency)}`
+                ? `Sí, cambiar a Empresarial por ${formatMoney(preview.today.total, preview.today.currency)}`
                 : 'Cargando…'}
             </button>
           </div>
@@ -556,7 +556,7 @@ const SubscriptionPageComponent = () => {
       setBanner({
         tone: 'info',
         text:
-          'Elegiste Empresarial. Suscríbete primero al plan Starter para activar tu cuenta — después puedes hacer upgrade a Empresarial en 1 click desde esta misma página (botón "Upgrade a Empresarial" abajo).',
+          'Elegiste Empresarial. Suscríbete primero al plan Starter para activar tu cuenta — después puedes cambiar a Empresarial en 1 click desde esta misma página (botón "Cambiar a Empresarial" abajo).',
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

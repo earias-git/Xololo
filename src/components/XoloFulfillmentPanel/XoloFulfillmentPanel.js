@@ -377,7 +377,7 @@ const FreightQuoteForm = ({
           return (
             <div className={css.feeBreakdown}>
               <div className={`${css.feeRow} ${css.feeMuted}`}>
-                <span>Cotización (buyer paga)</span>
+                <span>Cotización (cliente paga)</span>
                 <span>{money(bd.fleteSubunits, 'MXN')}</span>
               </div>
               <div className={`${css.feeRow} ${css.feeMuted}`}>

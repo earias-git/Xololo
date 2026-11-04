@@ -826,7 +826,7 @@ const ACTION_LABELS = {
     danger: true,
     needsReason: true,
     needsTotp: false,
-    hint: 'El user no podrá publicar listings nuevos ni completar transacciones. Documenta el motivo.',
+    hint: 'El user no podrá publicar anuncios nuevos ni completar transacciones. Documenta el motivo.',
   },
   unsuspend: {
     title: 'Levantar suspensión',

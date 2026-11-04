@@ -400,7 +400,7 @@ const PlanesPageComponent = () => {
                   <td colSpan={4}>Tienda y visibilidad</td>
                 </tr>
                 <tr>
-                  <th className={css.rowLabel}>Pago protegido al buyer</th>
+                  <th className={css.rowLabel}>Pago protegido al cliente</th>
                   <td className={css.val}>
                     <Check />
                   </td>
@@ -412,7 +412,7 @@ const PlanesPageComponent = () => {
                   </td>
                 </tr>
                 <tr>
-                  <th className={css.rowLabel}>Verified badge</th>
+                  <th className={css.rowLabel}>Sello Verified</th>
                   <td className={css.val}>
                     <Dash />
                   </td>
@@ -441,7 +441,7 @@ const PlanesPageComponent = () => {
                   <th className={css.rowLabel}>Promover / Xololear en RRSS</th>
                   <td className={css.val}>
                     <Check />
-                    <span className={css.cellNote}>Sin storefront propio</span>
+                    <span className={css.cellNote}>Sin tienda en línea propia</span>
                   </td>
                   <td className={css.val}>
                     <Check />
@@ -464,7 +464,7 @@ const PlanesPageComponent = () => {
                   </td>
                 </tr>
                 <tr>
-                  <th className={css.rowLabel}>Listings publicados</th>
+                  <th className={css.rowLabel}>Anuncios publicados</th>
                   <td className={css.val}>Limitado</td>
                   <td className={css.val}>Sin límite</td>
                   <td className={`${css.val} ${css.valHighlight}`}>Sin límite</td>
@@ -589,7 +589,7 @@ const PlanesPageComponent = () => {
                 Es la herramienta de promoción en redes sociales de Xololo: genera piezas visuales
                 listas para publicar en Instagram, Facebook y WhatsApp con los datos de tu
                 producto. Disponible para los tres planes (Segunda Mano puede Xololear pero sin un
-                storefront propio).
+                tienda en línea propia).
               </p>
             </details>
 

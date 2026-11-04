@@ -297,7 +297,7 @@ const MODULE_CARDS = [
     label: 'Usuarios 360',
     emoji: '👤',
     hint:
-      'Vista maestra de todos los users: membresía, listings, verified, última actividad, ubicación. Con drilldown 360.',
+      'Vista maestra de todos los users: membresía, anuncios, verified, última actividad, ubicación. Con drilldown 360.',
     route: '/ops/users',
   },
   {

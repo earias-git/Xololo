@@ -141,7 +141,7 @@ const DashboardTeamView = () => {
           <li>Hasta ilimitados colaboradores (pagando)</li>
           <li>10 permisos atómicos · 5 roles preset · roles custom</li>
           <li>Audit log cross-user de todo lo que hace tu equipo</li>
-          <li>Mismo payout y facturación — tú sigues siendo el titular</li>
+          <li>Mismos depósitos y facturación — tú sigues siendo el titular</li>
         </ul>
         <a href="/account/subscription" className={css.upgradeBtn}>
           Hacer upgrade a Empresarial →
