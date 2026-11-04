@@ -55,7 +55,7 @@ questions:
       - "Para protegerte a ti, evitando que alguien use tus datos sin autorización"
       - "Para cumplir con requisitos fiscales del SAT"
       - "Para vendérselos a otras empresas"
-      - "Para compartirlos públicamente en tu vitrina"
+      - "Para compartirlos públicamente en tu tienda en línea"
     correct: [0, 1, 2]
     feedback: >
       Correcto. Las tres razones legítimas son protección al cliente,

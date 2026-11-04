@@ -19,7 +19,7 @@
 | **Comisión por venta** | 6/4/2% escalonado | **0%** | **0%** |
 | **Cargo admin por venta** | $14 + IVA | $14 + IVA | $14 + IVA |
 | **CFDI** | No aplica | Sí | Sí |
-| **Vitrina con nombre público** | No | Sí | Sí |
+| **Tienda en línea con nombre público** | No | Sí | Sí |
 | **Colaboradores** | — | — | 2 incluidos |
 
 ---
@@ -88,5 +88,5 @@ Si vendes menos, Segunda Mano es más rentable.
 
 ## Slide 7 · Siguiente lección
 
-### ➡️ Lección 4 — Configura la vitrina de tu negocio
+### ➡️ Lección 4 — Configura la tienda en línea de tu negocio
 (20 min) · nombre público, logo, portada, horarios, métodos de envío.

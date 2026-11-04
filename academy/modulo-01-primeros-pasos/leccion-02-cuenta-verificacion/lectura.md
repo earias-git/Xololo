@@ -17,7 +17,7 @@ aprobarte, le decimos a cada cliente futuro: "mira, este negocio pasó
 por aquí, es real, es serio, puedes confiar".
 
 Ese sello —**Xololo Verified**— aparece junto al nombre de tu negocio
-en cada búsqueda, en cada vitrina, en cada mensaje. Es la razón por la
+en cada búsqueda, en cada tienda en línea, en cada mensaje. Es la razón por la
 que un cliente que no te conoce te prefiere sobre un negocio nuevo que
 no se tomó la molestia.
 

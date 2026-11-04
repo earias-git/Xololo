@@ -96,7 +96,7 @@ Usa la **calculadora de depósito** del panel:
 
 ### 9. Revisa envíos (1 min)
 
-- Los métodos de envío heredan los de tu vitrina (Lección 4).
+- Los métodos de envío heredan los de tu tienda en línea (Lección 4).
 - Si este producto específico no soporta alguno (ej. pastel fresco no
   va por Skydropx), desmárcalo aquí.
 

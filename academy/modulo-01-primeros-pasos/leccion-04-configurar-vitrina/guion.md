@@ -1,4 +1,4 @@
-# Lección 4 · Configura la vitrina de tu negocio
+# Lección 4 · Configura la tienda en línea de tu negocio
 
 **Duración objetivo del video**: 10 minutos.
 **Formato sugerido**: narrador en voz en off + captura del flujo real
@@ -7,13 +7,13 @@ de **Mi cuenta → Mi tienda** en xololo.mx.
 **Nota**: esta lección aplica principalmente a **Starter y
 Empresarial**. Si eres Segunda Mano, mira los primeros 3 minutos
 (sobre horarios y envíos) — el resto (nombre público, logo, portada) no te
-aplica porque no tienes vitrina propia.
+aplica porque no tienes tienda en línea propia.
 
 ---
 
 ## [0:00–1:00] Apertura
 
-> Tu vitrina es el escaparate digital de tu negocio en Xololo. Cuando
+> Tu tienda en línea es el escaparate digital de tu negocio en Xololo. Cuando
 > un cliente te encuentra, aterriza aquí antes de decidir si te compra.
 >
 > En esta lección vamos a configurarla pieza por pieza: el nombre público, el
@@ -21,7 +21,7 @@ aplica porque no tienes vitrina propia.
 > Son decisiones que una vez tomadas tocas poco — pero cada una afecta
 > cuánto vendes.
 
-## [1:00–2:30] Tu nombre público — la dirección de tu vitrina
+## [1:00–2:30] Tu nombre público — la dirección de tu tienda en línea
 
 > *(Captura: Mi tienda → Nombre y nombre público)*
 >
@@ -49,7 +49,7 @@ aplica porque no tienes vitrina propia.
 > *(Captura: panel de logo + portada con preview en vivo)*
 >
 > El **logo** es la imagen cuadrada que aparece como avatar de tu
-> negocio: en resultados de búsqueda, en el header de tu vitrina, en
+> negocio: en resultados de búsqueda, en el header de tu tienda en línea, en
 > cada anuncio.
 >
 > - 500×500 pixeles mínimo, 2000×2000 ideal
@@ -57,7 +57,7 @@ aplica porque no tienes vitrina propia.
 > - JPG con fondo neutro si es fotográfico
 >
 > La **portada** es el banner horizontal que ocupa el ancho completo
-> arriba de tu vitrina. Es la primera impresión visual.
+> arriba de tu tienda en línea. Es la primera impresión visual.
 >
 > - 1920×480 pixeles (ratio 4:1)
 > - Puede ser una foto de tu producto, de tu local, de tu equipo
@@ -103,7 +103,7 @@ aplica porque no tienes vitrina propia.
 >
 > **Horarios de respuesta** — cuándo tú o tu equipo contestan
 > mensajes. Esto es más importante de lo que parece: Xololo muestra
-> tu tiempo promedio de respuesta en tu vitrina. Un negocio que
+> tu tiempo promedio de respuesta en tu tienda en línea. Un negocio que
 > responde en 2 horas vende más que uno que tarda 2 días.
 >
 > Si eres solo tú y respondes cuando puedes, pon horarios realistas
@@ -140,13 +140,13 @@ aplica porque no tienes vitrina propia.
 
 > Al terminar esta lección deberías tener:
 >
-> - Slug elegido y bien escrito
+> - Nombre público elegido y bien escrito
 > - Logo y portada subidos
 > - Descripción de 200 caracteres clara y específica
 > - Horarios de atención y respuesta configurados
 > - Al menos un método de envío habilitado
 >
-> Visita tu vitrina pública en `xololo.mx/u/tu-slug` y mírala con los
+> Visita tu tienda en línea pública en `xololo.mx/u/tu-slug` y mírala con los
 > ojos de un cliente nuevo. ¿Comprarías aquí? Si la respuesta es "no
 > todavía", ajusta.
 >
@@ -156,7 +156,7 @@ aplica porque no tienes vitrina propia.
 
 ## Notas de producción
 
-- Mostrar en pantalla la vitrina pública (desktop + mobile) al final
+- Mostrar en pantalla la tienda en línea pública (desktop + mobile) al final
   del video — pone el "antes y después" en contexto visual.
 - Si graban la pantalla, usar una tienda de prueba con nombre
   genérico ("Panadería Rocío") en lugar de datos de un negocio real.

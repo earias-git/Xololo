@@ -84,4 +84,4 @@ usados puntuales, no para servicios recurrentes.
 
 ## Siguiente paso
 
-→ **Lección 4 — Configura la vitrina de tu negocio** (20 min)
+→ **Lección 4 — Configura la tienda en línea de tu negocio** (20 min)

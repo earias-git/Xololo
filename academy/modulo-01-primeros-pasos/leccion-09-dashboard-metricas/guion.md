@@ -32,7 +32,7 @@ real de Xololo mostrando cada KPI.
 
 > *(Slide: los 5 KPIs listados con íconos)*
 >
-> **1. Visitas a tu vitrina y anuncios** — cuánta gente ve lo que
+> **1. Visitas a tu tienda en línea y anuncios** — cuánta gente ve lo que
 > vendes. Si es cero o muy bajo, tu problema no es cerrar venta, es
 > atraer tráfico (foco en Xololear + SEO del título).
 >

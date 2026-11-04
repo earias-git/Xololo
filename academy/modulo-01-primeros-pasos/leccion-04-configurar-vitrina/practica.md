@@ -1,7 +1,7 @@
 # Práctica · Lección 4
 
 **Duración**: 15-20 minutos.
-**Objetivo**: tu vitrina pública publicada y revisada.
+**Objetivo**: tu tienda en línea pública publicada y revisada.
 **Verificable en**: `xololo.mx/u/tu-slug` (visita en modo incógnito).
 
 ---
@@ -58,7 +58,7 @@ Para arrancar, activa al menos:
   colonia/zona)
 - [ ] **Flete** (si vendes muebles grandes, electrodomésticos)
 
-### 6. ⭐ Visita tu vitrina pública (3 min)
+### 6. ⭐ Visita tu tienda en línea pública (3 min)
 
 Abre `xololo.mx/u/tu-slug` en una **ventana de incógnito** (Ctrl+Shift+N
 o Cmd+Shift+N). Mírala con ojos de cliente que no te conoce.
@@ -95,7 +95,7 @@ activar Skydropx para productos que sí lo permiten.
 
 > *"¿Qué pasa si no pongo descripción?"*
 
-Tu vitrina sigue publicada, pero el cliente no entiende qué vendes y
+Tu tienda en línea sigue publicada, pero el cliente no entiende qué vendes y
 se va. Es el campo con más retorno por minuto invertido.
 
 ---

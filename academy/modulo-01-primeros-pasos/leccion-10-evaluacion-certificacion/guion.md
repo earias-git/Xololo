@@ -10,7 +10,7 @@ captura de la insignia animada entregándose al final.
 
 > Llegaste a la última lección. Si cumpliste los 5 checkpoints en tu
 > cuenta real y pasas el quiz final, ganas la insignia **"Negocio
-> Xololo · Nivel Básico"** —que aparece en tu vitrina pública y suma a
+> Xololo · Nivel Básico"** —que aparece en tu tienda en línea pública y suma a
 > los criterios de **Xololo Verified**.
 >
 > En 4 minutos te explico cómo se evalúa, qué significa esa insignia y
@@ -31,7 +31,7 @@ captura de la insignia animada entregándose al final.
 >
 > - Perfil 100% completo
 > - Documentos legales aprobados
-> - Vitrina publicada con nombre público propio (si eres Starter/Empresarial)
+> - Tienda en línea publicada con nombre público propio (si eres Starter/Empresarial)
 > - Al menos 1 anuncio activo con foto
 > - Métodos de envío configurados
 >
@@ -48,12 +48,12 @@ captura de la insignia animada entregándose al final.
 
 ## [1:30–2:30] Qué significa la insignia
 
-> *(Captura: insignia en una vitrina real)*
+> *(Captura: insignia en una tienda en línea real)*
 >
 > La insignia **"Negocio Xololo · Nivel Básico"** aparece junto al
 > nombre de tu negocio en:
 >
-> - Tu vitrina pública
+> - Tu tienda en línea pública
 > - Resultados de búsqueda
 > - Mensajes a clientes
 >

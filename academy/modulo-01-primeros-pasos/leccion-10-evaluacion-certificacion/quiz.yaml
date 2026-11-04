@@ -59,7 +59,7 @@ questions:
       - "Empresarial tiene mejores precios por venta"
       - "Empresarial incluye colaboradores con permisos granulares; Starter no"
       - "Starter no permite emitir CFDI"
-      - "Empresarial no tiene vitrina con nombre público"
+      - "Empresarial no tiene tienda en línea con nombre público"
     correct: 1
     feedback: >
       Ambos pagan lo mismo por venta. Empresarial agrega 2 colaboradores
@@ -74,11 +74,11 @@ questions:
     feedback: >
       Falso. El onboarding se cobra UNA sola vez.
 
-  # ==================== LECCIÓN 4: Vitrina ====================
+  # ==================== LECCIÓN 4: Tienda en línea ====================
   - id: q7
     type: single
     question: >
-      Al elegir el nombre público (`xololo.mx/u/tu-slug`) de tu vitrina, la regla
+      Al elegir el nombre público (`xololo.mx/u/tu-slug`) de tu tienda en línea, la regla
       más importante es:
     options:
       - "Que sea lo más corto posible"
@@ -236,7 +236,7 @@ questions:
       Si tu tasa de conversión está en 0.5%, el problema más probable es:
     options:
       - "Tienes demasiado tráfico"
-      - "Algo en tu vitrina asusta (rating, precio, fotos, confianza)"
+      - "Algo en tu tienda en línea asusta (rating, precio, fotos, confianza)"
       - "Debes bajar el precio al 10%"
       - "El algoritmo te penaliza"
     correct: 1

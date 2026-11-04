@@ -34,7 +34,7 @@ Lo que ganas:
 
 Lo que no tienes:
 
-- **Vitrina propia con nombre público** — tus anuncios aparecen en búsqueda pero
+- **Tienda en línea propia con nombre público** — tus anuncios aparecen en búsqueda pero
   no tienes un `/u/tu-negocio`.
 - **CFDI** — no emites facturas (el bien usado no las requiere).
 - **Catálogo recurrente** — pensado para venta puntual, no para tener
@@ -57,7 +57,7 @@ es tu plan natural.
 
 Lo que ganas:
 
-- **Vitrina propia** con tu `/u/tu-slug`.
+- **Tienda en línea propia** con tu `/u/tu-slug`.
 - **Verified badge** cuando aprobemos tus documentos.
 - **CFDI** emitido por cada venta.
 - **Catálogo recurrente** — tu inventario, tus variantes.
@@ -108,7 +108,7 @@ Xololo? → Starter. Menos → Segunda Mano por ahora.
 
 ## Qué sigue
 
-En la **Lección 4** configuramos tu vitrina: logo, portada, horarios y
+En la **Lección 4** configuramos tu tienda en línea: logo, portada, horarios y
 los métodos de envío que vas a ofrecer. Es la cara pública de tu
 negocio en Xololo.
 

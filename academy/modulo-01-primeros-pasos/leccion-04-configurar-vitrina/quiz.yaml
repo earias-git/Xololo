@@ -1,11 +1,11 @@
 lesson: "modulo-01/leccion-04"
-title: "Configura la vitrina de tu negocio"
+title: "Configura la tienda en línea de tu negocio"
 pass_threshold: 0.80
 questions:
   - id: q1
     type: single
     question: >
-      Al elegir el nombre público (`xololo.mx/u/tu-slug`) de tu vitrina, la regla
+      Al elegir el nombre público (`xololo.mx/u/tu-slug`) de tu tienda en línea, la regla
       más importante es:
     options:
       - "Que sea lo más corto posible, aunque no se entienda"
@@ -21,7 +21,7 @@ questions:
   - id: q2
     type: single
     question: >
-      Una buena descripción de 200 caracteres para tu vitrina debe:
+      Una buena descripción de 200 caracteres para tu tienda en línea debe:
     options:
       - "Hablar de misión, visión y valores de la empresa"
       - "Decir qué vendes, dónde operas, y una ventaja concreta"
@@ -41,7 +41,7 @@ questions:
     correct: false
     feedback: >
       Falso. Xololo mide tu tiempo real de respuesta y lo publica en tu
-      vitrina. Si mientes, el indicador rojo aparece de todas formas y
+      tienda en línea. Si mientes, el indicador rojo aparece de todas formas y
       pierdes credibilidad. Mejor horario realista que falsa promesa.
 
   - id: q4
@@ -64,7 +64,7 @@ questions:
   - id: q5
     type: multiple
     question: >
-      ¿Qué le dice una vitrina MAL configurada a un cliente que la
+      ¿Qué le dice una tienda en línea MAL configurada a un cliente que la
       visita por primera vez? Marca TODAS las que apliquen.
     options:
       - "No les importa cómo se ven, tampoco les importará mi pedido"
@@ -74,7 +74,7 @@ questions:
       - "Mienten en lo chico, mentirán en lo grande (si los horarios no son reales)"
     correct: [0, 1, 4]
     feedback: >
-      Correcto. Una vitrina mal configurada transmite descuido,
+      Correcto. Una tienda en línea mal configurada transmite descuido,
       inversión mínima y falta de rigor. Un cliente infiere que así
-      tratará su pedido. Es por eso que tu vitrina es una "conversación
+      tratará su pedido. Es por eso que tu tienda en línea es una "conversación
       silenciosa" — comunica aun cuando no dice nada.

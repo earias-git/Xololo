@@ -53,10 +53,10 @@ Si falta algo:
 Si están en 🕐 "Pendiente", espera < 24h hábiles. Si fueron
 Rechazados, re-súbelos corrigiendo lo que te indicamos.
 
-#### 3. Vitrina publicada con nombre público propio *(solo Starter/Empresarial)*
+#### 3. Tienda en línea publicada con nombre público propio *(solo Starter/Empresarial)*
 
 **Verificable en**: visita `xololo.mx/u/tu-slug` en navegador
-incógnito. Debe cargar tu vitrina.
+incógnito. Debe cargar tu tienda en línea.
 
 *(Si eres Segunda Mano, este check NO aplica — tu insignia se emite
 sin él.)*
@@ -79,7 +79,7 @@ sin él.)*
 🎉 **Tu insignia "Negocio Xololo · Nivel Básico" se activa en < 1
 minuto** y aparece:
 
-- En tu vitrina pública junto al nombre del negocio
+- En tu tienda en línea pública junto al nombre del negocio
 - En resultados de búsqueda
 - En los mensajes que mandas a clientes
 

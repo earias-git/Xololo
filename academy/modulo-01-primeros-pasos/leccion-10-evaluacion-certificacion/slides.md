@@ -31,7 +31,7 @@ Checklist de 5 acciones verificables en tu cuenta real.
 
 - [ ] Perfil 100% completo
 - [ ] Documentos legales aprobados
-- [ ] Vitrina publicada con nombre público propio *(Starter/Empresarial)*
+- [ ] Tienda en línea publicada con nombre público propio *(Starter/Empresarial)*
 - [ ] Al menos 1 anuncio activo con foto
 - [ ] Métodos de envío configurados
 
@@ -47,7 +47,7 @@ Checklist de 5 acciones verificables en tu cuenta real.
 - 2 preguntas de filosofía Cliente primero
 - 2 de verificación y documentos
 - 2 de planes y precios
-- 2 de configuración de vitrina
+- 2 de configuración de tienda en línea
 - 3 de publicar anuncio
 - 1 de Xololear técnico
 - 3 de cobros y depósitos
@@ -62,7 +62,7 @@ Checklist de 5 acciones verificables en tu cuenta real.
 
 **"Negocio Xololo · Nivel Básico"** aparece en:
 
-- 🏪 Tu vitrina pública
+- 🏪 Tu tienda en línea pública
 - 🔍 Resultados de búsqueda
 - 💬 Mensajes a clientes
 
@@ -117,7 +117,7 @@ Si pasaste los niveles 1 y 2, tu insignia
 
 ### **"Negocio Xololo · Nivel Básico"**
 
-ya está activa en tu vitrina pública.
+ya está activa en tu tienda en línea pública.
 
 > *Gracias por completar el Módulo 1.*
 > *Nos vemos en el Módulo 2.*

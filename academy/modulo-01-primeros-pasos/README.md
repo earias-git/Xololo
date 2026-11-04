@@ -8,7 +8,7 @@
 ## Objetivo del módulo
 
 Que al terminar seas capaz de operar Xololo en lo esencial: tu cuenta
-está verificada, tu vitrina publicada, tu primer anuncio activo con una
+está verificada, tu tienda en línea publicada, tu primer anuncio activo con una
 pieza de Xololear lista, entiendes qué te cobramos y qué recibes, y ya
 sabes cómo responder a un cliente que te compra.
 
@@ -19,7 +19,7 @@ sabes cómo responder a un cliente que te compra.
 | 1 | Bienvenida y filosofía "Cliente primero" | 10 min | Firmas el compromiso del titular |
 | 2 | Tu cuenta y verificación de tu negocio | 15 min | Perfil 100% + documentos subidos |
 | 3 | Elegir tu plan | 10 min | Plan activo (SM / Starter / Empresarial) |
-| 4 | Configura la vitrina de tu negocio | 20 min | Vitrina pública en `/u/tu-slug` |
+| 4 | Configura la tienda en línea de tu negocio | 20 min | Tienda en línea pública en `/u/tu-slug` |
 | 5 | Publica tu primer anuncio | 30 min | 1 anuncio activo con foto buena |
 | 6 | Xololear: generar y descargar tu pieza (solo técnico) | 15 min | 1 pieza generada y descargada |
 | 7 | Cómo cobra Xololo y cómo te pagamos | 15 min | Calculas tu depósito en 2 escenarios |
@@ -42,7 +42,7 @@ Checklist verificado automáticamente contra tu cuenta:
 
 - [ ] Perfil 100% completo
 - [ ] Documentos legales aprobados (INE + comprobante de domicilio)
-- [ ] Vitrina publicada con nombre público propio *(solo Starter y Empresarial)*
+- [ ] Tienda en línea publicada con nombre público propio *(solo Starter y Empresarial)*
 - [ ] Al menos 1 anuncio activo con foto
 - [ ] Métodos de envío configurados
 
@@ -54,5 +54,5 @@ Evaluación automática 30 días después de la certificación:
 - ¿Tu rating promedio es ≥4.5?
 
 Si cumples los 3 niveles → la insignia **"Negocio Xololo · Nivel
-Básico"** aparece en tu vitrina pública y suma a los criterios de
+Básico"** aparece en tu tienda en línea pública y suma a los criterios de
 **Xololo Verified**.

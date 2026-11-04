@@ -26,7 +26,7 @@
 > **Starter** — $169 al mes en plan anual, o $229 al mes mensual. Para
 > profesionales con tienda y catálogo recurrente. Pagas la suscripción
 > y en cada venta solo un cargo administrativo plano de $14 más IVA
-> —cero comisión por venta—. Emites CFDI, tienes vitrina propia con tu
+> —cero comisión por venta—. Emites CFDI, tienes tienda en línea propia con tu
 > nombre público, acceso a Verified.
 >
 > **Empresarial** — $299 al mes en plan anual, o $499 al mes mensual.
@@ -89,7 +89,7 @@
 > Si al final del año no vendiste lo suficiente para justificarlo, el
 > siguiente ciclo cancelas sin penalización y bajas a Segunda Mano.
 >
-> Nos vemos en la Lección 4 donde configuramos tu vitrina.
+> Nos vemos en la Lección 4 donde configuramos tu tienda en línea.
 
 ---
 

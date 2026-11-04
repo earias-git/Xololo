@@ -17,11 +17,11 @@
 Encuentra en qué parte del Panel aparece cada métrica (anota la
 ubicación en el papel si te ayuda):
 
-- [ ] **Visitas** a vitrina y anuncios → sección Resumen
+- [ ] **Visitas** a tienda en línea y anuncios → sección Resumen
 - [ ] **Tasa de conversión** → sección Resumen
 - [ ] **Ticket promedio** → sección Resumen o Finanzas
 - [ ] **Rating promedio + volumen de reseñas** → sección Resumen o
-  vitrina
+  tienda en línea
 - [ ] **Tasa de recompra** → sección Resumen (puede estar en avance
   o aparecer con pocos datos)
 

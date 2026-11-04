@@ -13,7 +13,7 @@ Antes de que un cliente te pague, pasa por 3 micro-decisiones:
 2. **¿Entiendo qué es y cuánto cuesta?** → lo decide con las fotos
    completas, la descripción y el precio.
 3. **¿Confío en que me va a llegar bien?** → lo decide con las
-   reseñas del negocio, las opciones de envío y la vitrina.
+   reseñas del negocio, las opciones de envío y la tienda en línea.
 
 Cada una de las 3 es una oportunidad de perderlo. Un anuncio bien
 hecho **minimiza las razones para abandonarlo**.

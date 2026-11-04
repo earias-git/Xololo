@@ -65,7 +65,7 @@ viene en este módulo.
 1. Bienvenida y filosofía *(estás aquí)*
 2. Tu cuenta y verificación
 3. Elegir tu plan
-4. Configura tu vitrina
+4. Configura tu tienda en línea
 5. Publica tu primer anuncio
 6. Xololear — generar pieza para RRSS
 7. Cómo cobra Xololo y cómo te pagamos

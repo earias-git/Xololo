@@ -10,7 +10,7 @@ questions:
       - "El plan Empresarial tiene mejores precios por venta"
       - "Empresarial incluye colaboradores con permisos granulares; Starter no"
       - "Starter no permite emitir CFDI"
-      - "Empresarial no tiene vitrina con nombre público"
+      - "Empresarial no tiene tienda en línea con nombre público"
     correct: 1
     feedback: >
       Correcto. Ambos planes pagan exactamente lo mismo por venta ($14

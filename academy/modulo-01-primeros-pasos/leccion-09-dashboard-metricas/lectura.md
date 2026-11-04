@@ -19,7 +19,7 @@ Es que las que mires te sirvan para tomar decisiones.
 
 ## Los 5 KPIs explicados a detalle
 
-### 1. Visitas a tu vitrina y anuncios
+### 1. Visitas a tu tienda en línea y anuncios
 
 Es el **ancho del embudo**: cuánta gente está viendo lo que vendes.
 
@@ -38,7 +38,7 @@ Es qué tan **buena es tu propuesta** una vez que la gente la ve.
 
 Fórmula: `(Ventas / Visitas) × 100`
 
-- **< 1%**: algo en tu vitrina asusta. Puede ser rating bajo, precio
+- **< 1%**: algo en tu tienda en línea asusta. Puede ser rating bajo, precio
   fuera de rango, fotos malas, descripción confusa.
 - **1-3%**: normal. Puedes mejorar con detalles (más fotos, mejor
   copy, oferta por tiempo limitado).

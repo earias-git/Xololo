@@ -6,7 +6,7 @@
 
 ## Por qué los 30 minutos post-venta valen más que todo lo anterior
 
-Puedes tener la mejor vitrina, las mejores fotos y el mejor precio.
+Puedes tener la mejor tienda en línea, las mejores fotos y el mejor precio.
 Pero si cuando el cliente te paga tardas 24 horas en contestar o
 envías algo distinto a lo que compró, nada de lo anterior importa.
 

@@ -35,7 +35,7 @@
 
 ## Slide 3 · Los 5 KPIs básicos
 
-### 1. 👁️ **Visitas** a tu vitrina y anuncios
+### 1. 👁️ **Visitas** a tu tienda en línea y anuncios
 Cuánta gente ve lo que vendes.
 
 ### 2. 📈 **Tasa de conversión**

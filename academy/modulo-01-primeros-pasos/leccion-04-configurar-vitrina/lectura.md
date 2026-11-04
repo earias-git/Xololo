@@ -4,19 +4,19 @@
 
 ---
 
-## Tu vitrina es una conversación silenciosa
+## Tu tienda en línea es una conversación silenciosa
 
 Antes de que un cliente te mande un mensaje, antes de que tome una
-decisión de compra, pasa un minuto o dos mirando tu vitrina. Ve el
+decisión de compra, pasa un minuto o dos mirando tu tienda en línea. Ve el
 nombre, mira la foto, lee la descripción breve, revisa cuántos
 anuncios tienes, cuántas reseñas. En esos dos minutos **ya decidió** si
 va a seguir contigo o va a buscar en otro negocio.
 
-Tu vitrina es, por lo tanto, una conversación silenciosa entre tu
+Tu tienda en línea es, por lo tanto, una conversación silenciosa entre tu
 negocio y un cliente que todavía no te ha dicho hola. Y como toda
 conversación, lo que no se dice también comunica.
 
-## Lo que una vitrina mal configurada le dice al cliente
+## Lo que una tienda en línea mal configurada le dice al cliente
 
 - **Sin logo o con logo pixeleado** → "no les importa cómo se ven,
   tampoco les importará cómo me entregan"
@@ -29,7 +29,7 @@ conversación, lo que no se dice también comunica.
 - **Un solo método de envío (recoger en tienda) sin opción Skydropx**
   → "no venden fuera de su colonia; mejor busco otro"
 
-## Lo que una vitrina bien configurada le dice al cliente
+## Lo que una tienda en línea bien configurada le dice al cliente
 
 - **Logo nítido con identidad** → "esto es un negocio real que
   invierte en su imagen"
@@ -88,7 +88,7 @@ los adjetivos no.
 ## Los horarios de respuesta — el dato que casi nadie cuida
 
 Xololo rastrea cuánto tardas en contestar los primeros mensajes de un
-cliente. Ese dato se muestra en tu vitrina como:
+cliente. Ese dato se muestra en tu tienda en línea como:
 
 - *"Responde en menos de 1 hora"* 🟢
 - *"Responde en menos de 24 horas"* 🟡

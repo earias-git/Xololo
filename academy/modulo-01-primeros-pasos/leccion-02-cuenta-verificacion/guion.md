@@ -109,7 +109,7 @@ flujo real en xololo.mx.
 > en la mañana.
 >
 > Cuando los **documentos clave** quedan aprobados, se te activa el
-> **badge Xololo Verified** y aparece en tu vitrina. Es el sello que
+> **badge Xololo Verified** y aparece en tu tienda en línea. Es el sello que
 > le dice al cliente "este negocio pasó por nuestra verificación".
 
 ## [7:00–8:00] Cierre y práctica

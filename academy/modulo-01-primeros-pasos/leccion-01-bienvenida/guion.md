@@ -2,7 +2,7 @@
 
 **Duración objetivo del video**: 6 minutos.
 **Formato sugerido**: narrador en pantalla + slides + algún b-roll de un
-negocio Xololo real (vitrina + cliente contento).
+negocio Xololo real (tienda en línea + cliente contento).
 
 ---
 
@@ -74,7 +74,7 @@ negocio Xololo real (vitrina + cliente contento).
 >
 > - Cómo verificar tu cuenta y subir tus documentos legales.
 > - Cómo elegir el plan correcto para tu etapa.
-> - Cómo configurar tu vitrina para que un cliente confíe en ti.
+> - Cómo configurar tu tienda en línea para que un cliente confíe en ti.
 > - Cómo publicar un anuncio que se encuentre y que convierta.
 > - Cómo Xololear tu anuncio para amplificarlo en redes.
 > - Cómo cobra Xololo y cuánto recibes tú de cada venta.
@@ -83,7 +83,7 @@ negocio Xololo real (vitrina + cliente contento).
 >
 > Y al terminar, si cumples los 5 pasos ejecutados en tu cuenta real,
 > ganas la insignia **"Negocio Xololo · Nivel Básico"**, que aparece en
-> tu vitrina pública y suma puntos para tu badge **Xololo Verified**.
+> tu tienda en línea pública y suma puntos para tu badge **Xololo Verified**.
 
 ## [4:30–5:30] Tu compromiso del titular
 
@@ -126,5 +126,5 @@ negocio Xololo real (vitrina + cliente contento).
 - B-roll sugerido: fachada de una tienda, un cliente abriendo un
   paquete contento, dueños de negocios reales (con permiso).
 - Idioma: español neutro con regionalismos mexicanos sutiles ("tu
-  negocio", "la vitrina", "el cliente").
+  negocio", "la tienda en línea", "el cliente").
 - Evitar: tecnicismos, inglés innecesario, promesas tipo "hazte rico".

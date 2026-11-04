@@ -8,7 +8,7 @@ questions:
       Si tu tasa de conversión está en 0.5%, el problema más probable es:
     options:
       - "Tienes demasiado tráfico"
-      - "Algo en tu vitrina asusta al cliente (rating, precio, fotos, confianza)"
+      - "Algo en tu tienda en línea asusta al cliente (rating, precio, fotos, confianza)"
       - "Debes bajar el precio al 10% para todo"
       - "El algoritmo de Xololo te penaliza"
     correct: 1

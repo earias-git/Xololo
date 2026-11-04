@@ -4,14 +4,14 @@
 
 ## Slide 1 · Título
 
-# Configura la vitrina de tu negocio
+# Configura la tienda en línea de tu negocio
 ### Módulo 1 · Lección 4 · 20 min
 
 > *Tu escaparate digital. Lo que un cliente ve antes de decidir.*
 
 ---
 
-## Slide 2 · ¿Qué es tu vitrina?
+## Slide 2 · ¿Qué es tu tienda en línea?
 
 - URL único de tu negocio: `xololo.mx/u/tu-slug`
 - Logo, portada, descripción
@@ -20,7 +20,7 @@
 - Todos tus anuncios activos en un solo lugar
 
 **Aplica a**: Starter y Empresarial.
-**Segunda Mano**: no tiene vitrina propia — solo horarios y envíos.
+**Segunda Mano**: no tiene tienda en línea propia — solo horarios y envíos.
 
 ---
 
@@ -50,7 +50,7 @@
 | **Formato** | Cuadrado 1:1 | Horizontal 4:1 |
 | **Mínimo** | 500×500 px | 1920×480 px |
 | **Ideal** | 2000×2000 px | — |
-| **Dónde se ve** | Avatar en todas partes | Banner de tu vitrina |
+| **Dónde se ve** | Avatar en todas partes | Banner de tu tienda en línea |
 
 **Tips**:
 - Logo con fondo transparente si tiene bordes (PNG)
@@ -82,7 +82,7 @@ Qué, dónde, cuánto tiempo y la ventaja.
 | | Horario de atención | Horario de respuesta |
 |---|---|---|
 | **Qué es** | Cuándo abres el local o recibes pedidos | Cuándo contestas mensajes |
-| **Dónde se usa** | Visible en tu vitrina | Afecta tu "tiempo de respuesta" en búsqueda |
+| **Dónde se usa** | Visible en tu tienda en línea | Afecta tu "tiempo de respuesta" en búsqueda |
 | **Regla** | Sé realista | NUNCA mientas |
 
 > Un negocio que responde en 2 horas **vende más** que uno que tarda 2 días.
@@ -109,14 +109,14 @@ Muebles, electrodomésticos. Cotización manual.
 
 ## Slide 8 · Checkpoint
 
-- [ ] Slug elegido y guardado
+- [ ] Nombre público elegido y guardado
 - [ ] Logo subido (mínimo 500×500)
 - [ ] Portada subida (mínimo 1920×480)
 - [ ] Descripción escrita (concreta, no plantilla)
 - [ ] Horarios configurados (realistas)
 - [ ] Al menos 1 método de envío activo
 
-**Visita** `xololo.mx/u/tu-slug` **y mira tu vitrina con ojos de cliente**.
+**Visita** `xololo.mx/u/tu-slug` **y mira tu tienda en línea con ojos de cliente**.
 
 ---
 
