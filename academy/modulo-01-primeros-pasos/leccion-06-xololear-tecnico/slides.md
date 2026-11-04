@@ -100,4 +100,4 @@ la pieza.
 ## Slide 8 · Siguiente lección
 
 ### ➡️ Lección 7 — Cómo cobra Xololo y cómo te pagamos
-(15 min) · Breakdown completo del payout. Qué recibes, cuándo y cómo.
+(15 min) · Breakdown completo del depósito. Qué recibes, cuándo y cómo.

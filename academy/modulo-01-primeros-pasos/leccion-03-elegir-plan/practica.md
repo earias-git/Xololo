@@ -35,7 +35,7 @@ El botón te lleva al signup con tu plan pre-seleccionado:
 - **"Empezar como Segunda Mano"** → signup como particular ocasional,
   no requiere pago ni RFC.
 - **"Suscribirme Starter"** → signup como negocio profesional, al
-  terminar pasas directo al checkout de Stripe para activar tu
+  terminar pasas directo al pago de Stripe para activar tu
   suscripción.
 - **"Suscribirme Empresarial"** → por ahora, suscríbete primero como
   Starter y haz **upgrade** desde Mi cuenta → Suscripción. En 1 click

@@ -31,7 +31,7 @@ Checklist de 5 acciones verificables en tu cuenta real.
 
 - [ ] Perfil 100% completo
 - [ ] Documentos legales aprobados
-- [ ] Vitrina publicada con slug propio *(Starter/Empresarial)*
+- [ ] Vitrina publicada con nombre público propio *(Starter/Empresarial)*
 - [ ] Al menos 1 anuncio activo con foto
 - [ ] Métodos de envío configurados
 
@@ -50,9 +50,9 @@ Checklist de 5 acciones verificables en tu cuenta real.
 - 2 de configuración de vitrina
 - 3 de publicar anuncio
 - 1 de Xololear técnico
-- 3 de cobros y payouts
+- 3 de cobros y depósitos
 - 3 de atención al cliente
-- 2 de dashboard y métricas
+- 2 de panel y métricas
 
 **Mínimo**: 16 de 20 correctas (80%). Puedes reintentar las que falles.
 

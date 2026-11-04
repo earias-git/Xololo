@@ -1,7 +1,7 @@
-# Lección 9 · Dashboard y métricas clave de tu negocio
+# Lección 9 · Panel y métricas clave de tu negocio
 
 **Duración objetivo del video**: 6 minutos.
-**Formato sugerido**: narrador en voz en off + captura del dashboard
+**Formato sugerido**: narrador en voz en off + captura del panel
 real de Xololo mostrando cada KPI.
 
 ---
@@ -14,17 +14,17 @@ real de Xololo mostrando cada KPI.
 > En esta lección te muestro **los 5 KPIs** que todo negocio Xololo
 > debe revisar semanalmente, y cómo leerlos para tomar decisiones.
 
-## [0:30–1:30] Dónde está tu dashboard
+## [0:30–1:30] Dónde está tu panel
 
-> *(Captura: menú superior → Dashboard)*
+> *(Captura: menú superior → Panel)*
 >
-> Entra a **Dashboard** desde el menú de tu cuenta. La pantalla
+> Entra a **Panel** desde el menú de tu cuenta. La pantalla
 > principal te muestra 4 secciones:
 >
 > 1. **Resumen** — números del período (semana, mes, año).
 > 2. **Pedidos** — todos los pedidos recientes con su estado.
 > 3. **Anuncios** — tus anuncios con stats de cada uno.
-> 4. **Finanzas** — payouts, cargos, CFDIs.
+> 4. **Finanzas** — depósitos, cargos, CFDIs.
 >
 > Lo que vamos a revisar son métricas del **resumen** y de **anuncios**.
 
@@ -84,7 +84,7 @@ real de Xololo mostrando cada KPI.
 
 > *(Slide: ritual semanal)*
 >
-> Agenda **15 minutos cada lunes** para revisar tu dashboard:
+> Agenda **15 minutos cada lunes** para revisar tu panel:
 >
 > 1. **Mira los 5 KPIs** del período de la semana pasada.
 > 2. **Compara con la semana anterior** — ¿subió o bajó?
@@ -102,7 +102,7 @@ real de Xololo mostrando cada KPI.
 
 > Para completar esta lección necesitas:
 >
-> - Entrar a tu Dashboard
+> - Entrar a tu Panel
 > - Identificar los 5 KPIs básicos (ver dónde están)
 > - Anotar el valor actual de cada uno (aunque sea 0 si eres nuevo)
 >
@@ -113,7 +113,7 @@ real de Xololo mostrando cada KPI.
 
 ## Notas de producción
 
-- Esta lección se beneficia mucho de mostrar un dashboard real con
-  datos reales (con permiso del seller o con cuenta demo poblada).
+- Esta lección se beneficia mucho de mostrar un panel real con
+  datos reales (con permiso del negocio o con cuenta demo poblada).
 - Al mencionar rangos de conversión y rating, mostrar barras de color
   (rojo/amarillo/verde) para memoria visual.

@@ -97,7 +97,7 @@ de un pedido en el **Buzón** y **Mis pedidos** de xololo.mx.
 > *(Pausa)*
 >
 > El número de guía queda automáticamente en el pedido. El cliente lo
-> ve en su dashboard y puede rastrear en tiempo real. Nosotros le
+> ve en su panel y puede rastrear en tiempo real. Nosotros le
 > mandamos un email cuando cambia de estatus (recogido, en tránsito,
 > entregado).
 >
@@ -122,13 +122,13 @@ de un pedido en el **Buzón** y **Mis pedidos** de xololo.mx.
 
 ## [7:30–9:00] Durante el envío — qué hacer
 
-> *(Captura: estados del pedido en el dashboard)*
+> *(Captura: estados del pedido en el panel)*
 >
 > Mientras el paquete viaja, hay 3 posibles problemas y 1 flujo
 > normal:
 >
 > **Flujo normal**: paquete entregado, cliente marca "recibí". Fin.
-> Payout se dispara 2-3 días después.
+> Depósito se dispara 2-3 días después.
 >
 > **Problema 1 — paquete demorado**: la paquetería tarda más de lo
 > estimado. Ve al status, verifica, y si pasan >3 días del tiempo
@@ -166,7 +166,7 @@ de un pedido en el **Buzón** y **Mis pedidos** de xololo.mx.
 > tiene queja, resuélvela antes de que la escriba — es la diferencia
 > entre una reseña de 3 estrellas y una de 5.
 >
-> Nos vemos en la Lección 9: cómo leer tu dashboard para mejorar.
+> Nos vemos en la Lección 9: cómo leer tu panel para mejorar.
 
 ---
 

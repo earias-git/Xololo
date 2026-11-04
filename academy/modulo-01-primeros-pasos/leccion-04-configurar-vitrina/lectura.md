@@ -42,9 +42,9 @@ conversación, lo que no se dice también comunica.
 - **Varios métodos de envío (local + Skydropx)** → "tengo opciones
   según mi conveniencia"
 
-## El slug — la decisión que más impacta a largo plazo
+## El nombre público — la decisión que más impacta a largo plazo
 
-El slug (`xololo.mx/u/tu-slug`) es la **dirección permanente** de tu
+El nombre público (`xololo.mx/u/tu-slug`) es la **dirección permanente** de tu
 negocio. Va a aparecer en:
 
 - Tus tarjetas de presentación
@@ -55,7 +55,7 @@ negocio. Va a aparecer en:
 Si lo cambias después, todos esos materiales quedan rotos. Por eso
 vale la pena pensarlo bien:
 
-**Checklist para elegir un buen slug**:
+**Checklist para elegir un buen nombre público**:
 
 - [ ] Es fácil de dictar por teléfono sin equivocaciones
 - [ ] Es fácil de escribir sin ver (sin dobles letras raras)

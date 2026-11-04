@@ -31,7 +31,7 @@ hashtags) la vemos completa en el **Módulo 2**.
 > anuncio y lleva al cliente directo a comprar.
 >
 > Hay un botón **"Xololear este anuncio"** en cada anuncio activo de
-> tu dashboard. Hoy aprendes a usarlo. Nada más.
+> tu panel. Hoy aprendes a usarlo. Nada más.
 
 ## [1:30–3:00] Dónde está el botón y qué genera
 

@@ -85,7 +85,7 @@ improvisar.
 
 ---
 
-## Slide 7 · Flujo del payout
+## Slide 7 · Flujo del depósito
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌───────────────┐
@@ -96,7 +96,7 @@ improvisar.
                                               │
                                               ▼
                                       ┌───────────────┐
-                                      │  Payout       │
+                                      │  Depósito       │
                                       │  automático   │
                                       │  2-3 días     │
                                       │  hábiles      │
@@ -107,9 +107,9 @@ improvisar.
 
 ## Slide 8 · Requisito crítico — cuenta bancaria
 
-**El payout NO se dispara si no tienes cuenta bancaria configurada.**
+**El depósito NO se dispara si no tienes cuenta bancaria configurada.**
 
-Ruta: **Mi cuenta → Formas de pago → Cuenta de payout (Stripe)**.
+Ruta: **Mi cuenta → Formas de pago → Cuenta de depósito (Stripe)**.
 
 Sin esto:
 - La venta se completa normal
@@ -126,7 +126,7 @@ Sin esto:
 - **3 cargos**: admin + Stripe + comisión (0% o escalonada)
 - **Retenciones**: solo PF empresarial. SM y PM no.
 - **CFDI**: automático Starter/Empresarial. SM solo por la comisión.
-- **Payout**: 2-3 días post-entrega confirmada. Requiere cuenta
+- **Depósito**: 2-3 días post-entrega confirmada. Requiere cuenta
   bancaria.
 
 ---

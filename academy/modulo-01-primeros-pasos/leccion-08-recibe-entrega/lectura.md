@@ -80,7 +80,7 @@ Juana reporta problema.
 
 ### Día 5: Juana confirma recepción
 
-Juana marca "recibí" en su app. Payout se dispara.
+Juana marca "recibí" en su app. Depósito se dispara.
 
 ### Día 6: Juana deja reseña de 5 ⭐
 
@@ -147,7 +147,7 @@ Si llegas a esa reseña, es muy tarde.
 
 ## Qué sigue
 
-En la **Lección 9** vemos tu Dashboard: cómo leer tus 5 métricas
+En la **Lección 9** vemos tu Panel: cómo leer tus 5 métricas
 clave cada semana para saber qué funciona en tu negocio y qué
 mejorar.
 

@@ -27,12 +27,12 @@
 > profesionales con tienda y catálogo recurrente. Pagas la suscripción
 > y en cada venta solo un cargo administrativo plano de $14 más IVA
 > —cero comisión por venta—. Emites CFDI, tienes vitrina propia con tu
-> slug, acceso a Verified.
+> nombre público, acceso a Verified.
 >
 > **Empresarial** — $299 al mes en plan anual, o $499 al mes mensual.
 > Para equipos. Trae todo lo de Starter más 2 colaboradores incluidos
 > con permisos granulares (puedes agregar más por $69/mes anual cada
-> uno), audit log cross-user, panel de equipo en el dashboard.
+> uno), audit log cross-user, panel de equipo en el panel.
 >
 > *(Pausa)*
 >

@@ -8,9 +8,9 @@
 
 ## Pasos
 
-### 1. Elige y guarda tu slug (3 min)
+### 1. Elige y guarda tu nombre público (3 min)
 
-**Ruta**: Mi cuenta → **Mi tienda** → *Nombre y slug*.
+**Ruta**: Mi cuenta → **Mi tienda** → *Nombre y nombre público*.
 
 - Prueba varios con el campo de "revisar disponibilidad".
 - Confirma tu elección. Recuerda: cambiarlo después rompe links.
@@ -76,7 +76,7 @@ Si alguna respuesta es "no", vuelve a los pasos anteriores y ajusta.
 
 ## Preguntas frecuentes
 
-> *"Mi slug favorito ya está ocupado. ¿Qué hago?"*
+> *"Mi nombre público favorito ya está ocupado. ¿Qué hago?"*
 
 Prueba variantes con guion ("ropa-marina" → "ropa-marina-mx"), o con
 tu ubicación ("cafe-tulum"), o con una palabra adicional ("estudio-

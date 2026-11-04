@@ -59,7 +59,7 @@ questions:
       - "Empresarial tiene mejores precios por venta"
       - "Empresarial incluye colaboradores con permisos granulares; Starter no"
       - "Starter no permite emitir CFDI"
-      - "Empresarial no tiene vitrina con slug"
+      - "Empresarial no tiene vitrina con nombre público"
     correct: 1
     feedback: >
       Ambos pagan lo mismo por venta. Empresarial agrega 2 colaboradores
@@ -78,7 +78,7 @@ questions:
   - id: q7
     type: single
     question: >
-      Al elegir el slug (`xololo.mx/u/tu-slug`) de tu vitrina, la regla
+      Al elegir el nombre público (`xololo.mx/u/tu-slug`) de tu vitrina, la regla
       más importante es:
     options:
       - "Que sea lo más corto posible"
@@ -184,11 +184,11 @@ questions:
   - id: q15
     type: true_false
     question: >
-      "Si no tengo configurada mi cuenta bancaria en Stripe, el payout
+      "Si no tengo configurada mi cuenta bancaria en Stripe, el depósito
       igual se me deposita."
     correct: false
     feedback: >
-      Falso. Sin cuenta bancaria, el payout NO se dispara. Configúrala
+      Falso. Sin cuenta bancaria, el depósito NO se dispara. Configúrala
       HOY.
 
   # ==================== LECCIÓN 8: Entrega ====================
@@ -229,7 +229,7 @@ questions:
     feedback: >
       La causa #1 real es que lo recibió un vecino, portero o familia.
 
-  # ==================== LECCIÓN 9: Dashboard ====================
+  # ==================== LECCIÓN 9: Panel ====================
   - id: q19
     type: single
     question: >

@@ -22,9 +22,9 @@ sabes cómo responder a un cliente que te compra.
 | 4 | Configura la vitrina de tu negocio | 20 min | Vitrina pública en `/u/tu-slug` |
 | 5 | Publica tu primer anuncio | 30 min | 1 anuncio activo con foto buena |
 | 6 | Xololear: generar y descargar tu pieza (solo técnico) | 15 min | 1 pieza generada y descargada |
-| 7 | Cómo cobra Xololo y cómo te pagamos | 15 min | Calculas tu payout en 2 escenarios |
+| 7 | Cómo cobra Xololo y cómo te pagamos | 15 min | Calculas tu depósito en 2 escenarios |
 | 8 | Recibe, prepara y entrega al cliente | 25 min | Simulación completa cerrada |
-| 9 | Dashboard y métricas clave de tu negocio | 15 min | Identificas tus 5 KPIs |
+| 9 | Panel y métricas clave de tu negocio | 15 min | Identificas tus 5 KPIs |
 | 10 | Evaluación y certificación | 20 min | Quiz ≥80% + 5 checks ejecutados |
 
 ## Certificación — qué se evalúa
@@ -42,7 +42,7 @@ Checklist verificado automáticamente contra tu cuenta:
 
 - [ ] Perfil 100% completo
 - [ ] Documentos legales aprobados (INE + comprobante de domicilio)
-- [ ] Vitrina publicada con slug propio *(solo Starter y Empresarial)*
+- [ ] Vitrina publicada con nombre público propio *(solo Starter y Empresarial)*
 - [ ] Al menos 1 anuncio activo con foto
 - [ ] Métodos de envío configurados
 

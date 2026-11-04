@@ -49,7 +49,7 @@ questions:
   - id: q4
     type: single
     question: >
-      El payout a tu cuenta bancaria se dispara cuando:
+      El depósito a tu cuenta bancaria se dispara cuando:
     options:
       - "El cliente paga con TDC"
       - "Publicas el anuncio"
@@ -65,11 +65,11 @@ questions:
   - id: q5
     type: true_false
     question: >
-      "Si no tengo configurada mi cuenta bancaria en Stripe, el payout
+      "Si no tengo configurada mi cuenta bancaria en Stripe, el depósito
       igual se me deposita automáticamente al email que registré."
     correct: false
     feedback: >
-      Falso. Sin cuenta bancaria configurada el payout NO se dispara.
+      Falso. Sin cuenta bancaria configurada el depósito NO se dispara.
       La venta se completa, el cliente recibe, pero el dinero se queda
       esperando en Xololo hasta que configures la cuenta. Es el paso
       más olvidado de sellers nuevos — configúrala HOY desde Mi cuenta
@@ -84,10 +84,10 @@ questions:
       - "Solo la venta al cliente"
       - "Solo el cargo administrativo Xololo"
       - "Ambos: la venta al cliente Y el cargo administrativo Xololo"
-      - "Nada, el seller lo emite por su cuenta"
+      - "Nada, el negocio lo emite por su cuenta"
     correct: 2
     feedback: >
       Correcto. En Starter y Empresarial, Xololo emite 2 CFDIs: uno a
       nombre del cliente por la venta (con tu RFC como emisor), y otro
       a tu nombre por lo que te cobramos (admin). Ambos quedan en tu
-      dashboard.
+      panel.

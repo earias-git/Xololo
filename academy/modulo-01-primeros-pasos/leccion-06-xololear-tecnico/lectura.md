@@ -68,4 +68,4 @@ cuando le das clic.
 ## Qué sigue
 
 En la **Lección 7** vemos cómo cobra Xololo y cómo te pagamos: el
-breakdown completo del payout en una venta.
+breakdown completo del depósito en una venta.

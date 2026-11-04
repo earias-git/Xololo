@@ -11,7 +11,7 @@ porque descubren cargos sorpresa después de la venta. Nosotros
 tomamos la decisión opuesta: todos los cargos son visibles antes de
 publicar y antes de confirmar una venta.
 
-Si descubres algo que no te cuadra en tu primer payout, lo más
+Si descubres algo que no te cuadra en tu primer depósito, lo más
 probable es que esta lectura te lo explique. Si no, abre un ticket
 con soporte — y si encontramos algo mal, lo corregimos.
 
@@ -103,7 +103,7 @@ registro como "plataforma tecnológica" ante el SAT. Cuando se active,
 verás las retenciones desglosadas en cada venta y las enteramos
 directamente al SAT por ti.
 
-Mientras tanto, el seller es quien reporta y entera. No es ideal, es
+Mientras tanto, el negocio es quien reporta y entera. No es ideal, es
 transitorio.
 
 ## CFDI — detalle por plan
@@ -111,7 +111,7 @@ transitorio.
 ### Starter y Empresarial
 
 **Xololo emite CFDI** por cada venta automáticamente a nombre del
-cliente, con tu RFC como emisor. Recibes el CFDI en tu dashboard para
+cliente, con tu RFC como emisor. Recibes el CFDI en tu panel para
 tu contabilidad.
 
 También emitimos **CFDI por el cargo administrativo Xololo** que te
@@ -124,10 +124,10 @@ Pero sí emitimos **CFDI por el cargo administrativo + comisión Xololo**
 que te cobramos (Xololo es contribuyente de IVA aunque el bien que
 vendiste esté exento).
 
-Esto significa que si eres SM, el CFDI que ves en tu dashboard es solo
+Esto significa que si eres SM, el CFDI que ves en tu panel es solo
 por lo que te cobramos nosotros — no es por la venta.
 
-## Payout — cuándo te llega el dinero
+## Depósito — cuándo te llega el dinero
 
 El flujo tiene 4 pasos:
 
@@ -137,7 +137,7 @@ El flujo tiene 4 pasos:
 3. **Entrega confirmada** — pasa cuando:
    - El cliente marca "recibí mi pedido" en su app, O
    - Pasan 7 días desde que la paquetería marcó entregado sin reclamo.
-4. **Payout automático a tu cuenta bancaria** — Stripe lo deposita en
+4. **Depósito automático a tu cuenta bancaria** — Stripe lo deposita en
    2-3 días hábiles.
 
 El total de tiempo entre venta y dinero en tu cuenta es típicamente
@@ -145,12 +145,12 @@ El total de tiempo entre venta y dinero en tu cuenta es típicamente
 
 ## El requisito crítico: cuenta bancaria configurada
 
-**Si no tienes configurada tu cuenta bancaria en Stripe, el payout no
+**Si no tienes configurada tu cuenta bancaria en Stripe, el depósito no
 se dispara**. La venta se completa normal, el cliente recibe su
 producto, pero tu dinero se queda esperando en Xololo. Se te deposita
 en cuanto configures la cuenta.
 
-**Dónde**: Mi cuenta → Formas de pago → Cuenta de payout.
+**Dónde**: Mi cuenta → Formas de pago → Cuenta de depósito.
 
 Se te pide:
 - CLABE a 18 dígitos de tu cuenta

@@ -31,7 +31,7 @@ captura de la insignia animada entregándose al final.
 >
 > - Perfil 100% completo
 > - Documentos legales aprobados
-> - Vitrina publicada con slug propio (si eres Starter/Empresarial)
+> - Vitrina publicada con nombre público propio (si eres Starter/Empresarial)
 > - Al menos 1 anuncio activo con foto
 > - Métodos de envío configurados
 >

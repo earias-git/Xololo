@@ -2,19 +2,19 @@
 
 **Duración**: 10 minutos.
 **Objetivo**: identificar y anotar los 5 KPIs de tu negocio.
-**Verificable en**: Dashboard de xololo.mx + agenda personal.
+**Verificable en**: Panel de xololo.mx + agenda personal.
 
 ---
 
 ## Pasos
 
-### 1. Entra a tu Dashboard (1 min)
+### 1. Entra a tu Panel (1 min)
 
-**Ruta**: Menú superior → **Dashboard**.
+**Ruta**: Menú superior → **Panel**.
 
 ### 2. Ubica dónde está cada KPI (5 min)
 
-Encuentra en qué parte del Dashboard aparece cada métrica (anota la
+Encuentra en qué parte del Panel aparece cada métrica (anota la
 ubicación en el papel si te ayuda):
 
 - [ ] **Visitas** a vitrina y anuncios → sección Resumen
@@ -46,14 +46,14 @@ Recompra:         _______ %
 ```
 
 Rellena con los valores de hoy. Si algún campo está vacío en el
-Dashboard, pon "s/d" (sin datos).
+Panel, pon "s/d" (sin datos).
 
 ### 4. ⭐ Agenda tu ritual semanal (2 min)
 
 Abre tu calendario (Google Calendar, iCal, Outlook, lo que uses) y
 crea una **cita recurrente**:
 
-- **Título**: "Dashboard Xololo — 15 min"
+- **Título**: "Panel Xololo — 15 min"
 - **Cuándo**: cada **lunes** a una hora fija (recomendado 8:30-9:00
   AM antes de empezar el día).
 - **Recordatorio**: 10 min antes.

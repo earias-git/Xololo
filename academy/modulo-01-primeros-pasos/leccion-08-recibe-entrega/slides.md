@@ -145,5 +145,5 @@ Cuando el cliente marca "recibí" (o pasan 7 días):
 
 ## Slide 10 · Siguiente lección
 
-### ➡️ Lección 9 — Dashboard y métricas clave de tu negocio
+### ➡️ Lección 9 — Panel y métricas clave de tu negocio
 (15 min) · Los 5 KPIs que todo negocio Xololo debe mirar cada semana.

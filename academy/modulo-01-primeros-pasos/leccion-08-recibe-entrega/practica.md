@@ -122,4 +122,4 @@ genial. Si no, respeta su decisión.
 
 ## Siguiente paso
 
-→ **Lección 9 — Dashboard y métricas clave de tu negocio** (15 min)
+→ **Lección 9 — Panel y métricas clave de tu negocio** (15 min)

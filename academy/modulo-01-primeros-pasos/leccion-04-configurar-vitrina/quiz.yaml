@@ -5,7 +5,7 @@ questions:
   - id: q1
     type: single
     question: >
-      Al elegir el slug (`xololo.mx/u/tu-slug`) de tu vitrina, la regla
+      Al elegir el nombre público (`xololo.mx/u/tu-slug`) de tu vitrina, la regla
       más importante es:
     options:
       - "Que sea lo más corto posible, aunque no se entienda"
@@ -14,7 +14,7 @@ questions:
       - "Que use guiones bajos para resaltar"
     correct: 2
     feedback: >
-      Correcto. El slug vive en tus tarjetas, redes y correos. Debe ser
+      Correcto. El nombre público vive en tus tarjetas, redes y correos. Debe ser
       dictable, escribible sin error y con identidad propia. No usar
       guiones bajos (no están permitidos) ni nombres genéricos.
 

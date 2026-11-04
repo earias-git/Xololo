@@ -75,7 +75,7 @@ persona.
 
 ### 6. Pon el precio con la fórmula (3 min)
 
-Usa la **calculadora de payout** del dashboard:
+Usa la **calculadora de depósito** del panel:
 
 - Pon tu precio tentativo
 - Mira cuánto recibes neto

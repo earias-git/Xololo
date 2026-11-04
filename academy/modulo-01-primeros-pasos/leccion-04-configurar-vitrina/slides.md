@@ -24,7 +24,7 @@
 
 ---
 
-## Slide 3 · Tu slug — la dirección permanente
+## Slide 3 · Tu nombre público — la dirección permanente
 
 **Reglas**:
 
@@ -39,7 +39,7 @@
 - ❌ `tienda_123` *(guion bajo no permitido)*
 - ❌ `comerciante-el-mejor` *(largo y pretensioso)*
 
-> ⚠️ Cambiar el slug después rompe links ya publicados. Elige bien.
+> ⚠️ Cambiar el nombre público después rompe links ya publicados. Elige bien.
 
 ---
 

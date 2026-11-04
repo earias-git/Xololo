@@ -93,7 +93,7 @@ Pon en tu calendario, cada **lunes** a una hora fija:
 
 ### Minuto 1-3: mira los números
 
-Abre Dashboard. Mira los 5 KPIs de la semana que acaba de terminar.
+Abre Panel. Mira los 5 KPIs de la semana que acaba de terminar.
 Anota los valores (en una libreta, en Notes, donde sea).
 
 ### Minuto 3-8: compara

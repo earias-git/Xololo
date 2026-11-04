@@ -96,7 +96,7 @@ Al terminar el Módulo 1 te recomendamos:
 
 - Enfócate en operar bien lo que ya configuraste
 - Responde a clientes en < 1 hora
-- Mantén tu dashboard semanal
+- Mantén tu panel semanal
 
 ### Semana 3-4
 

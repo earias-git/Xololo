@@ -70,7 +70,7 @@ viene en este módulo.
 6. Xololear — generar pieza para RRSS
 7. Cómo cobra Xololo y cómo te pagamos
 8. Recibe, prepara y entrega al cliente
-9. Dashboard y métricas
+9. Panel y métricas
 10. Evaluación y certificación
 
 ---

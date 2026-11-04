@@ -3,7 +3,7 @@
 **Duración objetivo del video**: 8 minutos.
 **Formato sugerido**: narrador en voz en off + motion graphics con
 números corriendo + captura del breakdown de una venta real en el
-dashboard.
+panel.
 
 ---
 
@@ -105,7 +105,7 @@ dashboard.
 >
 > - **Starter y Empresarial**: emitimos CFDI por cada venta
 >   automáticamente al cliente, a tu nombre. Lo recibes también en tu
->   dashboard para tu contabilidad.
+>   panel para tu contabilidad.
 >
 > - **Segunda Mano**: no emitimos CFDI de la venta en sí porque el
 >   bien usado por particular ocasional está exento (Art. 9 fracc IV
@@ -119,7 +119,7 @@ dashboard.
 > equipo fiscal puede ayudarte vía soporte. No es tema que resuelvas
 > en 5 minutos — y es mejor preguntar que improvisar.
 
-## [6:30–7:30] Cuándo te llega el dinero (payout)
+## [6:30–7:30] Cuándo te llega el dinero (depósito)
 
 > *(Captura: timeline del flujo de pago)*
 >
@@ -130,12 +130,12 @@ dashboard.
 >    —esto es el "pago protegido" del que hablamos—.
 > 3. **Entrega confirmada** — cuando el cliente marca que recibió
 >    (o pasan 7 días desde la entrega sin reclamo).
-> 4. **Payout automático a tu cuenta bancaria** — Stripe lo deposita
+> 4. **Depósito automático a tu cuenta bancaria** — Stripe lo deposita
 >    en 2-3 días hábiles.
 >
 > *(Pausa)*
 >
-> Para recibir payouts necesitas haber **configurado tu cuenta
+> Para recibir depósitos necesitas haber **configurado tu cuenta
 > bancaria en Mi cuenta → Formas de pago**. Si no está configurada,
 > el dinero se queda en Xololo esperando y no se te deposita. Es el
 > paso que más gente olvida; no seas uno más.
@@ -149,7 +149,7 @@ dashboard.
 > - **Retenciones** aplican a PF empresarial con RFC. SM y PM: no.
 > - **CFDI** automático en Starter/Empresarial. SM solo por la
 >   comisión Xololo.
-> - **Payout** 2-3 días hábiles después de entrega confirmada o 7 días
+> - **Depósito** 2-3 días hábiles después de entrega confirmada o 7 días
 >   sin reclamo. Requiere cuenta bancaria configurada.
 >
 > Nos vemos en la Lección 8: cómo recibes, preparas y entregas tu
@@ -163,5 +163,5 @@ dashboard.
   cálculos — ver números corriendo es más impactante que leerlos.
 - Al mencionar RFC/retenciones, poner un disclaimer en pantalla: "No
   es asesoría fiscal personalizada. Consulta a tu contador."
-- Mostrar el breakdown real en el dashboard de ventas al final del
+- Mostrar el breakdown real en el panel de ventas al final del
   video.

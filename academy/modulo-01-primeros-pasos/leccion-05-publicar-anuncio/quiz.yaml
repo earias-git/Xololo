@@ -48,7 +48,7 @@ questions:
     feedback: >
       Correcto. El error más común es: Costo $200 + Margen $200 = $400,
       sin considerar que el admin ($16.24) + Stripe (~$17) te comen $33
-      del margen real. Usa la calculadora de payout ANTES de publicar
+      del margen real. Usa la calculadora de depósito ANTES de publicar
       para saber exactamente cuánto recibes.
 
   - id: q4

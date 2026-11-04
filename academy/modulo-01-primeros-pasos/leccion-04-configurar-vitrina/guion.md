@@ -6,7 +6,7 @@ de **Mi cuenta → Mi tienda** en xololo.mx.
 
 **Nota**: esta lección aplica principalmente a **Starter y
 Empresarial**. Si eres Segunda Mano, mira los primeros 3 minutos
-(sobre horarios y envíos) — el resto (slug, logo, portada) no te
+(sobre horarios y envíos) — el resto (nombre público, logo, portada) no te
 aplica porque no tienes vitrina propia.
 
 ---
@@ -16,16 +16,16 @@ aplica porque no tienes vitrina propia.
 > Tu vitrina es el escaparate digital de tu negocio en Xololo. Cuando
 > un cliente te encuentra, aterriza aquí antes de decidir si te compra.
 >
-> En esta lección vamos a configurarla pieza por pieza: el slug, el
+> En esta lección vamos a configurarla pieza por pieza: el nombre público, el
 > logo, la portada, los horarios y los métodos de envío que ofreces.
 > Son decisiones que una vez tomadas tocas poco — pero cada una afecta
 > cuánto vendes.
 
-## [1:00–2:30] Tu slug — la dirección de tu vitrina
+## [1:00–2:30] Tu nombre público — la dirección de tu vitrina
 
-> *(Captura: Mi tienda → Nombre y slug)*
+> *(Captura: Mi tienda → Nombre y nombre público)*
 >
-> El **slug** es el pedacito del URL que identifica a tu negocio. Por
+> El **nombre público** es el pedacito del URL que identifica a tu negocio. Por
 > ejemplo, `xololo.mx/u/panaderia-rocio` o `xololo.mx/u/arte-tulum`.
 >
 > Reglas para elegirlo:
@@ -39,9 +39,9 @@ aplica porque no tienes vitrina propia.
 >
 > *(Pausa)*
 >
-> El slug es **único** en Xololo. Si otro negocio ya tiene el que
+> El nombre público es **único** en Xololo. Si otro negocio ya tiene el que
 > quieres, te sugerimos variantes. Elige bien a la primera porque
-> **cambiar el slug después rompe los links que ya publicaste** —no es
+> **cambiar el nombre público después rompe los links que ya publicaste** —no es
 > catastrófico, pero sí incómodo.
 
 ## [2:30–4:00] Logo y portada — la primera impresión visual

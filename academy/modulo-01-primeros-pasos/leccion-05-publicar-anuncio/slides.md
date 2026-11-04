@@ -73,7 +73,7 @@ Precio a cobrar       ~$435.00
 ```
 
 > ⚠️ **Error #1**: olvidar las comisiones. Usa la **calculadora de
-> payout** del dashboard antes de publicar.
+> depósito** del panel antes de publicar.
 
 ---
 

@@ -89,7 +89,7 @@ flujo de **Mis anuncios → Nuevo anuncio** en xololo.mx.
 > **El error más común**: calcular el precio solo con costo + margen y
 > olvidar las comisiones. Te quedas sin margen.
 >
-> **Tip**: en tu dashboard tienes la calculadora de payout. Mete tu
+> **Tip**: en tu panel tienes la calculadora de depósito. Mete tu
 > precio y te dice exactamente cuánto recibes. Úsala antes de publicar.
 
 ## [7:00–8:30] IVA — gravado, 0% o exento
@@ -176,5 +176,5 @@ flujo de **Mis anuncios → Nuevo anuncio** en xololo.mx.
 - Si usan ejemplo de producto en el video, usar uno que **de verdad
   se podría vender** (una licuadora, una playera) — no inventar algo
   genérico tipo "producto X".
-- Al explicar precio, mostrar la **calculadora de payout** en vivo y
+- Al explicar precio, mostrar la **calculadora de depósito** en vivo y
   dejar que el estudiante vea los números cambiar.

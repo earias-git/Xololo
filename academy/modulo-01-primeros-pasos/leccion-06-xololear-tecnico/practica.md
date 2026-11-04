@@ -95,7 +95,7 @@ re-actívalo primero.
 
 > *"¿Xololo me cuenta estadísticas de cuánta gente clickeó mi pieza?"*
 
-Sí, en el **Dashboard** verás cuántas veces se generó cada pieza
+Sí, en el **Panel** verás cuántas veces se generó cada pieza
 ("xololeadas") y cuánto tráfico vino desde esos links (en tabla "Stats
 por fuente"). La tabla completa de stats se habilita en el Módulo 2 y
 está en roadmap de la plataforma (task #24).

@@ -1,9 +1,9 @@
 # Práctica · Lección 7
 
 **Duración**: 10 minutos.
-**Objetivo**: cuenta bancaria configurada + calculadora de payout usada.
+**Objetivo**: cuenta bancaria configurada + calculadora de depósito usada.
 **Verificable en**: Mi cuenta → **Formas de pago** → sección "Cuenta
-de payout (Stripe)".
+de depósito (Stripe)".
 
 ---
 
@@ -14,7 +14,7 @@ dinero se queda esperando en Xololo.
 
 ### Pasos
 
-1. Ve a **Mi cuenta → Formas de pago → Cuenta de payout (Stripe)**.
+1. Ve a **Mi cuenta → Formas de pago → Cuenta de depósito (Stripe)**.
 2. Haz clic en **"Configurar cuenta"**. Se abre el flujo de Stripe
    Connect en una nueva pestaña.
 3. Completa los campos que Stripe te pide:
@@ -28,21 +28,21 @@ dinero se queda esperando en Xololo.
 
 De vuelta en Xololo, en **Formas de pago** debes ver:
 
-- ✅ **Cuenta de payout: Configurada** (verde)
+- ✅ **Cuenta de depósito: Configurada** (verde)
 - Si aún aparece **🕐 Pendiente de verificación**, es normal — Stripe
   está revisando. Mientras tanto no bloquea tus ventas, pero los
-  payouts se acumulan y se depositan cuando quede verificada.
+  depósitos se acumulan y se depositan cuando quede verificada.
 
 ---
 
-## Parte 2 · Usa la calculadora de payout (5 min)
+## Parte 2 · Usa la calculadora de depósito (5 min)
 
-**Ruta**: Dashboard → **Calculadora de payout** (o abajo del formulario
+**Ruta**: Panel → **Calculadora de depósito** (o abajo del formulario
 de "Nuevo anuncio" / "Editar anuncio").
 
 ### Ejercicio
 
-Calcula el payout en estos 3 escenarios y anota el resultado para
+Calcula el depósito en estos 3 escenarios y anota el resultado para
 revisar:
 
 **Escenario A** — Starter / Empresarial, venta de $200
@@ -85,7 +85,7 @@ que revisen.
 > *"¿Puedo cambiar de cuenta bancaria después?"*
 
 Sí, cuando quieras. Es solo un nuevo flujo en Formas de pago. Los
-payouts siguientes van a la cuenta nueva; los que ya se depositaron
+depósitos siguientes van a la cuenta nueva; los que ya se depositaron
 quedan donde fueron.
 
 > *"¿Puedo usar una cuenta de un pariente o familiar?"*

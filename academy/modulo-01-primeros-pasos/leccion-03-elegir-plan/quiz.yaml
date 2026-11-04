@@ -10,7 +10,7 @@ questions:
       - "El plan Empresarial tiene mejores precios por venta"
       - "Empresarial incluye colaboradores con permisos granulares; Starter no"
       - "Starter no permite emitir CFDI"
-      - "Empresarial no tiene vitrina con slug"
+      - "Empresarial no tiene vitrina con nombre público"
     correct: 1
     feedback: >
       Correcto. Ambos planes pagan exactamente lo mismo por venta ($14
@@ -23,7 +23,7 @@ questions:
       En una venta de $5,000, ¿qué recibe un vendedor en Segunda Mano
       vs uno en Starter?
     options:
-      - "Lo mismo, los planes no afectan el payout"
+      - "Lo mismo, los planes no afectan el depósito"
       - "Starter recibe $348 más por venta (ahorra la comisión escalonada)"
       - "Segunda Mano recibe más porque es gratis"
       - "Depende solo del método de envío"

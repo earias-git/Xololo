@@ -4,18 +4,18 @@
 
 ## Slide 1 · Título
 
-# Dashboard y métricas clave de tu negocio
+# Panel y métricas clave de tu negocio
 ### Módulo 1 · Lección 9 · 15 min
 
 > *No puedes mejorar lo que no mides. Pero tampoco mires 50 KPIs.*
 
 ---
 
-## Slide 2 · Las 4 secciones de tu dashboard
+## Slide 2 · Las 4 secciones de tu panel
 
 ```
 ┌──────────────────────────────────────────┐
-│   Dashboard                              │
+│   Panel                              │
 ├──────────────────────────────────────────┤
 │                                          │
 │  📊 Resumen       📦 Pedidos             │
@@ -25,7 +25,7 @@
 │                                          │
 │  🏷️ Anuncios      💰 Finanzas            │
 │  ─────────────    ──────────             │
-│  Visitas, conv    Payouts, cargos        │
+│  Visitas, conv    Depósitos, cargos        │
 │  por anuncio      CFDIs                  │
 │                                          │
 └──────────────────────────────────────────┘
@@ -109,7 +109,7 @@ Una variable a la vez para saber qué funciona.
 
 ## Slide 7 · Checkpoint
 
-- [ ] Entraste a tu Dashboard
+- [ ] Entraste a tu Panel
 - [ ] Identificaste dónde están los 5 KPIs
 - [ ] Anotaste tus valores actuales (aunque sean 0)
 - [ ] Agendaste 15 min en tu calendario cada lunes

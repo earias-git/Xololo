@@ -79,7 +79,7 @@ negocio Xololo real (vitrina + cliente contento).
 > - Cómo Xololear tu anuncio para amplificarlo en redes.
 > - Cómo cobra Xololo y cuánto recibes tú de cada venta.
 > - Cómo responder a un cliente que te compra y entregarle bien.
-> - Cómo leer tu dashboard para saber qué funciona y qué no.
+> - Cómo leer tu panel para saber qué funciona y qué no.
 >
 > Y al terminar, si cumples los 5 pasos ejecutados en tu cuenta real,
 > ganas la insignia **"Negocio Xololo · Nivel Básico"**, que aparece en

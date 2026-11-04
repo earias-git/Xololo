@@ -3,7 +3,7 @@
 **Duración**: 15-20 minutos.
 **Objetivo**: completar los 2 niveles de certificación activa (Aprender
 + Practicar/Ejecutar) para ganar tu insignia.
-**Verificable en**: Dashboard → **Academy** → *Mi insignia Nivel Básico*.
+**Verificable en**: Panel → **Academy** → *Mi insignia Nivel Básico*.
 
 ---
 
@@ -53,7 +53,7 @@ Si falta algo:
 Si están en 🕐 "Pendiente", espera < 24h hábiles. Si fueron
 Rechazados, re-súbelos corrigiendo lo que te indicamos.
 
-#### 3. Vitrina publicada con slug propio *(solo Starter/Empresarial)*
+#### 3. Vitrina publicada con nombre público propio *(solo Starter/Empresarial)*
 
 **Verificable en**: visita `xololo.mx/u/tu-slug` en navegador
 incógnito. Debe cargar tu vitrina.

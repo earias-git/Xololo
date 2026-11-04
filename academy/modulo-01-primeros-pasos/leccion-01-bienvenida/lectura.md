@@ -49,7 +49,7 @@ cliente que recibe menos de lo esperado se va y escribe mala reseña.
 
 **Al calcular tu precio**: incluyes todo (comisiones, envío, impuestos)
 para no sorprender al cliente al final. Un carrito que sube de precio
-en el checkout es la primera causa de abandono.
+en el pago es la primera causa de abandono.
 
 **Al responder un mensaje**: lo haces en minutos u horas, no en días.
 Un cliente que no recibe respuesta en 24 horas se va con la

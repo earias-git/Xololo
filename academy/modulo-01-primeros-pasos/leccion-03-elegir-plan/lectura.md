@@ -34,7 +34,7 @@ Lo que ganas:
 
 Lo que no tienes:
 
-- **Vitrina propia con slug** — tus anuncios aparecen en búsqueda pero
+- **Vitrina propia con nombre público** — tus anuncios aparecen en búsqueda pero
   no tienes un `/u/tu-negocio`.
 - **CFDI** — no emites facturas (el bien usado no las requiere).
 - **Catálogo recurrente** — pensado para venta puntual, no para tener
@@ -81,7 +81,7 @@ Lo que ganas sobre Starter:
 - **2 colaboradores incluidos** con permisos granulares (Manager,
   Logística, Finanzas, Soporte).
 - **Audit log cross-user** — ves quién hizo qué en tu negocio.
-- **Panel Equipo** en el dashboard.
+- **Panel Equipo** en el panel.
 - Puedes **agregar colaboradores adicionales** por $69/mes anual cada
   uno (o $99/mes mensual).
 
