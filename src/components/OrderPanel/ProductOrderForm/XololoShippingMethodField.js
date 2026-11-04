@@ -69,7 +69,7 @@ const buildOptions = (methods, intl, currency) => {
       priceLabel: methods.skydropxCarrier.sellerCoversShipping ? 'Gratis' : 'Cotización en línea',
       note: methods.skydropxCarrier.sellerCoversShipping
         ? 'El vendedor cubre el costo del envío.'
-        : 'Verás cotizaciones en vivo (Estafeta, FedEx, etc.) al capturar tu dirección en el checkout.',
+        : 'Verás cotizaciones en vivo (Estafeta, FedEx, etc.) al capturar tu dirección al pagar.',
     });
   }
   if (methods?.freight?.enabled) {

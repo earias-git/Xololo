@@ -1432,7 +1432,7 @@ export const EVENT_ATTRIBUTES = {
     label: 'Cupo total',
     unit: 'personas',
     required: true,
-    helpText: 'Se usa como stock del listing — se descuenta por cada reserva',
+    helpText: 'Se usa como stock del anuncio — se descuenta por cada reserva',
   },
   event_includes: {
     type: 'text',
@@ -1448,7 +1448,7 @@ export const EVENT_ATTRIBUTES = {
     type: 'boolean',
     label: 'Enviar boleto con QR por email (además de la lista de nombres)',
     helpText:
-      'Si lo activas, el buyer recibe un PDF con QR escaneable en la puerta. Por default sólo se usa lista de nombres.',
+      'Si lo activas, el cliente recibe un PDF con QR escaneable en la puerta. Por default sólo se usa lista de nombres.',
   },
 };
 

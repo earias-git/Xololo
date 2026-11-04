@@ -426,7 +426,7 @@ const PlanesPageComponent = () => {
                   </td>
                 </tr>
                 <tr>
-                  <th className={css.rowLabel}>Storefront con slug propio</th>
+                  <th className={css.rowLabel}>Tienda en línea con nombre público</th>
                   <td className={css.val}>
                     <Dash />
                   </td>
@@ -516,7 +516,7 @@ const PlanesPageComponent = () => {
                   </td>
                 </tr>
                 <tr>
-                  <th className={css.rowLabel}>Panel Equipo en Dashboard</th>
+                  <th className={css.rowLabel}>Panel Equipo en Mi panel</th>
                   <td className={css.val}>
                     <Dash />
                   </td>

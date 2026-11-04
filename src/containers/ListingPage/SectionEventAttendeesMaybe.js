@@ -221,7 +221,7 @@ const SectionEventAttendeesMaybe = props => {
                       className={css.attendeesSendBtn}
                       disabled={sendingTxId === a.txId || !a.buyerEmail}
                       onClick={() => sendTicket(a.txId)}
-                      title={!a.buyerEmail ? 'Falta email del buyer' : ''}
+                      title={!a.buyerEmail ? 'Falta email del cliente' : ''}
                     >
                       {sendingTxId === a.txId ? 'Enviando…' : '📧 Enviar / reenviar'}
                     </button>

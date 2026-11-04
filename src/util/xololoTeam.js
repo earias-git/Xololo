@@ -50,17 +50,17 @@ export const ALL_PERMISSIONS = Object.values(PERMISSIONS);
 export const PERMISSION_META = {
   [PERMISSIONS.LISTINGS_CREATE]: {
     label: 'Publicar productos',
-    hint: 'Crear listings nuevos (fotos, precio, categoría)',
+    hint: 'Crear anuncios nuevos (fotos, precio, categoría)',
     risk: 'medium',
   },
   [PERMISSIONS.LISTINGS_EDIT]: {
     label: 'Editar productos',
-    hint: 'Modificar precio, fotos, stock de listings existentes',
+    hint: 'Modificar precio, fotos, stock de anuncios existentes',
     risk: 'medium-high',
   },
   [PERMISSIONS.LISTINGS_DELETE]: {
     label: 'Dar de baja productos',
-    hint: 'Cerrar o eliminar listings',
+    hint: 'Cerrar o eliminar anuncios',
     risk: 'high',
   },
   [PERMISSIONS.PROMOTE]: {
@@ -75,17 +75,17 @@ export const PERMISSION_META = {
   },
   [PERMISSIONS.ORDERS_VIEW]: {
     label: 'Ver órdenes',
-    hint: 'Consultar órdenes y sus detalles (buyer, monto, estado)',
+    hint: 'Consultar órdenes y sus detalles (cliente, monto, estado)',
     risk: 'low',
   },
   [PERMISSIONS.ORDERS_MANAGE]: {
     label: 'Gestionar órdenes',
-    hint: 'Confirmar, cancelar, mensajear al buyer, agendar entregas',
+    hint: 'Confirmar, cancelar, mensajear al cliente, agendar entregas',
     risk: 'medium-high',
   },
   [PERMISSIONS.FINANCE]: {
     label: 'Finanzas',
-    hint: 'Ver cobros, payouts, Stripe balance, descargar CFDI',
+    hint: 'Ver cobros, depósitos, saldo en Stripe, descargar CFDI',
     risk: 'high',
   },
   [PERMISSIONS.STORE_SETTINGS]: {

@@ -86,7 +86,7 @@ const AiSuggestionsBox = ({
           phase: 'error',
           error:
             code === 'listing_not_found'
-              ? 'No encontramos tu listing. Guarda este paso primero.'
+              ? 'No encontramos tu anuncio. Guarda este paso primero.'
               : `No pudimos analizar tus fotos (${code || 'error'}). Intenta de nuevo.`,
           suggestions: null,
         });
@@ -110,7 +110,7 @@ const AiSuggestionsBox = ({
       } else if (code === 'unauthenticated') {
         userError = 'Tu sesión expiró. Recarga la página e intenta de nuevo.';
       } else if (code === 'not_your_listing') {
-        userError = 'No puedes pedir sugerencias para un listing ajeno.';
+        userError = 'No puedes pedir sugerencias para un anuncio ajeno.';
       } else if (code === 'ai_not_configured') {
         userError = 'La IA está temporalmente deshabilitada. Intenta más tarde.';
       } else {

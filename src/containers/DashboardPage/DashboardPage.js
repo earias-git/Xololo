@@ -49,7 +49,7 @@ const DashboardPage = () => {
   const activeSection = getSectionFromLocation(location.search);
 
   return (
-    <Page title="Dashboard" scrollingDisabled={scrollingDisabled}>
+    <Page title="Mi panel" scrollingDisabled={scrollingDisabled}>
       <LayoutSideNavigation
         topbar={
           <TopbarContainer
@@ -60,7 +60,7 @@ const DashboardPage = () => {
         sideNav={
           <>
             <H2 as="h1" className={css.title}>
-              Dashboard
+              Mi panel
             </H2>
             <TabNav
               rootClassName={css.tabs}
@@ -77,12 +77,12 @@ const DashboardPage = () => {
                   },
                 })),
                 {
-                  text: 'Inbox',
+                  text: 'Mensajes',
                   selected: false,
                   linkProps: { name: 'InboxPage', params: { tab: 'sales' } },
                 },
               ]}
-              ariaLabel="Navegación dashboard"
+              ariaLabel="Navegación del panel"
             />
           </>
         }

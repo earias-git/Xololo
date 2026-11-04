@@ -189,7 +189,7 @@ const TopbarMobileMenu = props => {
   const dashboardLinkMaybe = showCreateListingsLink ? (
     <li className={classNames(css.navigationLink, currentPageClass('DashboardPage'))}>
       <NamedLink name="DashboardPage">
-        <FormattedMessage id="TopbarDesktop.dashboardLink" defaultMessage="Dashboard" />
+        <FormattedMessage id="TopbarDesktop.dashboardLink" defaultMessage="Mi panel" />
       </NamedLink>
     </li>
   ) : null;

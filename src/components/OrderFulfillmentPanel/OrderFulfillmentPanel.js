@@ -72,7 +72,7 @@ const OrderFulfillmentPanel = ({ transaction, className }) => {
           unauthorized: 'Sesión expirada. Recarga la página.',
           transaction_not_found: 'No encontramos esta transacción.',
           not_shippable: 'Esta orden no es cotizable por paquetería.',
-          no_rate_selected: 'El buyer aún no eligió paquetería.',
+          no_rate_selected: 'El cliente aún no eligió paquetería.',
           already_generated: 'La guía ya fue generada.',
           sos_photos_missing: 'Faltan fotos SOS. Sube las 5 antes de generar.',
           seller_address_incomplete:

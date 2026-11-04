@@ -127,7 +127,7 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
               name="DashboardPage"
             >
               <span className={css.menuItemBorder} />
-              <FormattedMessage id="TopbarDesktop.dashboardLink" defaultMessage="Dashboard" />
+              <FormattedMessage id="TopbarDesktop.dashboardLink" defaultMessage="Mi panel" />
             </NamedLink>
           </MenuItem>
         ) : null}

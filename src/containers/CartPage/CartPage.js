@@ -336,7 +336,7 @@ const CartPage = props => {
       );
     } catch (e) {
       setRedirecting(false);
-      setCheckoutError(e?.message || 'No se pudo iniciar el checkout.');
+      setCheckoutError(e?.message || 'No se pudo iniciar el pago.');
     }
   };
 
@@ -599,8 +599,8 @@ const CartPage = props => {
                 {hasMultipleGroups
                   ? 'Los productos se agruparon por compatibilidad de envío. Paga cada grupo por separado usando los botones arriba.'
                   : showXoloMethodSelector
-                  ? 'Al ir a checkout capturas dirección de envío. El costo final incluye envío según el método elegido arriba.'
-                  : 'Al ir a checkout eliges paquetería + capturas dirección de envío. El costo final incluye tu envío ya cotizado.'}
+                  ? 'Al pagar capturas dirección de envío. El costo final incluye envío según el método elegido arriba.'
+                  : 'Al pagar eliges paquetería + capturas dirección de envío. El costo final incluye tu envío ya cotizado.'}
               </p>
               <div className={css.actions}>
                 <a
@@ -626,12 +626,12 @@ const CartPage = props => {
                   }
                   style={hasMultipleGroups ? { display: 'none' } : {}}
                 >
-                  {redirecting ? 'Un momento…' : 'Ir a checkout →'}
+                  {redirecting ? 'Un momento…' : 'Ir a pagar →'}
                 </button>
               </div>
               {checkoutError ? (
                 <p className={css.pendingHint} role="alert">
-                  <strong>No se pudo iniciar el checkout:</strong> {checkoutError}
+                  <strong>No se pudo iniciar el pago:</strong> {checkoutError}
                 </p>
               ) : null}
             </div>

@@ -134,7 +134,7 @@ export const EditListingDeliveryForm = props => (
                   name="xololoMethods.pickup.instructions"
                   className={css.input}
                   type="textarea"
-                  label="Instrucciones para el buyer (opcional)"
+                  label="Instrucciones para el cliente (opcional)"
                   placeholder="Ej. Recoger de 10am a 6pm en Av. Insurgentes 123, portón azul."
                 />
               </div>
@@ -353,7 +353,7 @@ export const EditListingDeliveryForm = props => (
                 <FieldCheckbox
                   id={`${formId}.xoloSellerCovers`}
                   name="xololoMethods.skydropxCarrier.sellerCoversShipping"
-                  label="🎁 Yo absorbo el costo del envío (el buyer ve 'Envío gratis')"
+                  label="🎁 Yo absorbo el costo del envío (el cliente ve 'Envío gratis')"
                   value="true"
                 />
               </div>
