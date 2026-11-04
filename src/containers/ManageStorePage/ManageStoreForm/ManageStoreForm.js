@@ -472,7 +472,7 @@ const ManageStoreForm = props => (
               name="bannerUrl"
               kind="banner"
               label="Banner publicitario 1"
-              hint="Imagen horizontal (1600 x 400 px recomendado). Aparece bajo el header de tu storefront."
+              hint="Imagen horizontal (1600 x 400 px recomendado). Aparece bajo el header de tu tienda en línea."
               aspectRatio="4 / 1"
             />
 
@@ -582,7 +582,7 @@ const ManageStoreForm = props => (
                   <AddressBlock
                     name="commercialAddress"
                     title="Domicilio comercial"
-                    hint="Dónde opera tu tienda físicamente. Aparece en el footer de tu storefront con botón a Google Maps."
+                    hint="Dónde opera tu tienda físicamente. Aparece en el footer de tu tienda en línea con botón a Google Maps."
                     required
                   />
                 )
@@ -636,7 +636,7 @@ const ManageStoreForm = props => (
               className={css.field}
               id="showCalendar"
               name="showCalendar"
-              label="Mostrar sección de disponibilidad en tu storefront"
+              label="Mostrar sección de disponibilidad en tu tienda en línea"
             >
               <option value="no">No mostrar</option>
               <option value="yes">Sí, mostrar calendario</option>

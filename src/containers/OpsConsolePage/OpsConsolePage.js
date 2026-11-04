@@ -268,7 +268,7 @@ const MODULE_CARDS = [
     key: 'disputes',
     label: 'Disputes',
     emoji: '🤝',
-    hint: 'Mediación de disputes entre buyer y seller',
+    hint: 'Mediación de disputas entre cliente y negocio',
     route: null,
   },
   {
@@ -319,7 +319,7 @@ const MODULE_CARDS = [
     key: 'payout_queue',
     label: 'Payouts retenidos',
     emoji: '💰',
-    hint: 'Sellers con ventas cerradas sin payout liberado (Stripe + docs pendientes)',
+    hint: 'Negocios con ventas cerradas sin depósito liberado (Stripe + docs pendientes)',
     route: '/ops/payout-queue',
   },
   {

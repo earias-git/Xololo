@@ -19,7 +19,7 @@ import css from './AdminPage.module.css';
 const SOURCE_LABELS = {
   direct: 'Directo',
   xololo: 'Xololo (buscador)',
-  seller_store: 'Tienda del seller',
+  seller_store: 'Tienda del negocio',
   facebook: 'Facebook',
   instagram: 'Instagram',
   whatsapp: 'WhatsApp',
@@ -129,7 +129,7 @@ const AdminTrafficView = () => {
               <thead>
                 <tr>
                   <th style={{ width: '40%' }}>Producto</th>
-                  <th>Seller</th>
+                  <th>Negocio</th>
                   <th className={css.numeric}>Vistas</th>
                   <th className={css.numeric}>Vendidos</th>
                   <th className={css.numeric}>Conversión</th>

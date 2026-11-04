@@ -123,7 +123,7 @@ const BackfillVerifiedView = ({ onBack }) => {
               <table className={css.table}>
                 <thead>
                   <tr>
-                    <th>Seller</th>
+                    <th>Negocio</th>
                     <th>Email</th>
                     <th>Antes</th>
                     <th>Después</th>

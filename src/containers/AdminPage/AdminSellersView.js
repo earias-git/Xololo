@@ -46,7 +46,7 @@ const AdminSellersView = () => {
             <thead>
               <tr>
                 <th style={{ width: '5%' }}>#</th>
-                <th style={{ width: '40%' }}>Seller</th>
+                <th style={{ width: '40%' }}>Negocio</th>
                 <th className={css.numeric}># tx</th>
                 <th className={css.numeric}>Revenue</th>
                 <th className={css.numeric}>Comisión</th>

@@ -26,16 +26,16 @@ const api = async path => {
 
 const TYPE_LABEL = {
   admin: 'Admin',
-  store: 'Store',
-  casual_reseller: 'Casual',
-  buyer_only: 'Buyer',
+  store: 'Negocio',
+  casual_reseller: 'Vendedor particular',
+  buyer_only: 'Cliente',
   lead: 'Lead',
 };
 
 const SUB_LABEL = {
-  active: 'Active',
-  past_due: 'Past due',
-  canceled: 'Canceled',
+  active: 'Activa',
+  past_due: 'Pago vencido',
+  canceled: 'Cancelada',
   none: '—',
 };
 

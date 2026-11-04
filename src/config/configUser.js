@@ -176,18 +176,18 @@ export const userFields = [
 export const userTypes = [
   {
     userType: 'a',
-    label: 'Seller',
+    label: 'Negocio',
   },
   {
     userType: 'b',
-    label: 'Buyer',
+    label: 'Cliente',
   },
   {
     userType: 'c',
-    label: 'Guest',
+    label: 'Invitado',
   },
   {
     userType: 'd',
-    label: 'Host',
+    label: 'Anfitrión',
   },
 ];

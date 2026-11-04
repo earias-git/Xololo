@@ -42,7 +42,7 @@ const SECTIONS = [
   { key: 'users', label: 'Usuarios' },
   { key: 'traffic', label: 'Tráfico' },
   { key: 'disputes', label: 'Disputas activas' },
-  { key: 'sellers', label: 'Sellers destacados' },
+  { key: 'sellers', label: 'Negocios destacados' },
   { key: 'legal-docs', label: 'Documentos legales' },
 ];
 

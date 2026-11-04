@@ -21,9 +21,9 @@ const api = async (path, opts = {}) => {
 
 const TYPE_LABEL = {
   admin: 'Admin',
-  store: 'Store',
-  casual_reseller: 'Casual reseller',
-  buyer_only: 'Buyer',
+  store: 'Negocio',
+  casual_reseller: 'Vendedor particular',
+  buyer_only: 'Cliente',
   lead: 'Lead',
 };
 
@@ -493,7 +493,7 @@ const TransactionsTab = ({ transactions }) => {
             <th>Fecha</th>
             <th>Rol</th>
             <th>Contraparte</th>
-            <th>Listing</th>
+            <th>Anuncio</th>
             <th>Monto</th>
             <th>Estado</th>
           </tr>

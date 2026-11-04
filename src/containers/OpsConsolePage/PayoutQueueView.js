@@ -180,7 +180,7 @@ const PayoutQueueView = ({ onBack }) => {
             <table className={css.table}>
               <thead>
                 <tr>
-                  <th>Seller</th>
+                  <th>Negocio</th>
                   <th>Modo</th>
                   <th>Pendiente</th>
                   <th>Ventas</th>

@@ -181,7 +181,7 @@ const ERROR_COPY = {
   not_owner: {
     title: '⛔ No eres el organizador',
     detail:
-      'Este boleto pertenece a un evento de otro seller. Debes estar logueado con la cuenta del organizador para registrar check-ins.',
+      'Este boleto pertenece a un evento de otro negocio. Debes estar logueado con la cuenta del organizador para registrar check-ins.',
   },
   unauthorized: {
     title: 'Sesión requerida',
