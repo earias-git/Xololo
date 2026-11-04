@@ -118,7 +118,7 @@ const SECONDARY_PALETTE = [
 ];
 
 const validateSlug = value => {
-  if (!value) return 'Slug requerido para tu tienda.';
+  if (!value) return 'Nombre público requerido para tu tienda.';
   const v = String(value)
     .toLowerCase()
     .trim();
@@ -393,7 +393,7 @@ const ManageStoreForm = props => (
               type="text"
               id="slug"
               name="slug"
-              label="Slug — el subdominio de tu tienda"
+              label="Nombre público — el subdominio de tu tienda"
               placeholder="mi-tienda"
               validate={validateSlug}
             />
@@ -465,7 +465,7 @@ const ManageStoreForm = props => (
               name="logoUrl"
               kind="logo"
               label="Logo de tu tienda"
-              hint="PNG con fondo transparente, alto ~200 px. Se muestra en el header de tu storefront."
+              hint="PNG con fondo transparente, alto ~200 px. Se muestra en el header de tu tienda en línea."
             />
 
             <ImageUploadField
@@ -653,7 +653,7 @@ const ManageStoreForm = props => (
             </p>
           ) : null}
           {ready ? (
-            <p className={css.success}>Cambios guardados. Tu storefront se actualizó.</p>
+            <p className={css.success}>Cambios guardados. Tu tienda en línea se actualizó.</p>
           ) : null}
 
           <PrimaryButton

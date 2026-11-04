@@ -244,7 +244,7 @@ const AiSuggestionsBox = ({
             <section className={css.section}>
               <h5 className={css.sectionTitle}>SEO sugerido</h5>
               <dl className={css.seoList}>
-                <dt>Slug URL</dt>
+                <dt>Nombre público en URL</dt>
                 <dd className={css.mono}>{suggestions.seo.slug}</dd>
                 <dt>Meta title</dt>
                 <dd>{suggestions.seo.metaTitle}</dd>

@@ -214,8 +214,8 @@ export const ManageStorePageComponent = props => {
         <div className={css.content}>
           <H3 as="h1">Mi tienda</H3>
           <p className={css.subheading}>
-            Personaliza cómo se ve tu storefront (subdominio) en Xololo. Los cambios se aplican de
-            inmediato en tu tienda pública.
+            Personaliza cómo se ve tu tienda en línea (subdominio) en Xololo. Los cambios se
+            aplican de inmediato en tu tienda pública.
           </p>
           {storefrontHost ? (
             <p className={css.livePreview}>

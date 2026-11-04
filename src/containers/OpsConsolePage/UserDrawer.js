@@ -230,7 +230,7 @@ const SummaryTab = ({ data }) => {
               ? `${new Date(s.createdAt).toLocaleDateString('es-MX')} (${timeAgo(s.createdAt)})`
               : '—'}
           </dd>
-          <dt>Slug</dt>
+          <dt>Nombre público</dt>
           <dd>{s.slug || '—'}</dd>
           <dt>SellerMode</dt>
           <dd>{s.sellerMode || 'no declarado'}</dd>
