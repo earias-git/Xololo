@@ -26,6 +26,19 @@ import {
 } from '../../ducks/stripeConnectAccount.duck';
 import { fetchCurrentUser } from '../../ducks/user.duck';
 
+// XOLOLO · E9 fase 2: cuando el usuario opera como colaborador de un
+// Negocio (getCurrentWorkspace devuelve un workspace activo), las
+// operaciones de listing (create/update/publish/discard/stock) deben
+// ejecutarse bajo la identidad del admin via los wrappers
+// /api/team/as/listing/*. En modo propio, se usa el SDK normal.
+import { getCurrentWorkspace } from '../../util/xololoTeam';
+import {
+  createDraftAs,
+  updateListingAs,
+  publishDraftAs,
+  updateStockAs,
+} from '../../util/apiAsWorkspace';
+
 const { UUID } = sdkTypes;
 
 // Create array of N items where indexing starts from 1
@@ -121,9 +134,17 @@ export const requestShowListing = (actionPayload, config) => (dispatch, getState
 ///////////////
 export const setStockThunk = createAsyncThunk(
   'EditListingPage/setStock',
-  ({ listingId, oldTotal, newTotal }, { dispatch, rejectWithValue, extra: sdk }) => {
-    return sdk.stock
-      .compareAndSet({ listingId, oldTotal, newTotal }, { expand: true })
+  ({ listingId, oldTotal, newTotal }, { dispatch, getState, rejectWithValue, extra: sdk }) => {
+    // XOLOLO · E9 fase 2: en modo colaborador, el stock se actualiza via
+    // el wrapper /api/team/as/listing/update-stock bajo la identidad del
+    // admin. Si no hay workspace activo, SDK directo.
+    const workspace = getCurrentWorkspace(getState().user?.currentUser);
+    const idUuid = listingId?.uuid || listingId;
+    const fetchPromise = workspace
+      ? updateStockAs(workspace.sellerId, idUuid, oldTotal, newTotal)
+      : sdk.stock.compareAndSet({ listingId, oldTotal, newTotal }, { expand: true });
+
+    return fetchPromise
       .then(response => {
         // NOTE: compareAndSet returns the stock resource of the listing.
         // We update client app's internal state with these updated API entities.
@@ -164,7 +185,7 @@ const updateStockOfListingMaybe = (listingId, stockTotals, dispatch) => {
 // create, set stock, show listing (to get updated currentStock entity)
 export const createListingDraftThunk = createAsyncThunk(
   'EditListingPage/createListingDraft',
-  ({ data, config }, { dispatch, rejectWithValue, extra: sdk }) => {
+  ({ data, config }, { dispatch, getState, rejectWithValue, extra: sdk }) => {
     const { stockUpdate, images, ...rest } = data;
 
     // If images should be saved, create array out of the image UUIDs for the API call
@@ -179,8 +200,14 @@ export const createListingDraftThunk = createAsyncThunk(
       ...imageVariantInfo.imageVariants,
     };
 
-    return sdk.ownListings
-      .createDraft(ownListingValues, queryParams)
+    // XOLOLO · E9 fase 2: en modo colaborador, el draft se crea bajo el
+    // admin via /api/team/as/listing/create-draft (shape SDK-compatible).
+    const workspace = getCurrentWorkspace(getState().user?.currentUser);
+    const fetchPromise = workspace
+      ? createDraftAs(workspace.sellerId, ownListingValues, queryParams)
+      : sdk.ownListings.createDraft(ownListingValues, queryParams);
+
+    return fetchPromise
       .then(response => {
         dispatch(addMarketplaceEntities(response));
         const listingId = response.data.data.id;
@@ -222,8 +249,20 @@ export const updateListingThunk = createAsyncThunk(
       ...imageVariantInfo.imageVariants,
     };
 
+    // XOLOLO · E9 fase 2: en modo colaborador, el update va al wrapper
+    // /api/team/as/listing/update (identidad admin + shape SDK).
+    const workspace = getCurrentWorkspace(getState().user?.currentUser);
+    const doUpdate = () => {
+      if (workspace) {
+        // El helper recibe listingId + patch (sin id interno). Separamos.
+        const { id: _omit, ...patchFields } = ownListingUpdateValues;
+        return updateListingAs(workspace.sellerId, id.uuid, patchFields, queryParams);
+      }
+      return sdk.ownListings.update(ownListingUpdateValues, queryParams);
+    };
+
     return updateStockOfListingMaybe(id, stockUpdate, dispatch)
-      .then(() => sdk.ownListings.update(ownListingUpdateValues, queryParams))
+      .then(doUpdate)
       .then(response => {
         const state = getState();
         const existingTimeZone =
@@ -262,9 +301,18 @@ export const requestUpdateListing = (tab, data, config) => (dispatch, getState, 
 // Publish Listing //
 /////////////////////
 
-const publishListingPayloadCreator = ({ listingId }, { dispatch, rejectWithValue, extra: sdk }) => {
-  return sdk.ownListings
-    .publishDraft({ id: listingId }, { expand: true })
+const publishListingPayloadCreator = (
+  { listingId },
+  { dispatch, getState, rejectWithValue, extra: sdk }
+) => {
+  // XOLOLO · E9 fase 2: en modo colaborador, publicar el draft va al
+  // wrapper /api/team/as/listing/publish-draft.
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const idUuid = listingId?.uuid || listingId;
+  const fetchPromise = workspace
+    ? publishDraftAs(workspace.sellerId, idUuid, { include: ['author', 'images', 'currentStock'] })
+    : sdk.ownListings.publishDraft({ id: listingId }, { expand: true });
+  return fetchPromise
     .then(response => {
       // Add the created listing to the marketplace data
       dispatch(addMarketplaceEntities(response));

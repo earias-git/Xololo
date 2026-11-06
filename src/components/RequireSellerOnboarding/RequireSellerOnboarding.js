@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 
 import { apiBaseUrl } from '../../util/api';
 import { useOnboardingStatus } from '../../hooks/useOnboardingStatus';
+import { getCurrentWorkspace } from '../../util/xololoTeam';
 import NamedRedirect from '../NamedRedirect/NamedRedirect';
 import IconSpinner from '../IconSpinner/IconSpinner';
 
@@ -57,6 +58,17 @@ const useHasPublishedListings = hasUser => {
 const RequireSellerOnboarding = ({ children }) => {
   const currentUser = useSelector(state => state.user?.currentUser || null);
   const hasUser = !!currentUser?.id;
+
+  // XOLOLO · E9 fase 2: cuando el user opera como colaborador de un
+  // Negocio (workspace activo), bypasseamos el checklist del user
+  // logueado — el admin del Negocio ya cumplió SU onboarding (suscripción,
+  // banco, docs legales). El colaborador no necesita el propio para
+  // operar el catálogo del Negocio, porque todo lo que haga se escribe
+  // bajo la identidad del admin via los wrappers /api/team/as/*.
+  const workspace = getCurrentWorkspace(currentUser);
+  if (workspace) {
+    return children;
+  }
 
   const { checked, hasListings, failed: hasListingsFailed } = useHasPublishedListings(hasUser);
   const stillCheckingListings = hasUser && !checked;

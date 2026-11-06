@@ -1573,3 +1573,17 @@ textarea {
     margin-top: 32px;
   }
 }
+
+/* XOLOLO Tier Empresarial · E4 — cuando el colaborador opera como el
+   Negocio, el WorkspaceRibbon se posiciona fixed al top:0. Agregamos
+   padding-top al <body> para que el topbar no quede tapado por el ribbon.
+   La clase la toggle el propio componente via useEffect. */
+body.xolo-with-workspace-ribbon {
+  padding-top: 56px;
+}
+
+@media (min-width: 768px) {
+  body.xolo-with-workspace-ribbon {
+    padding-top: 60px;
+  }
+}

@@ -33,6 +33,7 @@
 //   - Cache in-memory 5min por (userId, from, to).
 
 const { getSdk } = require('../api-util/sdk');
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { readLineItemQty } = require('../api-util/lineItemMoney');
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -141,28 +142,23 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'invalid_request', details: 'rango inválido.' });
     }
 
-    const sdk = getSdk(req, res);
+    // XOLOLO · E9: adminId resuelto por requireSellerContext (self o
+    // workspace activo). Integration SDK ejecuta como el admin.
+    const adminId = req.actingAs.adminId;
+    const isdk = getIntegrationSdk();
+    if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
-    let currentUser;
-    try {
-      const resp = await sdk.currentUser.show();
-      currentUser = resp.data.data;
-    } catch (e) {
-      return res.status(401).json({ error: 'unauthorized' });
-    }
-    const userId = currentUser.id.uuid;
-
-    const key = cacheKey(userId, from, to);
+    const key = cacheKey(adminId, from, to);
     const hit = getCached(key);
     if (hit) return res.json({ ...hit, cached: true });
 
-    // Fetch en paralelo: tx del provider en rango + own listings.
+    // Fetch en paralelo: tx del provider en rango + listings del admin.
     const [txsResult, listingsResult] = await Promise.all([
       (async () => {
         const all = [];
         for (let page = 1; page <= 5; page++) {
-          const resp = await sdk.transactions.query({
-            only: 'sale',
+          const resp = await isdk.transactions.query({
+            providerId: adminId,
             page,
             perPage: 100,
             include: ['listing'],
@@ -187,7 +183,8 @@ module.exports = async (req, res) => {
         const all = [];
         let included = [];
         for (let page = 1; page <= 5; page++) {
-          const resp = await sdk.ownListings.query({
+          const resp = await isdk.listings.query({
+            authorId: adminId,
             page,
             perPage: 100,
             include: ['images'],

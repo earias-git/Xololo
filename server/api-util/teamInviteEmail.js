@@ -42,18 +42,25 @@ const sendTeamInviteEmail = async ({
   const bodyHtml = `
     <p>Hola,</p>
     <p>
-      <strong>${adminDisplayName || adminEmail || 'Un vendedor de Xololo'}</strong>
-      te invitó a administrar su tienda con el rol <strong>${roleLabel}</strong>
+      <strong>${adminDisplayName || adminEmail || 'Un Negocio de Xololo'}</strong>
+      te invitó a administrar su tienda en línea con el rol <strong>${roleLabel}</strong>
       (${permissionsCount} permiso${permissionsCount === 1 ? '' : 's'} asignado${permissionsCount === 1 ? '' : 's'}).
     </p>
     <p>
-      Al aceptar, podrás entrar a tu panel y elegir operar <em>tu propia cuenta</em>
-      o la tienda a la que te invitaron, con los permisos que el administrador definió.
-      Puedes salir cuando quieras — tu cuenta de Xololo sigue siendo tuya.
+      <strong>¿Aún no tienes cuenta en Xololo?</strong> Crearla es gratuito y toma menos
+      de 2 minutos. Importante: regístrate con <strong>este mismo correo</strong>
+      (<code>${collaboratorEmail}</code>) para que podamos ligar automáticamente la invitación.
+    </p>
+    <p>
+      Al aceptar podrás entrar a Mi panel y elegir, en cualquier momento, si quieres operar
+      <em>tu propia cuenta</em> o la tienda a la que te invitaron — con los permisos que el
+      administrador definió. Puedes salir cuando quieras: tu cuenta de Xololo sigue siendo tuya
+      y los depósitos de las ventas que gestiones se envían a la cuenta del administrador,
+      nunca a la tuya.
     </p>
     <p>Esta invitación caduca en 7 días.</p>
   `;
-  const bodyText = `${adminDisplayName || adminEmail || 'Un vendedor de Xololo'} te invitó a administrar su tienda en Xololo con el rol ${roleLabel}. Caduca en 7 días. Acepta aquí: ${acceptUrl}`;
+  const bodyText = `${adminDisplayName || adminEmail || 'Un Negocio de Xololo'} te invitó a administrar su tienda en línea en Xololo con el rol ${roleLabel}. Si aún no tienes cuenta, créala gratis usando este mismo correo (${collaboratorEmail}). Caduca en 7 días. Acepta aquí: ${acceptUrl}`;
   const cta = { label: 'Aceptar invitación', href: acceptUrl };
 
   if (!apiKey) {

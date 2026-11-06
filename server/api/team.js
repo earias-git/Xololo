@@ -298,6 +298,103 @@ const accept = async (req, res) => {
   return res.json({ collaborator });
 };
 
+// --------------- GET /my-pending-invites ---------------
+//
+// Devuelve las invitaciones (status=invited) donde el currentUser
+// aparece como colaborador. Lee de su propia publicData.xololoWorkspaces,
+// así no requiere un cross-user scan.
+//
+// Útil para mostrar el banner "Tienes N invitaciones pendientes" en el
+// dashboard del user cuando llegó al sitio sin usar el link del email.
+const listMyPendingInvites = async (req, res) => {
+  const sdk = getSdk(req, res);
+  let currentUser;
+  try {
+    const resp = await sdk.currentUser.show();
+    currentUser = resp.data.data;
+  } catch (_e) {
+    return res.status(401).json({ error: 'unauthenticated' });
+  }
+  if (!currentUser) return res.status(401).json({ error: 'unauthenticated' });
+  const ws = currentUser.attributes?.profile?.publicData?.xololoWorkspaces || {};
+  const pending = (ws.workspaces || []).filter(w => w.status === 'invited');
+  return res.json({ pending });
+};
+
+// --------------- POST /accept-pending-invite ---------------
+//
+// Acepta una invitación pendiente sin requerir el token del email.
+// Solo el propio colaborador puede aceptar invitaciones a SU cuenta,
+// así que es seguro: validamos que exista un workspace status=invited
+// en el currentUser que apunte a ese sellerId. Si no existe → 404.
+//
+// Esto permite al user aceptar desde el WorkspaceSwitcher o desde un
+// banner en el dashboard aunque haya perdido el email.
+const acceptPending = async (req, res) => {
+  const { sellerId } = req.body || {};
+  if (!sellerId) return res.status(400).json({ error: 'sellerId_required' });
+
+  const sdk = getSdk(req, res);
+  let currentUser;
+  try {
+    const resp = await sdk.currentUser.show();
+    currentUser = resp.data.data;
+  } catch (_e) {
+    return res.status(401).json({ error: 'unauthenticated' });
+  }
+  if (!currentUser) return res.status(401).json({ error: 'unauthenticated' });
+  const collaboratorId = currentUser.id?.uuid;
+  const userEmail = String(currentUser.attributes?.email || '').toLowerCase();
+
+  const ws = currentUser.attributes?.profile?.publicData?.xololoWorkspaces || {};
+  const match = (ws.workspaces || []).find(
+    w => w.sellerId === sellerId && w.status === 'invited'
+  );
+  if (!match) return res.status(404).json({ error: 'pending_invite_not_found' });
+
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+
+  let collaborator;
+  try {
+    collaborator = await acceptInvite({ isdk, adminId: sellerId, collaboratorId });
+  } catch (e) {
+    if (e.message === 'invite_not_found') return res.status(404).json({ error: 'invite_not_found' });
+    if (e.message === 'invalid_state_for_accept') {
+      return res.status(409).json({ error: 'already_accepted_or_revoked' });
+    }
+    // eslint-disable-next-line no-console
+    console.error('[team.acceptPending] error:', e.message);
+    return res.status(500).json({ error: 'internal' });
+  }
+
+  recordTeamAction({
+    isdk,
+    adminId: sellerId,
+    actor: { userId: collaboratorId, email: userEmail },
+    action: 'team.invite_accepted',
+    target: { collaboratorId, via: 'pending_panel' },
+  });
+
+  (async () => {
+    try {
+      const adminResp = await isdk.users.show({ id: sellerId });
+      const adminEmail = adminResp.data.data?.attributes?.email;
+      await sendTeamAcceptedEmail({
+        adminEmail,
+        collaboratorEmail: userEmail,
+        collaboratorDisplayName:
+          currentUser.attributes?.profile?.displayName || null,
+        dashboardUrl: `${MARKETPLACE_ROOT_URL.replace(/\/$/, '')}/dashboard?section=equipo`,
+      });
+    } catch (_e) {
+      // non-fatal
+    }
+  })();
+
+  return res.json({ collaborator });
+};
+
 // --------------- GET /collaborators ---------------
 
 const listCollaborators = async (req, res) => {
@@ -505,6 +602,8 @@ const meta = async (req, res) => {
 module.exports = {
   invite,
   accept,
+  acceptPending,
+  listMyPendingInvites,
   listCollaborators,
   updatePerms,
   pause,

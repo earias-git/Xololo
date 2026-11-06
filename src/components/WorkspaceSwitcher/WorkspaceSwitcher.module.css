@@ -161,3 +161,88 @@
   font-size: 16px;
   font-weight: 700;
 }
+
+.triggerPending {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+}
+
+.triggerPending:hover {
+  background: #ffedd5;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pendingItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  margin: 2px 0;
+}
+
+.pendingBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.pendingBody strong {
+  display: block;
+  color: #9a3412;
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pendingBody small {
+  display: block;
+  color: #7c2d12;
+  font-size: 11.5px;
+  margin-top: 2px;
+}
+
+.acceptBtn {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #047857;
+  color: #fff;
+  border: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 32px;
+}
+
+.acceptBtn:hover:not(:disabled) {
+  background: #065f46;
+}
+
+.acceptBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pendingError {
+  margin: 6px 10px 2px;
+  font-size: 11.5px;
+  color: #b91c1c;
+}

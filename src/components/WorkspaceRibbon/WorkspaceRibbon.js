@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
 import { apiBaseUrl } from '../../util/api';
@@ -28,6 +28,24 @@ const api = async (path, opts = {}) => {
 const WorkspaceRibbon = () => {
   const currentUser = useSelector(state => state.user?.currentUser);
   const ws = getCurrentWorkspace(currentUser);
+
+  // XOLOLO: el ribbon es position:fixed al top:0. Si no empujamos el
+  // contenido, tapa el topbar. Aplicamos una clase al <body> que suma
+  // un padding-top igual a la altura del ribbon — se limpia al desmontar
+  // o cuando el user sale del workspace.
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const cls = 'xolo-with-workspace-ribbon';
+    if (ws) {
+      document.body.classList.add(cls);
+    } else {
+      document.body.classList.remove(cls);
+    }
+    return () => {
+      document.body.classList.remove(cls);
+    };
+  }, [ws]);
+
   if (!ws) return null;
 
   const roleLabel = ROLE_PRESETS[ws.roleName]?.label || ws.roleName;
@@ -56,6 +74,9 @@ const WorkspaceRibbon = () => {
             Rol {roleLabel} · {permsCount} permiso{permsCount === 1 ? '' : 's'}
           </span>
         </div>
+        <a href="/dashboard" className={css.panelBtn}>
+          Ir al panel →
+        </a>
         <button type="button" className={css.exitBtn} onClick={exitWorkspace}>
           Salir del workspace
         </button>

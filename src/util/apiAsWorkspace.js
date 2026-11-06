@@ -1,4 +1,4 @@
-// XOLOLO Tier Empresarial · E5 — helpers client-side para llamar los
+// XOLOLO Tier Empresarial · E5/E9 — helpers client-side para llamar los
 // endpoints "actuar como" /api/team/as/*.
 //
 // Cuando la UI del colaborador quiere ejecutar una acción (crear
@@ -7,12 +7,29 @@
 // con 403 si el colaborador no tiene permiso.
 //
 // En modo "propio" (currentWorkspace === null), un seller sigue usando
-// los flows nativos de Sharetribe (trustedSdk.ownListings.*,
-// trustedSdk.transactions.*). Estos helpers son para el camino
-// "colaborador operando una tienda".
+// los flows nativos de Sharetribe (sdk.ownListings.*, sdk.transactions.*).
+// Estos helpers son para el camino "colaborador operando una tienda".
+//
+// E9 fase 2: todos los helpers de listings devuelven un response con
+// shape SDK-compatible ({data: {data: X, included: [], meta: {}}}) para
+// que los thunks reutilicen sin transformar — ver server/api/team-as.js.
 
-import { apiBaseUrl } from './api';
+import { apiBaseUrl, typeHandlers } from './api';
+import { transit } from './sdkLoader';
 
+// XOLOLO · E9 helper POST para endpoints "actuar como".
+//
+// Los endpoints custom de /api/team/as/* y /api/manage-listings responden
+// Transit+JSON para preservar los tipos del SDK (Money, UUID, LatLng,
+// BigDecimal). Si se parseara con res.json() plano, las instances se
+// convertirían en plain objects y los helpers del SDK (formatMoney, etc.)
+// crashearían con "Value must be a Money type".
+//
+// El cuerpo de la request se manda como JSON normal — Transit solo es
+// necesario para la respuesta (el body no suele contener Money/UUID).
+//
+// Retorna un objeto {data} para imitar el shape axios-like que usan los
+// reducers (response.data.data, response.data.included, response.data.meta).
 const post = async (path, body) => {
   const res = await fetch(`${apiBaseUrl()}${path}`, {
     method: 'POST',
@@ -20,40 +37,98 @@ const post = async (path, body) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body || {}),
   });
-  const data = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, data };
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    const err = new Error(errData?.error || 'team_as_failed');
+    err.status = res.status;
+    err.data = errData;
+    throw err;
+  }
+  // El server responde application/transit+json; deserializamos a
+  // los tipos reales del SDK. En error el server sigue mandando JSON.
+  const text = await res.text();
+  const parsed = transit.read(text, { typeHandlers });
+  return { data: parsed };
 };
 
-/**
- * Crea un listing bajo la identidad del admin.
- * @param {string} targetSellerId — admin owner.
- * @param {Object} listing — payload tipo { title, description, price,
- *   publicData, metadata, images[], state }.
- */
-export const createListingAs = (targetSellerId, listing) =>
-  post('/api/team/as/listing/create', { targetSellerId, listing });
+// -----------------------------------------------------------
+// Listings — createDraft / publishDraft / update / discardDraft
+// -----------------------------------------------------------
 
 /**
- * Actualiza un listing que pertenece al admin. El server verifica que
+ * Crea un listing draft bajo la identidad del admin.
+ * @param {string} targetSellerId — admin owner.
+ * @param {Object} listing — payload del wizard (title, description,
+ *   price, publicData, metadata, images[]).
+ * @param {Object} queryParams — include/fields para rehidratar response.
+ */
+export const createDraftAs = (targetSellerId, listing, queryParams) =>
+  post('/api/team/as/listing/create-draft', { targetSellerId, listing, queryParams });
+
+/**
+ * Publica un listing que estaba en draft.
+ */
+export const publishDraftAs = (targetSellerId, listingId, queryParams) =>
+  post('/api/team/as/listing/publish-draft', { targetSellerId, listingId, queryParams });
+
+/**
+ * Actualiza un listing existente del admin. El server verifica que
  * authorId === targetSellerId antes de escribir.
  */
-export const updateListingAs = (targetSellerId, listingId, patch) =>
-  post('/api/team/as/listing/update', { targetSellerId, listingId, patch });
-
-export const closeListingAs = (targetSellerId, listingId) =>
-  post('/api/team/as/listing/close', { targetSellerId, listingId });
-
-export const openListingAs = (targetSellerId, listingId) =>
-  post('/api/team/as/listing/open', { targetSellerId, listingId });
+export const updateListingAs = (targetSellerId, listingId, patch, queryParams) =>
+  post('/api/team/as/listing/update', { targetSellerId, listingId, patch, queryParams });
 
 /**
- * Dispara una transition en una transacción del admin.
+ * Descarta (close) un listing draft que estaba en edición.
  */
+export const discardDraftAs = (targetSellerId, listingId) =>
+  post('/api/team/as/listing/discard-draft', { targetSellerId, listingId });
+
+/**
+ * Cierra un listing publicado.
+ */
+export const closeListingAs = (targetSellerId, listingId, queryParams) =>
+  post('/api/team/as/listing/close', { targetSellerId, listingId, queryParams });
+
+/**
+ * Re-abre un listing cerrado.
+ */
+export const openListingAs = (targetSellerId, listingId, queryParams) =>
+  post('/api/team/as/listing/open', { targetSellerId, listingId, queryParams });
+
+/**
+ * Actualiza el stock de un listing del admin (equivalente a
+ * sdk.stock.compareAndSet).
+ */
+export const updateStockAs = (targetSellerId, listingId, oldTotal, newTotal) =>
+  post('/api/team/as/listing/update-stock', {
+    targetSellerId,
+    listingId,
+    oldTotal,
+    newTotal,
+  });
+
+// -----------------------------------------------------------
+// Legacy alias — createListing directo (no draft). Mantenido para
+// backward compat; el wizard usa createDraftAs + publishDraftAs.
+// -----------------------------------------------------------
+
+export const createListingAs = (targetSellerId, listing, queryParams) =>
+  post('/api/team/as/listing/create', { targetSellerId, listing, queryParams });
+
+// -----------------------------------------------------------
+// Transactions
+// -----------------------------------------------------------
+
 export const transitionTxAs = (targetSellerId, txId, transition, params) =>
   post('/api/team/as/tx/transition', { targetSellerId, txId, transition, params });
 
 export const sendTxMessageAs = (targetSellerId, txId, content) =>
   post('/api/team/as/tx/message', { targetSellerId, txId, content });
+
+// -----------------------------------------------------------
+// Store settings
+// -----------------------------------------------------------
 
 /**
  * Actualiza publicData / profile top-level (displayName, firstName,

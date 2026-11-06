@@ -1,4 +1,4 @@
-// XOLOLO Tier Empresarial · E5 — wrappers "actuar como" el admin.
+// XOLOLO Tier Empresarial · E5/E9 — wrappers "actuar como" el admin.
 //
 // Cada endpoint:
 //   1. Pasa por requirePermission(key) → verifica que el currentUser
@@ -7,10 +7,13 @@
 //   2. Usa Integration SDK para ejecutar la mutación bajo la identidad
 //      del admin (authorId / userId del admin, NO del colaborador).
 //   3. Llama recordTeamAction en el audit log del admin.
+//   4. Devuelve response con shape SDK-compatible
+//      ({data: {data: ..., included: [], meta: {}}}) para que los
+//      thunks client reutilicen sin transformar.
 //
-// Esto evita que el colaborador afecte sus propias listings/transacciones
-// cuando está "operando como" la tienda del admin, y mantiene al admin
-// como responsable server-side.
+// E9 fase 2 (2026-11-05): ampliado para cubrir el ciclo completo del
+// EditListingPage wizard: createDraft, publishDraft, discardDraft,
+// updateStock, además de create/update/close/open originales.
 //
 // Nota operativa: todos estos endpoints requieren Integration SDK
 // configurado (SHARETRIBE_INTEGRATION_CLIENT_ID/SECRET). Sin ellos
@@ -18,6 +21,7 @@
 
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { recordTeamAction } = require('../api-util/teamStore');
+const { sendTransit } = require('../api-util/transitResponse');
 
 const auditOk = (req, action, target, result) => {
   const isdk = getIntegrationSdk();
@@ -36,32 +40,129 @@ const auditOk = (req, action, target, result) => {
   });
 };
 
+// Normaliza queryParams del body a un objeto plano. Acepta include[],
+// fields.listing, fields.image, fields.user, y las claves de image
+// variants que CRA/Sharetribe generan dinámicamente (ej "imageVariant.x").
+const sanitizeQueryParams = raw => {
+  if (!raw || typeof raw !== 'object') return {};
+  const out = {};
+  for (const [k, v] of Object.entries(raw)) {
+    // Permitimos cualquier clave que empiece con "fields." o "limit." o
+    // sea "include" o "imageVariant.". Rechazamos keys desconocidas por
+    // precaución.
+    if (
+      k === 'include' ||
+      k === 'expand' ||
+      k.startsWith('fields.') ||
+      k.startsWith('limit.') ||
+      k.startsWith('imageVariant.')
+    ) {
+      out[k] = v;
+    }
+  }
+  return out;
+};
+
+// Re-fetch del listing con los includes/fields del wizard para que la
+// respuesta tenga el shape SDK completo que el frontend espera (author,
+// images, currentStock, etc.). isdk.listings.show devuelve
+// { data: {data: listing, included: [...], meta: {}} } directamente —
+// envolvemos en {data: ...} para imitar axios-like response del SDK
+// que el payload creator del thunk espera.
+//
+// XOLOLO E9 fase 2: los reducers del wizard (EditListingPage,
+// ManageListingsPage) guardan listings en la slice "ownListing" y
+// no en "listing". Integration SDK marca los recursos como type:'listing'
+// — reescribimos a 'ownListing' para que el flow nativo encuentre el
+// resource en el store de Redux.
+const toOwnListingType = r => (r && r.type === 'listing' ? { ...r, type: 'ownListing' } : r);
+
+// Devuelve el payload interno {data, included, meta} — el caller lo
+// envía via sendTransit. En el cliente, el shape final equivalente al
+// del SDK (`response.data.data`) viene de que fetch wrappea el body
+// transit-deserializado como `.data`.
+const rehydrateAsSdk = async (isdk, listingId, queryParams) => {
+  const resp = await isdk.listings.show({
+    id: listingId,
+    ...sanitizeQueryParams(queryParams),
+  });
+  return {
+    data: toOwnListingType(resp.data.data),
+    included: (resp.data.included || []).map(toOwnListingType),
+    meta: resp.data.meta || {},
+  };
+};
+
+// Guard: verifica que el listing pertenezca al admin del workspace.
+// Devuelve null si OK, o un error-response para enviar al cliente.
+const ensureListingBelongsToAdmin = async (isdk, listingId, adminId) => {
+  const current = await isdk.listings.show({ id: listingId, include: ['author'] });
+  const authorId = current.data.data?.relationships?.author?.data?.id?.uuid;
+  if (authorId !== adminId) {
+    return { status: 403, body: { error: 'listing_not_in_workspace' } };
+  }
+  return null;
+};
+
 // ============================================================
-// Listings
+// Listings — create / createDraft
 // ============================================================
 
-const createListing = async (req, res) => {
+// Crea un listing en estado draft (análogo a sdk.ownListings.createDraft).
+// authorId forzado al admin del workspace.
+const createDraft = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   const isdk = getIntegrationSdk();
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
-  const { targetSellerId, listing } = req.body || {};
+  const { listing, queryParams } = req.body || {};
   if (!listing || typeof listing !== 'object') {
     return res.status(400).json({ error: 'listing_body_required' });
   }
   try {
-    // authorId del admin — crítico. Si el caller lo pasa en el body,
-    // lo IGNORAMOS y forzamos targetSellerId (único source of truth).
+    // state 'draft' explícito — el admin publicará en un paso separado.
+    const resp = await isdk.listings.create({
+      ...listing,
+      authorId: req.actingAs.adminId,
+      state: 'draft',
+    });
+    const created = resp.data.data;
+    const listingId = created.id.uuid;
+    auditOk(req, 'listing.create_draft', {
+      listingId,
+      title: created?.attributes?.title,
+    });
+    // Rehidratamos con los includes del wizard.
+    const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
+    return sendTransit(res, sdkLike);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[team-as.createDraft] error:', e?.message || e);
+    auditOk(req, 'listing.create_draft', { error: e?.message }, 'failed');
+    return res.status(500).json({ error: 'internal', detail: e?.message });
+  }
+};
+
+// Legacy alias: createListing crea directo en 'published'. Lo mantenemos
+// por backward compat; el flujo del wizard usa createDraft + publishDraft.
+const createListing = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+  const { listing, queryParams } = req.body || {};
+  if (!listing || typeof listing !== 'object') {
+    return res.status(400).json({ error: 'listing_body_required' });
+  }
+  try {
     const resp = await isdk.listings.create({
       ...listing,
       authorId: req.actingAs.adminId,
     });
     const created = resp.data.data;
-    auditOk(req, 'listing.create', {
-      listingId: created?.id?.uuid,
-      title: created?.attributes?.title,
-    });
-    return res.json({ listing: created });
+    const listingId = created.id.uuid;
+    auditOk(req, 'listing.create', { listingId, title: created?.attributes?.title });
+    const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
+    return sendTransit(res, sdkLike);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[team-as.createListing] error:', e?.message || e);
@@ -70,29 +171,29 @@ const createListing = async (req, res) => {
   }
 };
 
+// ============================================================
+// Listings — update / publishDraft / discardDraft / close / open
+// ============================================================
+
 const updateListing = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   const isdk = getIntegrationSdk();
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
-  const { listingId, patch } = req.body || {};
+  const { listingId, patch, queryParams } = req.body || {};
   if (!listingId) return res.status(400).json({ error: 'listingId_required' });
   if (!patch || typeof patch !== 'object') {
     return res.status(400).json({ error: 'patch_required' });
   }
 
-  // Guard crítico: antes de escribir, verificar que el listing pertenece
-  // al admin del workspace. Un colaborador NO puede modificar listings
-  // de otro seller.
   try {
-    const current = await isdk.listings.show({ id: listingId, include: ['author'] });
-    const authorId = current.data.data?.relationships?.author?.data?.id?.uuid;
-    if (authorId !== req.actingAs.adminId) {
-      return res.status(403).json({ error: 'listing_not_in_workspace' });
-    }
-    const resp = await isdk.listings.update({ id: listingId, ...patch });
+    const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
+    if (guard) return res.status(guard.status).json(guard.body);
+
+    await isdk.listings.update({ id: listingId, ...patch });
     auditOk(req, 'listing.edit', { listingId });
-    return res.json({ listing: resp.data.data });
+    const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
+    return sendTransit(res, sdkLike);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[team-as.updateListing] error:', e?.message || e);
@@ -101,21 +202,74 @@ const updateListing = async (req, res) => {
   }
 };
 
+const publishDraft = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+
+  const { listingId, queryParams } = req.body || {};
+  if (!listingId) return res.status(400).json({ error: 'listingId_required' });
+
+  try {
+    const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
+    if (guard) return res.status(guard.status).json(guard.body);
+
+    // Integration SDK: publish mueve el state draft → pendingApproval o
+    // published según la política del marketplace.
+    await isdk.listings.approve({ id: listingId }).catch(async () => {
+      // Si approve falla (no moderado), probamos con update state.
+      await isdk.listings.update({ id: listingId, state: 'published' });
+    });
+    auditOk(req, 'listing.publish', { listingId });
+    const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
+    return sendTransit(res, sdkLike);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[team-as.publishDraft] error:', e?.message || e);
+    auditOk(req, 'listing.publish', { listingId, error: e?.message }, 'failed');
+    return res.status(500).json({ error: 'internal', detail: e?.message });
+  }
+};
+
+const discardDraft = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+
+  const { listingId } = req.body || {};
+  if (!listingId) return res.status(400).json({ error: 'listingId_required' });
+
+  try {
+    const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
+    if (guard) return res.status(guard.status).json(guard.body);
+
+    // Integration SDK no expone discardDraft explícito; cerramos el
+    // listing (close deja un listing en estado "closed" que ya no es
+    // visible). Es el equivalente operacional al discard del wizard.
+    const resp = await isdk.listings.close({ id: listingId });
+    auditOk(req, 'listing.discard_draft', { listingId });
+    return sendTransit(res, { data: toOwnListingType(resp.data.data), included: [], meta: {} });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[team-as.discardDraft] error:', e?.message || e);
+    auditOk(req, 'listing.discard_draft', { listingId, error: e?.message }, 'failed');
+    return res.status(500).json({ error: 'internal', detail: e?.message });
+  }
+};
+
 const closeListing = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   const isdk = getIntegrationSdk();
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
-  const { listingId } = req.body || {};
+  const { listingId, queryParams } = req.body || {};
   if (!listingId) return res.status(400).json({ error: 'listingId_required' });
   try {
-    const current = await isdk.listings.show({ id: listingId, include: ['author'] });
-    const authorId = current.data.data?.relationships?.author?.data?.id?.uuid;
-    if (authorId !== req.actingAs.adminId) {
-      return res.status(403).json({ error: 'listing_not_in_workspace' });
-    }
-    const resp = await isdk.listings.close({ id: listingId });
+    const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
+    if (guard) return res.status(guard.status).json(guard.body);
+    await isdk.listings.close({ id: listingId });
     auditOk(req, 'listing.close', { listingId });
-    return res.json({ listing: resp.data.data });
+    const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
+    return sendTransit(res, sdkLike);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[team-as.closeListing] error:', e?.message || e);
@@ -127,20 +281,51 @@ const openListing = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   const isdk = getIntegrationSdk();
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
-  const { listingId } = req.body || {};
+  const { listingId, queryParams } = req.body || {};
   if (!listingId) return res.status(400).json({ error: 'listingId_required' });
   try {
-    const current = await isdk.listings.show({ id: listingId, include: ['author'] });
-    const authorId = current.data.data?.relationships?.author?.data?.id?.uuid;
-    if (authorId !== req.actingAs.adminId) {
-      return res.status(403).json({ error: 'listing_not_in_workspace' });
-    }
-    const resp = await isdk.listings.open({ id: listingId });
+    const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
+    if (guard) return res.status(guard.status).json(guard.body);
+    await isdk.listings.open({ id: listingId });
     auditOk(req, 'listing.open', { listingId });
-    return res.json({ listing: resp.data.data });
+    const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
+    return sendTransit(res, sdkLike);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[team-as.openListing] error:', e?.message || e);
+    return res.status(500).json({ error: 'internal', detail: e?.message });
+  }
+};
+
+// ============================================================
+// Stock (compareAndSet)
+// ============================================================
+
+// El wizard llama sdk.stock.compareAndSet({listingId, oldTotal, newTotal})
+// para actualizar el stock de un listing. Lo replicamos como admin.
+const updateStock = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+
+  const { listingId, oldTotal, newTotal } = req.body || {};
+  if (!listingId) return res.status(400).json({ error: 'listingId_required' });
+  if (typeof newTotal !== 'number') return res.status(400).json({ error: 'newTotal_required' });
+
+  try {
+    const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
+    if (guard) return res.status(guard.status).json(guard.body);
+    const resp = await isdk.stock.compareAndSet({
+      listingId,
+      oldTotal: oldTotal == null ? null : oldTotal,
+      newTotal,
+    });
+    auditOk(req, 'listing.stock_update', { listingId, newTotal });
+    return sendTransit(res, { data: resp.data.data, included: [], meta: {} });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[team-as.updateStock] error:', e?.message || e);
+    auditOk(req, 'listing.stock_update', { listingId, error: e?.message }, 'failed');
     return res.status(500).json({ error: 'internal', detail: e?.message });
   }
 };
@@ -159,7 +344,6 @@ const transitionTx = async (req, res) => {
     return res.status(400).json({ error: 'txId_and_transition_required' });
   }
 
-  // Guard: la tx debe pertenecer al admin del workspace (como provider).
   try {
     const current = await isdk.transactions.show({
       id: txId,
@@ -202,9 +386,6 @@ const sendTxMessage = async (req, res) => {
       return res.status(403).json({ error: 'tx_not_in_workspace' });
     }
 
-    // Integration SDK envía el mensaje bajo la identidad del admin.
-    // El buyer verá "Mensaje de <admin>" aunque internamente lo haya
-    // tipeado un colaborador — por eso el audit es crítico.
     const resp = await isdk.messages.send({
       transactionId: txId,
       content: content.trim(),
@@ -235,9 +416,6 @@ const updateStoreSettings = async (req, res) => {
     return res.status(400).json({ error: 'nothing_to_update' });
   }
 
-  // Blacklist de keys que no queremos que un colaborador manipule aunque
-  // tenga 'store.settings'. Son campos que afectan payouts, suspension
-  // state o relación de equipo — gobernados por OPS o Admin propio.
   const BLOCKED_PUBLIC_KEYS = new Set([
     'xololoVerified',
     'xololoVerifiedAt',
@@ -250,9 +428,6 @@ const updateStoreSettings = async (req, res) => {
         Object.entries(publicData).filter(([k]) => !BLOCKED_PUBLIC_KEYS.has(k))
       )
     : null;
-  // Metadata y protectedData no se exponen al cliente — por seguridad,
-  // sólo aceptamos cambios a publicData y a profile top-level (firstName/
-  // lastName/displayName). protectedData se ignora via workspace.
   const safeProfile = profile
     ? {
         displayName: profile.displayName,
@@ -268,8 +443,6 @@ const updateStoreSettings = async (req, res) => {
       payload.publicData = cleanPublic;
     }
     if (safeProfile) {
-      // profile.* se mapea directamente al nivel top: Sharetribe
-      // Integration SDK acepta displayName, firstName, lastName, bio.
       if (safeProfile.displayName) payload.displayName = safeProfile.displayName;
       if (safeProfile.firstName) payload.firstName = safeProfile.firstName;
       if (safeProfile.lastName) payload.lastName = safeProfile.lastName;
@@ -292,9 +465,13 @@ const updateStoreSettings = async (req, res) => {
 
 module.exports = {
   createListing,
+  createDraft,
   updateListing,
+  publishDraft,
+  discardDraft,
   closeListing,
   openListing,
+  updateStock,
   transitionTx,
   sendTxMessage,
   updateStoreSettings,

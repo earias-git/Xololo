@@ -36,6 +36,8 @@ const txFlow = require('./api/tx-flow');
 const freight = require('./api/freight');
 const geoIp = require('./api/geo-ip');
 const sellerPromoListings = require('./api/seller-promo-listings');
+const manageListings = require('./api/manage-listings');
+const inboxTransactions = require('./api/inbox-transactions');
 const metaFeed = require('./api/meta-feed');
 const metaFeedInfo = require('./api/meta-feed-info');
 const generateShippingGuide = require('./api/generate-shipping-guide');
@@ -57,7 +59,11 @@ const opsAuditLog = require('./api/ops-audit-log');
 const team = require('./api/team');
 const teamAs = require('./api/team-as');
 const teamSeats = require('./api/team-seats');
-const { requirePermission, requireAnyWorkspace } = require('./api-util/teamAuth');
+const {
+  requirePermission,
+  requireAnyWorkspace,
+  requireSellerContext,
+} = require('./api-util/teamAuth');
 const adminPayoutQueue = require('./api/admin-payout-queue');
 const adminLegalModeration = require('./api/admin-legal-moderation');
 const adminBackfillVerified = require('./api/admin-backfill-verified');
@@ -195,7 +201,25 @@ router.get('/geo-ip', geoIp);
 
 // XOLOLO Promote: lista de listings del seller para el Dashboard >
 // Promote. Devuelve id, título, imagen, precio, viewCount por listing.
-router.get('/seller-promo-listings', sellerPromoListings);
+router.get('/seller-promo-listings', requireSellerContext('promote'), sellerPromoListings);
+
+// XOLOLO · E9 fase 2: lista de anuncios del admin ("Tus anuncios")
+// — usado por ManageListingsPage cuando opera un colaborador con
+// listings.edit. En modo propio no se consume (SDK normal basta).
+router.post(
+  '/manage-listings',
+  bodyParser.json(),
+  requireSellerContext('listings.edit'),
+  manageListings
+);
+
+// XOLOLO · E9 fase 3: inbox del admin para colaboradores con orders.view.
+router.post(
+  '/inbox-transactions',
+  bodyParser.json(),
+  requireSellerContext('orders.view'),
+  inboxTransactions
+);
 
 // XOLOLO Promote · Feed CSV público para Meta Commerce Manager +
 // endpoint autenticado que devuelve la URL del feed al seller.
@@ -331,6 +355,14 @@ router.post(
   team.invite
 );
 router.post('/team/accept-invite', limits.generic, bodyParser.json(), team.accept);
+// XOLOLO: aceptar sin token del email (user ya ve el invite en su panel).
+router.post(
+  '/team/accept-pending-invite',
+  limits.generic,
+  bodyParser.json(),
+  team.acceptPending
+);
+router.get('/team/my-pending-invites', limits.generic, team.listMyPendingInvites);
 router.get(
   '/team/collaborators',
   limits.generic,
@@ -403,6 +435,35 @@ router.post(
   bodyParser.json(),
   requirePermission('listings.edit'),
   teamAs.openListing
+);
+// XOLOLO · E9 fase 2: endpoints adicionales del wizard EditListingPage.
+router.post(
+  '/team/as/listing/create-draft',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.create'),
+  teamAs.createDraft
+);
+router.post(
+  '/team/as/listing/publish-draft',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.create'),
+  teamAs.publishDraft
+);
+router.post(
+  '/team/as/listing/discard-draft',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.delete'),
+  teamAs.discardDraft
+);
+router.post(
+  '/team/as/listing/update-stock',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.edit'),
+  teamAs.updateStock
 );
 router.post(
   '/team/as/tx/transition',
@@ -659,19 +720,33 @@ router.get('/postal-code', postalCode);
 
 // XOLOLO F3: analytics de ventas para el dashboard del seller.
 // Auth: user logueado. Devuelve las tx del provider en rango [from, to].
-router.get('/seller-analytics', sellerAnalytics);
+router.get('/seller-analytics', requireSellerContext('finance'), sellerAnalytics);
 
 // XOLOLO F3 Sprint 3: insights de catálogo (top-sales + alertas).
-// Auth: user logueado.
-router.get('/seller-catalog-insights', sellerCatalogInsights);
+// XOLOLO · E9: scoped al sellerId resuelto por requireSellerContext
+// (self para admin, workspace activo para colaborador con listings.edit).
+router.get(
+  '/seller-catalog-insights',
+  requireSellerContext('listings.edit'),
+  sellerCatalogInsights
+);
 
 // XOLOLO F3 Sprint 6: export CSV de ventas del seller.
 // Auth: user logueado. Devuelve text/csv attachment (UTF-8 BOM).
-router.get('/seller-analytics/export', sellerAnalyticsExport);
+router.get(
+  '/seller-analytics/export',
+  requireSellerContext('finance'),
+  sellerAnalyticsExport
+);
 
 // XOLOLO F3 Sprint 6B: dispara el email de reporte mensual al user
 // logueado (default: mes anterior). Sirve como preview del cron.
-router.post('/seller-monthly-report-preview', bodyParser.json(), sellerMonthlyReportPreview);
+router.post(
+  '/seller-monthly-report-preview',
+  bodyParser.json(),
+  requireSellerContext('finance'),
+  sellerMonthlyReportPreview
+);
 
 // XOLOLO F3 Fase 3: endpoints admin gated por XOLOLO_ADMIN_EMAILS.
 // GET /api/admin/health           → métricas globales del marketplace

@@ -3,8 +3,39 @@ import { storableError } from '../../util/errors';
 import { parse, getValidInboxSort } from '../../util/urlHelpers';
 import { getSupportedProcessesInfo } from '../../transactions/transaction';
 import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
+import { apiBaseUrl, typeHandlers } from '../../util/api';
+import { transit } from '../../util/sdkLoader';
+import { getCurrentWorkspace } from '../../util/xololoTeam';
 
 const INBOX_PAGE_SIZE = 10;
+
+// XOLOLO · E9 fase 3: cuando el colaborador opera como el Negocio, el
+// inbox se carga via /api/inbox-transactions (scoped al admin por
+// requireSellerContext). El tab "sales" filtra por providerId del admin;
+// "orders" por customerId del admin. Response shape igual al del SDK.
+const fetchInboxAsWorkspace = async (tab, apiQueryParams) => {
+  const role = tab === 'sales' ? 'provider' : 'customer';
+  // El server ya aplica providerId/customerId del admin — removemos del
+  // body cualquier filtro conflictivo. El 'only' tampoco se envía porque
+  // Integration SDK no lo soporta de la misma forma.
+  const { only: _only, ...safeParams } = apiQueryParams;
+  const res = await fetch(`${apiBaseUrl()}/api/inbox-transactions`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role, ...safeParams }),
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    const err = new Error(errData?.error || 'inbox_fetch_failed');
+    err.status = res.status;
+    throw err;
+  }
+  // transit+json → instancias reales del SDK (Money, UUID, etc).
+  const text = await res.text();
+  const parsed = transit.read(text, { typeHandlers });
+  return { data: parsed };
+};
 
 // ================ Helper functions ================ //
 
@@ -49,7 +80,10 @@ export default inboxPageSlice.reducer;
 
 // ================ Load data ================ //
 
-const loadDataPayloadCreator = ({ params, search }, { dispatch, rejectWithValue, extra: sdk }) => {
+const loadDataPayloadCreator = (
+  { params, search },
+  { dispatch, getState, rejectWithValue, extra: sdk }
+) => {
   const { tab } = params;
 
   const onlyFilterValues = {
@@ -99,8 +133,16 @@ const loadDataPayloadCreator = ({ params, search }, { dispatch, rejectWithValue,
     ...getValidInboxSort(sort),
   };
 
-  return sdk.transactions
-    .query(apiQueryParams)
+  // XOLOLO · E9 fase 3: cuando el user opera como colaborador del
+  // Negocio, el inbox se carga via /api/inbox-transactions con el
+  // adminId resuelto por requireSellerContext. En modo propio seguimos
+  // usando el SDK directo del user logueado.
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const fetchPromise = workspace
+    ? fetchInboxAsWorkspace(tab, apiQueryParams)
+    : sdk.transactions.query(apiQueryParams);
+
+  return fetchPromise
     .then(response => {
       dispatch(addMarketplaceEntities(response));
       return response;

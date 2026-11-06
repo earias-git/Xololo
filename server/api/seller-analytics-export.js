@@ -18,7 +18,7 @@
 //   envio_mxn, comision_xololo_mxn, neto_seller_mxn, estado,
 //   tracking, source
 
-const { getSdk } = require('../api-util/sdk');
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { readLineItemQty } = require('../api-util/lineItemMoney');
 
 const MAX_PAGES = 5;
@@ -80,44 +80,30 @@ const humanState = (state, lastTransition) => {
 
 // -------------- fetch --------------
 
-const fetchAllSales = async (sdk, fromDate, toDate) => {
+const fetchAllSales = async (isdk, adminId, fromDate, toDate) => {
   const all = [];
   let included = [];
   for (let page = 1; page <= MAX_PAGES; page++) {
-    let resp;
-    try {
-      resp = await sdk.transactions.query({
-        only: 'sale',
-        page,
-        perPage: PER_PAGE,
-        include: ['listing', 'customer'],
-        'fields.transaction': [
-          'createdAt',
-          'lastTransitionedAt',
-          'state',
-          'lastTransition',
-          'payinTotal',
-          'payoutTotal',
-          'lineItems',
-          'transitions',
-          'metadata',
-          'protectedData',
-        ],
-        'fields.listing': ['title'],
-        'fields.user': ['profile.displayName'],
-      });
-    } catch (e) {
-      if (e.status === 400) {
-        // Reintentar sin `only:sale`.
-        resp = await sdk.transactions.query({
-          page,
-          perPage: PER_PAGE,
-          include: ['listing', 'customer'],
-        });
-      } else {
-        throw e;
-      }
-    }
+    const resp = await isdk.transactions.query({
+      providerId: adminId,
+      page,
+      perPage: PER_PAGE,
+      include: ['listing', 'customer'],
+      'fields.transaction': [
+        'createdAt',
+        'lastTransitionedAt',
+        'state',
+        'lastTransition',
+        'payinTotal',
+        'payoutTotal',
+        'lineItems',
+        'transitions',
+        'metadata',
+        'protectedData',
+      ],
+      'fields.listing': ['title'],
+      'fields.user': ['profile.displayName'],
+    });
     const data = resp.data.data || [];
     included = included.concat(resp.data.included || []);
     for (const tx of data) {
@@ -150,15 +136,13 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'invalid_request', details: 'rango inválido.' });
     }
 
-    const sdk = getSdk(req, res);
+    // XOLOLO · E9: adminId resuelto por requireSellerContext. Integration
+    // SDK query de transactions con providerId = adminId.
+    const adminId = req.actingAs.adminId;
+    const isdk = getIntegrationSdk();
+    if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
-    try {
-      await sdk.currentUser.show();
-    } catch (e) {
-      return res.status(401).json({ error: 'unauthorized' });
-    }
-
-    const { txs, included } = await fetchAllSales(sdk, fromDate, toDate);
+    const { txs, included } = await fetchAllSales(isdk, adminId, fromDate, toDate);
 
     // Index included por tipo+id.
     const listings = new Map();

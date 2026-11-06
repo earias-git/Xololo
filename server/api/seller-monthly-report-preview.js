@@ -12,21 +12,15 @@
 // Ayuda al seller a validar cómo se ve el email sin esperar al día 1
 // del siguiente mes. También sirve para debugging del template.
 
-const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { sendEventNotifications } = require('../api-util/notifications');
 const { buildMonthlyReportForSeller } = require('../api-util/monthlyReport');
 
 module.exports = async (req, res) => {
   try {
-    const sdk = getSdk(req, res);
-    let userId;
-    try {
-      const u = await sdk.currentUser.show();
-      userId = u.data.data.id.uuid;
-    } catch (e) {
-      return res.status(401).json({ error: 'unauthorized' });
-    }
+    // XOLOLO · E9: userId es el adminId resuelto por requireSellerContext
+    // (self para admin, workspace activo para colaborador con 'finance').
+    const userId = req.actingAs.adminId;
 
     const isdk = getIntegrationSdk();
     if (!isdk) {

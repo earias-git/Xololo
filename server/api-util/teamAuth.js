@@ -164,9 +164,78 @@ const requireAnyWorkspace = async (req, res, next) => {
   return next();
 };
 
+/**
+ * XOLOLO · E9 — helper para endpoints de LECTURA (/api/seller-*).
+ *
+ * Diferencia con requirePermission:
+ *   - Si NO hay targetSellerId (ni en query/body/header/currentWorkspace),
+ *     usa el currentUser como adminId. "Modo propio" = seller leyendo su
+ *     propia data.
+ *   - Si SÍ hay target y el currentUser != adminId, verifica workspace
+ *     activo con el `permissionKey` correspondiente.
+ *
+ * Esto evita exigir que los endpoints de analytics/catalog/promo tengan
+ * targetSellerId en la query cuando el user es el dueño de la tienda.
+ *
+ * Attacha req.actingAs = { adminId, actorUserId, actorEmail, actorName,
+ * workspace, isAdmin } igual que los otros middlewares.
+ */
+const requireSellerContext = permissionKey => async (req, res, next) => {
+  const sdk = getSdk(req, res);
+  let currentUser;
+  try {
+    const resp = await sdk.currentUser.show({
+      'fields.user': ['profile.publicData'],
+    });
+    currentUser = resp.data.data;
+  } catch (_e) {
+    return res.status(401).json({ error: 'unauthenticated' });
+  }
+  if (!currentUser) return res.status(401).json({ error: 'unauthenticated' });
+
+  const currentUserId = currentUser.id?.uuid;
+  const requested = resolveTargetSellerId(req, currentUser);
+  // Fallback: si no se pide explícitamente otro seller, asumimos self.
+  const targetSellerId = requested || currentUserId;
+
+  // Admin de su propia tienda → pasa.
+  if (currentUserId === targetSellerId) {
+    req.actingAs = {
+      adminId: targetSellerId,
+      actorUserId: currentUserId,
+      actorEmail: currentUser.attributes?.email || null,
+      actorName: currentUser.attributes?.profile?.displayName || null,
+      workspace: null,
+      isAdmin: true,
+    };
+    return next();
+  }
+
+  // Colaborador — exige workspace activo + permiso (si viene permissionKey).
+  const ws = findActiveWorkspace(currentUser, targetSellerId);
+  if (!ws) return res.status(403).json({ error: 'not_a_collaborator' });
+  if (
+    permissionKey &&
+    (!Array.isArray(ws.permissions) || !ws.permissions.includes(permissionKey))
+  ) {
+    return res.status(403).json({ error: 'permission_denied', missing: permissionKey });
+  }
+
+  req.actingAs = {
+    adminId: targetSellerId,
+    actorUserId: currentUserId,
+    actorEmail: currentUser.attributes?.email || null,
+    actorName: currentUser.attributes?.profile?.displayName || null,
+    workspace: ws,
+    isAdmin: false,
+  };
+  return next();
+};
+
 module.exports = {
   requirePermission,
   requireAnyWorkspace,
+  requireSellerContext,
   resolveTargetSellerId,
   findActiveWorkspace,
   WORKSPACE_HEADER,

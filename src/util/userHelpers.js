@@ -214,6 +214,22 @@ const getCurrentUserTypeConfig = (config, currentUser) => {
  * @returns {Boolean} true if the currentUser's user type, or the anonymous user configuration, is set to see the link
  */
 export const showCreateListingLinkForUser = (config, currentUser) => {
+  // XOLOLO · E9 fase 2: cuando opera como colaborador con permiso
+  // listings.edit (o create), mostramos el link "Tus anuncios" /
+  // "Publicar anuncio" para que llegue a ManageListingsPage.
+  // ManageListingsPage ya lista los anuncios del Negocio via el
+  // endpoint /api/manage-listings. El flujo de CREAR/EDITAR dentro del
+  // wizard EditListingPage todavía usa sdk.ownListings — ahí se mostrará
+  // un banner de "función en desarrollo" (task #69).
+  const ws = currentUser?.attributes?.profile?.publicData?.xololoWorkspaces;
+  const currentWorkspace = ws?.currentWorkspace
+    ? (ws.workspaces || []).find(w => w.sellerId === ws.currentWorkspace && w.status === 'active')
+    : null;
+  if (currentWorkspace) {
+    const perms = currentWorkspace.permissions || [];
+    return perms.includes('listings.create') || perms.includes('listings.edit');
+  }
+
   const { topbar } = config;
   const currentUserTypeConfig = getCurrentUserTypeConfig(config, currentUser);
 

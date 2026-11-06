@@ -4,8 +4,41 @@ import { storableError } from '../../util/errors';
 import { createImageVariantConfig } from '../../util/sdkLoader';
 import { parse } from '../../util/urlHelpers';
 import { getReferralParams } from '../../util/webStorageHelpers';
+import { apiBaseUrl, typeHandlers } from '../../util/api';
+import { transit } from '../../util/sdkLoader';
+import { getCurrentWorkspace } from '../../util/xololoTeam';
+import { closeListingAs, openListingAs, discardDraftAs } from '../../util/apiAsWorkspace';
 
 import { fetchCurrentUser } from '../../ducks/user.duck';
+
+// XOLOLO · E9 fase 2: cuando el colaborador opera como el Negocio,
+// las listas del wizard "Tus anuncios" vienen del endpoint custom
+// /api/manage-listings (scoped al admin por requireSellerContext) en
+// lugar de sdk.ownListings.query (que es del user logueado).
+//
+// El shape de respuesta imita al del SDK para que el resto del flow
+// (addOwnEntities, denormalisedEntities) funcione sin modificar.
+const fetchListingsAsWorkspace = async queryParams => {
+  const res = await fetch(`${apiBaseUrl()}/api/manage-listings`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(queryParams),
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    const err = new Error(errData?.error || 'manage_listings_failed');
+    err.status = res.status;
+    throw err;
+  }
+  // El server responde application/transit+json — deserializamos a las
+  // instancias del SDK (Money, UUID, LatLng, BigDecimal) para que los
+  // reducers y helpers del wizard funcionen igual que con el SDK nativo.
+  const text = await res.text();
+  const parsed = transit.read(text, { typeHandlers });
+  // Shape axios-like: {data: {data, included, meta}}.
+  return { data: parsed };
+};
 
 // Pagination page size might need to be dynamic on responsive page layouts
 // Current design has max 3 columns 42 is divisible by 2 and 3
@@ -35,12 +68,23 @@ export const getOwnListingsById = (state, listingIds) => {
 ////////////////////////
 // Query Own Listings //
 ////////////////////////
-const queryOwnListingsPayloadCreator = (queryParams, { extra: sdk, dispatch, rejectWithValue }) => {
+const queryOwnListingsPayloadCreator = (
+  queryParams,
+  { extra: sdk, dispatch, getState, rejectWithValue }
+) => {
   const { perPage, ...rest } = queryParams;
   const params = { ...rest, perPage };
 
-  return sdk.ownListings
-    .query(params)
+  // XOLOLO · E9 fase 2: si el user opera como colaborador de otro
+  // Negocio, consultamos los anuncios del admin via /api/manage-listings.
+  // Modo propio (admin en su cuenta) sigue el camino SDK normal.
+  const state = getState();
+  const workspace = getCurrentWorkspace(state.user?.currentUser);
+  const fetchPromise = workspace
+    ? fetchListingsAsWorkspace(params)
+    : sdk.ownListings.query(params);
+
+  return fetchPromise
     .then(response => {
       dispatch(addOwnEntities(response));
       return response;
@@ -62,9 +106,17 @@ export const queryOwnListings = queryParams => (dispatch, getState, sdk) => {
 ///////////////////
 // Close Listing //
 ///////////////////
-const closeListingPayloadCreator = (listingId, { extra: sdk, rejectWithValue }) => {
-  return sdk.ownListings
-    .close({ id: listingId }, { expand: true })
+const closeListingPayloadCreator = (
+  listingId,
+  { extra: sdk, getState, rejectWithValue }
+) => {
+  // XOLOLO · E9 fase 2: en modo colaborador, cerrar va al wrapper.
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const idUuid = listingId?.uuid || listingId;
+  const fetchPromise = workspace
+    ? closeListingAs(workspace.sellerId, idUuid, { include: ['author', 'images', 'currentStock'] })
+    : sdk.ownListings.close({ id: listingId }, { expand: true });
+  return fetchPromise
     .then(response => response)
     .catch(e => {
       return rejectWithValue(storableError(e));
@@ -83,9 +135,16 @@ export const closeListing = listingId => (dispatch, getState, sdk) => {
 //////////////////
 // Open Listing //
 //////////////////
-const openListingPayloadCreator = (listingId, { extra: sdk, rejectWithValue }) => {
-  return sdk.ownListings
-    .open({ id: listingId }, { expand: true })
+const openListingPayloadCreator = (
+  listingId,
+  { extra: sdk, getState, rejectWithValue }
+) => {
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const idUuid = listingId?.uuid || listingId;
+  const fetchPromise = workspace
+    ? openListingAs(workspace.sellerId, idUuid, { include: ['author', 'images', 'currentStock'] })
+    : sdk.ownListings.open({ id: listingId }, { expand: true });
+  return fetchPromise
     .then(response => response)
     .catch(e => {
       return rejectWithValue(storableError(e));
@@ -111,12 +170,21 @@ const discardDraftPayloadCreator = (listingId, thunkAPI) => {
   const { getState, extra: sdk, dispatch, rejectWithValue } = thunkAPI;
   const { queryParams } = getState().ManageListingsPage;
 
-  return sdk.ownListings
-    .discardDraft({ id: listingId }, { expand: true })
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const idUuid = listingId?.uuid || listingId;
+  const discardPromise = workspace
+    ? discardDraftAs(workspace.sellerId, idUuid)
+    : sdk.ownListings.discardDraft({ id: listingId }, { expand: true });
+  const relistPromise = () =>
+    workspace
+      ? fetchListingsAsWorkspace(queryParams)
+      : sdk.ownListings.query(queryParams);
+
+  return discardPromise
     .then(() => {
       // Return the listing update with a delay, so that the user
       // notices which listing gets removed
-      return Promise.all([delay(300), sdk.ownListings.query(queryParams)]);
+      return Promise.all([delay(300), relistPromise()]);
     })
     .then(([_, listingResponse]) => {
       dispatch(addOwnEntities(listingResponse));

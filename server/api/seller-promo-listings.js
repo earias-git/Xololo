@@ -24,6 +24,7 @@
 // después con endpoints ya existentes de analytics.
 
 const { getSdk } = require('../api-util/sdk');
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { createTTLCache } = require('../api-util/cache');
 
 // Cache in-memory 10 min para no re-fetchear el logo en cada hit del
@@ -65,6 +66,10 @@ const firstImageUrl = listing => {
 
 module.exports = async (req, res) => {
   try {
+    // XOLOLO · E9: scoped al admin resuelto por requireSellerContext.
+    const adminId = req.actingAs.adminId;
+    const isdk = getIntegrationSdk();
+    if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
     const sdk = getSdk(req, res);
 
     // XOLOLO Promote: logo del seller + nombre de tienda para los
@@ -92,7 +97,10 @@ module.exports = async (req, res) => {
       storeUrl: null,
     };
     try {
-      const me = await sdk.currentUser.show({
+      // XOLOLO · E9: en vez de sdk.currentUser, leemos al admin por id
+      // via Integration SDK. En modo propio adminId === currentUser.id.
+      const me = await isdk.users.show({
+        id: adminId,
         include: ['profileImage'],
         'fields.image': ['variants.square-small2x', 'variants.square-small'],
       });
@@ -159,7 +167,8 @@ module.exports = async (req, res) => {
 
     let response;
     try {
-      response = await sdk.ownListings.query({
+      response = await isdk.listings.query({
+        authorId: adminId,
         include: ['images'],
         'fields.listing': ['title', 'state', 'price', 'publicData.listingType', 'metadata'],
         'fields.image': ['variants.listing-card', 'variants.scaled-small'],

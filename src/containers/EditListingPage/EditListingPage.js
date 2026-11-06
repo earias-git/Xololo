@@ -22,6 +22,7 @@ import { LISTING_STATE_DRAFT, LISTING_STATE_PENDING_APPROVAL, propTypes } from '
 import { isErrorNoPermissionToPostListings } from '../../util/errors';
 import { ensureOwnListing } from '../../util/data';
 import { hasPermissionToPostListings, isUserAuthorized } from '../../util/userHelpers';
+import { getCurrentWorkspace } from '../../util/xololoTeam';
 import { getMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
 import {
@@ -169,8 +170,14 @@ export const EditListingPageComponent = props => {
   const currentListing = ensureOwnListing(getOwnListing(listingId));
   const { state: currentListingState } = currentListing.attributes;
 
-  const hasPostingRights = hasPermissionToPostListings(currentUser);
-  const hasPostingRightsError = isErrorNoPermissionToPostListings(page.publishListingError?.error);
+  // XOLOLO · E9 fase 2: un colaborador operando como el Negocio no
+  // necesita tener posting rights propios — publica bajo identidad del
+  // admin via /api/team/as/listing/create-draft. Bypasseamos el chequeo
+  // de Sharetribe accountRights cuando hay workspace activo.
+  const workspaceForGate = getCurrentWorkspace(currentUser);
+  const hasPostingRights = workspaceForGate ? true : hasPermissionToPostListings(currentUser);
+  const hasPostingRightsError =
+    !workspaceForGate && isErrorNoPermissionToPostListings(page.publishListingError?.error);
   const shouldRedirectNoPostingRights =
     !!currentUser?.id && ((isNewListingFlow && !hasPostingRights) || hasPostingRightsError);
 

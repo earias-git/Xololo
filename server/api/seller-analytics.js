@@ -34,6 +34,7 @@
 //     día/semana/mes según granularidad elegida (más rápido y flexible).
 
 const { getSdk, handleError } = require('../api-util/sdk');
+const { getIntegrationSdk } = require('../api-util/integrationSdk');
 
 const MAX_PAGES = 5; // 500 tx por período máximo
 const PER_PAGE = 100;
@@ -144,20 +145,14 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'invalid_request', details: 'rango máximo 24 meses.' });
     }
 
-    const sdk = getSdk(req, res);
+    // XOLOLO · E9: adminId resuelto por requireSellerContext. Integration
+    // SDK query de transactions con providerId = adminId.
+    const adminId = req.actingAs.adminId;
+    const isdk = getIntegrationSdk();
+    if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
-    // Session check
-    let currentUser;
-    try {
-      const resp = await sdk.currentUser.show();
-      currentUser = resp.data.data;
-    } catch (e) {
-      return res.status(401).json({ error: 'unauthorized' });
-    }
-    const userId = currentUser.id.uuid;
-
-    // Cache hit?
-    const key = cacheKey(userId, from, to);
+    // Cache hit? Key scoped por adminId para no mezclar entre sellers.
+    const key = cacheKey(adminId, from, to);
     const hit = getCached(key);
     if (hit) {
       return res.json({ ...hit, cached: true });
@@ -168,10 +163,8 @@ module.exports = async (req, res) => {
     let page = 1;
     while (page <= MAX_PAGES) {
       const queryParams = {
-        // Note: Marketplace API filters supported for transactions.query
-        // include role, createdAtStart, createdAtEnd, perPage, page.
-        only: 'sale', // solo ventas donde el user es provider
-        lastTransitions: undefined, // no filtramos por transition — traemos todo
+        providerId: adminId,
+        lastTransitions: undefined,
         page,
         perPage: PER_PAGE,
         include: ['listing', 'customer', 'customer.profileImage', 'listing.images'],
@@ -189,19 +182,7 @@ module.exports = async (req, res) => {
         'fields.listing': ['title'],
         'fields.user': ['profile.displayName'],
       };
-      let resp;
-      try {
-        resp = await sdk.transactions.query(queryParams);
-      } catch (e) {
-        // Si Marketplace API rechaza el `only:sale`, reintentar sin filtro
-        // — se ajustará cliente-side por currentUser.
-        if (e.status === 400) {
-          delete queryParams.only;
-          resp = await sdk.transactions.query(queryParams);
-        } else {
-          throw e;
-        }
-      }
+      const resp = await isdk.transactions.query(queryParams);
       const data = resp.data.data || [];
       const included = resp.data.included || [];
       const shrunkPage = data.map(shrinkTx);

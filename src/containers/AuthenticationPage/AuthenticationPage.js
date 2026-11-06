@@ -246,7 +246,24 @@ export const AuthenticationPageComponent = props => {
   // so that use can be redirected back to that page after authentication.
   const locationFrom = location.state?.from || null;
   const authinfoFrom = authInfo?.from || null;
-  const from = locationFrom || authinfoFrom || null;
+  // XOLOLO: fallback que lee ?from=/path del query string. Lo usa la
+  // página /accept-invite para preservar el token tras login/signup —
+  // location.state no sobrevive al signup/signin inicial del user.
+  const queryFrom = (() => {
+    try {
+      const params = new URLSearchParams(location?.search || '');
+      const raw = params.get('from');
+      // Solo permitimos paths relativos (empiezan con "/") para evitar
+      // redirect open — no URLs externas.
+      if (raw && raw.startsWith('/') && !raw.startsWith('//')) {
+        return raw;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  })();
+  const from = locationFrom || authinfoFrom || queryFrom || null;
   const idp = authInfo ? authInfo.idpId.replace(/^./, str => str.toUpperCase()) : null;
 
   const isConfirm = tab === 'confirm';
