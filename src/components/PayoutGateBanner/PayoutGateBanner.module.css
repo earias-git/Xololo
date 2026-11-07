@@ -6,6 +6,12 @@
   border-radius: 10px;
   border-left-width: 4px;
   border-left-style: solid;
+  /* Fuerza al banner a respetar el ancho del contenedor del dashboard
+     en móvil, incluso cuando el texto "Antes de recibir tu primer
+     pago" o las etiquetas de step pedirían más max-content. */
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
 
 .informational {

@@ -86,6 +86,11 @@
   padding: 16px;
   max-width: 1100px;
   margin: 0 auto;
+  /* Sin width 100% + box-sizing border-box, el root se expandía al
+     max-content de hijos como PayoutGateBanner, filterChips o fechas
+     largas, dejando banner, header y chips cortados en móvil. */
+  width: 100%;
+  box-sizing: border-box;
   /* Impide que descendientes con content largo (URLs, cards grandes)
      provoquen scroll horizontal de la página en mobile. */
   min-width: 0;
@@ -99,6 +104,7 @@
 
 .header {
   margin-bottom: 20px;
+  max-width: 100%;
 }
 
 .pageTitle {
@@ -106,12 +112,15 @@
   font-size: 22px;
   font-weight: 800;
   color: var(--colorGrey900);
+  overflow-wrap: anywhere;
 }
 
 .pageSubtitle {
   margin: 0;
   font-size: 13px;
   color: var(--colorGrey500);
+  /* Permite que fechas largas y el badge de caché envuelvan en móvil. */
+  overflow-wrap: anywhere;
 }
 
 .cachedBadge {
@@ -164,6 +173,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  max-width: 100%;
 }
 
 .chip,
@@ -177,6 +187,10 @@
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.12s, background-color 0.12s;
+  /* Evita que un chip con label largo ("Últimos 3 meses") empuje el
+     flex-row más allá del viewport móvil. */
+  max-width: 100%;
+  white-space: nowrap;
 }
 
 .chip:hover {
