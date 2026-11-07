@@ -28,6 +28,7 @@ const LandingPage = loadable(() => import(/* webpackChunkName: "LandingPage" */ 
 const SmartSearchPage = loadable(() => import(/* webpackChunkName: "SmartSearchPage" */ '../containers/SmartSearchPage/SmartSearchPage'));
 const CotizarEnvioPage = loadable(() => import(/* webpackChunkName: "CotizarEnvioPage" */ '../containers/CotizarEnvioPage/CotizarEnvioPage'));
 const TiendasVerifiedPage = loadable(() => import(/* webpackChunkName: "TiendasVerifiedPage" */ '../containers/TiendasVerifiedPage/TiendasVerifiedPage'));
+const VerifiedPage = loadable(() => import(/* webpackChunkName: "VerifiedPage" */ '../containers/VerifiedPage/VerifiedPage'));
 const PlanesPage = loadable(() => import(/* webpackChunkName: "PlanesPage" */ '../containers/PlanesPage/PlanesPage'));
 const ListingPageCoverPhoto = loadable(() => import(/* webpackChunkName: "ListingPageCoverPhoto" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCoverPhoto'));
 const ListingPageCarousel = loadable(() => import(/* webpackChunkName: "ListingPageCarousel" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCarousel'));
@@ -122,6 +123,15 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/tiendas-verified',
       name: 'TiendasVerifiedPage',
       component: TiendasVerifiedPage,
+    },
+    // XOLOLO: página explicativa del programa Xololo Verified. Post-
+    // reunión Mario (2026-11-06): los CTAs del landing banner y del
+    // footer apuntaban a /p/verified (ruta CMS inexistente) → 404.
+    // Esta es la página real.
+    {
+      path: '/verified',
+      name: 'VerifiedPage',
+      component: VerifiedPage,
     },
     // XOLOLO: página pública /planes con tabla comparativa de los 3
     // tipos de seller (Segunda Mano, Starter, Empresarial) + CTAs que

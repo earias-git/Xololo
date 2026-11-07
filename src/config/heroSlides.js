@@ -15,7 +15,9 @@ const heroSlides = [
       'Cada vendedor con Xololo Verified pasó un filtro de identidad, documentos legales y cuenta de cobros. Tu dinero se libera solo cuando confirmas que recibiste.',
     ctas: [
       { label: 'Explorar productos', href: '/s?pub_listingType=product' },
-      { label: '¿Qué es Verified?', href: '/p/verified', variant: 'ghost' },
+      // XOLOLO fix post-reunión Mario: /verified (página explicativa
+      // del programa Xololo Verified que se crea en el mismo sprint).
+      { label: '¿Qué es Verified?', href: '/verified', variant: 'ghost' },
     ],
     background: slide1,
     imageAlt: 'Fondo azul Xololo — compra con confianza',
@@ -40,8 +42,12 @@ const heroSlides = [
     description:
       'Suscripción fija, cobro directo a tu cuenta y badge Xololo Verified™ para que tus clientes compren con tranquilidad.',
     ctas: [
-      { label: 'Ver planes', href: '/p/planes' },
-      { label: 'Verificarme', href: '/p/verified', variant: 'ghost' },
+      // XOLOLO fix post-reunión Mario: /p/planes era una ruta CMS
+      // inexistente → 404. La página real está en /planes (PlanesPage).
+      // El CTA "Verificarme" apunta a /verified (página explicativa del
+      // programa Xololo Verified que se crea en el mismo sprint).
+      { label: 'Ver planes', href: '/planes' },
+      { label: 'Verificarme', href: '/verified', variant: 'ghost' },
     ],
     note: 'Precio con pago anual',
     background: slide3,

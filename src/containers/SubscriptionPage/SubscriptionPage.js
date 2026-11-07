@@ -512,11 +512,16 @@ const SubscriptionPageComponent = () => {
   const isActive = sub?.status === 'active';
   const statusLabel = sub?.status ? STATUS_LABELS[sub.status] : null;
 
-  const startCheckout = async planKey => {
+  // XOLOLO fix post-reunión Mario (2026-11-06): startCheckout ahora
+  // propaga tier ('starter'|'enterprise') al endpoint. El backend ya
+  // lo soportaba desde E6 pero el frontend no lo mandaba — eso obligaba
+  // al signup Empresarial a pasar por Starter + upgrade.
+  const startCheckout = async (planKey, tier = 'starter') => {
     setCheckoutLoading(planKey);
     try {
       const data = await postJson(`${apiBaseUrl()}/api/create-subscription-checkout`, {
         plan: planKey,
+        tier,
       });
       window.location.href = data.url;
     } catch (e) {
@@ -551,13 +556,14 @@ const SubscriptionPageComponent = () => {
 
     if (pending.planKey === 'starter') {
       // Dispara el checkout Starter directo con el ciclo elegido.
-      startCheckout(pending.cycle);
+      startCheckout(pending.cycle, 'starter');
     } else if (pending.planKey === 'enterprise') {
-      setBanner({
-        tone: 'info',
-        text:
-          'Elegiste Empresarial. Suscríbete primero al plan Starter para activar tu cuenta — después puedes cambiar a Empresarial en 1 click desde esta misma página (botón "Cambiar a Empresarial" abajo).',
-      });
+      // XOLOLO fix post-reunión Mario (2026-11-06): antes aquí se
+      // mostraba un banner pidiendo suscribirse primero a Starter y
+      // luego upgradear. Ahora se dispara directo el checkout Empresarial
+      // — el backend (create-subscription-checkout) ya soporta
+      // tier='enterprise' desde E6.
+      startCheckout(pending.cycle, 'enterprise');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.status, sub]);

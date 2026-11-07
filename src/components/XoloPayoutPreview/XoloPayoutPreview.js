@@ -87,6 +87,14 @@ const XoloPayoutPreview = ({
   applyWithholdings = false,
   usedGoodsNotice = null,
   sellerMode = 'store',
+  // XOLOLO fix post-reunión Mario (2026-11-06): cuando el preview se
+  // usa para mostrar el breakdown del envío (tab "Envío" del wizard),
+  // los $14+IVA de Serv. administrativos Xololo NO deben descontarse
+  // porque ya se cobran una sola vez sobre el producto. El checkout
+  // real no duplica el fee — este fix solo arregla el PREVIEW visual
+  // del wizard, que confundía al seller haciéndole creer que pagaba
+  // $28+IVA por venta.
+  skipAdminFee = false,
 }) => {
   // Resuelve defaults a partir de la categoría del listing. Los props
   // explícitos tienen precedencia (p. ej. el checkbox de clasificación
@@ -189,10 +197,12 @@ const XoloPayoutPreview = ({
         <span>− Motor de cobro ({bd.labels.motorCobro})</span>
         <span>−{money(bd.motorCobroSubunits, currency)}</span>
       </div>
-      <div className={`${css.row} ${css.muted}`}>
-        <span>− Serv. administrativos Xololo ({bd.labels.xololoAdmin})</span>
-        <span>−{money(bd.xololoAdminSubunits, currency)}</span>
-      </div>
+      {skipAdminFee ? null : (
+        <div className={`${css.row} ${css.muted}`}>
+          <span>− Serv. administrativos Xololo ({bd.labels.xololoAdmin})</span>
+          <span>−{money(bd.xololoAdminSubunits, currency)}</span>
+        </div>
+      )}
 
       {/* Retenciones — placeholder hasta Facturapi + SAT. Siempre mostramos
           la línea con base legal para que el seller aprenda el modelo. La
@@ -236,7 +246,14 @@ const XoloPayoutPreview = ({
 
       <div className={`${css.row} ${css.total}`}>
         <span>Monto a recibir en tu cuenta</span>
-        <span>{money(bd.sellerReceivesSubunits, currency)}</span>
+        <span>
+          {money(
+            skipAdminFee
+              ? bd.sellerReceivesSubunits + bd.xololoAdminSubunits
+              : bd.sellerReceivesSubunits,
+            currency
+          )}
+        </span>
       </div>
 
       {/* Paquetería pass-through: nota al final para que el seller entienda

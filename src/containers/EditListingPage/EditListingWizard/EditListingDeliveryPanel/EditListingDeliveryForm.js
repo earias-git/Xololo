@@ -161,12 +161,17 @@ export const EditListingDeliveryForm = props => (
                 />
                 {/* XOLOLO: preview del payout del envío local. categoryId
                     resuelve el default fiscal (ivaMode + taxActivity)
-                    vía xololoTaxCategories. */}
+                    vía xololoTaxCategories.
+                    skipAdminFee: el cargo de Serv. administrativos
+                    Xololo ($14+IVA) se cobra UNA SOLA VEZ por venta,
+                    sobre el producto. Antes aparecía duplicado en este
+                    preview del envío — fix post-reunión Mario 2026-11-06. */}
                 <XoloPayoutPreview
                   price={xoloMethods.localDelivery?.price}
                   currency={marketplaceCurrency}
                   heading="Del cobro del envío recibirás"
                   categoryId={categoryId}
+                  skipAdminFee
                 />
                 <FieldTextInput
                   id={`${formId}.xoloLocalZone`}
@@ -209,10 +214,27 @@ export const EditListingDeliveryForm = props => (
                     y src/util/mxMunicipios. */}
                 {(xoloMethods.localDelivery?.coverageStates || []).length > 0 ? (
                   <div style={{ marginTop: 16 }}>
-                    <p className={css.xxHint}>
-                      <strong>Municipios por estado</strong> (opcional). Si dejas todos los
-                      municipios sin marcar, se acepta cualquier municipio del estado. Marcar
-                      algunos limita la entrega a esos municipios.
+                    {/* XOLOLO fix post-reunión Mario: hacer la leyenda muy
+                        visible (rojo) porque confundía — un seller escribía
+                        "Cuernavaca" + seleccionaba "Morelos" sin marcar
+                        municipios y la cobertura quedaba en todo el estado
+                        sin que lo notara. */}
+                    <p
+                      className={css.xxHint}
+                      style={{
+                        padding: '10px 12px',
+                        background: '#fef2f2',
+                        border: '1px solid #fecaca',
+                        borderRadius: 8,
+                        color: '#991b1b',
+                        fontSize: 13.5,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      ⚠️ <strong>Municipios por estado</strong> (opcional). Si dejas{' '}
+                      <strong>todos los municipios sin marcar</strong>, tu cobertura aplicará a{' '}
+                      <strong>TODO el estado</strong>. Marca municipios específicos si quieres
+                      limitar la entrega.
                     </p>
                     {(xoloMethods.localDelivery?.coverageStates || []).map(estado => {
                       const munis = municipiosByEstado(estado);
