@@ -1,6 +1,14 @@
 .wrap {
   padding: 12px 0 0;
   width: 100%;
+  /* Recharts ResponsiveContainer usa ResizeObserver y, sin min-width 0
+     + overflow hidden en el padre, el SVG interno puede expandir el
+     wrapper al max-content de las etiquetas del eje, inflando el
+     viewport en móvil tras el primer render. */
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .tooltip {

@@ -358,6 +358,11 @@
   background-color: #ffffff;
   border: 1px solid var(--colorGrey100);
   border-radius: 12px;
+  /* Evita que la section crezca al max-content de la tabla/chart. */
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .sectionTitle {
@@ -416,12 +421,27 @@
 
 .tableWrap {
   overflow-x: auto;
+  /* Sin width 100%, .tableWrap se expande al max-content de la tabla
+     en móvil. Con esto la tabla queda scrollable dentro de un wrap
+     de 343px, sin empujar el banner ni el header. */
+  width: 100%;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13.5px;
+  /* Permite scroll horizontal dentro de .tableWrap cuando hay muchas
+     columnas, sin empujar el ancho del dashboard. */
+  min-width: 560px;
+}
+
+@media (--viewportMedium) {
+  .table {
+    min-width: 0;
+  }
 }
 
 .table th,
@@ -719,8 +739,10 @@
 .promoGrid {
   display: grid;
   /* Mobile: 1 columna que se adapta al viewport (sin forzar 320px
-     mínimos que desbordaban en pantallas de 360px con padding). */
-  grid-template-columns: 1fr;
+     mínimos que desbordaban en pantallas de 360px con padding).
+     minmax(0, 1fr) — no "1fr" — para que la columna no se expanda al
+     max-content de títulos largos de anuncios. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   margin-top: 16px;
 
