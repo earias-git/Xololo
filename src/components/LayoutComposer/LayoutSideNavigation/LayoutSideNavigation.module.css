@@ -2,6 +2,11 @@
 
 .root {
   grid-template-rows: auto 1fr auto;
+  /* XOLOLO fix mobile: LayoutComposer mete display:grid inline. Sin
+     minmax(0, 1fr), la columna crece al max-content de hijos (chart,
+     tabla, email largo) y rompe el viewport en móvil.
+     Ventas/Xololear/Equipo del Dashboard sufrían este bug. */
+  grid-template-columns: minmax(0, 1fr);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -11,6 +16,7 @@
   position: sticky;
   top: 0;
   z-index: var(--zIndexTopbar);
+  min-width: 0;
 }
 
 /* Container for side and content */
@@ -23,6 +29,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-width: 0;
 
   /* When side nav is shown as a column, Topbar's box-shadow should be visible */
   z-index: calc(var(--zIndexTopbar) - 1);
@@ -38,6 +45,12 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  /* Sin min-width: 0, flex items usan min-content por default y el
+     chart/tabla hace que main crezca al max-content, descuadrando
+     todo lo demás (banner, header). */
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 
   padding: 24px;
   scroll-margin-top: var(--topbarHeight);
