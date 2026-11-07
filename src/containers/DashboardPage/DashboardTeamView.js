@@ -200,6 +200,7 @@ const DashboardTeamView = () => {
           <p>Invita al primero y asígnale los permisos que necesite.</p>
         </div>
       ) : (
+        <div className={css.tableScroll}>
         <table className={css.table}>
           <thead>
             <tr>
@@ -308,6 +309,7 @@ const DashboardTeamView = () => {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {showActions ? <TeamActionsLog targetSellerId={sellerId} /> : null}

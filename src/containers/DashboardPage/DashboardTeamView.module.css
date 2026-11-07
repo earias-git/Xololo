@@ -5,6 +5,13 @@
   flex-direction: column;
   gap: 20px;
   padding: 0 0 32px;
+  /* Sin width 100%, el root se expandía al max-content de la tabla
+     (email largo del colaborador) y eso cortaba también al banner
+     PayoutGate y al header de Equipo en móvil. */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .header {
@@ -177,6 +184,16 @@
 
 /* ------------- Table ------------- */
 
+/* En móvil la tabla de colaboradores tiene 6 columnas y un email
+   largo; no cabe en 375px. Wrapper con scroll horizontal propio
+   para que la tabla no empuje al root del TeamView. */
+.tableScroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -185,6 +202,7 @@
   border: 1px solid var(--colorGrey100);
   border-radius: 12px;
   overflow: hidden;
+  min-width: 560px;
 }
 
 .table th,
