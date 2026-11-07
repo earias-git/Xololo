@@ -24,6 +24,7 @@ import {
 } from './util/webStorageHelpers';
 import { includeCSSProperties } from './util/style';
 import { IncludeScripts } from './util/includeScripts';
+import { installMobileIframeGuard } from './util/mobileIframeGuard';
 
 import { MaintenanceMode, WhatsAppButton } from './components';
 import CartUserSync from './components/CartUserSync/CartUserSync';
@@ -226,6 +227,11 @@ export const ClientApp = props => {
   const appConfig = mergeConfig(hostedConfig, defaultConfig);
 
   useEffect(() => {
+    // XOLOLO: neutraliza iframes invisibles de terceros (Stripe metrics,
+    // Intercom) que inflaban el ICB en móvil y amplificaban el layout
+    // después del render inicial. Ver src/util/mobileIframeGuard.js.
+    installMobileIframeGuard();
+
     // Clear referral data from session storage the expiration time has passed
     clearReferralDataIfExpired();
 
