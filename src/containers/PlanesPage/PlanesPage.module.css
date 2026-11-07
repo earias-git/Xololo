@@ -238,7 +238,11 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 13.5px;
-  min-width: 640px;
+  min-width: 0;
+
+  @media (--viewportMedium) {
+    min-width: 640px;
+  }
 }
 
 .tableCaption {

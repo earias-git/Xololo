@@ -1,6 +1,11 @@
 @import '../../../styles/customMediaQueries.css';
 .root {
   grid-template-rows: auto 1fr auto;
+  /* Force the single column to respect the viewport instead of
+     expanding to max-content of its widest child. Without minmax(0,1fr)
+     a tall child (table, long text, injected iframe) inflates the
+     column and causes horizontal overflow on mobile. */
+  grid-template-columns: minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -8,10 +13,14 @@
   position: sticky;
   top: 0;
   z-index: var(--zIndexTopbar);
+  /* Keep the sticky header tied to the viewport-sized track. */
+  min-width: 0;
 }
 
 .main {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   scroll-margin-top: var(--topbarHeight);
 
   @media (--viewportMedium) {

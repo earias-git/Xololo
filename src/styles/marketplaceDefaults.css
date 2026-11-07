@@ -1587,3 +1587,18 @@ body.xolo-with-workspace-ribbon {
     padding-top: 60px;
   }
 }
+
+/* ================ Mobile viewport guardrail ================
+   Evita que iframes invisibles de terceros (Stripe metrics,
+   intercom, etc.) inflen el ICB y descuadren TODA la app en
+   móvil (bug observado en /planes, /dashboard, etc.).
+   `overflow-x: clip` corta el overflow horizontal sin crear
+   nuevo scroll container, por lo que NO rompe `position: sticky`
+   del topbar; `overflow-x: hidden` en body es fallback. */
+html {
+  overflow-x: clip;
+}
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
