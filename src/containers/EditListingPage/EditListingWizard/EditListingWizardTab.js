@@ -20,6 +20,7 @@ import EditListingPhotosPanel from './EditListingPhotosPanel/EditListingPhotosPa
 import EditListingPricingPanel from './EditListingPricingPanel/EditListingPricingPanel';
 import EditListingPricingAndStockPanel from './EditListingPricingAndStockPanel/EditListingPricingAndStockPanel';
 import EditListingStylePanel from './EditListingStylePanel/EditListingStylePanel';
+import EditListingVariantsPanel from './EditListingVariantsPanel/EditListingVariantsPanel';
 
 import css from './EditListingWizardTab.module.css';
 
@@ -33,6 +34,9 @@ export const AVAILABILITY = 'availability';
 export const PHOTOS = 'photos';
 export const STYLE = 'style';
 export const TEXT = 'text';
+// XOLOLO (variantes · PR 2): tab de SKU variantes, solo visible para
+// sellers tier Enterprise (gate en EditListingWizard.js).
+export const VARIANTS = 'variants';
 
 // EditListingWizardTab component supports these tabs
 export const SUPPORTED_TABS = [
@@ -46,6 +50,7 @@ export const SUPPORTED_TABS = [
   PHOTOS,
   STYLE,
   TEXT,
+  VARIANTS,
 ];
 
 const pathParamsToNextTab = (params, tab, marketplaceTabs) => {
@@ -287,6 +292,9 @@ const EditListingWizardTab = props => {
     }
     case TEXT: {
       return <EditListingTextPanel {...panelProps(TEXT)} />;
+    }
+    case VARIANTS: {
+      return <EditListingVariantsPanel {...panelProps(VARIANTS)} />;
     }
     default:
       return null;

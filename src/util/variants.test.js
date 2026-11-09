@@ -1,5 +1,8 @@
 import {
   MAX_VARIANT_AXES,
+  generateVariantGroupId,
+  variantLabel,
+  buildSiblingPayload,
   getListingStock,
   getVariantGroupId,
   isVariantMaster,
@@ -69,6 +72,148 @@ const siblings = [master, childM_azul, childM_rojo, childL_azul];
 const simpleListing = mkListing({ id: 'simple', stock: 1, publicData: {} });
 
 describe('variants helpers', () => {
+  describe('generateVariantGroupId', () => {
+    it('returns a non-empty string', () => {
+      const id = generateVariantGroupId();
+      expect(typeof id).toBe('string');
+      expect(id.length).toBeGreaterThan(0);
+    });
+    it('returns different ids on repeated calls', () => {
+      const a = generateVariantGroupId();
+      const b = generateVariantGroupId();
+      expect(a).not.toBe(b);
+    });
+    it('matches UUID-ish pattern', () => {
+      const id = generateVariantGroupId();
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    });
+  });
+
+  describe('variantLabel', () => {
+    it('joins axis values with separator', () => {
+      expect(variantLabel({ talla: 'M', color: 'azul' }, ['talla', 'color'])).toBe('M · azul');
+    });
+    it('respects axis order', () => {
+      expect(variantLabel({ talla: 'M', color: 'azul' }, ['color', 'talla'])).toBe('azul · M');
+    });
+    it('omits empty values', () => {
+      expect(variantLabel({ talla: 'M', color: '' }, ['talla', 'color'])).toBe('M');
+      expect(variantLabel({ talla: 'M' }, ['talla', 'color'])).toBe('M');
+    });
+    it('returns empty string for no match', () => {
+      expect(variantLabel({}, ['talla'])).toBe('');
+      expect(variantLabel({ talla: 'M' }, [])).toBe('');
+    });
+  });
+
+  describe('buildSiblingPayload', () => {
+    const masterListing = {
+      id: { uuid: 'master-id' },
+      attributes: {
+        title: 'Playera X',
+        description: 'Una playera',
+        price: { amount: 25000, currency: 'MXN' },
+        geolocation: { lat: 19.4, lng: -99.1 },
+        publicData: {
+          variantGroupId: 'g-1',
+          isVariantMaster: true,
+          variantAxes: ['talla', 'color'],
+          variantValues: { talla: 'S', color: 'azul' },
+          variantsMatrix: [{ talla: 'S', color: 'azul', stock: 2 }],
+          categoryLevel1: 'ropa',
+          subcategory: 'playeras',
+          attributes: { marca: 'Nike' },
+        },
+      },
+    };
+
+    it('clones title with variant suffix', () => {
+      const p = buildSiblingPayload(masterListing, {
+        variantValues: { talla: 'M', color: 'azul' },
+      });
+      expect(p.title).toBe('Playera X · M · azul');
+    });
+
+    it('inherits price from master when no override', () => {
+      const p = buildSiblingPayload(masterListing, {
+        variantValues: { talla: 'M', color: 'azul' },
+      });
+      expect(p.price).toBe(masterListing.attributes.price);
+    });
+
+    it('uses priceOverride when provided', () => {
+      const override = { amount: 30000, currency: 'MXN' };
+      const p = buildSiblingPayload(masterListing, {
+        variantValues: { talla: 'M', color: 'azul' },
+        priceOverride: override,
+      });
+      expect(p.price).toBe(override);
+    });
+
+    it('clones geolocation', () => {
+      const p = buildSiblingPayload(masterListing, {
+        variantValues: { talla: 'M', color: 'azul' },
+      });
+      expect(p.geolocation).toEqual({ lat: 19.4, lng: -99.1 });
+    });
+
+    it('sibling publicData has correct variant fields', () => {
+      const p = buildSiblingPayload(masterListing, {
+        variantValues: { talla: 'M', color: 'azul' },
+      });
+      expect(p.publicData.variantGroupId).toBe('g-1');
+      expect(p.publicData.isVariantMaster).toBe(false);
+      expect(p.publicData.variantAxes).toEqual(['talla', 'color']);
+      expect(p.publicData.variantValues).toEqual({ talla: 'M', color: 'azul' });
+    });
+
+    it('sibling publicData omits master-only staging', () => {
+      const p = buildSiblingPayload(masterListing, {
+        variantValues: { talla: 'M', color: 'azul' },
+      });
+      expect(p.publicData.variantsMatrix).toBeUndefined();
+    });
+
+    it('sibling publicData clones category + attributes', () => {
+      const p = buildSiblingPayload(masterListing, {
+        variantValues: { talla: 'M', color: 'azul' },
+      });
+      expect(p.publicData.categoryLevel1).toBe('ropa');
+      expect(p.publicData.subcategory).toBe('playeras');
+      expect(p.publicData.attributes).toEqual({ marca: 'Nike' });
+    });
+
+    it('throws when master is missing', () => {
+      expect(() => buildSiblingPayload(null, { variantValues: { talla: 'M' } })).toThrow(
+        /master listing is required/
+      );
+    });
+
+    it('throws when master has no variantGroupId', () => {
+      const bad = {
+        attributes: {
+          title: 't',
+          publicData: { variantAxes: ['talla'] },
+        },
+      };
+      expect(() =>
+        buildSiblingPayload(bad, { variantValues: { talla: 'M' } })
+      ).toThrow(/variantGroupId/);
+    });
+
+    it('throws when master has no variantAxes', () => {
+      const bad = {
+        attributes: {
+          title: 't',
+          publicData: { variantGroupId: 'g' },
+        },
+      };
+      expect(() =>
+        buildSiblingPayload(bad, { variantValues: { talla: 'M' } })
+      ).toThrow(/variantAxes/);
+    });
+  });
+
   describe('getListingStock', () => {
     it('reads currentStock.attributes.quantity', () => {
       expect(getListingStock(childM_azul)).toBe(5);

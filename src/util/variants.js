@@ -25,6 +25,120 @@
 export const MAX_VARIANT_AXES = 2;
 
 /**
+ * Genera un UUID v4 para usar como variantGroupId.
+ * Usa crypto.randomUUID donde esté disponible (navegador moderno + Node 18+),
+ * con fallback a Math.random (OK para un identificador de agrupación no-seguro).
+ * @returns {string}
+ */
+export const generateVariantGroupId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Fallback RFC4122-ish, no cripto-seguro — suficiente para agrupar.
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
+/**
+ * Serializa variantValues en una etiqueta legible para títulos y sufijos.
+ * Orden determinado por `axes`; omite valores vacíos.
+ *
+ * @example
+ *   variantLabel({ talla: 'M', color: 'azul' }, ['talla', 'color'])
+ *   => 'M · azul'
+ *
+ * @param {object} variantValues
+ * @param {string[]} axes
+ * @returns {string}
+ */
+export const variantLabel = (variantValues = {}, axes = []) => {
+  return axes
+    .map(a => variantValues[a])
+    .filter(v => v != null && v !== '')
+    .join(' · ');
+};
+
+/**
+ * Construye el payload para crear un sibling listing a partir del master.
+ *
+ * Clona lo esencial del master (price, geolocation, publicData con
+ * excepciones, images refs) y aplica el override de variante. El stock
+ * se maneja aparte (sdk.stock.compareAndSet), NO va en este payload.
+ *
+ * Campos NO clonados desde el master:
+ *   - publicData.variantsMatrix (solo el master la tiene — es staging)
+ *   - publicData.isVariantMaster (false en el sibling)
+ *
+ * Campos sobrescritos:
+ *   - title: `${masterTitle} · ${variantLabel}` (p.ej. "Playera X · M · azul")
+ *   - publicData.variantGroupId: el mismo del master
+ *   - publicData.variantAxes: el mismo del master
+ *   - publicData.variantValues: el de este sibling
+ *   - price: priceOverride si viene; si no, el del master
+ *
+ * @param {object} master — listing fuente (shape de Sharetribe SDK)
+ * @param {object} opts
+ * @param {object} opts.variantValues — e.g. { talla: 'M', color: 'azul' }
+ * @param {object|null} [opts.priceOverride] — Money object; si null, hereda del master
+ * @returns {object} payload apto para sdk.ownListings.createDraft({ ... })
+ */
+export const buildSiblingPayload = (master, { variantValues, priceOverride = null } = {}) => {
+  if (!master || !master.attributes) {
+    throw new Error('buildSiblingPayload: master listing is required');
+  }
+  const mAttrs = master.attributes;
+  const mPublicData = mAttrs.publicData || {};
+
+  const variantGroupId = mPublicData.variantGroupId;
+  const axes = Array.isArray(mPublicData.variantAxes) ? mPublicData.variantAxes : [];
+  if (!variantGroupId) {
+    throw new Error('buildSiblingPayload: master must have publicData.variantGroupId');
+  }
+  if (axes.length === 0) {
+    throw new Error('buildSiblingPayload: master must have publicData.variantAxes');
+  }
+
+  // Excluye claves específicas del master y staging de la matriz.
+  const {
+    variantsMatrix,
+    isVariantMaster,
+    variantValues: _mvv,
+    ...publicDataClone
+  } = mPublicData;
+
+  const siblingPublicData = {
+    ...publicDataClone,
+    variantGroupId,
+    isVariantMaster: false,
+    variantAxes: axes,
+    variantValues,
+  };
+
+  const suffix = variantLabel(variantValues, axes);
+  const title = suffix ? `${mAttrs.title || ''} · ${suffix}`.trim() : mAttrs.title;
+
+  const payload = {
+    title,
+    description: mAttrs.description || '',
+    price: priceOverride || mAttrs.price,
+    publicData: siblingPublicData,
+  };
+
+  // Clona geolocation si existe (listings con ubicación física).
+  if (mAttrs.geolocation) {
+    payload.geolocation = mAttrs.geolocation;
+  }
+
+  // Images: Sharetribe acepta array de UUIDs en createDraft.
+  // El caller resuelve los UUIDs desde master.relationships.images si
+  // los quiere compartir (recomendado para variantes).
+  return payload;
+};
+
+/**
  * Lee el stock actual de un listing Sharetribe.
  * @param {object} listing
  * @returns {number|null} quantity o null si no está cargado

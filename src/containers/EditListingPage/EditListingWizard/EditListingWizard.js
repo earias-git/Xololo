@@ -60,7 +60,9 @@ import EditListingWizardTab, {
   PHOTOS,
   STYLE,
   TEXT,
+  VARIANTS,
 } from './EditListingWizardTab';
+import { useSellerTier, tierHasVariants } from '../../../hooks/useSellerTier';
 import css from './EditListingWizard.module.css';
 
 // This is the initial tab on editlisting wizard.
@@ -84,7 +86,7 @@ const STRIPE_ONBOARDING_RETURN_URL_FAILURE = 'failure';
  * @param {Object} listingTypeConfig - The listing type configuration
  * @returns {Array<string>} - The allowed tabs for the given process and listing type configuration
  */
-const tabsForListingType = (processName, listingTypeConfig, isEvent = false) => {
+const tabsForListingType = (processName, listingTypeConfig, isEvent = false, hasVariants = false) => {
   // XOLOLO (eventos): eventos son productos vendidos como boletos; NO
   // tienen envío ni ubicación "entregable" — el lugar + fecha viven en
   // publicData.event. Saltamos DELIVERY (y LOCATION si procediera)
@@ -97,6 +99,11 @@ const tabsForListingType = (processName, listingTypeConfig, isEvent = false) => 
       ? [DELIVERY]
       : [];
   const styleOrPhotosTab = requireListingImage(listingTypeConfig) ? [PHOTOS] : [STYLE];
+  // XOLOLO (variantes · PR 2): tab de variantes solo para tier Enterprise,
+  // y solo en el flow de compra (purchase) — no aplica a booking/inquiry.
+  // Se inserta DESPUÉS de PRICING_AND_STOCK para que el master tenga base
+  // de precio/stock antes de clonar a siblings.
+  const variantsMaybe = hasVariants ? [VARIANTS] : [];
 
   // You can reorder these panels.
   // Note 1: You need to change save button translations for new listing flow
@@ -132,6 +139,7 @@ const tabsForListingType = (processName, listingTypeConfig, isEvent = false) => 
       ...styleOrPhotosTab,
       ATTRIBUTES,
       PRICING_AND_STOCK,
+      ...variantsMaybe,
       ...deliveryMaybe,
       TEXT,
     ],
@@ -203,6 +211,9 @@ const tabLabelAndSubmit = (intl, tab, isNewListingFlow, isPriceDisabled, process
   } else if (tab === TEXT) {
     labelKey = 'EditListingWizard.tabLabelText';
     submitButtonKey = `EditListingWizard.${processNameString}${newOrEdit}.saveText`;
+  } else if (tab === VARIANTS) {
+    labelKey = 'EditListingWizard.tabLabelVariants';
+    submitButtonKey = `EditListingWizard.${processNameString}${newOrEdit}.saveVariants`;
   }
 
   return {
@@ -336,6 +347,12 @@ const tabCompleted = (tab, listing, config) => {
       // Una descripción mínima da contexto al buyer; sin ella no vale
       // publicar.
       return !!title && !!description && description.trim().length >= 10;
+    case VARIANTS:
+      // XOLOLO (variantes · PR 2): el tab de variantes es opcional —
+      // el seller puede guardarlo con la variante desactivada. Se
+      // considera completable apenas PRICING_AND_STOCK está listo (es
+      // el previo en el orden purchase).
+      return true;
     default:
       return false;
   }
@@ -614,7 +631,7 @@ class EditListingWizard extends Component {
     const tabs =
       isNewListingFlow && (invalidExistingListingType || !hasListingTypeSelected)
         ? TABS_DETAILS_ONLY
-        : tabsForListingType(processName, listingTypeConfig, isEventListing);
+        : tabsForListingType(processName, listingTypeConfig, isEventListing, this.props.hasVariants);
 
     // Check if wizard tab is active / linkable.
     // When creating a new listing, we don't allow users to access next tab until the current one is completed.
@@ -851,11 +868,17 @@ const EnhancedEditListingWizard = props => {
   const config = useConfiguration();
   const routeConfiguration = useRouteConfiguration();
   const intl = useIntl();
+  // XOLOLO (variantes · PR 2): lee el tier del seller logueado para
+  // decidir si mostrar el tab VARIANTS. El fetch es barato y solo
+  // ocurre cuando el wizard monta (editar/crear listing).
+  const { tier } = useSellerTier(true);
+  const hasVariants = tierHasVariants(tier);
   return (
     <EditListingWizard
       config={config}
       routeConfiguration={routeConfiguration}
       intl={intl}
+      hasVariants={hasVariants}
       {...props}
     />
   );
