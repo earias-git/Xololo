@@ -53,9 +53,12 @@ export const useSellerTier = (enabled = true) => {
 
 /**
  * Tiers que habilitan SKU/variantes en el wizard.
- * Starter NO tiene variantes (un listing = una pieza).
+ * Cualquier seller con suscripción activa (Starter o Enterprise) puede
+ * usar variantes. Casual (sin suscripción, sellerMode='casual_reseller')
+ * no entra — mantiene el modelo 1 listing = 1 pieza porque el caso de
+ * uso típico (segunda mano particular) no necesita variantes.
  */
-export const TIERS_WITH_VARIANTS = ['enterprise'];
+export const TIERS_WITH_VARIANTS = ['starter', 'enterprise'];
 
 /**
  * @param {SellerTier} tier
