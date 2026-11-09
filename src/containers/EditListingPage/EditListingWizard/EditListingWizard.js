@@ -63,6 +63,9 @@ import EditListingWizardTab, {
   VARIANTS,
 } from './EditListingWizardTab';
 import { useSellerTier, tierHasVariants } from '../../../hooks/useSellerTier';
+import VariantsBreadcrumb from './VariantsBreadcrumb';
+import { getVariantGroupId } from '../../../util/variants';
+import { useVariantSiblings } from './useVariantSiblings';
 import css from './EditListingWizard.module.css';
 
 // This is the initial tab on editlisting wizard.
@@ -743,6 +746,13 @@ class EditListingWizard extends Component {
 
     return (
       <div className={classes}>
+        {/* XOLOLO (variantes · PR 5): breadcrumb informativo cuando el
+            listing pertenece a un grupo (master o child). No bloquea
+            nada; solo aporta contexto + quick-nav a otras variantes. */}
+        <VariantsBreadcrumb
+          listing={currentListing}
+          siblings={this.props.variantSiblings || []}
+        />
         <Tabs
           rootClassName={css.tabsContainer}
           navRootClassName={css.nav}
@@ -873,12 +883,17 @@ const EnhancedEditListingWizard = props => {
   // ocurre cuando el wizard monta (editar/crear listing).
   const { tier } = useSellerTier(true);
   const hasVariants = tierHasVariants(tier);
+  // XOLOLO (variantes · PR 5): carga siblings del grupo para el
+  // breadcrumb con quick-nav (solo si el listing pertenece a un grupo).
+  const groupId = getVariantGroupId(props.listing);
+  const variantSiblings = useVariantSiblings(groupId);
   return (
     <EditListingWizard
       config={config}
       routeConfiguration={routeConfiguration}
       intl={intl}
       hasVariants={hasVariants}
+      variantSiblings={variantSiblings}
       {...props}
     />
   );

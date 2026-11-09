@@ -306,6 +306,26 @@ export const updateListingThunk = createAsyncThunk(
             log.error(e, 'sync-variants-chained-failed', { masterListingId: id });
           }
         }
+
+        // XOLOLO (variantes · PR 5): si el tab guardado es un tab de
+        // campos compartidos (TEXT, PHOTOS, STYLE, ATTRIBUTES) y el
+        // listing es master de un grupo, replica esos campos a los
+        // siblings. El thunk mismo verifica si el listing es master
+        // (short-circuit si no), así que correrlo para TODO listing
+        // que cae acá es barato.
+        //
+        // Guard anti-recursión: el replicate aplica patches a los
+        // siblings; esos siblings tienen isVariantMaster=false, así que
+        // el chain interno short-circuita con skipped:'not_master'.
+        if (REPLICABLE_TABS.has(tab)) {
+          try {
+            await dispatch(
+              replicateMasterSharedFieldsThunk({ masterListingId: id, tab })
+            ).unwrap();
+          } catch (e) {
+            log.error(e, 'replicate-shared-fields-chained-failed', { masterListingId: id, tab });
+          }
+        }
         return result;
       })
       .catch(e => {
@@ -589,6 +609,122 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
 // Backward compatible wrapper.
 export const requestSyncVariantSiblings = (masterListingId, config) => dispatch => {
   return dispatch(syncVariantSiblingsThunk({ masterListingId, config })).unwrap();
+};
+
+// XOLOLO (variantes · PR 5) — Lee los siblings del grupo (ownListings,
+// para incluir drafts y cerrados que no salen en sdk.listings.query).
+// Usado por el VariantsBreadcrumb del wizard para armar quick-nav.
+export const fetchOwnVariantSiblingsThunk = createAsyncThunk(
+  'EditListingPage/fetchOwnVariantSiblings',
+  ({ groupId }, { dispatch, rejectWithValue, extra: sdk }) => {
+    if (!groupId) return Promise.resolve([]);
+    return sdk.ownListings
+      .query({
+        pub_variantGroupId: groupId,
+        perPage: 100,
+      })
+      .then(res => res?.data?.data || [])
+      .catch(e => rejectWithValue(storableError(e)));
+  }
+);
+
+export const fetchOwnVariantSiblings = groupId => dispatch => {
+  return dispatch(fetchOwnVariantSiblingsThunk({ groupId })).unwrap();
+};
+
+////////////////////////////////////////////////////////////////////////
+// XOLOLO (variantes · PR 5) — Replicar campos compartidos del master
+//                             a los siblings después de guardar.
+////////////////////////////////////////////////////////////////////////
+//
+// Cuando el seller edita el master y guarda un tab de campos
+// COMPARTIDOS (TEXT, PHOTOS, STYLE, ATTRIBUTES), replicamos el cambio
+// a todos los hermanos del grupo:
+//   - TEXT: title + description
+//   - PHOTOS / STYLE: images
+//   - ATTRIBUTES: publicData.subcategory + attributes + event
+//
+// Stock, precio y variantValues NO se replican — son por-variante.
+//
+// Fallos NO abortan: se loguean, el user puede re-guardar para reintentar.
+// Idempotente: aplicar el mismo patch dos veces no causa cambio.
+
+const REPLICABLE_TABS = new Set(['text', 'photos', 'style', 'attributes']);
+
+const buildReplicatePatch = (master, tab) => {
+  const attrs = master.attributes || {};
+  const pd = attrs.publicData || {};
+  const patch = {};
+
+  if (tab === 'text') {
+    if (attrs.title !== undefined) patch.title = attrs.title;
+    if (attrs.description !== undefined) patch.description = attrs.description;
+  }
+  if (tab === 'photos' || tab === 'style') {
+    const imageIds = (master.relationships?.images?.data || []).map(i => i.id);
+    if (imageIds.length > 0) patch.images = imageIds;
+  }
+  if (tab === 'attributes') {
+    const inner = {};
+    if (pd.subcategory !== undefined) inner.subcategory = pd.subcategory;
+    if (pd.attributes !== undefined) inner.attributes = pd.attributes;
+    if (pd.attributesVersion !== undefined) inner.attributesVersion = pd.attributesVersion;
+    if (pd.event !== undefined) inner.event = pd.event;
+    if (Object.keys(inner).length > 0) patch.publicData = inner;
+  }
+  return patch;
+};
+
+export const replicateMasterSharedFieldsThunk = createAsyncThunk(
+  'EditListingPage/replicateMasterSharedFields',
+  async ({ masterListingId, tab }, { dispatch, getState, rejectWithValue, extra: sdk }) => {
+    if (!REPLICABLE_TABS.has(tab)) return { skipped: 'tab_not_replicable' };
+    const state = getState();
+    const master = state.marketplaceData.entities.ownListing[masterListingId?.uuid];
+    if (!master || master.attributes?.publicData?.isVariantMaster !== true) {
+      return { skipped: 'not_master' };
+    }
+    const groupId = master.attributes?.publicData?.variantGroupId;
+    if (!groupId) return { skipped: 'no_group' };
+
+    const patch = buildReplicatePatch(master, tab);
+    if (Object.keys(patch).length === 0) return { skipped: 'empty_patch' };
+
+    const workspace = getCurrentWorkspace(state.user?.currentUser);
+
+    // Query siblings (excluyendo al master).
+    let siblings = [];
+    try {
+      const res = await sdk.ownListings.query({ pub_variantGroupId: groupId, perPage: 100 });
+      siblings = (res.data?.data || []).filter(l => l.id?.uuid !== masterListingId.uuid);
+    } catch (e) {
+      log.error(e, 'replicate-query-failed', { groupId });
+      return rejectWithValue(storableError(e));
+    }
+
+    // Aplica el patch a cada sibling. Sequential + fail-soft.
+    let replicated = 0;
+    let failed = 0;
+    for (const sib of siblings) {
+      const sibId = sib.id;
+      try {
+        if (workspace) {
+          await updateListingAs(workspace.sellerId, sibId.uuid, patch, {});
+        } else {
+          await sdk.ownListings.update({ id: sibId, ...patch }, { expand: true });
+        }
+        replicated += 1;
+      } catch (e) {
+        log.error(e, 'replicate-sibling-failed', { sibling: sibId?.uuid, tab });
+        failed += 1;
+      }
+    }
+    return { replicated, failed, tab };
+  }
+);
+
+export const replicateMasterSharedFields = (masterListingId, tab) => dispatch => {
+  return dispatch(replicateMasterSharedFieldsThunk({ masterListingId, tab })).unwrap();
 };
 
 //////////////////
