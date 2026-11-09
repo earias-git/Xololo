@@ -110,4 +110,48 @@ describe('listingToAlgoliaDoc', () => {
   test('lanza si falta el uuid', () => {
     expect(() => listingToAlgoliaDoc({}, [])).toThrow('listing_missing_id');
   });
+
+  // XOLOLO (variantes · PR 4) ----------------------------------
+  test('listing simple: searchable=true, sin campos de variante', () => {
+    const doc = listingToAlgoliaDoc(baseListing, included);
+    expect(doc.variantGroupId).toBe(null);
+    expect(doc.isVariantMaster).toBe(false);
+    expect(doc.searchable).toBe(true);
+  });
+
+  test('master de grupo: searchable=true + variantGroupId expuesto', () => {
+    const l = {
+      ...baseListing,
+      attributes: {
+        ...baseListing.attributes,
+        publicData: {
+          ...baseListing.attributes.publicData,
+          variantGroupId: 'grp-1',
+          isVariantMaster: true,
+        },
+      },
+    };
+    const doc = listingToAlgoliaDoc(l, included);
+    expect(doc.variantGroupId).toBe('grp-1');
+    expect(doc.isVariantMaster).toBe(true);
+    expect(doc.searchable).toBe(true);
+  });
+
+  test('child de grupo: searchable=false → excluido del search default', () => {
+    const l = {
+      ...baseListing,
+      attributes: {
+        ...baseListing.attributes,
+        publicData: {
+          ...baseListing.attributes.publicData,
+          variantGroupId: 'grp-1',
+          // sin isVariantMaster → es child
+        },
+      },
+    };
+    const doc = listingToAlgoliaDoc(l, included);
+    expect(doc.variantGroupId).toBe('grp-1');
+    expect(doc.isVariantMaster).toBe(false);
+    expect(doc.searchable).toBe(false);
+  });
 });

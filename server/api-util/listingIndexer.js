@@ -21,6 +21,13 @@
 //   hasAiAnalysis   → true si tiene publicData.aiAnalysis
 //   moderation      → 'safe' | 'warn' | 'block'
 //   autoDescription → corta descripción generada por IA
+//   // Variantes SKU (Plan C · PR 4):
+//   variantGroupId  → publicData.variantGroupId (si pertenece a grupo)
+//   isVariantMaster → publicData.isVariantMaster === true
+//   searchable      → true para simples y masters; false para children.
+//                     Filtro default del search excluye children (son el
+//                     "backing store" del selector del master, no listings
+//                     que deban mostrarse como resultados independientes).
 
 const toSlug = title =>
   String(title || 'listing')
@@ -64,6 +71,11 @@ const listingToAlgoliaDoc = (listing, included = []) => {
   const price = attrs.price || null;
   const createdAt = attrs.createdAt ? new Date(attrs.createdAt) : null;
 
+  // Variantes: un child de grupo NO debe aparecer en search.
+  const variantGroupId = pd.variantGroupId || null;
+  const isVariantMaster = pd.isVariantMaster === true;
+  const searchable = !variantGroupId || isVariantMaster;
+
   return {
     objectID: listing.id.uuid,
     title: attrs.title || '',
@@ -92,6 +104,10 @@ const listingToAlgoliaDoc = (listing, included = []) => {
       setting: aiTags.setting || '',
       quality: aiTags.quality || '',
     },
+
+    variantGroupId,
+    isVariantMaster,
+    searchable,
   };
 };
 

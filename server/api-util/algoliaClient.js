@@ -144,6 +144,11 @@ const configureIndex = async () => {
         'filterOnly(authorId)',
         'filterOnly(state)',
         'filterOnly(hasAiAnalysis)',
+        // XOLOLO (variantes · PR 4): filtrar children de grupo. Default
+        // del search es `searchable:true` → solo masters y simples.
+        'filterOnly(searchable)',
+        'filterOnly(variantGroupId)',
+        'filterOnly(isVariantMaster)',
       ],
       // Después de la relevancia, prioriza listings más nuevos y con IA.
       customRanking: ['desc(hasAiAnalysis)', 'desc(createdAtTs)'],

@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 import { createImageVariantConfig } from '../util/sdkLoader';
 import { storableError } from '../util/errors';
+import { filterSearchable } from '../util/variants';
 
 // XOLOLO: fetch de los últimos listings publicados (productos y servicios)
 // para el landing. Se dispara al montar la LandingPage y alimenta las
@@ -72,17 +73,19 @@ const fetchLandingListingsPayloadCreator = async (_, { extra: sdk, rejectWithVal
         ...commonQueryParams(),
       }),
     ]);
+    // XOLOLO (variantes · PR 4): excluir children del grupo. Masters y
+    // simples sí entran. Fallback cliente mientras Algolia reindexa.
     return {
       products: {
-        data: productsRes.data.data || [],
+        data: filterSearchable(productsRes.data.data || []),
         included: productsRes.data.included || [],
       },
       services: {
-        data: servicesRes.data.data || [],
+        data: filterSearchable(servicesRes.data.data || []),
         included: servicesRes.data.included || [],
       },
       used: {
-        data: usedRes.data.data || [],
+        data: filterSearchable(usedRes.data.data || []),
         included: usedRes.data.included || [],
       },
     };

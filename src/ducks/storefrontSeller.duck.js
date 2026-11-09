@@ -3,6 +3,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { createImageVariantConfig } from '../util/sdkLoader';
 import { storableError } from '../util/errors';
 import { apiBaseUrl } from '../util/api';
+import { filterSearchable } from '../util/variants';
 
 // XOLOLO: fetch del seller cuyo slug matchea el subdominio, más sus
 // listings publicados. Se dispara al montar la StorefrontPage.
@@ -44,8 +45,10 @@ const fetchSellerPayloadCreator = async (slug, { extra: sdk, rejectWithValue }) 
 
     return {
       seller,
+      // XOLOLO (variantes · PR 4): excluir children del grupo del
+      // storefront público. Solo masters/simples salen como cards.
       listings: {
-        data: listingsRes.data.data || [],
+        data: filterSearchable(listingsRes.data.data || []),
         included: listingsRes.data.included || [],
       },
     };

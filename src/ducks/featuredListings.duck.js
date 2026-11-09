@@ -3,6 +3,7 @@ import * as log from '../util/log';
 import { storableError } from '../util/errors';
 import { addMarketplaceEntities } from './marketplaceData.duck';
 import { createImageVariantConfig } from '../util/sdkLoader';
+import { isSearchable } from '../util/variants';
 
 const MAX_LISTING_COUNT = 10;
 
@@ -175,7 +176,11 @@ const featuredListingsSlice = createSlice({
         if (!selectionType) return;
 
         const affectedSections = getAffectedSectionKeys(allSections, sectionId, selectionType);
-        const listingIds = apiResponse.data.data.map(listing => listing.id);
+        // XOLOLO (variantes · PR 4): fallback cliente mientras Algolia no
+        // ha reindexado — excluye children del grupo de variantes.
+        const listingIds = apiResponse.data.data
+          .filter(isSearchable)
+          .map(listing => listing.id);
 
         affectedSections.forEach(sectionKey => {
           updateSectionState(state, parentPage, sectionKey, selectionType, {

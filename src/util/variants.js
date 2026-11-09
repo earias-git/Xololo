@@ -263,6 +263,32 @@ export const hasAnyStock = siblings => {
 };
 
 /**
+ * ¿Debe aparecer este listing en search, landing y listados agregados?
+ *
+ * Reglas:
+ *   - Listing simple (sin variantGroupId): SÍ.
+ *   - Master del grupo (isVariantMaster=true): SÍ — representa al grupo.
+ *   - Child del grupo: NO — está "oculto" dentro de la selección del master.
+ *
+ * Mantener SIEMPRE consistente entre backend (Algolia filter) y frontend
+ * (fallback por si Algolia no reindexó aún).
+ */
+export const isSearchable = listing => {
+  if (!listing) return false;
+  const groupId = getVariantGroupId(listing);
+  if (!groupId) return true;
+  return isVariantMaster(listing);
+};
+
+/**
+ * Filtra un array de listings dejando solo los searchables (ver isSearchable).
+ */
+export const filterSearchable = listings => {
+  if (!Array.isArray(listings)) return [];
+  return listings.filter(isSearchable);
+};
+
+/**
  * Construye una matriz 2D para render tipo tabla (talla × color).
  *
  * Si hay 1 eje → devuelve matriz 1D en `rows` y `cols` vacío.

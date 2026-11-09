@@ -16,6 +16,8 @@ import {
   findSiblingBySelection,
   hasAnyStock,
   buildMatrix,
+  isSearchable,
+  filterSearchable,
 } from './variants';
 
 const mkListing = ({ id, publicData = {}, stock = null } = {}) => ({
@@ -373,6 +375,37 @@ describe('variants helpers', () => {
     it('treats unloaded stock as 0', () => {
       const unloaded = [mkListing({}), mkListing({})];
       expect(hasAnyStock(unloaded)).toBe(false);
+    });
+  });
+
+  describe('isSearchable / filterSearchable', () => {
+    it('simple listings are searchable', () => {
+      expect(isSearchable(simpleListing)).toBe(true);
+    });
+    it('variant master is searchable', () => {
+      expect(isSearchable(master)).toBe(true);
+    });
+    it('variant children are NOT searchable', () => {
+      expect(isSearchable(childM_azul)).toBe(false);
+      expect(isSearchable(childM_rojo)).toBe(false);
+      expect(isSearchable(childL_azul)).toBe(false);
+    });
+    it('null-safe', () => {
+      expect(isSearchable(null)).toBe(false);
+      expect(isSearchable(undefined)).toBe(false);
+    });
+    it('filterSearchable keeps only masters + simples', () => {
+      const result = filterSearchable([...siblings, simpleListing]);
+      expect(result).toContain(master);
+      expect(result).toContain(simpleListing);
+      expect(result).not.toContain(childM_azul);
+      expect(result).not.toContain(childM_rojo);
+      expect(result).not.toContain(childL_azul);
+      expect(result).toHaveLength(2);
+    });
+    it('filterSearchable handles empty / non-array', () => {
+      expect(filterSearchable([])).toEqual([]);
+      expect(filterSearchable(null)).toEqual([]);
     });
   });
 

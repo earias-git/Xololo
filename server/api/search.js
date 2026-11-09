@@ -238,9 +238,14 @@ const sharetribeKeywordFallback = async (sdk, { q, hitsPerPage, category, listin
     if (category) params.pub_categoryLevel1 = category;
     if (listingType) params.pub_listingType = listingType;
     const resp = await sdk.listings.query(params);
-    const listings = (resp.data.data || []).filter(
-      l => l.attributes?.state === 'published'
-    );
+    const listings = (resp.data.data || []).filter(l => {
+      if (l.attributes?.state !== 'published') return false;
+      // XOLOLO (variantes · PR 4): excluir children de grupo (no deben
+      // salir como resultados independientes). Masters y simples sí.
+      const pd = l.attributes?.publicData || {};
+      if (pd.variantGroupId && pd.isVariantMaster !== true) return false;
+      return true;
+    });
     const included = resp.data.included || [];
     return listings.map(l => {
       const attrs = l.attributes || {};
@@ -282,8 +287,12 @@ module.exports = async (req, res) => {
 
     // Filtros base: siempre published, nunca bloqueados por moderación.
     // Puede añadirse filtro explícito de UI (ej. CategoryRail del landing).
+    //
+    // XOLOLO (variantes · PR 4): `searchable:true` excluye los children
+    // de un grupo de variantes — ellos son el storage del selector del
+    // master, no listings independientes que deban salir como resultados.
     const buildFilters = (category, listingType) => {
-      const f = ['state:published', 'NOT moderation:block'];
+      const f = ['state:published', 'NOT moderation:block', 'searchable:true'];
       if (category) f.push(`category:${category}`);
       if (listingType) f.push(`listingType:${listingType}`);
       return f;

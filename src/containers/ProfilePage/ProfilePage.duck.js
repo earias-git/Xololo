@@ -76,6 +76,12 @@ const queryUserListingsPayloadCreator = (
       const listings = response.data.data;
       const listingRefs = listings
         .filter(l => l => !l.attributes.deleted && l.attributes.state === 'published')
+        // XOLOLO (variantes · PR 4): excluir children del grupo del
+        // perfil público. Masters y simples sí.
+        .filter(l => {
+          const pd = l.attributes?.publicData || {};
+          return !pd.variantGroupId || pd.isVariantMaster === true;
+        })
         .map(({ id, type }) => ({ id, type }));
       dispatch(addMarketplaceEntities(response));
       return { listingRefs, response };
