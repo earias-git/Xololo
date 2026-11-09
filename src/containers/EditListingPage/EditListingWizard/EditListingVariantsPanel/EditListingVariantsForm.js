@@ -322,9 +322,10 @@ const EditListingVariantsForm = props => {
 
           {hasRows ? (
             <div className={css.summary}>
-              Se guardarán <strong>{matrix.length}</strong> variantes. La primera fila
-              queda como listing principal y el resto se publica como hermanos en un
-              paso siguiente (próxima iteración del wizard).
+              Se publicarán <strong>{matrix.length}</strong> variantes. La primera fila
+              queda como listing principal; las demás se crean como listings hermanos
+              con stock propio. Si quitas una variante, su listing se cierra (no se
+              borra; puedes reabrirlo).
             </div>
           ) : null}
 

@@ -37,9 +37,13 @@ import {
   updateListingAs,
   publishDraftAs,
   updateStockAs,
+  closeListingAs,
 } from '../../util/apiAsWorkspace';
+// XOLOLO (variantes · PR 2b): helper para construir siblings consistentes
+// con el master. buildSiblingPayload clona lo esencial + aplica override.
+import { buildSiblingPayload } from '../../util/variants';
 
-const { UUID } = sdkTypes;
+const { UUID, Money } = sdkTypes;
 
 // Create array of N items where indexing starts from 1
 const getArrayOfNItems = n =>
@@ -282,6 +286,28 @@ export const updateListingThunk = createAsyncThunk(
         dispatch(addMarketplaceEntities(response));
         return { response, tab };
       })
+      .then(async result => {
+        // XOLOLO (variantes · PR 2b): si el tab guardado es VARIANTS y el
+        // master quedó como grupo (isVariantMaster=true + variantsMatrix),
+        // sincroniza siblings vía sdk (crear/actualizar/cerrar).
+        // Fallos NO abortan el guardado del master — se loguean y seguimos.
+        //
+        // Guard: solo cuando el patch del panel incluye variantsMatrix en
+        // publicData (el panel SIEMPRE lo envía, los updates internos del
+        // propio sync NO — así evitamos recursión).
+        const isVariantsPanelSubmit =
+          tab === 'variants' &&
+          data?.publicData &&
+          Object.prototype.hasOwnProperty.call(data.publicData, 'variantsMatrix');
+        if (isVariantsPanelSubmit) {
+          try {
+            await dispatch(syncVariantSiblingsThunk({ masterListingId: id, config })).unwrap();
+          } catch (e) {
+            log.error(e, 'sync-variants-chained-failed', { masterListingId: id });
+          }
+        }
+        return result;
+      })
       .catch(e => {
         log.error(e, 'update-listing-failed', { listingData: data });
         return rejectWithValue(storableError(e));
@@ -330,6 +356,239 @@ export const publishListingThunk = createAsyncThunk(
 // Backward compatible wrappers for the thunks
 export const requestPublishListingDraft = listingId => (dispatch, getState, sdk) => {
   return dispatch(publishListingThunk({ listingId })).unwrap();
+};
+
+//////////////////////////////////////////////////////////////////////
+// XOLOLO (variantes · PR 2b) — Sync de siblings del grupo de variantes
+//////////////////////////////////////////////////////////////////////
+//
+// Lee el master en Redux state (ownListing entity) y reconcilia los
+// listings hermanos vs la publicData.variantsMatrix staging:
+//   - Row 0 = master (sus variantValues). Ajusta SU stock + priceOverride
+//     en el propio master.
+//   - Rows 1..N → siblings. Match por variantValues a los siblings
+//     existentes del grupo (query por pub_variantGroupId).
+//     · Existe → update stock + priceOverride (si cambió).
+//     · No existe → createDraft + publishDraft + setStock.
+//   - Siblings existentes NO presentes en el matrix → close (reversible).
+//
+// Sequential por simplicidad y para evitar rate limits. Si falla un
+// sibling, se loguea y continúa — el seller puede re-guardar el tab
+// para reintentar (idempotente: no duplica siblings).
+
+const rowKey = (axes, variantValues) =>
+  axes.map(ax => variantValues?.[ax] ?? '').join('||');
+
+// Convierte un número (en unidades, p.ej. 350 pesos) a Money subunits.
+const toMoneyFromNumber = (n, currency) => {
+  if (n === null || n === undefined || n === '') return null;
+  const num = Number(n);
+  if (!Number.isFinite(num) || num < 0) return null;
+  return new Money(Math.round(num * 100), currency);
+};
+
+const moneyEquals = (a, b) => {
+  if (!a || !b) return false;
+  return a.amount === b.amount && a.currency === b.currency;
+};
+
+export const syncVariantSiblingsThunk = createAsyncThunk(
+  'EditListingPage/syncVariantSiblings',
+  async ({ masterListingId, config }, { dispatch, getState, rejectWithValue, extra: sdk }) => {
+    const state = getState();
+    const master = state.marketplaceData.entities.ownListing[masterListingId?.uuid];
+    if (!master) {
+      log.error(new Error('sync-variants: master not in state'), 'sync-variants-no-master', {
+        masterListingId,
+      });
+      return rejectWithValue(storableError(new Error('master_not_found')));
+    }
+
+    const pd = master.attributes?.publicData || {};
+    if (pd.isVariantMaster !== true || !pd.variantGroupId) {
+      // El listing no es master de un grupo — nada que sincronizar.
+      return { synced: 0, skipped: 'not_master' };
+    }
+    const axes = Array.isArray(pd.variantAxes) ? pd.variantAxes : [];
+    const matrix = Array.isArray(pd.variantsMatrix) ? pd.variantsMatrix : [];
+    if (axes.length === 0 || matrix.length === 0) {
+      return { synced: 0, skipped: 'empty_matrix' };
+    }
+
+    const workspace = getCurrentWorkspace(state.user?.currentUser);
+    const currency = master.attributes?.price?.currency || config.currency;
+    const imageIdsFromMaster = (master.relationships?.images?.data || []).map(i => i.id);
+
+    const imageVariantInfo = getImageVariantInfo(config.layout.listingImage);
+    const queryParams = {
+      expand: true,
+      include: ['author', 'images', 'currentStock'],
+      'fields.image': imageVariantInfo.fieldsImage,
+      ...imageVariantInfo.imageVariants,
+    };
+
+    // ---- 1. Query hermanos existentes del grupo ----
+    //
+    // El filtro pub_variantGroupId de Sharetribe acepta string.
+    // Devuelve también el master; lo filtramos abajo.
+    let existingSiblings = [];
+    try {
+      const res = await sdk.ownListings.query(
+        { pub_variantGroupId: pd.variantGroupId, ...queryParams },
+        { expand: true }
+      );
+      const all = res.data?.data || [];
+      existingSiblings = all.filter(l => l.id?.uuid !== masterListingId.uuid);
+      // Hidrata la store para que futuros renders tengan los siblings.
+      dispatch(addMarketplaceEntities(res));
+    } catch (e) {
+      log.error(e, 'sync-variants-query-failed', { groupId: pd.variantGroupId });
+      return rejectWithValue(storableError(e));
+    }
+
+    // ---- 2. Row 0 = master: ajusta su propio stock + precio ----
+    const row0 = matrix[0];
+    const row0Key = rowKey(axes, row0?.variantValues);
+    const masterKey = rowKey(axes, pd.variantValues);
+    const masterStock = master.currentStock?.attributes?.quantity;
+    const masterPrice = master.attributes?.price;
+
+    let masterUpdated = 0;
+    if (row0 && row0Key === masterKey) {
+      // Stock
+      if (typeof row0.stock === 'number' && row0.stock !== masterStock) {
+        try {
+          await dispatch(
+            setStockThunk({
+              listingId: masterListingId,
+              oldTotal: typeof masterStock === 'number' ? masterStock : null,
+              newTotal: row0.stock,
+            })
+          ).unwrap();
+          masterUpdated += 1;
+        } catch (e) {
+          log.error(e, 'sync-variants-master-stock-failed', { masterListingId });
+        }
+      }
+      // Precio
+      const newPrice = toMoneyFromNumber(row0.priceOverride, currency);
+      if (newPrice && !moneyEquals(newPrice, masterPrice)) {
+        try {
+          await dispatch(
+            updateListingThunk({ tab: 'variants', data: { id: masterListingId, price: newPrice }, config })
+          ).unwrap();
+          masterUpdated += 1;
+        } catch (e) {
+          log.error(e, 'sync-variants-master-price-failed', { masterListingId });
+        }
+      }
+    }
+
+    // ---- 3. Rows 1..N → siblings ----
+    const matchedExistingIds = new Set();
+    let siblingsCreated = 0;
+    let siblingsUpdated = 0;
+    let siblingsFailed = 0;
+
+    for (let i = 1; i < matrix.length; i++) {
+      const row = matrix[i];
+      const key = rowKey(axes, row.variantValues);
+      const existing = existingSiblings.find(l => {
+        const vv = l.attributes?.publicData?.variantValues;
+        return rowKey(axes, vv) === key;
+      });
+
+      try {
+        if (existing) {
+          // Match → update stock + precio si cambiaron.
+          matchedExistingIds.add(existing.id.uuid);
+          const curStock = existing.currentStock?.attributes?.quantity;
+          if (typeof row.stock === 'number' && row.stock !== curStock) {
+            await dispatch(
+              setStockThunk({
+                listingId: existing.id,
+                oldTotal: typeof curStock === 'number' ? curStock : null,
+                newTotal: row.stock,
+              })
+            ).unwrap();
+          }
+          const newPrice = toMoneyFromNumber(row.priceOverride, currency);
+          if (newPrice && !moneyEquals(newPrice, existing.attributes?.price)) {
+            await dispatch(
+              updateListingThunk({
+                tab: 'variants',
+                data: { id: existing.id, price: newPrice },
+                config,
+              })
+            ).unwrap();
+          }
+          siblingsUpdated += 1;
+        } else {
+          // Nuevo sibling → createDraft + publish + setStock.
+          const payload = buildSiblingPayload(master, {
+            variantValues: row.variantValues,
+            priceOverride: toMoneyFromNumber(row.priceOverride, currency),
+          });
+          if (imageIdsFromMaster.length > 0) {
+            payload.images = imageIdsFromMaster;
+          }
+
+          const createRes = workspace
+            ? await createDraftAs(workspace.sellerId, payload, queryParams)
+            : await sdk.ownListings.createDraft(payload, queryParams);
+          dispatch(addMarketplaceEntities(createRes));
+          const newListingId = createRes.data.data.id;
+
+          const pubRes = workspace
+            ? await publishDraftAs(workspace.sellerId, newListingId.uuid, queryParams)
+            : await sdk.ownListings.publishDraft({ id: newListingId }, { expand: true });
+          dispatch(addMarketplaceEntities(pubRes));
+
+          if (typeof row.stock === 'number' && row.stock > 0) {
+            await dispatch(
+              setStockThunk({ listingId: newListingId, oldTotal: null, newTotal: row.stock })
+            ).unwrap();
+          }
+          siblingsCreated += 1;
+        }
+      } catch (e) {
+        log.error(e, 'sync-variants-sibling-failed', { row, index: i });
+        siblingsFailed += 1;
+      }
+    }
+
+    // ---- 4. Siblings existentes NO en el matrix → close ----
+    let siblingsClosed = 0;
+    for (const existing of existingSiblings) {
+      if (matchedExistingIds.has(existing.id.uuid)) continue;
+      try {
+        if (workspace) {
+          const res = await closeListingAs(workspace.sellerId, existing.id.uuid, queryParams);
+          dispatch(addMarketplaceEntities(res));
+        } else {
+          const res = await sdk.ownListings.close({ id: existing.id }, { expand: true });
+          dispatch(addMarketplaceEntities(res));
+        }
+        siblingsClosed += 1;
+      } catch (e) {
+        log.error(e, 'sync-variants-close-failed', { listingId: existing.id?.uuid });
+      }
+    }
+
+    return {
+      synced: siblingsCreated + siblingsUpdated,
+      masterUpdated,
+      siblingsCreated,
+      siblingsUpdated,
+      siblingsClosed,
+      siblingsFailed,
+    };
+  }
+);
+
+// Backward compatible wrapper.
+export const requestSyncVariantSiblings = (masterListingId, config) => dispatch => {
+  return dispatch(syncVariantSiblingsThunk({ masterListingId, config })).unwrap();
 };
 
 //////////////////
