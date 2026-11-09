@@ -59,6 +59,13 @@ import SectionEventAttendeesMaybe from './SectionEventAttendeesMaybe';
 import SectionGallery from './SectionGallery';
 import CustomListingFields from './CustomListingFields';
 import ListingPageAccessWrapper from './ListingPageAccessWrapper';
+import VariantSelector from './VariantSelector';
+import {
+  isVariantMaster,
+  getVariantAxes,
+  getVariantValues,
+  findSiblingBySelection,
+} from '../../util/variants';
 
 import css from './ListingPage.module.css';
 
@@ -182,6 +189,51 @@ export const ListingPageComponent = props => {
   }
   const unitType = publicData.unitType;
   const isNegotiation = processType === 'negotiation';
+
+  // XOLOLO (variantes · PR 3): si el listing es master de un grupo,
+  // cargar los hermanos (ya precargados por loadData) y gestionar
+  // la selección local. El sibling activo reemplaza al master como
+  // target del OrderPanel.
+  const isMaster = isVariantMaster(currentListing);
+  const variantSiblingIds = useSelector(state => state.ListingPage.variantSiblingIds || []);
+  const siblingsFromStore = useSelector(state => {
+    if (!isMaster || variantSiblingIds.length === 0) return [];
+    const refs = variantSiblingIds.map(id => ({ id, type: 'listing' }));
+    return getMarketplaceEntities(state, refs).filter(Boolean);
+  });
+  // Incluye el master en el set de "hermanos" para que el selector
+  // pueda rendirizar su propia combinación como activa.
+  const allSiblings = isMaster
+    ? (() => {
+        const hasMaster = siblingsFromStore.some(l => l.id?.uuid === currentListing.id?.uuid);
+        return hasMaster ? siblingsFromStore : [currentListing, ...siblingsFromStore];
+      })()
+    : [];
+
+  const masterAxes = isMaster ? getVariantAxes(currentListing) : [];
+  const [variantSelection, setVariantSelection] = useState(() =>
+    isMaster ? getVariantValues(currentListing) : {}
+  );
+  // Si el master se carga/cambia después del primer render (SSR hydration,
+  // navegación entre listings), sincroniza la selección inicial con sus
+  // variantValues para que los pills del master arranquen pre-seleccionados.
+  const masterIdForEffect = isMaster ? currentListing.id?.uuid : null;
+  useEffect(() => {
+    if (masterIdForEffect) {
+      setVariantSelection(getVariantValues(currentListing));
+    } else {
+      setVariantSelection({});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [masterIdForEffect]);
+
+  const activeSibling = isMaster
+    ? findSiblingBySelection(allSiblings, variantSelection) || currentListing
+    : currentListing;
+
+  // El OrderPanel usa activeSibling como listing. Si la selección no
+  // matchea un hermano real, cae al master para no dejar la UI muerta.
+  const listingForOrderPanel = activeSibling;
 
   const commonParams = { params, history, routes: routeConfiguration };
   const onContactUser = handleContactUser({
@@ -342,11 +394,19 @@ export const ListingPageComponent = props => {
             {/* XOLOLO: wrapper sticky que agrupa OrderPanel + AddToCartCta
                 para que viajen juntos al scrollear y no se encimen. */}
             <div className={css.productOrderStickyWrap}>
+              {isMaster && masterAxes.length > 0 ? (
+                <VariantSelector
+                  masterListing={currentListing}
+                  siblings={allSiblings}
+                  selection={variantSelection}
+                  onChange={setVariantSelection}
+                />
+              ) : null}
               <OrderPanel
                 className={classNames(css.productOrderPanel, {
                   [css.imagesEnabled]: showListingImage,
                 })}
-                listing={currentListing}
+                listing={listingForOrderPanel}
                 isOwnListing={isOwnListing}
                 onSubmit={handleOrderSubmit}
                 authorLink={
@@ -387,7 +447,7 @@ export const ListingPageComponent = props => {
                 Cart.5. */}
               {!isOwnListing ? (
                 <AddToCartCta
-                  listing={currentListing}
+                  listing={listingForOrderPanel}
                   author={ensuredAuthor}
                   imageUrl={
                     currentListing?.images?.[0]?.attributes?.variants?.['listing-card']?.url

@@ -154,6 +154,58 @@ export const fetchReviews = listingId => (dispatch, getState, sdk) => {
   return dispatch(fetchReviewsThunk({ listingId })).unwrap();
 };
 
+/////////////////////////////////////////////////////////////////
+// XOLOLO (variantes · PR 3) — Fetch siblings del grupo de variantes
+/////////////////////////////////////////////////////////////////
+//
+// Cuando el listing abierto es master de un grupo, cargamos los
+// hermanos (mismo variantGroupId) para que el selector del carousel
+// pueda renderizarse sin más fetches por cada click.
+//
+// No se filtran los cerrados por el SDK; el componente los filtra en
+// cliente si necesita. El master se EXCLUYE del result en el selector
+// (se agrega aparte).
+
+export const fetchVariantSiblingsThunk = createAsyncThunk(
+  'ListingPage/fetchVariantSiblings',
+  ({ groupId, config }, { dispatch, rejectWithValue, extra: sdk }) => {
+    const aspectWidth = config?.layout?.listingImage?.aspectWidth || 1;
+    const aspectHeight = config?.layout?.listingImage?.aspectHeight || 1;
+    const variantPrefix = config?.layout?.listingImage?.variantPrefix || 'listing-card';
+    const aspectRatio = aspectHeight / aspectWidth;
+    const queryParams = {
+      pub_variantGroupId: groupId,
+      include: ['images', 'currentStock'],
+      'fields.listing': [
+        'title',
+        'price',
+        'publicData',
+        'state',
+      ],
+      'fields.image': [
+        `variants.${variantPrefix}`,
+        `variants.${variantPrefix}-2x`,
+      ],
+      ...createImageVariantConfig(`${variantPrefix}`, 400, aspectRatio),
+      ...createImageVariantConfig(`${variantPrefix}-2x`, 800, aspectRatio),
+      perPage: 100,
+      page: 1,
+    };
+    return sdk.listings
+      .query(queryParams)
+      .then(response => {
+        const listings = response.data?.data || [];
+        dispatch(addMarketplaceEntities(response));
+        return listings.map(l => l.id);
+      })
+      .catch(e => rejectWithValue(storableError(e)));
+  }
+);
+
+export const fetchVariantSiblings = (groupId, config) => (dispatch, getState, sdk) => {
+  return dispatch(fetchVariantSiblingsThunk({ groupId, config })).unwrap();
+};
+
 //////////////////////
 // Fetch Time Slots //
 //////////////////////
@@ -383,6 +435,12 @@ const initialState = {
   showListingError: null,
   reviews: [],
   fetchReviewsError: null,
+  // XOLOLO (variantes · PR 3): IDs de listings hermanos del grupo (si
+  // el listing abierto es master). Permite al carousel renderizar el
+  // selector sin reinvocar al SDK en cada cambio de variante.
+  variantSiblingIds: [],
+  variantGroupId: null,
+  fetchVariantSiblingsError: null,
   monthlyTimeSlots: {
     // '2022-03': {
     //   timeSlots: [],
@@ -437,6 +495,17 @@ const listingPageSlice = createSlice({
       })
       .addCase(fetchReviewsThunk.rejected, (state, action) => {
         state.fetchReviewsError = action.payload;
+      })
+      .addCase(fetchVariantSiblingsThunk.pending, (state, action) => {
+        state.fetchVariantSiblingsError = null;
+        state.variantGroupId = action.meta.arg.groupId;
+      })
+      .addCase(fetchVariantSiblingsThunk.fulfilled, (state, action) => {
+        state.variantSiblingIds = action.payload || [];
+      })
+      .addCase(fetchVariantSiblingsThunk.rejected, (state, action) => {
+        state.fetchVariantSiblingsError = action.payload;
+        state.variantSiblingIds = [];
       })
       .addCase(fetchTimeSlotsThunk.pending, (state, action) => {
         const { options, start, timeZone } = action.meta.arg;
@@ -576,6 +645,15 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
       // This can happen parallel to loadData.
       // We are not interested to return them from loadData call.
       fetchMonthlyTimeSlots(dispatch, listing);
+    }
+    // XOLOLO (variantes · PR 3): si el listing es master de un grupo,
+    // precarga siblings para que el selector del carousel pueda
+    // renderizar sin fetches extras tras la hidratación.
+    const pd = listing?.attributes?.publicData || {};
+    if (pd.isVariantMaster === true && pd.variantGroupId) {
+      // Fire-and-forget: errores no abortan loadData (fail-open —
+      // el selector cae a "sin variantes" y muestra solo el master).
+      dispatch(fetchVariantSiblings(pd.variantGroupId, config)).catch(() => {});
     }
     return response;
   });

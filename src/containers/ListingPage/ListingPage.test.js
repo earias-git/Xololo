@@ -354,6 +354,10 @@ describe('Duck', () => {
         showListingError: null,
         reviews: [],
         fetchReviewsError: null,
+        // XOLOLO (variantes · PR 3): siblings precargados por loadData
+        variantSiblingIds: [],
+        variantGroupId: null,
+        fetchVariantSiblingsError: null,
         monthlyTimeSlots: {},
         timeSlotsForDate: {},
         lineItems: null,

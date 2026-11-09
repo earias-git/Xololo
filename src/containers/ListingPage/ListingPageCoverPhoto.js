@@ -59,6 +59,13 @@ import SectionMapMaybe from './SectionMapMaybe';
 import CustomListingFields from './CustomListingFields';
 import Notifications from './Notifications/Notifications';
 import ListingPageAccessWrapper from './ListingPageAccessWrapper';
+import VariantSelector from './VariantSelector';
+import {
+  isVariantMaster,
+  getVariantAxes,
+  getVariantValues,
+  findSiblingBySelection,
+} from '../../util/variants';
 
 import css from './ListingPage.module.css';
 
@@ -182,6 +189,38 @@ export const ListingPageComponent = props => {
   }
   const unitType = publicData.unitType;
   const isNegotiation = processType === 'negotiation';
+
+  // XOLOLO (variantes · PR 3): mismo patrón que ListingPageCarousel.
+  const isMaster = isVariantMaster(currentListing);
+  const variantSiblingIds = useSelector(state => state.ListingPage.variantSiblingIds || []);
+  const siblingsFromStore = useSelector(state => {
+    if (!isMaster || variantSiblingIds.length === 0) return [];
+    const refs = variantSiblingIds.map(id => ({ id, type: 'listing' }));
+    return getMarketplaceEntities(state, refs).filter(Boolean);
+  });
+  const allSiblings = isMaster
+    ? (() => {
+        const hasMaster = siblingsFromStore.some(l => l.id?.uuid === currentListing.id?.uuid);
+        return hasMaster ? siblingsFromStore : [currentListing, ...siblingsFromStore];
+      })()
+    : [];
+  const masterAxes = isMaster ? getVariantAxes(currentListing) : [];
+  const [variantSelection, setVariantSelection] = useState(() =>
+    isMaster ? getVariantValues(currentListing) : {}
+  );
+  const masterIdForEffect = isMaster ? currentListing.id?.uuid : null;
+  useEffect(() => {
+    if (masterIdForEffect) {
+      setVariantSelection(getVariantValues(currentListing));
+    } else {
+      setVariantSelection({});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [masterIdForEffect]);
+  const activeSibling = isMaster
+    ? findSiblingBySelection(allSiblings, variantSelection) || currentListing
+    : currentListing;
+  const listingForOrderPanel = activeSibling;
 
   const commonParams = { params, history, routes: routeConfiguration };
   const onContactUser = handleContactUser({
@@ -356,9 +395,17 @@ export const ListingPageComponent = props => {
             {/* XOLOLO: wrapper sticky que agrupa OrderPanel + AddToCartCta
                 para que viajen juntos al scrollear y no se encimen. */}
             <div className={css.productOrderStickyWrap}>
+              {isMaster && masterAxes.length > 0 ? (
+                <VariantSelector
+                  masterListing={currentListing}
+                  siblings={allSiblings}
+                  selection={variantSelection}
+                  onChange={setVariantSelection}
+                />
+              ) : null}
               <OrderPanel
                 className={css.orderPanel}
-                listing={currentListing}
+                listing={listingForOrderPanel}
                 isOwnListing={isOwnListing}
                 onSubmit={handleOrderSubmit}
                 authorLink={
@@ -394,7 +441,7 @@ export const ListingPageComponent = props => {
                 OrderPanel para consolidar productos del mismo seller. */}
               {!isOwnListing ? (
                 <AddToCartCta
-                  listing={currentListing}
+                  listing={listingForOrderPanel}
                   author={ensuredAuthor}
                   imageUrl={
                     currentListing?.images?.[0]?.attributes?.variants?.['listing-card']?.url
