@@ -34,8 +34,48 @@ import {
   getOwnListingsById,
   discardDraft,
 } from './ManageListingsPage.duck';
+import {
+  getVariantGroupId,
+  isVariantMaster,
+  getVariantValues,
+  getVariantAxes,
+  variantLabel,
+} from '../../util/variants';
 import css from './ManageListingsPage.module.css';
 import DiscardDraftModal from './DiscardDraftModal/DiscardDraftModal';
+
+// XOLOLO (variantes · PR 6) — Metadata para el card de un listing que
+// pertenece a un grupo. Mira la página actual; si el master no está en
+// esta página (otro screen de paginación), devuelve `kind:'child-orphan'`
+// con los campos mínimos para pintar un chip informativo.
+const getVariantGroupInfoForListing = (listing, allOnPage) => {
+  const groupId = getVariantGroupId(listing);
+  if (!groupId) return null;
+  const axes = getVariantAxes(listing);
+  const myLabel = variantLabel(getVariantValues(listing), axes);
+  if (isVariantMaster(listing)) {
+    const siblingsOnPage = (allOnPage || []).filter(
+      l => getVariantGroupId(l) === groupId && !isVariantMaster(l)
+    );
+    return {
+      kind: 'master',
+      groupId,
+      axes,
+      label: myLabel,
+      siblingCount: siblingsOnPage.length,
+    };
+  }
+  const master = (allOnPage || []).find(
+    l => getVariantGroupId(l) === groupId && isVariantMaster(l)
+  );
+  return {
+    kind: master ? 'child' : 'child-orphan',
+    groupId,
+    axes,
+    label: myLabel,
+    masterListing: master || null,
+  };
+};
 
 const Heading = props => {
   const { listingsAreLoaded, pagination } = props;
@@ -229,6 +269,7 @@ export const ManageListingsPageComponent = props => {
               <li key={l.id.uuid} className={css.listingCard}>
                 <ManageListingCard
                   listing={l}
+                  variantGroupInfo={getVariantGroupInfoForListing(l, listings)}
                   isMenuOpen={!!listingMenuOpen && listingMenuOpen.id.uuid === l.id.uuid}
                   actionsInProgressListingId={openingListing || closingListing || discardingDraft}
                   onToggleMenu={onToggleMenu}

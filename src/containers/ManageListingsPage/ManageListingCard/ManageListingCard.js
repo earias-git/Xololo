@@ -29,6 +29,54 @@ import css from './ManageListingCard.module.css';
 
 const MAX_LENGTH_FOR_WORDS_IN_TITLE = 7;
 
+// XOLOLO (variantes · PR 6) — Chip contextual bajo el título del card.
+//
+// 3 formas:
+//   - master: "Grupo · 3 variantes más"  → listing principal del grupo.
+//   - child:  "Variante · M · azul (← Playera X)" con link al master.
+//   - child-orphan: "Variante · M · azul" (master en otra página).
+//
+// Mantiene cards 1-a-1 con los listings (no consolida en una sola card)
+// porque Sharetribe pagina por listing y una página puede tener
+// master + algunos siblings; agrupar visualmente en una sola card
+// confundiría la paginación. El chip da el contexto sin romperla.
+const VariantGroupChip = ({ info }) => {
+  if (!info) return null;
+  const label = info.label || '';
+  if (info.kind === 'master') {
+    const more = info.siblingCount > 0 ? ` · ${info.siblingCount} variante${info.siblingCount === 1 ? '' : 's'} más` : '';
+    return (
+      <div className={css.variantChip}>
+        <span className={css.variantChipTag}>Grupo</span>
+        {label ? <span className={css.variantChipLabel}>{label}</span> : null}
+        {more ? <span className={css.variantChipMuted}>{more}</span> : null}
+      </div>
+    );
+  }
+  // child or child-orphan
+  const masterLink = info.masterListing ? (
+    <NamedLink
+      className={css.variantChipMasterLink}
+      name="EditListingPage"
+      params={{
+        id: info.masterListing.id.uuid,
+        slug: createSlug(info.masterListing.attributes?.title || 'listing'),
+        type: LISTING_PAGE_PARAM_TYPE_EDIT,
+        tab: 'variants',
+      }}
+    >
+      ← Abrir master
+    </NamedLink>
+  ) : null;
+  return (
+    <div className={css.variantChip}>
+      <span className={css.variantChipTag}>Variante</span>
+      {label ? <span className={css.variantChipLabel}>{label}</span> : null}
+      {masterLink}
+    </div>
+  );
+};
+
 /**
  * Splits a title to break long words into spans so that
  * flexbox card layouts don't expand excessively.
@@ -189,6 +237,7 @@ export const ManageListingCard = props => {
     onOpenListing,
     onDiscardDraft,
     onToggleMenu,
+    variantGroupInfo,
   } = props;
   const classes = classNames(rootClassName || css.root, className);
   const currentListing = ensureOwnListing(listing);
@@ -252,6 +301,9 @@ export const ManageListingCard = props => {
           <div className={css.titleWrapper}>
             <LinkedListingTitle state={state} id={id} slug={slug} title={title} />
           </div>
+          {variantGroupInfo ? (
+            <VariantGroupChip info={variantGroupInfo} />
+          ) : null}
         </div>
 
         <div className={css.manageLinks}>
