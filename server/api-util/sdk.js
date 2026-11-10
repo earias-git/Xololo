@@ -72,6 +72,22 @@ exports.handleError = (res, error, options = {}) => {
     log.error(error, 'local-api-request-failed', error.data);
   }
 
+  // XOLOLO (2026-11-09): errores custom usan err.statusCode + err.reason
+  // (ej. invalid_shipping_rate_signature). Antes caían al 500 genérico y
+  // perdíamos el motivo. Ahora respetamos statusCode y exponemos reason
+  // para que el frontend pueda mostrar diagnóstico útil y Sentry/logs
+  // no requieran buscar en logs server-side.
+  if (error.statusCode && typeof error.message === 'string') {
+    res
+      .status(error.statusCode)
+      .json({
+        error: error.message,
+        reason: error.reason || null,
+      })
+      .end();
+    return;
+  }
+
   if (error.status && error.statusText && error.data) {
     const { status, statusText, data } = error;
 
