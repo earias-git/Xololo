@@ -73,9 +73,17 @@ const request = (path, options = {}) => {
 
     if (res.status >= 400) {
       return res.json().then(data => {
-        let e = new Error();
-        e = Object.assign(e, data);
-
+        // XOLOLO 2026-11-10: preserva status + message + reason del
+        // server. Antes solo asignaba data (que no incluye el HTTP status)
+        // y la UI veía {status: undefined, message: ""} inservible.
+        const msg = (data && (data.error || data.message)) || `request_failed_${res.status}`;
+        let e = new Error(msg);
+        e.status = res.status;
+        e.statusText = res.statusText;
+        e.data = data;
+        if (data && typeof data === 'object') {
+          Object.assign(e, data);
+        }
         throw e;
       });
     }

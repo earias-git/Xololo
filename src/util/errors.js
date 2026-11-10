@@ -370,6 +370,13 @@ export const storableError = err => {
   // Status, statusText, and data.errors are (possibly) added to the error object by SDK
   const apiErrors = responseAPIErrors(error);
 
+  // XOLOLO 2026-11-10: preserva campos custom que levanta nuestra API
+  // (ej. `reason` en invalid_shipping_rate_signature) y el error-code
+  // top-level del server. Sin esto, el frontend solo ve {message, status}
+  // y no puede mostrar diagnóstico útil al buyer ni grep en logs.
+  const customError = error && typeof error === 'object' && error.error ? error.error : undefined;
+  const customReason = error && typeof error === 'object' && error.reason ? error.reason : undefined;
+
   // Returned object is the same as prop type check in util/types -> error
   return {
     type: 'error',
@@ -378,5 +385,7 @@ export const storableError = err => {
     status,
     statusText,
     apiErrors,
+    ...(customError ? { error: customError } : {}),
+    ...(customReason ? { reason: customReason } : {}),
   };
 };
