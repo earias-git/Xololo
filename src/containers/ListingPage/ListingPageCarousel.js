@@ -170,6 +170,30 @@ export const ListingPageComponent = props => {
 
   const topbar = <TopbarContainer />;
 
+  // XOLOLO (variantes · PR 3 — fix 2026-11-09): TODOS los hooks DEBEN
+  // llamarse antes de cualquier early return. Antes estaban después y
+  // provocaba React #310 (hooks order mismatch) cuando currentListing
+  // se cargaba async.
+  const isMaster = isVariantMaster(currentListing);
+  const variantSiblingIdsRaw = useSelector(state => state.ListingPage.variantSiblingIds || []);
+  const siblingsFromStore = useSelector(state => {
+    if (!isMaster || variantSiblingIdsRaw.length === 0) return [];
+    const refs = variantSiblingIdsRaw.map(id => ({ id, type: 'listing' }));
+    return getMarketplaceEntities(state, refs).filter(Boolean);
+  });
+  const [variantSelection, setVariantSelection] = useState(() =>
+    isMaster ? getVariantValues(currentListing) : {}
+  );
+  const masterIdForEffect = isMaster ? currentListing?.id?.uuid : null;
+  useEffect(() => {
+    if (masterIdForEffect) {
+      setVariantSelection(getVariantValues(currentListing));
+    } else {
+      setVariantSelection({});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [masterIdForEffect]);
+
   if (showListingError && showListingError.status === 404) {
     // 404 listing not found
     return <NotFoundPage staticContext={props.staticContext} />;
@@ -190,49 +214,18 @@ export const ListingPageComponent = props => {
   const unitType = publicData.unitType;
   const isNegotiation = processType === 'negotiation';
 
-  // XOLOLO (variantes · PR 3): si el listing es master de un grupo,
-  // cargar los hermanos (ya precargados por loadData) y gestionar
-  // la selección local. El sibling activo reemplaza al master como
-  // target del OrderPanel.
-  const isMaster = isVariantMaster(currentListing);
-  const variantSiblingIds = useSelector(state => state.ListingPage.variantSiblingIds || []);
-  const siblingsFromStore = useSelector(state => {
-    if (!isMaster || variantSiblingIds.length === 0) return [];
-    const refs = variantSiblingIds.map(id => ({ id, type: 'listing' }));
-    return getMarketplaceEntities(state, refs).filter(Boolean);
-  });
-  // Incluye el master en el set de "hermanos" para que el selector
-  // pueda rendirizar su propia combinación como activa.
+  // XOLOLO (variantes · PR 3): deriva valores NO-hook de la selección
+  // de variantes. Los hooks ya se llamaron arriba (antes de early returns).
   const allSiblings = isMaster
     ? (() => {
         const hasMaster = siblingsFromStore.some(l => l.id?.uuid === currentListing.id?.uuid);
         return hasMaster ? siblingsFromStore : [currentListing, ...siblingsFromStore];
       })()
     : [];
-
   const masterAxes = isMaster ? getVariantAxes(currentListing) : [];
-  const [variantSelection, setVariantSelection] = useState(() =>
-    isMaster ? getVariantValues(currentListing) : {}
-  );
-  // Si el master se carga/cambia después del primer render (SSR hydration,
-  // navegación entre listings), sincroniza la selección inicial con sus
-  // variantValues para que los pills del master arranquen pre-seleccionados.
-  const masterIdForEffect = isMaster ? currentListing.id?.uuid : null;
-  useEffect(() => {
-    if (masterIdForEffect) {
-      setVariantSelection(getVariantValues(currentListing));
-    } else {
-      setVariantSelection({});
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [masterIdForEffect]);
-
   const activeSibling = isMaster
     ? findSiblingBySelection(allSiblings, variantSelection) || currentListing
     : currentListing;
-
-  // El OrderPanel usa activeSibling como listing. Si la selección no
-  // matchea un hermano real, cae al master para no dejar la UI muerta.
   const listingForOrderPanel = activeSibling;
 
   const commonParams = { params, history, routes: routeConfiguration };
