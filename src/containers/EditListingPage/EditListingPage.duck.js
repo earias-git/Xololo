@@ -457,9 +457,15 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
     // crear duplicados.
     let existingSiblings = [];
     try {
+      // XOLOLO 2026-11-10: incluir currentStock (y author/images) es
+      // obligatorio — si no viene currentStock, el setStock de más
+      // abajo pasa oldTotal:null a compareAndSet y Sharetribe responde
+      // 409 (el stock YA existe en el sibling). Resultado: el stock
+      // nunca se actualiza y el buyer ve stock "fantasma".
       const res = await sdk.ownListings.query({
         pub_variantGroupId: pd.variantGroupId,
         perPage: 100,
+        ...queryParams,
       });
       const all = res.data?.data || [];
       const inGroup = all.filter(

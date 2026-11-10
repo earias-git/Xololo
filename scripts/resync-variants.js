@@ -100,15 +100,40 @@ const rowKey = (axes, vv) => axes.map(a => vv?.[a] ?? '').join('||');
   console.log(`  mode: ${APPLY ? 'APPLY' : 'DRY RUN'}\n`);
 
   // 2. Query siblings existentes + filtro cliente.
+  // Incluir currentStock es crítico: setStock usa compareAndSet con
+  // oldTotal = stock actual. Sin include, oldTotal queda undefined y
+  // Sharetribe responde 409 ("stock already exists").
   const sibRes = await sdk.listings.query({
     pub_variantGroupId: groupId,
+    include: ['currentStock'],
     perPage: 100,
   });
   const allInQuery = sibRes.data.data || [];
-  const inGroup = allInQuery.filter(
-    l => l.attributes?.publicData?.variantGroupId === groupId
-  );
+  const sibIncluded = sibRes.data.included || [];
+  // Attach currentStock a cada listing (JSON:API raw — hay que
+  // resolverlo manualmente desde included).
+  const attachStock = l => {
+    const stockRel = l.relationships?.currentStock?.data;
+    if (!stockRel) return l;
+    const stockEntity = sibIncluded.find(
+      i => i.type === 'stock' && i.id?.uuid === stockRel.id?.uuid
+    );
+    l.currentStock = stockEntity;
+    return l;
+  };
+  const inGroup = allInQuery
+    .filter(l => l.attributes?.publicData?.variantGroupId === groupId)
+    .map(attachStock);
   const existingSiblings = inGroup.filter(l => l.id.uuid !== MASTER_ID);
+
+  // Attach stock al master también (de su propio show response).
+  const mIncluded = mres.data.included || [];
+  const mStockRel = master.relationships?.currentStock?.data;
+  if (mStockRel) {
+    master.currentStock = mIncluded.find(
+      i => i.type === 'stock' && i.id?.uuid === mStockRel.id?.uuid
+    );
+  }
   console.log(
     `Query: Sharetribe devolvió ${allInQuery.length}, en el grupo ${inGroup.length}, siblings no-master ${existingSiblings.length}\n`
   );
