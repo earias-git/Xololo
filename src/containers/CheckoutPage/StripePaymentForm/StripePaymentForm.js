@@ -670,8 +670,13 @@ class StripePaymentForm extends Component {
     const isPureLegacy = xoloMethodEnabledCount === 0;
     const showRateSelector =
       isXoloSkydropxSelected || (isPureLegacy && listingShippingPricingMode === 'carrier');
-    const handleRateSelected = rate => {
+    const handleRateSelected = (rate, quotationId) => {
       formApi.change('selectedShippingRate', rate || undefined);
+      // XOLOLO 2026-11-10: persistir quotationId en el form para que
+      // CheckoutPageWithPayment lo lea (formValues.shippingQuotationId)
+      // y se incluya en orderData hacia initiate-privileged. Sin esto
+      // el HMAC del rate no valida y el checkout tira 400.
+      formApi.change('shippingQuotationId', quotationId || undefined);
       if (typeof onShippingRateSelected === 'function') {
         onShippingRateSelected(rate);
       }

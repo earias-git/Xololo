@@ -203,6 +203,11 @@ const ShippingRateSelector = props => {
         error: null,
         declaredValue: Number(data.declaredValue) || 0,
         insuranceMinDeclaredValue: Number(data.insuranceMinDeclaredValue) || 500,
+        // XOLOLO 2026-11-10: quotationId es parte del HMAC del rate.
+        // Sin propagarlo, initiate-privileged valida con undefined y
+        // tira signature_mismatch. Lo guardamos en state para pasarlo
+        // al callback cuando el buyer selecciona un rate.
+        quotationId: data.quotationId || null,
       });
     } catch (e) {
       if (e.name === 'AbortError') return; // request cancelado por cambio de dirección
@@ -215,11 +220,18 @@ const ShippingRateSelector = props => {
     if (typeof onRateSelected === 'function') {
       // XOLOLO Fase 2: pasamos la elección de seguro para que el
       // checkout la persista en metadata de la tx.
-      onRateSelected({
-        ...rate,
-        insuranceAccepted: wantsInsurance,
-        noInsuranceConsent: !wantsInsurance ? acceptsNoInsurance : false,
-      });
+      //
+      // XOLOLO 2026-11-10: segundo argumento = quotationId, requerido
+      // por el server para validar la firma HMAC del rate en
+      // initiate-privileged. Sin esto el rate no se puede comprar.
+      onRateSelected(
+        {
+          ...rate,
+          insuranceAccepted: wantsInsurance,
+          noInsuranceConsent: !wantsInsurance ? acceptsNoInsurance : false,
+        },
+        state.quotationId || null
+      );
     }
   };
 
