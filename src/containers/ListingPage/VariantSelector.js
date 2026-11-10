@@ -50,12 +50,15 @@ const VariantSelector = props => {
   // ¿Todo el grupo está sin stock?
   const anyStock = hasAnyStock(siblings);
 
-  // Para el eje N: valores disponibles considerando las elecciones
-  // previas. Ej: al elegir talla M, el color se filtra a los colores
-  // que combinan con M.
+  // Para el eje N: TODOS los valores que el grupo ofrece para ese eje
+  // (no solo los compatibles con la selección actual). Los que no
+  // combinan con la selección de ejes ANTERIORES se marcan stock=0
+  // para quedar visualmente "agotados" (disabled, tachados) en vez de
+  // desaparecer. Así el buyer ve todas las opciones y entiende que
+  // debe cambiar la talla para llegar a otro color.
   const valuesForAxis = axisIndex => {
     const axis = axes[axisIndex];
-    // Filtra siblings por las elecciones ANTERIORES (0..axisIndex-1).
+    // Elecciones ANTERIORES al eje actual.
     const partialSelection = {};
     for (let i = 0; i < axisIndex; i++) {
       const prevAxis = axes[i];
@@ -63,11 +66,25 @@ const VariantSelector = props => {
         partialSelection[prevAxis] = selection[prevAxis];
       }
     }
-    const filtered = siblings.filter(l => {
-      const vv = getVariantValues(l);
-      return Object.entries(partialSelection).every(([k, v]) => vv[k] === v);
+    // Todos los valores que ofrece el grupo para este eje (sin filtrar).
+    const allValues = axisValuesWithStock(siblings, axis);
+    // Para cada valor, re-calcular su stock SOLO entre siblings que
+    // cumplen la selección previa. Si cero, queda disabled.
+    return allValues.map(({ value }) => {
+      const compat = siblings.filter(l => {
+        const vv = getVariantValues(l);
+        if (vv[axis] !== value) return false;
+        return Object.entries(partialSelection).every(([k, v]) => vv[k] === v);
+      });
+      const compatWithStock = axisValuesWithStock(compat, axis).find(
+        x => x.value === value
+      );
+      return {
+        value,
+        stock: compatWithStock ? compatWithStock.stock : 0,
+        siblingCount: compat.length,
+      };
     });
-    return axisValuesWithStock(filtered, axis);
   };
 
   const handlePillClick = (axis, value) => {
