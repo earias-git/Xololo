@@ -57,6 +57,7 @@ import SectionEventMaybe from './SectionEventMaybe';
 import SectionEventAttendeesMaybe from './SectionEventAttendeesMaybe';
 import SectionMapMaybe from './SectionMapMaybe';
 import CustomListingFields from './CustomListingFields';
+import SectionXololoAttributes from './SectionXololoAttributes';
 import Notifications from './Notifications/Notifications';
 import ListingPageAccessWrapper from './ListingPageAccessWrapper';
 import VariantSelector from './VariantSelector';
@@ -372,6 +373,9 @@ export const ListingPageComponent = props => {
               categoryConfiguration={config.categoryConfiguration}
               intl={intl}
             />
+
+            {/* XOLOLO 2026-11-10: características locales del catálogo. */}
+            <SectionXololoAttributes publicData={publicData} />
 
             <SectionMapMaybe
               geolocation={geolocation}
