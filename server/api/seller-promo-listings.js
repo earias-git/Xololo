@@ -170,7 +170,15 @@ module.exports = async (req, res) => {
       response = await isdk.listings.query({
         authorId: adminId,
         include: ['images'],
-        'fields.listing': ['title', 'state', 'price', 'publicData.listingType', 'metadata'],
+        'fields.listing': [
+          'title',
+          'state',
+          'price',
+          'publicData.listingType',
+          'publicData.variantGroupId',
+          'publicData.isVariantMaster',
+          'metadata',
+        ],
         'fields.image': ['variants.listing-card', 'variants.scaled-small'],
         perPage: 100,
       });
@@ -184,7 +192,15 @@ module.exports = async (req, res) => {
     data.forEach(l => {
       l._includedImages = included;
     });
-    const listings = data.map(l => {
+    // XOLOLO 2026-11-10: en productos con variantes, solo mostramos el
+    // master (o listings simples sin grupo). Los hermanos saturaban la
+    // vista Xololear con el mismo producto repetido N veces — el seller
+    // debe promocionar el producto UNA vez, no cada combinación.
+    const nonChildren = data.filter(l => {
+      const pd = l.attributes?.publicData || {};
+      return !pd.variantGroupId || pd.isVariantMaster === true;
+    });
+    const listings = nonChildren.map(l => {
       const price = l.attributes?.price;
       const meta = l.attributes?.metadata || {};
       const viewedTotals = meta.listingViewedTotal || meta.xoloListingViewed || null;

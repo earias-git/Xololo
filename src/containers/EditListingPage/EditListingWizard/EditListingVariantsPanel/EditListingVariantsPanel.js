@@ -128,9 +128,21 @@ const EditListingVariantsPanel = props => {
     const axes = form.axes;
     const rows = form.rows || [];
 
-    // El master toma los variantValues de la PRIMERA fila (convención).
-    const firstRow = rows[0];
-    const masterValues = firstRow ? firstRow.variantValues : {};
+    // XOLOLO 2026-11-10: el master NO es una variante — es el producto
+    // canónico. Sus variantValues vienen del paso Atributos (talla,
+    // color que el seller capturó al crear el listing), NO de la primera
+    // fila del matrix. Las filas del matrix son SIBLINGS adicionales.
+    //
+    // Si un atributo es array (multiselect), tomamos el primer valor.
+    // Si el atributo no existe aún, queda undefined (se recomienda al
+    // seller completar el paso Atributos antes de activar variantes).
+    const masterAttrs = publicData?.attributes || {};
+    const normalizeAttrValue = v => (Array.isArray(v) ? v[0] : v);
+    const masterValues = {};
+    for (const ax of axes) {
+      const v = normalizeAttrValue(masterAttrs[ax]);
+      if (v != null && v !== '') masterValues[ax] = v;
+    }
 
     const updateValues = {
       publicData: {

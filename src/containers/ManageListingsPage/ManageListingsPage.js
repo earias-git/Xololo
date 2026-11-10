@@ -265,7 +265,16 @@ export const ManageListingsPageComponent = props => {
           <Heading listingsAreLoaded={listingsAreLoaded} pagination={pagination} />
 
           <ul className={css.listingCards}>
-            {listings.map(l => (
+            {/* XOLOLO 2026-11-10: ocultamos hijos de grupos de variantes
+                para que el seller vea 1 card por producto, no N (una por
+                variante). El master absorbe toda la gestión del grupo
+                via el chip "N variantes" (click → tab Variantes). */}
+            {listings
+              .filter(l => {
+                const pd = l.attributes?.publicData || {};
+                return !pd.variantGroupId || pd.isVariantMaster === true;
+              })
+              .map(l => (
               <li key={l.id.uuid} className={css.listingCard}>
                 <ManageListingCard
                   listing={l}

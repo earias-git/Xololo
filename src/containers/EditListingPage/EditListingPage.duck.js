@@ -486,23 +486,31 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
       return rejectWithValue(storableError(e));
     }
 
-    // ---- 2. Row 0 = master: ajusta su propio stock + precio ----
-    const row0 = matrix[0];
-    const row0Key = rowKey(axes, row0?.variantValues);
+    // ---- 2. Localiza la fila del master (por variantValues) ----
+    //
+    // XOLOLO 2026-11-10: el master NO es por convención row[0]. Su
+    // combinación (variantValues) viene del paso Atributos. Buscamos
+    // en la matrix la fila que matchee esos valores y la usamos para
+    // ajustar stock/precio del master. Todas las demás filas son
+    // candidatas a siblings.
     const masterKey = rowKey(axes, pd.variantValues);
+    const masterRowIdx = matrix.findIndex(
+      r => rowKey(axes, r?.variantValues) === masterKey
+    );
+    const masterRow = masterRowIdx >= 0 ? matrix[masterRowIdx] : null;
     const masterStock = master.currentStock?.attributes?.quantity;
     const masterPrice = master.attributes?.price;
 
     let masterUpdated = 0;
-    if (row0 && row0Key === masterKey) {
+    if (masterRow) {
       // Stock
-      if (typeof row0.stock === 'number' && row0.stock !== masterStock) {
+      if (typeof masterRow.stock === 'number' && masterRow.stock !== masterStock) {
         try {
           await dispatch(
             setStockThunk({
               listingId: masterListingId,
               oldTotal: typeof masterStock === 'number' ? masterStock : null,
-              newTotal: row0.stock,
+              newTotal: masterRow.stock,
             })
           ).unwrap();
           masterUpdated += 1;
@@ -511,7 +519,7 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
         }
       }
       // Precio
-      const newPrice = toMoneyFromNumber(row0.priceOverride, currency);
+      const newPrice = toMoneyFromNumber(masterRow.priceOverride, currency);
       if (newPrice && !moneyEquals(newPrice, masterPrice)) {
         try {
           await dispatch(
@@ -522,15 +530,24 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
           log.error(e, 'sync-variants-master-price-failed', { masterListingId });
         }
       }
+    } else {
+      // El master no tiene fila propia en la matrix → el seller no
+      // incluyó la combinación del producto maestro. Loguear pero
+      // no fallar.
+      // eslint-disable-next-line no-console
+      console.warn('[variants-sync] master combination not in matrix', {
+        masterValues: pd.variantValues,
+      });
     }
 
-    // ---- 3. Rows 1..N → siblings ----
+    // ---- 3. Todas las demás filas → siblings ----
     const matchedExistingIds = new Set();
     let siblingsCreated = 0;
     let siblingsUpdated = 0;
     let siblingsFailed = 0;
 
-    for (let i = 1; i < matrix.length; i++) {
+    for (let i = 0; i < matrix.length; i++) {
+      if (i === masterRowIdx) continue; // fila del master, ya tratada
       const row = matrix[i];
       const key = rowKey(axes, row.variantValues);
       const existing = existingSiblings.find(l => {

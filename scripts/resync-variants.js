@@ -25,6 +25,10 @@
 
 require('dotenv').config();
 const { getIntegrationSdk } = require('../server/api-util/integrationSdk');
+const { Readable } = require('stream');
+const path = require('path');
+const os = require('os');
+const fs = require('fs');
 
 const ARGS = process.argv.slice(2);
 const APPLY = ARGS.includes('--apply');
@@ -40,14 +44,36 @@ const rowKey = (axes, vv) => axes.map(a => vv?.[a] ?? '').join('||');
 (async () => {
   const sdk = getIntegrationSdk();
 
-  // 1. Lee el master.
+  // 1. Lee el master (con variantes de imagen grande para descargarlas).
   const mres = await sdk.listings.show({
     id: MASTER_ID,
     include: ['author', 'images', 'currentStock'],
+    'fields.image': ['variants.scaled-xlarge', 'variants.scaled-large', 'variants.listing-card-2x'],
   });
   const master = mres.data.data;
   const mAttrs = master.attributes;
   const mPd = mAttrs.publicData;
+
+  // Descarga una vez los binarios de las imágenes del master a disco
+  // temporal. Cada sibling necesita upload propio (Sharetribe rechaza
+  // reusar image UUIDs — 409 image-invalid).
+  const included = mres.data.included || [];
+  const masterImageRefs = master.relationships.images.data || [];
+  const masterImageFiles = [];
+  for (const ref of masterImageRefs) {
+    const img = included.find(i => i.type === 'image' && i.id.uuid === ref.id.uuid);
+    const v = img?.attributes?.variants || {};
+    const url =
+      v['scaled-xlarge']?.url || v['scaled-large']?.url || v['listing-card-2x']?.url;
+    if (!url) continue;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('image fetch failed: ' + resp.status);
+    const buf = Buffer.from(await resp.arrayBuffer());
+    const tmp = path.join(os.tmpdir(), `xololo-img-${ref.id.uuid}.jpg`);
+    fs.writeFileSync(tmp, buf);
+    masterImageFiles.push(tmp);
+  }
+  console.log(`Imágenes descargadas a tmp: ${masterImageFiles.length}`);
   if (!mPd.variantGroupId) {
     console.error('El listing no es parte de un grupo.');
     process.exit(1);
@@ -65,13 +91,12 @@ const rowKey = (axes, vv) => axes.map(a => vv?.[a] ?? '').join('||');
 
   const groupId = mPd.variantGroupId;
   const authorId = master.relationships.author.data.id;
-  const masterImages = (master.relationships.images.data || []).map(i => i.id);
 
   console.log(`\n=== Master: ${mAttrs.title} ===`);
   console.log(`  groupId: ${groupId}`);
   console.log(`  axes: ${axes.join(', ')}`);
   console.log(`  matrix rows: ${matrix.length}`);
-  console.log(`  images: ${masterImages.length}`);
+  console.log(`  images (tmp local): ${masterImageFiles.length}`);
   console.log(`  mode: ${APPLY ? 'APPLY' : 'DRY RUN'}\n`);
 
   // 2. Query siblings existentes + filtro cliente.
@@ -155,27 +180,64 @@ const rowKey = (axes, vv) => axes.map(a => vv?.[a] ?? '').join('||');
       continue;
     }
 
-    // Create new sibling (Integration SDK: sdk.listings.create con state).
-    const payload = {
-      title: `${mAttrs.title} · ${label}`,
-      description: mAttrs.description || '',
-      price: mAttrs.price,
-      authorId,
-      state: 'published',
-      publicData: {
-        ...basePublicData,
-        isVariantMaster: false,
-        variantValues: row.variantValues,
-      },
-      images: masterImages,
-    };
-    if (mAttrs.geolocation) payload.geolocation = mAttrs.geolocation;
     console.log(`[${i}] ${label}: CREATE`);
     if (!APPLY) {
       created += 1;
       continue;
     }
     try {
+      // Re-sube las imágenes del master para este sibling. Sharetribe
+      // NO permite reusar image UUIDs entre listings (409 image-invalid).
+      //
+      // Workaround: timeout + retry — sdk.images.upload a veces se cuelga
+      // sin responder. 60s timeout, hasta 3 intentos.
+      const uploadWithTimeout = tmpPath =>
+        new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error('upload_timeout_60s')), 60000);
+          const stream = fs.createReadStream(tmpPath);
+          sdk.images
+            .upload({ image: stream })
+            .then(r => {
+              clearTimeout(timer);
+              resolve(r);
+            })
+            .catch(e => {
+              clearTimeout(timer);
+              reject(e);
+            });
+        });
+      const siblingImageIds = [];
+      for (const tmpPath of masterImageFiles) {
+        let lastErr;
+        let uploaded = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            uploaded = await uploadWithTimeout(tmpPath);
+            break;
+          } catch (e) {
+            lastErr = e;
+            console.warn(`  · upload attempt ${attempt}/3 failed: ${e.message}`);
+          }
+        }
+        if (!uploaded) throw lastErr || new Error('upload_failed_3_attempts');
+        siblingImageIds.push(uploaded.data.data.id);
+      }
+
+      const payload = {
+        title: `${mAttrs.title} · ${label}`,
+        description: mAttrs.description || '',
+        price: mAttrs.price,
+        authorId,
+        state: 'published',
+        publicData: {
+          ...basePublicData,
+          isVariantMaster: false,
+          variantValues: row.variantValues,
+        },
+        images: siblingImageIds,
+      };
+      if (mAttrs.geolocation) payload.geolocation = mAttrs.geolocation;
+
       const createRes = await sdk.listings.create(payload);
       const newId = createRes.data.data.id;
       if (typeof row.stock === 'number' && row.stock > 0) {
@@ -194,6 +256,11 @@ const rowKey = (axes, vv) => axes.map(a => vv?.[a] ?? '').join('||');
       }
       failed += 1;
     }
+  }
+
+  // Limpia archivos tmp.
+  for (const tmp of masterImageFiles) {
+    try { fs.unlinkSync(tmp); } catch (_) {}
   }
 
   // 5. Siblings huérfanos.
