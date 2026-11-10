@@ -449,20 +449,40 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
 
     // ---- 1. Query hermanos existentes del grupo ----
     //
-    // El filtro pub_variantGroupId de Sharetribe acepta string.
-    // Devuelve también el master; lo filtramos abajo.
+    // XOLOLO (PR 2c): Sharetribe NO filtra por pub_variantGroupId
+    // (el campo no está registrado como listing field en Console), así
+    // que la query devuelve TODO el marketplace. Filtramos cliente por
+    // publicData.variantGroupId. Sin esto, Redux se llena de listings
+    // ajenos y el iterador de rows nunca matchea "existente" → intenta
+    // crear duplicados.
     let existingSiblings = [];
     try {
-      const res = await sdk.ownListings.query(
-        { pub_variantGroupId: pd.variantGroupId, ...queryParams },
-        { expand: true }
-      );
+      const res = await sdk.ownListings.query({
+        pub_variantGroupId: pd.variantGroupId,
+        perPage: 100,
+      });
       const all = res.data?.data || [];
-      existingSiblings = all.filter(l => l.id?.uuid !== masterListingId.uuid);
-      // Hidrata la store para que futuros renders tengan los siblings.
-      dispatch(addMarketplaceEntities(res));
+      const inGroup = all.filter(
+        l => l.attributes?.publicData?.variantGroupId === pd.variantGroupId
+      );
+      existingSiblings = inGroup.filter(l => l.id?.uuid !== masterListingId.uuid);
+      // Dispatch SOLO los del grupo para no inyectar basura en Redux.
+      const filteredRes = {
+        ...res,
+        data: { ...res.data, data: inGroup, included: res.data?.included || [] },
+      };
+      dispatch(addMarketplaceEntities(filteredRes));
+      // eslint-disable-next-line no-console
+      console.log('[variants-sync] query result', {
+        groupId: pd.variantGroupId,
+        sharetribeReturned: all.length,
+        inGroup: inGroup.length,
+        existingSiblings: existingSiblings.length,
+      });
     } catch (e) {
       log.error(e, 'sync-variants-query-failed', { groupId: pd.variantGroupId });
+      // eslint-disable-next-line no-console
+      console.error('[variants-sync] query failed', e);
       return rejectWithValue(storableError(e));
     }
 
@@ -573,6 +593,14 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
         }
       } catch (e) {
         log.error(e, 'sync-variants-sibling-failed', { row, index: i });
+        // eslint-disable-next-line no-console
+        console.error('[variants-sync] sibling failed', {
+          index: i,
+          variantValues: row.variantValues,
+          error: e?.message,
+          data: e?.data,
+          statusText: e?.statusText,
+        });
         siblingsFailed += 1;
       }
     }
@@ -595,7 +623,7 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
       }
     }
 
-    return {
+    const result = {
       synced: siblingsCreated + siblingsUpdated,
       masterUpdated,
       siblingsCreated,
@@ -603,6 +631,9 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
       siblingsClosed,
       siblingsFailed,
     };
+    // eslint-disable-next-line no-console
+    console.log('[variants-sync] done', result);
+    return result;
   }
 );
 
@@ -623,7 +654,15 @@ export const fetchOwnVariantSiblingsThunk = createAsyncThunk(
         pub_variantGroupId: groupId,
         perPage: 100,
       })
-      .then(res => res?.data?.data || [])
+      .then(res => {
+        // XOLOLO (PR 2c): filtro cliente — Sharetribe ignora
+        // pub_variantGroupId. Devuelve TODOS los ownListings sin el
+        // filtro aplicado.
+        const all = res?.data?.data || [];
+        return all.filter(
+          l => l.attributes?.publicData?.variantGroupId === groupId
+        );
+      })
       .catch(e => rejectWithValue(storableError(e)));
   }
 );

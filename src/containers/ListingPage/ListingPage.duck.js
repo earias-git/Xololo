@@ -169,34 +169,65 @@ export const fetchReviews = listingId => (dispatch, getState, sdk) => {
 export const fetchVariantSiblingsThunk = createAsyncThunk(
   'ListingPage/fetchVariantSiblings',
   ({ groupId, config }, { dispatch, rejectWithValue, extra: sdk }) => {
+    // XOLOLO (variantes · PR 2c): Sharetribe ignora pub_variantGroupId
+    // porque el campo no está registrado como "listing field" en Console.
+    // Mandamos el filtro de todos modos (por si en el futuro se registra)
+    // y además filtramos client-side por publicData.variantGroupId. El
+    // perPage debe ser grande para que el barrido traiga todos los
+    // posibles hermanos aunque Sharetribe devuelva todo el marketplace.
+    //
+    // Además: pedimos los mismos image variants que usa el ListingPage
+    // en loadData para no pisar el master en Redux con una versión
+    // incompleta (solo listing-card) que rompe la galería principal.
     const aspectWidth = config?.layout?.listingImage?.aspectWidth || 1;
     const aspectHeight = config?.layout?.listingImage?.aspectHeight || 1;
     const variantPrefix = config?.layout?.listingImage?.variantPrefix || 'listing-card';
     const aspectRatio = aspectHeight / aspectWidth;
     const queryParams = {
       pub_variantGroupId: groupId,
-      include: ['images', 'currentStock'],
-      'fields.listing': [
-        'title',
-        'price',
-        'publicData',
-        'state',
-      ],
+      include: ['images', 'currentStock', 'author'],
       'fields.image': [
         `variants.${variantPrefix}`,
         `variants.${variantPrefix}-2x`,
+        `variants.${variantPrefix}-4x`,
+        `variants.${variantPrefix}-6x`,
+        'variants.scaled-small',
+        'variants.scaled-medium',
+        'variants.scaled-large',
+        'variants.scaled-xlarge',
+        'variants.facebook',
+        'variants.twitter',
+        'variants.square-small',
+        'variants.square-small2x',
       ],
       ...createImageVariantConfig(`${variantPrefix}`, 400, aspectRatio),
       ...createImageVariantConfig(`${variantPrefix}-2x`, 800, aspectRatio),
+      ...createImageVariantConfig(`${variantPrefix}-4x`, 1600, aspectRatio),
+      ...createImageVariantConfig(`${variantPrefix}-6x`, 2400, aspectRatio),
       perPage: 100,
       page: 1,
     };
     return sdk.listings
       .query(queryParams)
       .then(response => {
-        const listings = response.data?.data || [];
-        dispatch(addMarketplaceEntities(response));
-        return listings.map(l => l.id);
+        const all = response.data?.data || [];
+        // Filtro cliente defensivo: solo los del grupo. Sharetribe no
+        // filtra por pub_variantGroupId → aquí nos aseguramos.
+        const inGroup = all.filter(
+          l => l.attributes?.publicData?.variantGroupId === groupId
+        );
+        // Dispatch solo los filtrados para NO pisar el master con otros
+        // listings del marketplace que llegaron en la respuesta.
+        const filteredResponse = {
+          ...response,
+          data: {
+            ...response.data,
+            data: inGroup,
+            included: response.data?.included || [],
+          },
+        };
+        dispatch(addMarketplaceEntities(filteredResponse));
+        return inGroup.map(l => l.id);
       })
       .catch(e => rejectWithValue(storableError(e)));
   }
