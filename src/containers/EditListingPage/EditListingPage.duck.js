@@ -606,9 +606,24 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
     }
 
     // ---- 4. Siblings existentes NO en el matrix → close ----
+    //
+    // XOLOLO (PR 2c): doble-seguridad — SOLO cerrar listings cuyo
+    // publicData.variantGroupId === el del master Y isVariantMaster !== true.
+    // Esto previene que un bug futuro (ej. filtro upstream roto) cierre
+    // listings ajenos. Un sibling legítimo cumple ambas condiciones.
     let siblingsClosed = 0;
     for (const existing of existingSiblings) {
       if (matchedExistingIds.has(existing.id.uuid)) continue;
+      const epd = existing.attributes?.publicData || {};
+      if (epd.variantGroupId !== pd.variantGroupId || epd.isVariantMaster === true) {
+        // eslint-disable-next-line no-console
+        console.warn('[variants-sync] REFUSE to close non-sibling', {
+          listingId: existing.id?.uuid,
+          hasGroupId: !!epd.variantGroupId,
+          isMaster: epd.isVariantMaster,
+        });
+        continue;
+      }
       try {
         if (workspace) {
           const res = await closeListingAs(workspace.sellerId, existing.id.uuid, queryParams);
