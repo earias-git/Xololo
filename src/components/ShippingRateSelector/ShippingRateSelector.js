@@ -159,7 +159,13 @@ const ShippingRateSelector = props => {
     wantsInsurance,
   ]);
 
-  const fetchRatesFor = async (dest, insurance = false) => {
+  // XOLOLO 2026-11-10: errores "ambientales" (no por la dirección en sí)
+  // que valen la pena reintentar automáticamente: Skydropx a veces tiene
+  // hiccups transitorios en quote_failed / quote_timeout.
+  const RETRYABLE_ERRORS = new Set(['quote_failed', 'quote_timeout']);
+  const MAX_AUTO_RETRIES = 1;
+
+  const fetchRatesFor = async (dest, insurance = false, attempt = 0) => {
     // Cancela request previo si hay uno en vuelo.
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
@@ -182,12 +188,24 @@ const ShippingRateSelector = props => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        // XOLOLO 2026-11-10: auto-retry con backoff en errores transitorios
+        // antes de mostrar el error al buyer. Skydropx a veces tira
+        // 422/quote_failed por razones ambientales (API hiccup, race con
+        // autocomplete de dirección) y se recupera solo al segundo
+        // intento. Antes el buyer veía el mensaje feo y tenía que
+        // recargar; ahora lo hacemos por él.
+        if (RETRYABLE_ERRORS.has(data.error) && attempt < MAX_AUTO_RETRIES) {
+          await new Promise(r => setTimeout(r, 900));
+          return fetchRatesFor(dest, insurance, attempt + 1);
+        }
         const msgByError = {
           origin_not_configured: 'El vendedor aún no configuró su código postal de origen.',
           listing_not_shippable: 'Este producto no está disponible para envío por paquetería.',
           listing_incomplete: 'El vendedor no capturó peso o dimensiones para cotizar el envío.',
-          quote_timeout: 'La cotización tardó demasiado. Intenta de nuevo.',
-          quote_failed: 'No pudimos cotizar el envío para esta dirección.',
+          quote_timeout:
+            'La cotización tardó demasiado. Verifica tu dirección e intenta de nuevo en un momento.',
+          quote_failed:
+            'No pudimos cotizar para esta dirección. Verifica que la calle, número y colonia estén completos y correctos, y vuelve a intentar.',
         };
         throw new Error(msgByError[data.error] || 'No pudimos cotizar el envío.');
       }
@@ -269,10 +287,16 @@ const ShippingRateSelector = props => {
           para ver las paqueterías disponibles.
         </p>
       ) : state.status === QuoteRequestState.LOADING ? (
-        <p className={css.hint}>
-          Estamos solicitando el presupuesto para CP {destination.postal_code} — esto puede tardar
-          unos segundos…
-        </p>
+        // XOLOLO 2026-11-10: aviso naranja llamativo con spinner.
+        // Antes el texto gris pasaba desapercibido y el buyer pensaba
+        // que el checkout estaba roto cuando en realidad Skydropx
+        // estaba procesando (1-10s típico).
+        <div className={css.loadingNotice}>
+          <span>
+            Estamos solicitando el presupuesto para CP {destination.postal_code}. Por favor,
+            espera un momento — Skydropx puede tardar hasta 10 segundos en responder.
+          </span>
+        </div>
       ) : state.status === QuoteRequestState.SUCCESS ? (
         <p className={css.hint}>
           Cotización para CP {destination.postal_code} · elige tu paquetería:

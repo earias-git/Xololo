@@ -23,6 +23,42 @@
   line-height: 1.45;
 }
 
+/* XOLOLO 2026-11-10: aviso naranja de carga para que el buyer entienda
+   que está esperando una respuesta real (Skydropx tarda 1-10s) y no
+   piense que la página está rota. */
+.loadingNotice {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #c2410c;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.loadingNotice::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fdba74;
+  border-top-color: #c2410c;
+  border-radius: 50%;
+  animation: xololoShippingSpin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes xololoShippingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ---------- Form de destino ---------- */
 .formGrid {
   display: grid;
