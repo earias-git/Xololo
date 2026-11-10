@@ -160,7 +160,12 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
     // devtools. Si el rate llega con signature, DEBE validar; si no,
     // dejamos pasar (clientes viejos sin firmar) pero logueamos.
     if (rate?.signature) {
-      const quotationId = orderData?.shippingQuotationId;
+      // XOLOLO 2026-11-10: lee quotationId de orderData.shippingQuotationId
+      // (field dedicado, flujo nuevo) o de rate.quotationId (embebido en
+      // el rate, workaround contra race condition del form). Si cliente
+      // viejo no envió ninguno, cae a undefined y HMAC no valida — ese
+      // caso devuelve el reason puntual para debug.
+      const quotationId = orderData?.shippingQuotationId || rate?.quotationId;
       const check = verifyRateSignature(rate, quotationId);
       if (!check.valid) {
         const err = new Error('invalid_shipping_rate_signature');
@@ -170,6 +175,8 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
         console.warn('[initiate-privileged] rate signature rejected:', check.reason, {
           rateId: rate.id,
           quotationId,
+          quotationIdFromOrderData: orderData?.shippingQuotationId,
+          quotationIdFromRate: rate?.quotationId,
         });
         throw err;
       }
@@ -252,7 +259,8 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
     const rate = orderData?.selectedShippingRate;
     // XOLOLO 2026-10-27: HMAC guard (legacy carrier flow).
     if (rate?.signature) {
-      const quotationId = orderData?.shippingQuotationId;
+      // XOLOLO 2026-11-10: fallback a rate.quotationId si no viene aparte.
+      const quotationId = orderData?.shippingQuotationId || rate?.quotationId;
       const check = verifyRateSignature(rate, quotationId);
       if (!check.valid) {
         const err = new Error('invalid_shipping_rate_signature');
@@ -262,6 +270,8 @@ const buildXololoShipping = (listing, orderData, { isSpeculative } = {}) => {
         console.warn('[initiate-privileged] rate signature rejected (legacy):', check.reason, {
           rateId: rate.id,
           quotationId,
+          quotationIdFromOrderData: orderData?.shippingQuotationId,
+          quotationIdFromRate: rate?.quotationId,
         });
         throw err;
       }

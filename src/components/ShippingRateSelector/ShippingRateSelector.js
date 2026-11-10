@@ -221,14 +221,17 @@ const ShippingRateSelector = props => {
       // XOLOLO Fase 2: pasamos la elección de seguro para que el
       // checkout la persista en metadata de la tx.
       //
-      // XOLOLO 2026-11-10: segundo argumento = quotationId, requerido
-      // por el server para validar la firma HMAC del rate en
-      // initiate-privileged. Sin esto el rate no se puede comprar.
+      // XOLOLO 2026-11-10: embebemos quotationId DENTRO del rate (además
+      // de pasarlo como 2° arg para compatibilidad). Server lee de
+      // orderData.shippingQuotationId o rate.quotationId — cualquiera
+      // de los dos. Robust ante race conditions del form y clientes
+      // viejos que no manejan el 2° arg.
       onRateSelected(
         {
           ...rate,
           insuranceAccepted: wantsInsurance,
           noInsuranceConsent: !wantsInsurance ? acceptsNoInsurance : false,
+          quotationId: state.quotationId || null,
         },
         state.quotationId || null
       );
