@@ -172,6 +172,36 @@ const createListing = async (req, res) => {
 };
 
 // ============================================================
+// Listings — show (lectura del listing del admin para el wizard)
+// ============================================================
+
+// Lee un listing del admin bajo la identidad del Integration SDK.
+// Lo usa EditListingPage.duck.js showListingThunk cuando hay workspace
+// activo: sdk.ownListings.show falla porque el listing no pertenece al
+// colaborador. Reutilizamos rehydrateAsSdk para devolver el shape SDK
+// que espera el reducer, incluyendo author/images/currentStock.
+const showListing = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+
+  const { listingId, queryParams } = req.body || {};
+  if (!listingId) return res.status(400).json({ error: 'listingId_required' });
+
+  try {
+    const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
+    if (guard) return res.status(guard.status).json(guard.body);
+
+    const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
+    return sendTransit(res, sdkLike);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[team-as.showListing] error:', e?.message || e);
+    return res.status(500).json({ error: 'internal', detail: e?.message });
+  }
+};
+
+// ============================================================
 // Listings — update / publishDraft / discardDraft / close / open
 // ============================================================
 
@@ -466,6 +496,7 @@ const updateStoreSettings = async (req, res) => {
 module.exports = {
   createListing,
   createDraft,
+  showListing,
   updateListing,
   publishDraft,
   discardDraft,

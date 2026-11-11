@@ -438,6 +438,13 @@ router.post(
 );
 // XOLOLO · E9 fase 2: endpoints adicionales del wizard EditListingPage.
 router.post(
+  '/team/as/listing/show',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.edit'),
+  teamAs.showListing
+);
+router.post(
   '/team/as/listing/create-draft',
   limits.generic,
   bodyParser.json(),

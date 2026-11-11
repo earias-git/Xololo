@@ -34,6 +34,7 @@ import { fetchCurrentUser } from '../../ducks/user.duck';
 import { getCurrentWorkspace } from '../../util/xololoTeam';
 import {
   createDraftAs,
+  showListingAs,
   updateListingAs,
   publishDraftAs,
   updateStockAs,
@@ -108,7 +109,7 @@ const sortExceptionsByStartTime = (a, b) => {
 //////////////////
 export const showListingThunk = createAsyncThunk(
   'EditListingPage/showListing',
-  ({ actionPayload, config }, { dispatch, rejectWithValue, extra: sdk }) => {
+  ({ actionPayload, config }, { dispatch, getState, rejectWithValue, extra: sdk }) => {
     const imageVariantInfo = getImageVariantInfo(config.layout.listingImage);
     const queryParams = {
       include: ['author', 'images', 'currentStock'],
@@ -116,8 +117,17 @@ export const showListingThunk = createAsyncThunk(
       ...imageVariantInfo.imageVariants,
     };
 
-    return sdk.ownListings
-      .show({ ...actionPayload, ...queryParams })
+    // XOLOLO · E9: en modo colaborador, el listing pertenece al admin
+    // y sdk.ownListings.show falla. Usamos el wrapper /api/team/as/listing/show
+    // que lee via Integration SDK bajo la identidad del admin (con guard
+    // ensureListingBelongsToAdmin).
+    const workspace = getCurrentWorkspace(getState().user?.currentUser);
+    const idUuid = actionPayload?.id?.uuid || actionPayload?.id;
+    const fetchPromise = workspace
+      ? showListingAs(workspace.sellerId, idUuid, queryParams)
+      : sdk.ownListings.show({ ...actionPayload, ...queryParams });
+
+    return fetchPromise
       .then(response => {
         // EditListingPage fetches new listing data, which also needs to be added to global data
         dispatch(addMarketplaceEntities(response));

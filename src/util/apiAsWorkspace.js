@@ -72,6 +72,14 @@ export const publishDraftAs = (targetSellerId, listingId, queryParams) =>
   post('/api/team/as/listing/publish-draft', { targetSellerId, listingId, queryParams });
 
 /**
+ * Lee un listing del admin con los includes/fields del wizard. Se usa
+ * en EditListingPage.duck.js cuando hay workspace activo: sdk.ownListings
+ * no funciona para el colaborador (no es el owner).
+ */
+export const showListingAs = (targetSellerId, listingId, queryParams) =>
+  post('/api/team/as/listing/show', { targetSellerId, listingId, queryParams });
+
+/**
  * Actualiza un listing existente del admin. El server verifica que
  * authorId === targetSellerId antes de escribir.
  */
