@@ -249,6 +249,11 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       loadData: pageDataLoadingAPI.EditListingPage.loadData,
       prioritizeLibraryLoading: {
         stripe: true,
+        // XOLOLO: el wizard incluye tab Ubicación con autocomplete
+        // de Mapbox. Si lo cargamos diferido, el colaborador que entra
+        // directo al wizard ve el input sin sugerencias hasta que el
+        // script termine de cargar. Priorizarlo evita ese estado.
+        map: true,
       },
     },
     {

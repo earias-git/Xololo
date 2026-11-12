@@ -279,6 +279,7 @@
   "EditListingDetailsPanel.noListingTypeSetTitle": "Oops, something went wrong!",
   "EditListingDetailsPanel.title": "Edit the details of {listingTitle}",
   "EditListingLocationForm.address": "Address",
+  "EditListingLocationForm.addressHint": "Type the address and wait for the suggestions dropdown. Select the matching one so we can register the exact coordinates.",
   "EditListingLocationForm.addressNotRecognized": "We didn't recognize this location. Please try another location.",
   "EditListingLocationForm.addressPlaceholder": "123 Example Street",
   "EditListingLocationForm.addressRequired": "You need to provide a location.",

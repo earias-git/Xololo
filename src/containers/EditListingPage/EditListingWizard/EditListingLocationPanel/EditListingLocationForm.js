@@ -120,6 +120,9 @@ export const EditListingLocationForm = props => (
               autocompletePlaceSelected(addressNotRecognizedMessage)
             )}
           />
+          <p className={css.addressHint}>
+            <FormattedMessage id="EditListingLocationForm.addressHint" />
+          </p>
 
           <FieldTextInput
             className={css.building}
