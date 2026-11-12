@@ -159,7 +159,9 @@ const createDraft = async (req, res) => {
     return res.status(500).json({
       error: 'internal',
       detail: e?.message,
-      sdkErrors: e?.data?.errors || null,
+      // storableError client-side lee error.data.errors → apiErrors.
+      // Al llamarlo "errors" el flujo estándar lo expone sin cambios.
+      data: { errors: e?.data?.errors || [] },
     });
   }
 };
@@ -256,7 +258,7 @@ const updateListing = async (req, res) => {
     return res.status(500).json({
       error: 'internal',
       detail: e?.message,
-      sdkErrors: e?.data?.errors || null,
+      data: { errors: e?.data?.errors || [] },
     });
   }
 };
