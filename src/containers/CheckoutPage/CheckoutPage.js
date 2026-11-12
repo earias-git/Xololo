@@ -13,6 +13,7 @@ import {
   NO_ACCESS_PAGE_USER_PENDING_APPROVAL,
 } from '../../util/urlHelpers';
 import { hasPermissionToInitiateTransactions, isUserAuthorized } from '../../util/userHelpers';
+import { getCurrentWorkspace } from '../../util/xololoTeam';
 import { isErrorNoPermissionForInitiateTransactions } from '../../util/errors';
 import {
   INQUIRY_PROCESS_NAME,
@@ -138,7 +139,16 @@ const EnhancedCheckoutPage = props => {
   const listing = pageData?.listing;
   const unitType = listing?.attributes?.publicData?.unitType;
   const isRequest = unitType === REQUEST;
-  const isOwnListing = currentUser?.id && listing?.author?.id?.uuid === currentUser?.id?.uuid;
+  // XOLOLO · E9: un colaborador operando como el admin del workspace
+  // tampoco debe comprarle a su propio Negocio (si entra directo por
+  // URL, el gate del carrito y de ListingPage no alcanzan). Redirigimos
+  // a ListingPage igual que si fuera el dueño mismo.
+  const isAuthorSelf =
+    !!(currentUser?.id && listing?.author?.id?.uuid === currentUser?.id?.uuid);
+  const workspaceOwnsListing =
+    !!(listing?.author?.id?.uuid &&
+      getCurrentWorkspace(currentUser)?.sellerId === listing.author.id.uuid);
+  const isOwnListing = isAuthorSelf || workspaceOwnsListing;
   const hasRequiredData = !!(listing?.id && listing?.author?.id && processName);
   const shouldRedirect = isDataLoaded && !(hasRequiredData && (!isOwnListing || isRequest));
   const shouldRedirectUnathorizedUser = isDataLoaded && !isUserAuthorized(currentUser);

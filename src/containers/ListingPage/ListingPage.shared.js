@@ -8,6 +8,7 @@ import { timestampToDate } from '../../util/dates';
 import { requireListingImage } from '../../util/configHelpers';
 import { richText } from '../../util/richText';
 import { hasPermissionToInitiateTransactions, isUserAuthorized } from '../../util/userHelpers';
+import { getCurrentWorkspace } from '../../util/xololoTeam';
 import {
   ensureListing,
   ensureOwnListing,
@@ -185,8 +186,17 @@ export const getDerivedRenderData = ({
 
   const authorAvailable = currentListing && currentListing.author;
   const userAndListingAuthorAvailable = !!(currentUser && authorAvailable);
-  const isOwnListing =
+  const isAuthorSelf =
     userAndListingAuthorAvailable && currentListing.author.id.uuid === currentUser.id.uuid;
+  // XOLOLO · E9: un colaborador operando como el admin del workspace
+  // tiene los mismos poderes que el dueño sobre este listing (editar,
+  // no comprárselo a sí mismo, etc.). isAuthorSelf se mantiene para
+  // chequeos que son estrictamente del user propio (ej. payout warning).
+  const workspaceOwnsListing =
+    !!currentUser &&
+    authorAvailable &&
+    getCurrentWorkspace(currentUser)?.sellerId === currentListing.author.id.uuid;
+  const isOwnListing = isAuthorSelf || workspaceOwnsListing;
 
   const { listingType, transactionProcessAlias, unitType } = publicData;
   const hasInvalidListingData = !(listingType && transactionProcessAlias && unitType);
@@ -212,8 +222,10 @@ export const getDerivedRenderData = ({
   const ensuredAuthor = ensureUser(currentAuthor);
   const authorNeedsPayoutDetails =
     ['booking', 'purchase'].includes(processType) || (isNegotiation && unitType === OFFER);
+  // Payout warning solo tiene sentido si el usuario es realmente el
+  // author (tiene su propio stripeConnected). Un colaborador no.
   const noPayoutDetailsSetWithOwnListing =
-    isOwnListing && authorNeedsPayoutDetails && !currentUser?.attributes?.stripeConnected;
+    isAuthorSelf && authorNeedsPayoutDetails && !currentUser?.attributes?.stripeConnected;
 
   const payoutDetailsWarning = noPayoutDetailsSetWithOwnListing ? (
     <span className={payoutDetailsWarningClassName}>
