@@ -39,6 +39,7 @@ import {
   publishDraftAs,
   updateStockAs,
   closeListingAs,
+  uploadImageAs,
 } from '../../util/apiAsWorkspace';
 // XOLOLO (variantes · PR 2b): helper para construir siblings consistentes
 // con el master. buildSiblingPayload clona lo esencial + aplica override.
@@ -821,7 +822,7 @@ export const replicateMasterSharedFields = (masterListingId, tab) => dispatch =>
 // Images return imageId which we need to map with previously generated temporary id
 export const uploadImageThunk = createAsyncThunk(
   'EditListingPage/uploadImage',
-  ({ actionPayload, listingImageConfig }, { rejectWithValue, extra: sdk }) => {
+  ({ actionPayload, listingImageConfig }, { getState, rejectWithValue, extra: sdk }) => {
     const imageVariantInfo = getImageVariantInfo(listingImageConfig);
     const queryParams = {
       expand: true,
@@ -829,8 +830,16 @@ export const uploadImageThunk = createAsyncThunk(
       ...imageVariantInfo.imageVariants,
     };
 
-    return sdk.images
-      .upload({ image: actionPayload.file }, queryParams)
+    // XOLOLO · E9 fase 3: en modo colaborador, la imagen debe subirse
+    // via Integration SDK bajo la identidad del admin. Si no, el imageId
+    // queda claimado por el colaborador y el admin no puede adjuntarlo
+    // a su listing (Sharetribe lo rechaza con image-invalid).
+    const workspace = getCurrentWorkspace(getState().user?.currentUser);
+    const uploadPromise = workspace
+      ? uploadImageAs(workspace.sellerId, actionPayload.file)
+      : sdk.images.upload({ image: actionPayload.file }, queryParams);
+
+    return uploadPromise
       .then(resp => {
         const img = resp.data.data;
         // Uploaded image has an existing id that refers to file

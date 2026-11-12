@@ -58,6 +58,7 @@ const opsUsersBulk = require('./api/ops-users-bulk');
 const opsAuditLog = require('./api/ops-audit-log');
 const team = require('./api/team');
 const teamAs = require('./api/team-as');
+const teamAsUploadImage = require('./api/team-as-upload-image');
 const teamSeats = require('./api/team-seats');
 const {
   requirePermission,
@@ -471,6 +472,15 @@ router.post(
   bodyParser.json(),
   requirePermission('listings.edit'),
   teamAs.updateStock
+);
+// XOLOLO · E9 fase 3: subir imagen del listing bajo identidad del admin.
+// SIN bodyParser.json porque multer procesa el multipart dentro del handler.
+// targetSellerId viene via ?query o header x-xololo-acting-as.
+router.post(
+  '/team/as/listing/upload-image',
+  limits.generic,
+  requirePermission('listings.create'),
+  teamAsUploadImage
 );
 router.post(
   '/team/as/tx/show',

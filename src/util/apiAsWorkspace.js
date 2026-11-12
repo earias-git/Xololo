@@ -134,6 +134,38 @@ export const createListingAs = (targetSellerId, listing, queryParams) =>
   post('/api/team/as/listing/create', { targetSellerId, listing, queryParams });
 
 // -----------------------------------------------------------
+// Upload image — multipart.
+//
+// El Integration SDK re-sube la imagen bajo la identidad del admin.
+// Devuelve un imageId claimado por el admin, que luego se usa en
+// payload.images de createDraftAs/updateListingAs.
+// -----------------------------------------------------------
+export const uploadImageAs = (targetSellerId, file) => {
+  const form = new FormData();
+  form.append('image', file);
+  const qs = new URLSearchParams({ targetSellerId }).toString();
+  // Nota: NO ponemos Content-Type manual — el browser arma el boundary
+  // del multipart. Y NO transit — es una imagen cruda.
+  return fetch(`${apiBaseUrl()}/api/team/as/listing/upload-image?${qs}`, {
+    method: 'POST',
+    credentials: 'include',
+    body: form,
+  }).then(async res => {
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const err = new Error(errData?.error || 'upload_failed');
+      err.status = res.status;
+      err.data = errData;
+      throw err;
+    }
+    // El server responde application/transit+json con {data, included, meta}.
+    const text = await res.text();
+    const parsed = transit.read(text, { typeHandlers });
+    return { data: parsed };
+  });
+};
+
+// -----------------------------------------------------------
 // Transactions
 // -----------------------------------------------------------
 
