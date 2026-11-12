@@ -25,9 +25,19 @@
 // expone el handler que procesa el multipart + llama al SDK.
 
 const multer = require('multer');
-const { Readable } = require('stream');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { sendTransit } = require('../api-util/transitResponse');
+
+const EXT_BY_MIME = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+};
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20 MB (consistent con Sharetribe)
 const ALLOWED_MIME = new Set([
@@ -73,16 +83,46 @@ module.exports = async (req, res) => {
   }
   if (!req.file) return res.status(400).json({ error: 'no_file' });
 
+  // Integration SDK images.upload internamente arma un multipart con
+  // `form-data`, que requiere un stream con `.path` (para inferir
+  // filename/contentType) o un Buffer con opciones. Readable.from(buffer)
+  // no basta y Sharetribe devuelve 500 genérico. Escribimos a un archivo
+  // tmp y pasamos fs.createReadStream — es el patrón que usa
+  // scripts/resync-variants.js sin problemas.
+  const ext = EXT_BY_MIME[req.file.mimetype] || 'bin';
+  const tmpPath = path.join(
+    os.tmpdir(),
+    `xololo-img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+  );
   try {
-    // Integration SDK images.upload acepta un stream. Readable.from
-    // envuelve el Buffer de multer sin tocar disco.
-    const stream = Readable.from(req.file.buffer);
+    fs.writeFileSync(tmpPath, req.file.buffer);
+    const stream = fs.createReadStream(tmpPath);
     const resp = await isdk.images.upload({ image: stream });
     const img = resp.data.data;
     return sendTransit(res, { data: img, included: [], meta: {} });
   } catch (e) {
+    const sdkData = e?.data;
+    const sdkDataStr = typeof sdkData === 'string' ? sdkData : JSON.stringify(sdkData || null);
     // eslint-disable-next-line no-console
-    console.error('[team-as.uploadImage] error:', e?.message || e);
-    return res.status(500).json({ error: 'upload_failed', detail: e?.message });
+    console.error(
+      '[team-as.uploadImage] error:',
+      e?.message,
+      'status:',
+      e?.status,
+      'sdkData:',
+      sdkDataStr
+    );
+    return res.status(500).json({
+      error: 'upload_failed',
+      detail: e?.message,
+      sdkStatus: e?.status,
+      sdkDataRaw: sdkDataStr,
+    });
+  } finally {
+    try {
+      fs.unlinkSync(tmpPath);
+    } catch (_) {
+      /* no-op */
+    }
   }
 };
