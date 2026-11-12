@@ -40,6 +40,7 @@ import {
   updateStockAs,
   closeListingAs,
   uploadImageAs,
+  queryListingsAs,
   queryAvailabilityExceptionsAs,
   createAvailabilityExceptionAs,
   deleteAvailabilityExceptionAs,
@@ -476,11 +477,16 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
       // abajo pasa oldTotal:null a compareAndSet y Sharetribe responde
       // 409 (el stock YA existe en el sibling). Resultado: el stock
       // nunca se actualiza y el buyer ve stock "fantasma".
-      const res = await sdk.ownListings.query({
+      // Colaborador: query va a /api/manage-listings (Integration SDK
+      // bajo authorId=admin). Modo propio: sdk.ownListings directo.
+      const siblingsQuery = {
         pub_variantGroupId: pd.variantGroupId,
         perPage: 100,
         ...queryParams,
-      });
+      };
+      const res = workspace
+        ? await queryListingsAs(siblingsQuery)
+        : await sdk.ownListings.query(siblingsQuery);
       const all = res.data?.data || [];
       const inGroup = all.filter(
         l => l.attributes?.publicData?.variantGroupId === pd.variantGroupId
@@ -699,13 +705,14 @@ export const requestSyncVariantSiblings = (masterListingId, config) => dispatch 
 // Usado por el VariantsBreadcrumb del wizard para armar quick-nav.
 export const fetchOwnVariantSiblingsThunk = createAsyncThunk(
   'EditListingPage/fetchOwnVariantSiblings',
-  ({ groupId }, { dispatch, rejectWithValue, extra: sdk }) => {
+  ({ groupId }, { dispatch, getState, rejectWithValue, extra: sdk }) => {
     if (!groupId) return Promise.resolve([]);
-    return sdk.ownListings
-      .query({
-        pub_variantGroupId: groupId,
-        perPage: 100,
-      })
+    const workspace = getCurrentWorkspace(getState().user?.currentUser);
+    const queryBody = { pub_variantGroupId: groupId, perPage: 100 };
+    const queryPromise = workspace
+      ? queryListingsAs(queryBody)
+      : sdk.ownListings.query(queryBody);
+    return queryPromise
       .then(res => {
         // XOLOLO (PR 2c): filtro cliente — Sharetribe ignora
         // pub_variantGroupId. Devuelve TODOS los ownListings sin el
@@ -783,10 +790,14 @@ export const replicateMasterSharedFieldsThunk = createAsyncThunk(
 
     const workspace = getCurrentWorkspace(state.user?.currentUser);
 
-    // Query siblings (excluyendo al master).
+    // Query siblings (excluyendo al master). En modo colaborador va al
+    // wrapper /api/manage-listings (scope admin).
     let siblings = [];
     try {
-      const res = await sdk.ownListings.query({ pub_variantGroupId: groupId, perPage: 100 });
+      const queryBody = { pub_variantGroupId: groupId, perPage: 100 };
+      const res = workspace
+        ? await queryListingsAs(queryBody)
+        : await sdk.ownListings.query(queryBody);
       siblings = (res.data?.data || []).filter(l => l.id?.uuid !== masterListingId.uuid);
     } catch (e) {
       log.error(e, 'replicate-query-failed', { groupId });

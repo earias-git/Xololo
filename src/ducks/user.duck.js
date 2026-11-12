@@ -5,6 +5,8 @@ import * as log from '../util/log';
 import { LISTING_STATE_DRAFT } from '../util/types';
 import { storableError } from '../util/errors';
 import { isUserAuthorized } from '../util/userHelpers';
+import { getCurrentWorkspace } from '../util/xololoTeam';
+import { queryTxAs } from '../util/apiAsWorkspace';
 import {
   getStatesNeedingProviderAttention,
   getStatesNeedingCustomerAttention,
@@ -115,7 +117,10 @@ export const fetchCurrentUserHasOrders = () => (dispatch, getState, sdk) => {
 // Notificaiton page size is max (100 items on page)
 const NOTIFICATION_PAGE_SIZE = 100;
 
-const fetchCurrentUserNotificationsPayloadCreator = (_, { extra: sdk, rejectWithValue }) => {
+const fetchCurrentUserNotificationsPayloadCreator = (
+  _,
+  { extra: sdk, getState, rejectWithValue }
+) => {
   const statesNeedingProviderAttention = getStatesNeedingProviderAttention() || [];
   const statesNeedingCustomerAttention = getStatesNeedingCustomerAttention() || [];
 
@@ -132,10 +137,19 @@ const fetchCurrentUserNotificationsPayloadCreator = (_, { extra: sdk, rejectWith
     perPage: NOTIFICATION_PAGE_SIZE,
   };
 
-  return Promise.all([
-    sdk.transactions.query(paramsForSales),
-    sdk.transactions.query(paramsForOrders),
-  ])
+  // XOLOLO · E9: en modo colaborador, el badge del topbar debe reflejar
+  // las ventas del Negocio (del admin), no las notifs del colaborador.
+  // Y "orders" (compras) no aplica — el colaborador no puede comprar en
+  // modo workspace; queda en 0.
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const salesPromise = workspace
+    ? queryTxAs('provider', paramsForSales)
+    : sdk.transactions.query(paramsForSales);
+  const ordersPromise = workspace
+    ? Promise.resolve({ data: { data: [] } })
+    : sdk.transactions.query(paramsForOrders);
+
+  return Promise.all([salesPromise, ordersPromise])
     .then(([sales, orders]) => {
       const saleNotificationsCount = sales.data.data.length;
       const orderNotificationsCount = orders.data.data.length;

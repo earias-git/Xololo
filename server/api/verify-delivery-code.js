@@ -30,6 +30,7 @@
 
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { isActingAsAuthor } = require('../api-util/workspaceOwner');
 
 const MAX_ATTEMPTS = 3;
 const CODE_MODES = ['pickup', 'localDelivery', 'freight'];
@@ -55,15 +56,22 @@ module.exports = async (req, res) => {
     const sdk = getSdk(req, res);
     let currentUserResp;
     try {
-      currentUserResp = await sdk.currentUser.show();
+      currentUserResp = await sdk.currentUser.show({
+        'fields.user': ['profile.publicData'],
+      });
     } catch (e) {
       return res.status(401).json({ error: 'unauthorized' });
     }
-    const currentUserId = currentUserResp.data.data.id.uuid;
+    const currentUser = currentUserResp.data.data;
+    const currentUserId = currentUser.id.uuid;
 
+    // XOLOLO · E9: usa Integration SDK para leer la tx, para que un
+    // colaborador que no es provider/customer también pueda cargarla.
+    const isdkRead = getIntegrationSdk();
     let txResp;
     try {
-      txResp = await sdk.transactions.show({
+      const txReader = isdkRead || sdk;
+      txResp = await txReader.transactions.show({
         id: transactionId,
         include: ['provider'],
       });
@@ -74,9 +82,9 @@ module.exports = async (req, res) => {
     const tx = txResp.data.data;
     const providerId = tx.relationships?.provider?.data?.id?.uuid;
 
-    // Solo el provider puede verificar el código (el buyer no; sería un
-    // vector de ataque para "auto-marcar como entregado").
-    if (providerId !== currentUserId) {
+    // Solo el provider (o colaborador del admin del workspace) puede
+    // verificar el código — el buyer no; sería un vector de ataque.
+    if (!isActingAsAuthor(currentUser, providerId)) {
       return res.status(401).json({ error: 'unauthorized' });
     }
 

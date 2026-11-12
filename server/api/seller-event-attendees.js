@@ -21,6 +21,7 @@
 
 const { getSdk, getTrustedSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { isActingAsAuthor } = require('../api-util/workspaceOwner');
 const { getAdminEmails } = require('../api-util/adminGate');
 
 const CANCELED_STATES = new Set(['canceled', 'refunded', 'disputed']);
@@ -35,21 +36,28 @@ module.exports = async (req, res) => {
 
   // XOLOLO: usamos getTrustedSdk (JWT) — es más confiable que getSdk que
   // puede fallar silenciosamente si falta refresh del access token.
+  let currentUser;
   let userId;
   let userEmail;
   try {
     const trustedSdk = await getTrustedSdk(req);
-    const uResp = await trustedSdk.currentUser.show();
-    userId = uResp.data.data?.id?.uuid;
-    userEmail = String(uResp.data.data?.attributes?.email || '').toLowerCase();
+    const uResp = await trustedSdk.currentUser.show({
+      'fields.user': ['profile.publicData'],
+    });
+    currentUser = uResp.data.data;
+    userId = currentUser?.id?.uuid;
+    userEmail = String(currentUser?.attributes?.email || '').toLowerCase();
   } catch (e) {
     // Fallback: intenta con getSdk clásico por si el browser no tiene JWT
     // (p.ej. caches viejos).
     try {
       const sdk = getSdk(req, res);
-      const uResp = await sdk.currentUser.show();
-      userId = uResp.data.data?.id?.uuid;
-      userEmail = String(uResp.data.data?.attributes?.email || '').toLowerCase();
+      const uResp = await sdk.currentUser.show({
+        'fields.user': ['profile.publicData'],
+      });
+      currentUser = uResp.data.data;
+      userId = currentUser?.id?.uuid;
+      userEmail = String(currentUser?.attributes?.email || '').toLowerCase();
     } catch (_) {
       return res.status(401).json({ error: 'unauthorized' });
     }
@@ -77,8 +85,10 @@ module.exports = async (req, res) => {
     // email, o hay desincronización entre JWT y Integration SDK), igual
     // dejamos pasar si el email del user logueado coincide con el del author.
     const emailMatches = !!userEmail && !!authorEmail && userEmail === authorEmail;
+    // XOLOLO · E9: colaborador del workspace del admin también cuenta.
+    const workspaceMatches = isActingAsAuthor(currentUser, authorId);
 
-    if (!uuidMatches && !emailMatches && !isAdmin) {
+    if (!uuidMatches && !emailMatches && !isAdmin && !workspaceMatches) {
       // eslint-disable-next-line no-console
       console.warn('[seller-event-attendees] not_owner', {
         listingId,

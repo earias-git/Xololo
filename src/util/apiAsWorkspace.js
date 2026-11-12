@@ -69,6 +69,23 @@ const post = async (path, body) => {
 };
 
 // -----------------------------------------------------------
+// Listings — query (scoped al admin)
+// -----------------------------------------------------------
+
+/**
+ * Query de listings del admin del workspace. Reutiliza
+ * /api/manage-listings que ya filtra por authorId=adminId y
+ * acepta queryParams estándar del SDK (pub_variantGroupId, perPage,
+ * include, 'fields.image', etc.). El shape de respuesta es
+ * {data: {data, included, meta}} igual que sdk.ownListings.query.
+ */
+export const queryListingsAs = queryParams => {
+  // No requiere body específico de team-as, pero reutilizamos post()
+  // para que vaya como transit (preserva Money/UUID si acaso).
+  return post('/api/manage-listings', queryParams || {});
+};
+
+// -----------------------------------------------------------
 // Listings — createDraft / publishDraft / update / discardDraft
 // -----------------------------------------------------------
 
@@ -189,6 +206,13 @@ export const uploadImageAs = (targetSellerId, file) => {
 // -----------------------------------------------------------
 // Transactions
 // -----------------------------------------------------------
+
+/**
+ * Query de transactions del admin del workspace vía /api/inbox-transactions.
+ * role='provider' (default) → sales, role='customer' → orders del admin.
+ */
+export const queryTxAs = (role, queryParams) =>
+  post('/api/inbox-transactions', { ...(queryParams || {}), role });
 
 export const showTxAs = (targetSellerId, txId, queryParams) =>
   post('/api/team/as/tx/show', { targetSellerId, txId, queryParams });

@@ -719,21 +719,24 @@ export const uploadFile = (file, tempId) => dispatch => {
 
 const pollForMessageFileVerificationPayloadCreator = (
   { messageId, txId },
-  { dispatch, rejectWithValue, extra: sdk }
+  { dispatch, getState, rejectWithValue, extra: sdk }
 ) => {
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const idUuid = txId?.uuid || txId;
   const poll = (attempt, delayMs) => {
     if (document.hidden) {
       // If the user is on another browser tab or window,
       // skip the SDK poll and don't increment the delay
       return delay(delayMs).then(() => poll(attempt + 1, delayMs));
     }
-    return sdk.messages
-      .query({
-        transactionId: txId,
-        ids: [messageId],
-        include: ['publicFileAttachments', 'publicFileAttachments.file'],
-      })
-      .then(resp => {
+    const commonParams = {
+      ids: [messageId],
+      include: ['publicFileAttachments', 'publicFileAttachments.file'],
+    };
+    const queryPromise = workspace
+      ? queryTxMessagesAs(workspace.sellerId, idUuid, commonParams)
+      : sdk.messages.query({ transactionId: txId, ...commonParams });
+    return queryPromise.then(resp => {
         const message = denormalisedResponseEntities(resp)[0];
         if (!message) {
           return rejectWithValue({ messageId, reason: 'messageNotFound' });
@@ -869,17 +872,22 @@ export const sendMessage = (txId, message, config, fileIds = null) => dispatch =
 ////////////////
 const sendReviewPayloadCreator = (
   { tx, transitionOptionsInfo, params, config },
-  { dispatch, rejectWithValue, extra: sdk }
+  { dispatch, getState, rejectWithValue, extra: sdk }
 ) => {
   const { reviewAsFirst, reviewAsSecond, hasOtherPartyReviewedFirst } = transitionOptionsInfo;
   const include = REVIEW_TX_INCLUDES;
+  // XOLOLO · E9: colaborador responde review como el admin.
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const idUuid = tx?.id?.uuid || tx?.id;
 
   const sendReviewAsSecond = () => {
-    return sdk.transactions
-      .transition(
-        { id: tx?.id, transition: reviewAsSecond, params },
-        { expand: true, include, ...getImageVariants(config.layout.listingImage) }
-      )
+    const transitionPromise = workspace
+      ? transitionTxAs(workspace.sellerId, idUuid, reviewAsSecond, params)
+      : sdk.transactions.transition(
+          { id: tx?.id, transition: reviewAsSecond, params },
+          { expand: true, include, ...getImageVariants(config.layout.listingImage) }
+        );
+    return transitionPromise
       .then(response => {
         dispatch(addMarketplaceEntities(response));
         return response;
@@ -890,11 +898,13 @@ const sendReviewPayloadCreator = (
   };
 
   const sendReviewAsFirst = () => {
-    return sdk.transactions
-      .transition(
-        { id: tx?.id, transition: reviewAsFirst, params },
-        { expand: true, include, ...getImageVariants(config.layout.listingImage) }
-      )
+    const transitionPromise = workspace
+      ? transitionTxAs(workspace.sellerId, idUuid, reviewAsFirst, params)
+      : sdk.transactions.transition(
+          { id: tx?.id, transition: reviewAsFirst, params },
+          { expand: true, include, ...getImageVariants(config.layout.listingImage) }
+        );
+    return transitionPromise
       .then(response => {
         dispatch(addMarketplaceEntities(response));
         return response;

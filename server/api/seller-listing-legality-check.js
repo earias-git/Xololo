@@ -21,6 +21,7 @@
 
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { isActingAsAuthor } = require('../api-util/workspaceOwner');
 const { moderateListingLegality } = require('../api-util/listingLegalityAi');
 const { sendEventNotifications } = require('../api-util/notifications');
 
@@ -30,14 +31,15 @@ module.exports = async (req, res) => {
   const listingId = String(req.body?.listingId || '').trim();
   if (!listingId) return res.status(400).json({ error: 'invalid_request' });
 
-  let userId;
+  let currentUser;
   try {
     const sdk = getSdk(req, res);
-    const uResp = await sdk.currentUser.show();
-    userId = uResp.data.data?.id?.uuid;
+    const uResp = await sdk.currentUser.show({ 'fields.user': ['profile.publicData'] });
+    currentUser = uResp.data.data;
   } catch (e) {
     return res.status(401).json({ error: 'unauthorized' });
   }
+  const userId = currentUser?.id?.uuid;
   if (!userId) return res.status(401).json({ error: 'unauthorized' });
 
   const isdk = getIntegrationSdk();
@@ -47,7 +49,7 @@ module.exports = async (req, res) => {
     const resp = await isdk.listings.show({ id: listingId, include: ['author'] });
     const l = resp.data.data;
     const authorId = l.relationships?.author?.data?.id?.uuid;
-    if (authorId !== userId) {
+    if (!isActingAsAuthor(currentUser, authorId)) {
       return res.status(403).json({ error: 'not_owner' });
     }
 

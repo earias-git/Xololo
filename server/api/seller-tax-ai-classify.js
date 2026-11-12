@@ -20,6 +20,7 @@
 
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { isActingAsAuthor } = require('../api-util/workspaceOwner');
 const { classifyTaxDeclaration } = require('../api-util/taxReviewAi');
 const { sendEventNotifications } = require('../api-util/notifications');
 
@@ -59,15 +60,15 @@ module.exports = async (req, res) => {
   if (!listingId) return res.status(400).json({ error: 'invalid_request' });
 
   // 1) Identifica al user logueado.
-  let userId;
+  let currentUser;
   try {
     const sdk = getSdk(req, res);
-    const uResp = await sdk.currentUser.show();
-    userId = uResp.data.data?.id?.uuid;
+    const uResp = await sdk.currentUser.show({ 'fields.user': ['profile.publicData'] });
+    currentUser = uResp.data.data;
   } catch (e) {
     return res.status(401).json({ error: 'unauthorized' });
   }
-  if (!userId) return res.status(401).json({ error: 'unauthorized' });
+  if (!currentUser?.id?.uuid) return res.status(401).json({ error: 'unauthorized' });
 
   const isdk = getIntegrationSdk();
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
@@ -77,9 +78,8 @@ module.exports = async (req, res) => {
     const resp = await isdk.listings.show({ id: listingId, include: ['author'] });
     const l = resp.data.data;
     const authorId = l.relationships?.author?.data?.id?.uuid;
-    // Verifica ownership — defensa contra sellers que intenten
-    // clasificar listings ajenos.
-    if (authorId !== userId) {
+    // Verifica ownership (owner directo o colaborador del admin).
+    if (!isActingAsAuthor(currentUser, authorId)) {
       return res.status(403).json({ error: 'not_owner' });
     }
 
@@ -158,7 +158,9 @@ module.exports = async (req, res) => {
           'vendedor';
         sendEventNotifications('listing.tax_approved', {
           seller: {
-            id: userId,
+            // El seller notificado es el dueño del listing (authorId),
+            // no el currentUser — un colaborador no es el seller.
+            id: authorId,
             email: authorInc?.attributes?.email || null,
             name: sellerName,
           },

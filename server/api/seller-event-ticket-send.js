@@ -13,6 +13,7 @@
 
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { isActingAsAuthor } = require('../api-util/workspaceOwner');
 const { getAdminEmails } = require('../api-util/adminGate');
 const { sendEventNotifications } = require('../api-util/notifications');
 const {
@@ -27,13 +28,15 @@ module.exports = async (req, res) => {
   const txId = String(req.body?.txId || '').trim();
   if (!txId) return res.status(400).json({ error: 'invalid_request' });
 
+  let currentUser;
   let userId;
   let userEmail;
   try {
     const sdk = getSdk(req, res);
-    const uResp = await sdk.currentUser.show();
-    userId = uResp.data.data?.id?.uuid;
-    userEmail = String(uResp.data.data?.attributes?.email || '').toLowerCase();
+    const uResp = await sdk.currentUser.show({ 'fields.user': ['profile.publicData'] });
+    currentUser = uResp.data.data;
+    userId = currentUser?.id?.uuid;
+    userEmail = String(currentUser?.attributes?.email || '').toLowerCase();
   } catch (e) {
     return res.status(401).json({ error: 'unauthorized' });
   }
@@ -53,7 +56,8 @@ module.exports = async (req, res) => {
     const tx = txResp.data.data;
     if (!tx) return res.status(404).json({ error: 'tx_not_found' });
     const providerId = tx.relationships?.provider?.data?.id?.uuid;
-    if (providerId !== userId && !isAdmin) {
+    const workspaceMatches = isActingAsAuthor(currentUser, providerId);
+    if (providerId !== userId && !isAdmin && !workspaceMatches) {
       // eslint-disable-next-line no-console
       console.warn(
         '[seller-event-ticket-send] not_owner — user',

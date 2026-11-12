@@ -19,6 +19,7 @@ const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const sharetribeSdk = require('../api-util/sdk');
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const { isActingAsAuthor } = require('../api-util/workspaceOwner');
 
 const MAX_SIZE = 8 * 1024 * 1024; // 8 MB — fotos de móvil pueden ser más grandes que logos
 const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp']);
@@ -83,24 +84,34 @@ module.exports = async (req, res) => {
   const client = getR2();
   if (!client) return res.status(500).json({ error: 'r2_not_configured' });
 
-  // Auth + validación de que el user es el provider de la transacción.
+  // Auth + validación de que el user es el provider (o colaborador
+  // operando como el admin de la tienda que es provider).
+  let currentUser;
   let currentUserId;
   let providerId;
   try {
     const sdk = getSdk(req, res);
-    const uResp = await sdk.currentUser.show();
-    currentUserId = uResp.data.data.id.uuid;
+    const uResp = await sdk.currentUser.show({ 'fields.user': ['profile.publicData'] });
+    currentUser = uResp.data.data;
+    currentUserId = currentUser?.id?.uuid;
     if (!currentUserId) return res.status(401).json({ error: 'unauthorized' });
 
+    // Integration SDK para que un colaborador (no provider/customer)
+    // pueda cargar la tx.
+    const isdkRead = getIntegrationSdk();
     let txResp;
     try {
-      txResp = await sdk.transactions.show({ id: transactionId, include: ['provider'] });
+      const txReader = isdkRead || sdk;
+      txResp = await txReader.transactions.show({
+        id: transactionId,
+        include: ['provider'],
+      });
     } catch (e) {
       if (e.status === 404) return res.status(404).json({ error: 'transaction_not_found' });
       throw e;
     }
     providerId = txResp.data.data.relationships?.provider?.data?.id?.uuid;
-    if (providerId !== currentUserId) {
+    if (!isActingAsAuthor(currentUser, providerId)) {
       return res.status(403).json({ error: 'not_provider' });
     }
   } catch (err) {
