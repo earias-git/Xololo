@@ -59,7 +59,17 @@ const getInitialValues = props => {
       skydropxCarrier: {
         enabled: sk.enabled ? ['true'] : [],
         sellerCoversShipping: sk.sellerCoversShipping ? ['true'] : [],
-        weightGrams: sk.weightGrams != null ? String(sk.weightGrams) : '',
+        // XOLOLO 2026-11-12: el form pide KILOS ENTEROS (1, 2, 3…) en vez
+        // de gramos. Si el listing tiene weightGrams viejo, lo
+        // redondeamos hacia arriba al kilo (mejor declarar de más que
+        // sub-declarar — Skydropx penaliza si el peso real supera lo
+        // declarado). En onSubmit volvemos a convertir kg → gramos para
+        // mantener el contrato con el backend (cartShipping.js divide
+        // sumWeightGrams / 1000 al armar el parcel).
+        weightKg:
+          sk.weightGrams != null && Number(sk.weightGrams) > 0
+            ? String(Math.max(1, Math.ceil(Number(sk.weightGrams) / 1000)))
+            : '',
         dimensionLengthCm: sk.dimensionLengthCm != null ? String(sk.dimensionLengthCm) : '',
         dimensionWidthCm: sk.dimensionWidthCm != null ? String(sk.dimensionWidthCm) : '',
         dimensionHeightCm: sk.dimensionHeightCm != null ? String(sk.dimensionHeightCm) : '',
@@ -202,8 +212,11 @@ const EditListingDeliveryPanel = props => {
                 sellerCoversShipping: xoloIsOn(
                   xololoMethods?.skydropxCarrier?.sellerCoversShipping
                 ),
-                weightGrams: xololoMethods?.skydropxCarrier?.weightGrams
-                  ? Number(xololoMethods.skydropxCarrier.weightGrams)
+                // XOLOLO 2026-11-12: el form captura KILOS; persistimos
+                // en gramos para mantener el contrato backend (cartShipping
+                // divide /1000 al armar el parcel para Skydropx).
+                weightGrams: xololoMethods?.skydropxCarrier?.weightKg
+                  ? Number(xololoMethods.skydropxCarrier.weightKg) * 1000
                   : null,
                 dimensionLengthCm: xololoMethods?.skydropxCarrier?.dimensionLengthCm
                   ? Number(xololoMethods.skydropxCarrier.dimensionLengthCm)

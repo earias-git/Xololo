@@ -4,7 +4,20 @@ import classNames from 'classnames';
 
 // Import configs and util modules
 import appSettings from '../../../../config/settings';
-import { required } from '../../../../util/validators';
+import { composeValidators, required } from '../../../../util/validators';
+
+// XOLOLO 2026-11-12: validador inline — entero entre 1 y 70 kg. El
+// campo pide KILOS, no gramos, para evitar errores de dedo (típico:
+// escribir 150 pensando "150 g" cuando son 1.5 kg → Skydropx penaliza
+// si el peso real supera lo declarado).
+const integerKg = message => value => {
+  if (value == null || value === '') return undefined;
+  const n = Number(value);
+  if (!Number.isFinite(n) || !Number.isInteger(n) || n < 1 || n > 70) {
+    return message;
+  }
+  return undefined;
+};
 import { MX_STATES } from '../../../../util/mxStates';
 import { municipiosByEstado } from '../../../../util/mxMunicipios';
 
@@ -335,14 +348,26 @@ export const EditListingDeliveryForm = props => (
                   peso y dimensiones del paquete cerrado.
                 </p>
                 <FieldTextInput
-                  id={`${formId}.xoloWeightGrams`}
-                  name="xololoMethods.skydropxCarrier.weightGrams"
+                  id={`${formId}.xoloWeightKg`}
+                  name="xololoMethods.skydropxCarrier.weightKg"
                   className={css.input}
                   type="number"
-                  label="Peso del paquete (gramos)"
-                  placeholder="Ej. 1500"
-                  validate={required('El peso es requerido.')}
+                  min="1"
+                  max="70"
+                  step="1"
+                  inputMode="numeric"
+                  label="Peso del paquete (kilos)"
+                  placeholder="Ej. 2"
+                  validate={composeValidators(
+                    required('El peso es requerido.'),
+                    integerKg('Usa un número entero de kilos entre 1 y 70.')
+                  )}
                 />
+                <p className={css.xxHint} style={{ marginTop: -8 }}>
+                  Captura el peso <strong>en kilos enteros</strong> (1, 2, 3…). Si tu paquete pesa
+                  1.2 kg, declara 2. Skydropx cobra penalizaciones si el peso real supera el
+                  declarado, así que conviene redondear hacia arriba.
+                </p>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   <FieldTextInput
                     id={`${formId}.xoloDimLength`}
