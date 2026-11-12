@@ -9,6 +9,7 @@ import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
 import { getTaxProfile } from '../../../../util/xololoTaxProfile';
 import { SELLER_MODES, getSellerMode } from '../../../../util/xololoSellerMode';
+import { getCurrentWorkspace } from '../../../../util/xololoTeam';
 import { apiBaseUrl } from '../../../../util/api';
 // Note: SELLER_MODES used by the Form for isCasual check downstream.
 
@@ -149,10 +150,18 @@ const buildTaxClassificationUpdate = (values, listing) => {
  */
 const EditListingPricingAndStockPanel = props => {
   // XOLOLO: perfil fiscal + modo del seller. Default 'used' para casual.
+  // XOLOLO · E9: en modo colaborador, los datos fiscales relevantes son
+  // los del admin del workspace (dueño del listing). listing.author
+  // viene con publicData expuesto; con eso alcanza para getSellerMode.
+  // taxProfile vive en protectedData del admin, que no se incluye en el
+  // show del listing; ante ausencia, los componentes downstream aplican
+  // los defaults de MX (IVA 16% new).
   const currentUser = useSelector(state => state.user?.currentUser);
-  const sellerTaxProfile = getTaxProfile(currentUser);
+  const workspace = getCurrentWorkspace(currentUser);
+  const effectiveUser = workspace && props.listing?.author ? props.listing.author : currentUser;
+  const sellerTaxProfile = getTaxProfile(effectiveUser);
   const defaultCondition =
-    getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER ? 'used' : 'new';
+    getSellerMode(effectiveUser) === SELLER_MODES.CASUAL_RESELLER ? 'used' : 'new';
   // State is needed since re-rendering would overwrite the values during XHR call.
   const [state, setState] = useState({
     initialValues: getInitialValues({ ...props, defaultCondition }),
@@ -233,7 +242,7 @@ const EditListingPricingAndStockPanel = props => {
           initialValues={initialValues}
           categoryId={listing?.attributes?.publicData?.categoryLevel1}
           sellerTaxProfile={sellerTaxProfile}
-          sellerMode={getSellerMode(currentUser)}
+          sellerMode={getSellerMode(effectiveUser)}
           isEvent={publicData?.isEvent === true}
           eventCapacity={publicData?.event?.capacity || null}
           onSubmit={values => {
@@ -279,7 +288,7 @@ const EditListingPricingAndStockPanel = props => {
             // Para casual, condition siempre es 'used' (único modo que puede
             // publicar). Esto hidrata correctamente listings viejos que
             // quedaron sin publicData.condition persistido.
-            const isCasualSubmit = getSellerMode(currentUser) === SELLER_MODES.CASUAL_RESELLER;
+            const isCasualSubmit = getSellerMode(effectiveUser) === SELLER_MODES.CASUAL_RESELLER;
             const taxUpdate = buildTaxClassificationUpdate(
               isCasualSubmit ? { ...values, condition: 'used' } : values,
               listing

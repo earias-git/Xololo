@@ -387,6 +387,7 @@ export const ListingPageComponent = props => {
               sendInquiryInProgress={sendInquiryInProgress}
               onSubmitInquiry={onSubmitInquiry}
               currentUser={currentUser}
+              isBuyingBlocked={isBuyingBlocked}
               onManageDisableScrolling={onManageDisableScrolling}
             />
           </div>

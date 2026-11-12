@@ -2,14 +2,38 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 import { denormalisedResponseEntities } from '../../util/data';
 import { storableError } from '../../util/errors';
-import { setCurrentUser } from '../../ducks/user.duck';
+import { getCurrentWorkspace } from '../../util/xololoTeam';
+import { updateStoreSettingsAs } from '../../util/apiAsWorkspace';
+import { setCurrentUser, fetchCurrentUser } from '../../ducks/user.duck';
 
 // XOLOLO: página /account/store donde el seller edita el branding de su
 // storefront y activa/desactiva calendario. Guarda los cambios en
 // publicData vía sdk.currentUser.updateProfile — el user actualiza sus
 // propios campos (no necesita Integration API para esto).
+// XOLOLO · E9: en modo colaborador, el save va al wrapper
+// /api/team/as/store/settings que actualiza al admin del workspace via
+// Integration SDK (filtra keys sensibles).
 
-const saveStorePayloadCreator = (publicData, { dispatch, extra: sdk, rejectWithValue }) => {
+const saveStorePayloadCreator = (
+  publicData,
+  { dispatch, getState, extra: sdk, rejectWithValue }
+) => {
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+
+  if (workspace) {
+    return updateStoreSettingsAs(workspace.sellerId, { publicData })
+      .then(() => {
+        // El wrapper actualiza al admin via Integration SDK; el currentUser
+        // del colaborador no cambia. Refrescamos currentUser para que el
+        // ribbon/switcher y getCurrentWorkspace lean los datos actualizados.
+        dispatch(fetchCurrentUser({ updateNotifications: false })).catch(() => null);
+        return null;
+      })
+      .catch(e => {
+        return rejectWithValue(storableError(e));
+      });
+  }
+
   return sdk.currentUser
     .updateProfile(
       { publicData },

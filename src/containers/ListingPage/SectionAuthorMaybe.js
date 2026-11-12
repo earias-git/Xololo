@@ -27,6 +27,10 @@ const SectionAuthorMaybe = props => {
     onSubmitInquiry,
     currentUser,
     onManageDisableScrolling,
+    // XOLOLO · E9: en modo colaborador (workspace activo) el user no
+    // puede iniciar una inquiry — opera como el Negocio, no como
+    // comprador. Ocultamos el botón "Contactar al proveedor".
+    isBuyingBlocked = false,
   } = props;
 
   if (!listing.author) {
@@ -37,7 +41,9 @@ const SectionAuthorMaybe = props => {
   const unitType = listing?.attributes?.publicData?.unitType || '';
   const isInquiryProcess = isInquiryProcessAlias(transactionProcessAlias);
   const isNegotiationProcess = isNegotiationProcessAlias(transactionProcessAlias);
-  const showContact = !(isInquiryProcess || (isNegotiationProcess && unitType === OFFER));
+  const showContact =
+    !isBuyingBlocked &&
+    !(isInquiryProcess || (isNegotiationProcess && unitType === OFFER));
 
   return (
     <section id="author" className={css.sectionAuthor}>

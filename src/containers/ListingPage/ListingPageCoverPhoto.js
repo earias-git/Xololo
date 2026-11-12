@@ -397,6 +397,7 @@ export const ListingPageComponent = props => {
               onSubmitInquiry={onSubmitInquiry}
               currentUser={currentUser}
               onManageDisableScrolling={onManageDisableScrolling}
+              isBuyingBlocked={isBuyingBlocked}
             />
           </div>
           <div className={css.orderColumnForHeroLayout}>
