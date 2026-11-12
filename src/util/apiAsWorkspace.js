@@ -14,6 +14,7 @@
 // shape SDK-compatible ({data: {data: X, included: [], meta: {}}}) para
 // que los thunks reutilicen sin transformar — ver server/api/team-as.js.
 
+import appSettings from '../config/settings';
 import { apiBaseUrl, typeHandlers } from './api';
 import { transit } from './sdkLoader';
 
@@ -25,17 +26,25 @@ import { transit } from './sdkLoader';
 // convertirían en plain objects y los helpers del SDK (formatMoney, etc.)
 // crashearían con "Value must be a Money type".
 //
-// El cuerpo de la request se manda como JSON normal — Transit solo es
-// necesario para la respuesta (el body no suele contener Money/UUID).
+// XOLOLO 2026-11-11: también el BODY se manda como transit — antes se
+// JSON.stringify-aba, lo cual aplasta Money/UUID/LatLng/BigDecimal del
+// payload del wizard (price, authorId, geolocation) a objetos planos
+// que el Integration SDK rechaza en listings.create/update (síntoma:
+// "Error al crear el borrador"). El router del server ya tiene
+// middleware global `application/transit+json` → `transit.read`, así
+// que el handler recibe los tipos reconstruidos sin trabajo extra.
 //
 // Retorna un objeto {data} para imitar el shape axios-like que usan los
 // reducers (response.data.data, response.data.included, response.data.meta).
+const serializeBody = data =>
+  transit.write(data || {}, { typeHandlers, verbose: appSettings.sdk.transitVerbose });
+
 const post = async (path, body) => {
   const res = await fetch(`${apiBaseUrl()}${path}`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body || {}),
+    headers: { 'Content-Type': 'application/transit+json' },
+    body: serializeBody(body),
   });
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
@@ -127,6 +136,12 @@ export const createListingAs = (targetSellerId, listing, queryParams) =>
 // -----------------------------------------------------------
 // Transactions
 // -----------------------------------------------------------
+
+export const showTxAs = (targetSellerId, txId, queryParams) =>
+  post('/api/team/as/tx/show', { targetSellerId, txId, queryParams });
+
+export const queryTxMessagesAs = (targetSellerId, txId, queryParams) =>
+  post('/api/team/as/tx/messages', { targetSellerId, txId, queryParams });
 
 export const transitionTxAs = (targetSellerId, txId, transition, params) =>
   post('/api/team/as/tx/transition', { targetSellerId, txId, transition, params });

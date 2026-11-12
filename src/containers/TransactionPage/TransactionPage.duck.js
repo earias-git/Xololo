@@ -29,6 +29,18 @@ import { MAX_FILE_SIZE, messageHasPendingFiles } from '../../util/fileHelpers';
 import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import { fetchCurrentUserNotifications } from '../../ducks/user.duck';
 
+// XOLOLO · E9: en modo colaborador (hay workspace activo), las
+// operaciones sobre la transacción del admin se hacen vía los wrappers
+// /api/team/as/tx/* bajo la identidad del admin. En modo propio
+// (customer/provider directo), se usa el SDK normal.
+import { getCurrentWorkspace } from '../../util/xololoTeam';
+import {
+  showTxAs,
+  queryTxMessagesAs,
+  transitionTxAs,
+  sendTxMessageAs,
+} from '../../util/apiAsWorkspace';
+
 const { UUID } = sdkTypes;
 
 const MESSAGES_PAGE_SIZE = 100;
@@ -70,17 +82,23 @@ const getImageVariants = listingImageConfig => {
 };
 
 const delay = ms => new Promise(resolve => window.setTimeout(resolve, ms));
-const refreshTx = (sdk, txId) => sdk.transactions.show({ id: txId }, { expand: true });
-const refreshTransactionEntity = (sdk, txId, dispatch) => {
+const refreshTx = (sdk, txId, workspace) => {
+  if (workspace) {
+    const idUuid = txId?.uuid || txId;
+    return showTxAs(workspace.sellerId, idUuid, { expand: true });
+  }
+  return sdk.transactions.show({ id: txId }, { expand: true });
+};
+const refreshTransactionEntity = (sdk, txId, dispatch, workspace) => {
   delay(3000)
-    .then(() => refreshTx(sdk, txId))
+    .then(() => refreshTx(sdk, txId, workspace))
     .then(response => {
       dispatch(addMarketplaceEntities(response));
       const lastTransition = response?.data?.data?.attributes?.lastTransition;
       // We'll make another attempt if mark-received-from-purchased from default-purchase process is still the latest.
       if (lastTransition === 'transition/mark-received-from-purchased') {
         return delay(8000)
-          .then(() => refreshTx(sdk, txId))
+          .then(() => refreshTx(sdk, txId, workspace))
           .then(response => {
             dispatch(addMarketplaceEntities(response));
           });
@@ -242,35 +260,38 @@ const fetchMonthlyTimeSlots = (dispatch, listing) => {
 // fetchTransaction
 const fetchTransactionPayloadCreator = (
   { id, txRole, config },
-  { dispatch, rejectWithValue, extra: sdk }
+  { dispatch, getState, rejectWithValue, extra: sdk }
 ) => {
   const listingRelationship = txResponse => {
     return txResponse.data.data.relationships.listing.data;
   };
 
-  return sdk.transactions
-    .show(
-      {
-        id,
-        include: [
-          'customer',
-          'customer.profileImage',
-          'provider',
-          'provider.profileImage',
-          'listing',
-          'listing.currentStock',
-          'listing.images',
-          'listing.author',
-          'listing.author.profileImage',
-          'booking',
-          'reviews',
-          'reviews.author',
-          'reviews.subject',
-        ],
-        ...getImageVariants(config.layout.listingImage),
-      },
-      { expand: true }
-    )
+  const showQueryParams = {
+    include: [
+      'customer',
+      'customer.profileImage',
+      'provider',
+      'provider.profileImage',
+      'listing',
+      'listing.currentStock',
+      'listing.images',
+      'listing.author',
+      'listing.author.profileImage',
+      'booking',
+      'reviews',
+      'reviews.author',
+      'reviews.subject',
+    ],
+    ...getImageVariants(config.layout.listingImage),
+  };
+
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const idUuid = id?.uuid || id;
+  const fetchPromise = workspace
+    ? showTxAs(workspace.sellerId, idUuid, showQueryParams)
+    : sdk.transactions.show({ id, ...showQueryParams }, { expand: true });
+
+  return fetchPromise
     .then(response => {
       const listingId = listingRelationship(response).id;
       const entities = updatedEntities({}, response.data);
@@ -333,8 +354,14 @@ const makeTransitionPayloadCreator = (
   const transaction = getState()?.marketplaceData?.entities?.transaction?.[txId?.uuid];
   const processName = resolveLatestProcessName(transaction?.attributes?.processName);
   const process = getProcess(processName);
+  // XOLOLO · E9: colaborador operando como el admin.
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const idUuid = txId?.uuid || txId;
 
   // This calls the client app's server to make a privileged transition.
+  // NOTE: privileged transitions son del flujo de customer (checkout);
+  // un colaborador operando como el admin no las dispara. Si eso cambia,
+  // hay que mapear transitionPrivileged → endpoint actuar-como server-side.
   const privilegedTransition = () =>
     transitionPrivileged({
       isSpeculative: false,
@@ -349,10 +376,18 @@ const makeTransitionPayloadCreator = (
       },
     });
   const normalTransition = () =>
-    sdk.transactions.transition({ id: txId, transition: transitionName, params }, { expand: true });
+    workspace
+      ? transitionTxAs(workspace.sellerId, idUuid, transitionName, params)
+      : sdk.transactions.transition(
+          { id: txId, transition: transitionName, params },
+          { expand: true }
+        );
   // Negotiation process / accept update: check if payin total has changed
-  const acceptUpdateTransition = () =>
-    sdk.transactions.show({ id: txId }, { expand: true }).then(response => {
+  const acceptUpdateTransition = () => {
+    const showPromise = workspace
+      ? showTxAs(workspace.sellerId, idUuid, { expand: true })
+      : sdk.transactions.show({ id: txId }, { expand: true });
+    return showPromise.then(response => {
       const updatedTransaction = response.data.data;
       const newPayinTotal = updatedTransaction.attributes.payinTotal.amount;
       const oldPayinTotal = transaction.attributes.payinTotal.amount;
@@ -361,11 +396,14 @@ const makeTransitionPayloadCreator = (
         dispatch(addMarketplaceEntities(response));
         throw new Error('Payin total has changed');
       }
-      return sdk.transactions.transition(
-        { id: txId, transition: transitionName, params },
-        { expand: true }
-      );
+      return workspace
+        ? transitionTxAs(workspace.sellerId, idUuid, transitionName, params)
+        : sdk.transactions.transition(
+            { id: txId, transition: transitionName, params },
+            { expand: true }
+          );
     });
+  };
 
   const makeCall = process?.isPrivileged(transitionName)
     ? privilegedTransition
@@ -382,7 +420,7 @@ const makeTransitionPayloadCreator = (
       // For example mark-received-from-purchased > auto-complete.
       // Here, we make 1-2 delayed updates for the tx entity.
       // This way "leave a review" link should show up for the customer.
-      refreshTransactionEntity(sdk, txId, dispatch);
+      refreshTransactionEntity(sdk, txId, dispatch, workspace);
 
       return response;
     })
@@ -421,22 +459,27 @@ export const makeTransition = (txId, transitionName, params) => dispatch => {
 ////////////////////
 const fetchMessagesPayloadCreator = (
   { txId, page, config },
-  { dispatch, rejectWithValue, extra: sdk }
+  { dispatch, getState, rejectWithValue, extra: sdk }
 ) => {
   const paging = { page, perPage: MESSAGES_PAGE_SIZE };
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const idUuid = txId?.uuid || txId;
+  const commonParams = {
+    include: [
+      'sender',
+      'sender.profileImage',
+      'publicFileAttachments',
+      'publicFileAttachments.file',
+    ],
+    ...getImageVariants(config.layout.listingImage),
+    ...paging,
+  };
 
-  return sdk.messages
-    .query({
-      transaction_id: txId,
-      include: [
-        'sender',
-        'sender.profileImage',
-        'publicFileAttachments',
-        'publicFileAttachments.file',
-      ],
-      ...getImageVariants(config.layout.listingImage),
-      ...paging,
-    })
+  const queryPromise = workspace
+    ? queryTxMessagesAs(workspace.sellerId, idUuid, commonParams)
+    : sdk.messages.query({ transaction_id: txId, ...commonParams });
+
+  return queryPromise
     .then(response => {
       const messages = denormalisedResponseEntities(response);
       const { totalItems, totalPages, page: fetchedPage } = response.data.meta;
@@ -779,10 +822,24 @@ export const downloadFile = (fileAttachmentId, isOwnFile = false) => dispatch =>
 /////////////////
 const sendMessagePayloadCreator = (
   { txId, message, config, fileIds },
-  { dispatch, rejectWithValue, extra: sdk }
+  { dispatch, getState, rejectWithValue, extra: sdk }
 ) => {
-  return sdk.messages
-    .send({ transactionId: txId, content: message, publicFileAttachments: fileIds })
+  // XOLOLO · E9: colaborador envía el mensaje bajo la identidad del admin.
+  // Nota: fileIds / publicFileAttachments aún no se propagan por el
+  // wrapper — si el colaborador necesita adjuntar archivos, cae al flow
+  // directo (fallará si no es customer/provider). Los mensajes de texto
+  // simples —el 95% del uso— sí se cubren.
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const idUuid = txId?.uuid || txId;
+  const sendPromise = workspace
+    ? sendTxMessageAs(workspace.sellerId, idUuid, message)
+    : sdk.messages.send({
+        transactionId: txId,
+        content: message,
+        publicFileAttachments: fileIds,
+      });
+
+  return sendPromise
     .then(response => {
       const messageId = response.data.data.id;
 

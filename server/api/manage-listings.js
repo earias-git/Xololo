@@ -11,6 +11,7 @@
 // Body JSON: los queryParams que se pasarían a sdk.ownListings.query,
 // p.ej. { page, perPage, include, 'fields.image', ... }.
 
+const { types: sdkTypes } = require('sharetribe-flex-integration-sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { sendTransit } = require('../api-util/transitResponse');
 
@@ -22,7 +23,7 @@ module.exports = async (req, res) => {
 
     const queryParams = req.body || {};
     const resp = await isdk.listings.query({
-      authorId: adminId,
+      authorId: new sdkTypes.UUID(adminId),
       ...queryParams,
     });
 

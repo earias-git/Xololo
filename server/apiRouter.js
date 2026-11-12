@@ -473,6 +473,20 @@ router.post(
   teamAs.updateStock
 );
 router.post(
+  '/team/as/tx/show',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('orders.view'),
+  teamAs.showTx
+);
+router.post(
+  '/team/as/tx/messages',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('orders.view'),
+  teamAs.queryMessages
+);
+router.post(
   '/team/as/tx/transition',
   limits.generic,
   bodyParser.json(),

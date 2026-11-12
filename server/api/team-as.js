@@ -19,9 +19,20 @@
 // configurado (SHARETRIBE_INTEGRATION_CLIENT_ID/SECRET). Sin ellos
 // devuelven 500 integration_api_missing.
 
+const { types: sdkTypes } = require('sharetribe-flex-integration-sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { recordTeamAction } = require('../api-util/teamStore');
 const { sendTransit } = require('../api-util/transitResponse');
+
+// XOLOLO 2026-11-11: wrap defensivo string→UUID. El body viene por
+// transit, así que un listingId/UUID que el cliente mandó como instance
+// llega como instance; pero adminId (de la session cookie) es string.
+// El Integration SDK exige UUID para authorId/listingId.
+const asUUID = v => {
+  if (!v) return v;
+  if (typeof v === 'object' && v._sdkType === 'UUID') return v;
+  return new sdkTypes.UUID(v);
+};
 
 const auditOk = (req, action, target, result) => {
   const isdk = getIntegrationSdk();
@@ -83,7 +94,7 @@ const toOwnListingType = r => (r && r.type === 'listing' ? { ...r, type: 'ownLis
 // transit-deserializado como `.data`.
 const rehydrateAsSdk = async (isdk, listingId, queryParams) => {
   const resp = await isdk.listings.show({
-    id: listingId,
+    id: asUUID(listingId),
     ...sanitizeQueryParams(queryParams),
   });
   return {
@@ -96,7 +107,7 @@ const rehydrateAsSdk = async (isdk, listingId, queryParams) => {
 // Guard: verifica que el listing pertenezca al admin del workspace.
 // Devuelve null si OK, o un error-response para enviar al cliente.
 const ensureListingBelongsToAdmin = async (isdk, listingId, adminId) => {
-  const current = await isdk.listings.show({ id: listingId, include: ['author'] });
+  const current = await isdk.listings.show({ id: asUUID(listingId), include: ['author'] });
   const authorId = current.data.data?.relationships?.author?.data?.id?.uuid;
   if (authorId !== adminId) {
     return { status: 403, body: { error: 'listing_not_in_workspace' } };
@@ -123,7 +134,7 @@ const createDraft = async (req, res) => {
     // state 'draft' explícito — el admin publicará en un paso separado.
     const resp = await isdk.listings.create({
       ...listing,
-      authorId: req.actingAs.adminId,
+      authorId: asUUID(req.actingAs.adminId),
       state: 'draft',
     });
     const created = resp.data.data;
@@ -156,7 +167,7 @@ const createListing = async (req, res) => {
   try {
     const resp = await isdk.listings.create({
       ...listing,
-      authorId: req.actingAs.adminId,
+      authorId: asUUID(req.actingAs.adminId),
     });
     const created = resp.data.data;
     const listingId = created.id.uuid;
@@ -220,7 +231,7 @@ const updateListing = async (req, res) => {
     const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
     if (guard) return res.status(guard.status).json(guard.body);
 
-    await isdk.listings.update({ id: listingId, ...patch });
+    await isdk.listings.update({ id: asUUID(listingId), ...patch });
     auditOk(req, 'listing.edit', { listingId });
     const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
     return sendTransit(res, sdkLike);
@@ -246,9 +257,9 @@ const publishDraft = async (req, res) => {
 
     // Integration SDK: publish mueve el state draft → pendingApproval o
     // published según la política del marketplace.
-    await isdk.listings.approve({ id: listingId }).catch(async () => {
+    await isdk.listings.approve({ id: asUUID(listingId) }).catch(async () => {
       // Si approve falla (no moderado), probamos con update state.
-      await isdk.listings.update({ id: listingId, state: 'published' });
+      await isdk.listings.update({ id: asUUID(listingId), state: 'published' });
     });
     auditOk(req, 'listing.publish', { listingId });
     const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
@@ -276,7 +287,7 @@ const discardDraft = async (req, res) => {
     // Integration SDK no expone discardDraft explícito; cerramos el
     // listing (close deja un listing en estado "closed" que ya no es
     // visible). Es el equivalente operacional al discard del wizard.
-    const resp = await isdk.listings.close({ id: listingId });
+    const resp = await isdk.listings.close({ id: asUUID(listingId) });
     auditOk(req, 'listing.discard_draft', { listingId });
     return sendTransit(res, { data: toOwnListingType(resp.data.data), included: [], meta: {} });
   } catch (e) {
@@ -296,7 +307,7 @@ const closeListing = async (req, res) => {
   try {
     const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
     if (guard) return res.status(guard.status).json(guard.body);
-    await isdk.listings.close({ id: listingId });
+    await isdk.listings.close({ id: asUUID(listingId) });
     auditOk(req, 'listing.close', { listingId });
     const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
     return sendTransit(res, sdkLike);
@@ -316,7 +327,7 @@ const openListing = async (req, res) => {
   try {
     const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
     if (guard) return res.status(guard.status).json(guard.body);
-    await isdk.listings.open({ id: listingId });
+    await isdk.listings.open({ id: asUUID(listingId) });
     auditOk(req, 'listing.open', { listingId });
     const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
     return sendTransit(res, sdkLike);
@@ -346,7 +357,7 @@ const updateStock = async (req, res) => {
     const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
     if (guard) return res.status(guard.status).json(guard.body);
     const resp = await isdk.stock.compareAndSet({
-      listingId,
+      listingId: asUUID(listingId),
       oldTotal: oldTotal == null ? null : oldTotal,
       newTotal,
     });
@@ -364,6 +375,71 @@ const updateStock = async (req, res) => {
 // Transactions / Orders
 // ============================================================
 
+// Lectura del detalle de una transaction (equivalente a
+// sdk.transactions.show). Verifica que la tx pertenezca al admin del
+// workspace (provider === adminId) y la devuelve con el shape que
+// TransactionPage.duck.js espera.
+const showTx = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+
+  const { txId, queryParams } = req.body || {};
+  if (!txId) return res.status(400).json({ error: 'txId_required' });
+
+  try {
+    const resp = await isdk.transactions.show({
+      id: asUUID(txId),
+      ...sanitizeQueryParams(queryParams),
+    });
+    const providerId = resp.data.data?.relationships?.provider?.data?.id?.uuid;
+    if (providerId !== req.actingAs.adminId) {
+      return res.status(403).json({ error: 'tx_not_in_workspace' });
+    }
+    return sendTransit(res, {
+      data: resp.data.data,
+      included: resp.data.included || [],
+      meta: resp.data.meta || {},
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[team-as.showTx] error:', e?.message || e);
+    return res.status(500).json({ error: 'internal', detail: e?.message });
+  }
+};
+
+// Query de messages de una transaction.
+const queryMessages = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+
+  const { txId, queryParams } = req.body || {};
+  if (!txId) return res.status(400).json({ error: 'txId_required' });
+
+  try {
+    // Guard: solo mensajes de txs del admin.
+    const tx = await isdk.transactions.show({ id: asUUID(txId), include: ['provider'] });
+    const providerId = tx.data.data?.relationships?.provider?.data?.id?.uuid;
+    if (providerId !== req.actingAs.adminId) {
+      return res.status(403).json({ error: 'tx_not_in_workspace' });
+    }
+    const resp = await isdk.messages.query({
+      transactionId: asUUID(txId),
+      ...sanitizeQueryParams(queryParams),
+    });
+    return sendTransit(res, {
+      data: resp.data.data,
+      included: resp.data.included || [],
+      meta: resp.data.meta || {},
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[team-as.queryMessages] error:', e?.message || e);
+    return res.status(500).json({ error: 'internal', detail: e?.message });
+  }
+};
+
 const transitionTx = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   const isdk = getIntegrationSdk();
@@ -376,7 +452,7 @@ const transitionTx = async (req, res) => {
 
   try {
     const current = await isdk.transactions.show({
-      id: txId,
+      id: asUUID(txId),
       include: ['provider'],
     });
     const providerId = current.data.data?.relationships?.provider?.data?.id?.uuid;
@@ -385,12 +461,16 @@ const transitionTx = async (req, res) => {
     }
 
     const resp = await isdk.transactions.transition({
-      id: txId,
+      id: asUUID(txId),
       transition,
       params,
     });
     auditOk(req, `tx.${transition}`, { txId });
-    return res.json({ transaction: resp.data.data });
+    return sendTransit(res, {
+      data: resp.data.data,
+      included: resp.data.included || [],
+      meta: resp.data.meta || {},
+    });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[team-as.transitionTx] error:', e?.message || e);
@@ -410,21 +490,25 @@ const sendTxMessage = async (req, res) => {
   }
 
   try {
-    const current = await isdk.transactions.show({ id: txId, include: ['provider'] });
+    const current = await isdk.transactions.show({ id: asUUID(txId), include: ['provider'] });
     const providerId = current.data.data?.relationships?.provider?.data?.id?.uuid;
     if (providerId !== req.actingAs.adminId) {
       return res.status(403).json({ error: 'tx_not_in_workspace' });
     }
 
     const resp = await isdk.messages.send({
-      transactionId: txId,
+      transactionId: asUUID(txId),
       content: content.trim(),
     });
     auditOk(req, 'tx.message', {
       txId,
       preview: content.trim().slice(0, 80),
     });
-    return res.json({ message: resp.data.data });
+    return sendTransit(res, {
+      data: resp.data.data,
+      included: resp.data.included || [],
+      meta: resp.data.meta || {},
+    });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[team-as.sendTxMessage] error:', e?.message || e);
@@ -468,7 +552,7 @@ const updateStoreSettings = async (req, res) => {
     : null;
 
   try {
-    const payload = { id: req.actingAs.adminId };
+    const payload = { id: asUUID(req.actingAs.adminId) };
     if (cleanPublic && Object.keys(cleanPublic).length) {
       payload.publicData = cleanPublic;
     }
@@ -503,6 +587,8 @@ module.exports = {
   closeListing,
   openListing,
   updateStock,
+  showTx,
+  queryMessages,
   transitionTx,
   sendTxMessage,
   updateStoreSettings,
