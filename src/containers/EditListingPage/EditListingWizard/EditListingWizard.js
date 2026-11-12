@@ -36,6 +36,7 @@ import {
 } from '../../../util/fieldHelpers';
 import { ensureCurrentUser, ensureListing } from '../../../util/data';
 import { getDisplayAccountType } from '../../../util/stripeConnect';
+import { getCurrentWorkspace } from '../../../util/xololoTeam';
 import { INQUIRY_PROCESS_NAME, resolveLatestProcessName } from '../../../transactions/transaction';
 
 // Import shared components
@@ -544,9 +545,19 @@ class EditListingWizard extends Component {
       (hasRequirements(stripeAccountData, 'past_due') ||
         hasRequirements(stripeAccountData, 'currently_due'));
 
+    // XOLOLO · E9: en modo colaborador, el chequeo de Stripe aplica
+    // al admin (dueño del listing), no al colaborador. No podemos
+    // inspeccionar el stripeAccount del admin desde aquí; confiamos
+    // en que el admin ya configuró Stripe cuando creó el workspace, y
+    // dejamos que el publish proceda. El flujo de checkout del buyer
+    // sigue validando que el admin tenga Stripe conectado antes de
+    // iniciar transacción.
+    const isCollaboratorWorkspace = !!getCurrentWorkspace(currentUser);
+
     if (
       isInquiryProcess ||
       !isPayoutDetailsRequired ||
+      isCollaboratorWorkspace ||
       (stripeConnected && !stripeRequirementsMissing)
     ) {
       onPublishListingDraft(id);
