@@ -50,22 +50,26 @@ const ErrorMessage = props => {
     updateListingError || createListingDraftError || showListingsError || null;
   const apiErrors = underlyingError?.apiErrors;
   const message = underlyingError?.message;
+  const sdkDataRaw = underlyingError?.sdkDataRaw;
+  const payloadKeys = underlyingError?.payloadKeys;
 
   if (errorMessage) {
     return (
       <>
         <p className={css.error}>{errorMessage}</p>
-        {(message || (apiErrors && apiErrors.length > 0)) && (
+        {(message || apiErrors?.length || sdkDataRaw || payloadKeys) && (
           <pre style={{
             background: '#fff3f3',
             border: '1px solid #f99',
             padding: '8px',
             fontSize: '11px',
             overflow: 'auto',
-            maxHeight: '240px',
+            maxHeight: '320px',
             whiteSpace: 'pre-wrap',
           }}>
             {message ? `message: ${message}\n` : ''}
+            {sdkDataRaw ? `sdkDataRaw: ${sdkDataRaw}\n` : ''}
+            {payloadKeys ? `payloadKeys: ${JSON.stringify(payloadKeys, null, 2)}\n` : ''}
             {apiErrors && apiErrors.length
               ? `apiErrors:\n${JSON.stringify(apiErrors, null, 2)}`
               : ''}

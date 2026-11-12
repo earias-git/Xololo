@@ -377,6 +377,12 @@ export const storableError = err => {
   const customError = error && typeof error === 'object' && error.error ? error.error : undefined;
   const customReason = error && typeof error === 'object' && error.reason ? error.reason : undefined;
 
+  // XOLOLO 2026-11-11 debug team-as: preservar sdkDataRaw + payloadKeys
+  // para diagnosticar el 400 del Integration SDK en modo colaborador.
+  // Temporal; sacar cuando quitemos el debug visual del wizard.
+  const sdkDataRaw = error && typeof error === 'object' ? error.sdkDataRaw : undefined;
+  const payloadKeys = error && typeof error === 'object' ? error.payloadKeys : undefined;
+
   // Returned object is the same as prop type check in util/types -> error
   return {
     type: 'error',
@@ -387,5 +393,7 @@ export const storableError = err => {
     apiErrors,
     ...(customError ? { error: customError } : {}),
     ...(customReason ? { reason: customReason } : {}),
+    ...(sdkDataRaw ? { sdkDataRaw } : {}),
+    ...(payloadKeys ? { payloadKeys } : {}),
   };
 };

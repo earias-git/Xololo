@@ -53,7 +53,12 @@ const post = async (path, body) => {
     const err = new Error(errData?.detail || errData?.error || 'team_as_failed');
     err.status = res.status;
     err.error = errData?.error;
-    err.data = errData;
+    // storableError client lee error.data.errors → apiErrors.
+    // Preservamos también el raw del SDK + payload shape para debug.
+    err.data = errData?.data || errData;
+    err.sdkStatus = errData?.sdkStatus;
+    err.sdkDataRaw = errData?.sdkDataRaw;
+    err.payloadKeys = errData?.payloadKeys;
     throw err;
   }
   // El server responde application/transit+json; deserializamos a

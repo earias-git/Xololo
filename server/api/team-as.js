@@ -130,13 +130,16 @@ const createDraft = async (req, res) => {
   if (!listing || typeof listing !== 'object') {
     return res.status(400).json({ error: 'listing_body_required' });
   }
+  // Payload tal cual lo enviamos al Integration SDK (lo usamos también
+  // para el diagnóstico si falla). Keys que llegan por transit incluye
+  // instancias Money/UUID/LatLng.
+  const sdkPayload = {
+    ...listing,
+    authorId: asUUID(req.actingAs.adminId),
+    state: 'draft',
+  };
   try {
-    // state 'draft' explícito — el admin publicará en un paso separado.
-    const resp = await isdk.listings.create({
-      ...listing,
-      authorId: asUUID(req.actingAs.adminId),
-      state: 'draft',
-    });
+    const resp = await isdk.listings.create(sdkPayload);
     const created = resp.data.data;
     const listingId = created.id.uuid;
     auditOk(req, 'listing.create_draft', {
@@ -147,21 +150,40 @@ const createDraft = async (req, res) => {
     const sdkLike = await rehydrateAsSdk(isdk, listingId, queryParams);
     return sendTransit(res, sdkLike);
   } catch (e) {
+    // Shape del error del Integration SDK (axios):
+    //   e.message = "Request failed with status code 400"
+    //   e.status  = 400
+    //   e.data    = { errors: [...] } | "Bad request" (string)
+    // Exponemos TODO al cliente para debug + log server.
+    const sdkData = e?.data;
+    const sdkErrors = Array.isArray(sdkData?.errors) ? sdkData.errors : [];
+    const sdkDataStr =
+      typeof sdkData === 'string' ? sdkData : JSON.stringify(sdkData || null);
+
+    // Keys del payload — ayuda a detectar faltantes o tipos raros sin
+    // dumpear price/geolocation enteros en el log.
+    const payloadKeys = Object.keys(sdkPayload).reduce((acc, k) => {
+      const v = sdkPayload[k];
+      acc[k] = v === null ? 'null' : v?._sdkType || typeof v;
+      return acc;
+    }, {});
+
     // eslint-disable-next-line no-console
-    console.error('[team-as.createDraft] error:', e?.message || e);
-    if (e?.data?.errors) {
-      // eslint-disable-next-line no-console
-      console.error('[team-as.createDraft] sdk errors:', JSON.stringify(e.data.errors, null, 2));
-    }
+    console.error('[team-as.createDraft] error:', e?.message, 'status:', e?.status);
     // eslint-disable-next-line no-console
-    console.error('[team-as.createDraft] payload keys:', Object.keys(listing || {}));
+    console.error('[team-as.createDraft] sdk data:', sdkDataStr);
+    // eslint-disable-next-line no-console
+    console.error('[team-as.createDraft] payload shape:', JSON.stringify(payloadKeys));
+
     auditOk(req, 'listing.create_draft', { error: e?.message }, 'failed');
     return res.status(500).json({
       error: 'internal',
       detail: e?.message,
+      sdkStatus: e?.status,
+      sdkDataRaw: sdkDataStr,
+      payloadKeys,
       // storableError client-side lee error.data.errors → apiErrors.
-      // Al llamarlo "errors" el flujo estándar lo expone sin cambios.
-      data: { errors: e?.data?.errors || [] },
+      data: { errors: sdkErrors },
     });
   }
 };
