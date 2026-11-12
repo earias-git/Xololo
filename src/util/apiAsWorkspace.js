@@ -134,6 +134,19 @@ export const updateStockAs = (targetSellerId, listingId, oldTotal, newTotal) =>
   });
 
 // -----------------------------------------------------------
+// Availability exceptions (calendario de disponibilidad)
+// -----------------------------------------------------------
+
+export const queryAvailabilityExceptionsAs = (targetSellerId, { listingId, start, end, page }) =>
+  post('/api/team/as/availability/query', { targetSellerId, listingId, start, end, page });
+
+export const createAvailabilityExceptionAs = (targetSellerId, params) =>
+  post('/api/team/as/availability/create', { targetSellerId, params });
+
+export const deleteAvailabilityExceptionAs = (targetSellerId, params) =>
+  post('/api/team/as/availability/delete', { targetSellerId, params });
+
+// -----------------------------------------------------------
 // Legacy alias — createListing directo (no draft). Mantenido para
 // backward compat; el wizard usa createDraftAs + publishDraftAs.
 // -----------------------------------------------------------

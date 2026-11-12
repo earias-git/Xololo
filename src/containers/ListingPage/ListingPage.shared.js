@@ -192,11 +192,21 @@ export const getDerivedRenderData = ({
   // tiene los mismos poderes que el dueño sobre este listing (editar,
   // no comprárselo a sí mismo, etc.). isAuthorSelf se mantiene para
   // chequeos que son estrictamente del user propio (ej. payout warning).
+  const activeWorkspace = currentUser ? getCurrentWorkspace(currentUser) : null;
   const workspaceOwnsListing =
-    !!currentUser &&
+    !!activeWorkspace &&
     authorAvailable &&
-    getCurrentWorkspace(currentUser)?.sellerId === currentListing.author.id.uuid;
+    activeWorkspace.sellerId === currentListing.author.id.uuid;
+  // isOwnListing = "puedo editar / administrar este listing".
   const isOwnListing = isAuthorSelf || workspaceOwnsListing;
+  // XOLOLO · E9: adicionalmente, un colaborador en modo workspace NO
+  // puede comprar NINGÚN listing (ni del propio Negocio ni de otros)
+  // — opera como el Negocio, no como comprador. Para compra personal
+  // debe salir del workspace. Downstream el helper usa isOwnListing
+  // para ocultar botón de compra y bloquear submit; reusamos esa
+  // misma flag para forzar el bloqueo cuando hay workspace activo.
+  // (El checkout tiene su propio gate con una pantalla explicativa.)
+  const isBuyingBlocked = isOwnListing || !!activeWorkspace;
 
   const { listingType, transactionProcessAlias, unitType } = publicData;
   const hasInvalidListingData = !(listingType && transactionProcessAlias && unitType);
@@ -280,6 +290,7 @@ export const getDerivedRenderData = ({
     metadata,
     richTitle,
     isOwnListing,
+    isBuyingBlocked,
     showListingImage,
     showDescription,
     processType,

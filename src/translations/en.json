@@ -61,6 +61,8 @@
   "BookingTimeForm.seatsTitle": "Number of seats",
   "BookingTimeForm.timeSlotsError": "We encountered an error when loading the available dates. Please refresh the page.",
   "CheckoutPage.bookingTimeNotAvailableMessage": "Unfortunately, the requested time has just been booked.",
+  "CheckoutPage.workspaceBlockedTitle": "You can't buy while acting as a collaborator",
+  "CheckoutPage.workspaceBlockedBody": "You are acting in collaborator mode for this Business. Purchasing is not allowed in this mode. If you want to buy this listing, leave the workspace (button at the top right) and sign in with your personal account.",
   "CheckoutPage.chargeDisabledMessage": "The transaction can't move forward because the provider's payout information is incomplete. Please contact support.",
   "CheckoutPage.correctQuantityInformationMissing": "The order data is missing correct quantity information",
   "CheckoutPage.default-booking.orderBreakdown": "Booking breakdown",

@@ -473,6 +473,27 @@ router.post(
   requirePermission('listings.edit'),
   teamAs.updateStock
 );
+router.post(
+  '/team/as/availability/query',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.edit'),
+  teamAs.queryAvailabilityExceptions
+);
+router.post(
+  '/team/as/availability/create',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.edit'),
+  teamAs.createAvailabilityException
+);
+router.post(
+  '/team/as/availability/delete',
+  limits.generic,
+  bodyParser.json(),
+  requirePermission('listings.edit'),
+  teamAs.deleteAvailabilityException
+);
 // XOLOLO · E9 fase 3: subir imagen del listing bajo identidad del admin.
 // SIN bodyParser.json porque multer procesa el multipart dentro del handler.
 // targetSellerId viene via ?query o header x-xololo-acting-as.

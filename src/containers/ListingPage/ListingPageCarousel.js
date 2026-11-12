@@ -152,6 +152,7 @@ export const ListingPageComponent = props => {
     metadata,
     richTitle,
     isOwnListing,
+    isBuyingBlocked,
     showListingImage,
     showDescription,
     processType,
@@ -249,7 +250,7 @@ export const ListingPageComponent = props => {
 
   const handleOrderSubmit = values => {
     const isCurrentlyClosed = currentListing.attributes.state === LISTING_STATE_CLOSED;
-    if (isOwnListing || isCurrentlyClosed) {
+    if (isBuyingBlocked || isCurrentlyClosed) {
       window.scrollTo(0, 0);
     } else if (isNegotiation && unitType === REQUEST) {
       // This is to navigate to MakeOfferPage when InvokeNegotiationForm is submitted
@@ -444,7 +445,7 @@ export const ListingPageComponent = props => {
                 Cart.4 aún, se acumula en localStorage pero al comprar
                 se cierra con transacción individual — se soluciona en
                 Cart.5. */}
-              {!isOwnListing ? (
+              {!isBuyingBlocked ? (
                 <AddToCartCta
                   listing={listingForOrderPanel}
                   author={ensuredAuthor}

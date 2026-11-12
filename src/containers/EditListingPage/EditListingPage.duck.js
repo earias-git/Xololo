@@ -40,6 +40,9 @@ import {
   updateStockAs,
   closeListingAs,
   uploadImageAs,
+  queryAvailabilityExceptionsAs,
+  createAvailabilityExceptionAs,
+  deleteAvailabilityExceptionAs,
 } from '../../util/apiAsWorkspace';
 // XOLOLO (variantes · PR 2b): helper para construir siblings consistentes
 // con el master. buildSiblingPayload clona lo esencial + aplica override.
@@ -865,9 +868,15 @@ export const requestImageUpload = (actionPayload, listingImageConfig) => (
 ///////////////////////////////
 // Add AvailabilityException //
 ///////////////////////////////
-const addAvailabilityExceptionPayloadCreator = ({ params }, { rejectWithValue, extra: sdk }) => {
-  return sdk.availabilityExceptions
-    .create(params, { expand: true })
+const addAvailabilityExceptionPayloadCreator = (
+  { params },
+  { getState, rejectWithValue, extra: sdk }
+) => {
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const createPromise = workspace
+    ? createAvailabilityExceptionAs(workspace.sellerId, params)
+    : sdk.availabilityExceptions.create(params, { expand: true });
+  return createPromise
     .then(response => {
       const availabilityException = response.data.data;
       return { data: availabilityException };
@@ -889,9 +898,15 @@ export const requestAddAvailabilityException = params => (dispatch, getState, sd
 //////////////////////////////////
 // Delete AvailabilityException //
 //////////////////////////////////
-const deleteAvailabilityExceptionPayloadCreator = ({ params }, { rejectWithValue, extra: sdk }) => {
-  return sdk.availabilityExceptions
-    .delete(params, { expand: true })
+const deleteAvailabilityExceptionPayloadCreator = (
+  { params },
+  { getState, rejectWithValue, extra: sdk }
+) => {
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const deletePromise = workspace
+    ? deleteAvailabilityExceptionAs(workspace.sellerId, params)
+    : sdk.availabilityExceptions.delete(params, { expand: true });
+  return deletePromise
     .then(response => {
       const availabilityException = response.data.data;
       return { data: availabilityException };
@@ -915,7 +930,7 @@ export const requestDeleteAvailabilityException = params => (dispatch, getState,
 //////////////////////////////////
 const fetchAvailabilityExceptionsPayloadCreator = (
   { params },
-  { dispatch, rejectWithValue, extra: sdk }
+  { dispatch, getState, rejectWithValue, extra: sdk }
 ) => {
   const { listingId, start, end, timeZone, page, isWeekly } = params;
   const fetchParams = { listingId, start, end };
@@ -923,8 +938,12 @@ const fetchAvailabilityExceptionsPayloadCreator = (
     ? { weekStartId: stringifyDateToISO8601(start) }
     : { monthId: monthIdString(start, timeZone) };
 
-  return sdk.availabilityExceptions
-    .query(fetchParams)
+  const workspace = getCurrentWorkspace(getState().user?.currentUser);
+  const queryPromise = workspace
+    ? queryAvailabilityExceptionsAs(workspace.sellerId, fetchParams)
+    : sdk.availabilityExceptions.query(fetchParams);
+
+  return queryPromise
     .then(response => {
       const availabilityExceptions = denormalisedResponseEntities(response);
 
@@ -935,7 +954,9 @@ const fetchAvailabilityExceptionsPayloadCreator = (
 
         Promise.all(
           extraPages.map(page => {
-            return sdk.availabilityExceptions.query({ ...fetchParams, page });
+            return workspace
+              ? queryAvailabilityExceptionsAs(workspace.sellerId, { ...fetchParams, page })
+              : sdk.availabilityExceptions.query({ ...fetchParams, page });
           })
         ).then(responses => {
           const denormalizedFlatResults = (all, r) => all.concat(denormalisedResponseEntities(r));

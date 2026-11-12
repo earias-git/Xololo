@@ -413,6 +413,93 @@ const openListing = async (req, res) => {
 };
 
 // ============================================================
+// AvailabilityExceptions (calendario de disponibilidad)
+// ============================================================
+// El wizard tab "Disponibilidad" (listings con proceso de booking)
+// pide/crea/borra excepciones. Las llamadas nativas usan el SDK del
+// colaborador — Sharetribe rechaza porque el listing no es suyo.
+
+const queryAvailabilityExceptions = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+  const { listingId, start, end, page } = req.body || {};
+  if (!listingId) return res.status(400).json({ error: 'listingId_required' });
+  try {
+    const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
+    if (guard) return res.status(guard.status).json(guard.body);
+    const resp = await isdk.availabilityExceptions.query({
+      listingId: asUUID(listingId),
+      start,
+      end,
+      ...(page ? { page } : {}),
+    });
+    return sendTransit(res, {
+      data: resp.data.data,
+      included: resp.data.included || [],
+      meta: resp.data.meta || {},
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[team-as.queryAvailability] error:', e?.message);
+    return res.status(500).json({ error: 'internal', detail: e?.message });
+  }
+};
+
+const createAvailabilityException = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+  const { params } = req.body || {};
+  const listingId = params?.listingId;
+  if (!listingId) return res.status(400).json({ error: 'listingId_required' });
+  try {
+    const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
+    if (guard) return res.status(guard.status).json(guard.body);
+    const resp = await isdk.availabilityExceptions.create(
+      { ...params, listingId: asUUID(listingId) },
+      { expand: true }
+    );
+    return sendTransit(res, {
+      data: resp.data.data,
+      included: resp.data.included || [],
+      meta: resp.data.meta || {},
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[team-as.createAvailability] error:', e?.message);
+    return res.status(500).json({ error: 'internal', detail: e?.message });
+  }
+};
+
+const deleteAvailabilityException = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+  const { params } = req.body || {};
+  const exceptionId = params?.id;
+  if (!exceptionId) return res.status(400).json({ error: 'exceptionId_required' });
+  try {
+    // No podemos ensureListingBelongsToAdmin aquí (no tenemos listingId en
+    // el payload del delete). El Integration SDK de todas formas valida
+    // que la exception pertenezca a un listing del admin — si no, 404.
+    const resp = await isdk.availabilityExceptions.delete(
+      { id: asUUID(exceptionId) },
+      { expand: true }
+    );
+    return sendTransit(res, {
+      data: resp.data.data,
+      included: resp.data.included || [],
+      meta: resp.data.meta || {},
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[team-as.deleteAvailability] error:', e?.message);
+    return res.status(500).json({ error: 'internal', detail: e?.message });
+  }
+};
+
+// ============================================================
 // Stock (compareAndSet)
 // ============================================================
 
@@ -661,6 +748,9 @@ module.exports = {
   closeListing,
   openListing,
   updateStock,
+  queryAvailabilityExceptions,
+  createAvailabilityException,
+  deleteAvailabilityException,
   showTx,
   queryMessages,
   transitionTx,

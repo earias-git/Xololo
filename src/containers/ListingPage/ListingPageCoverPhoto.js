@@ -152,6 +152,7 @@ export const ListingPageComponent = props => {
     metadata,
     richTitle,
     isOwnListing,
+    isBuyingBlocked,
     showListingImage,
     showDescription,
     processType,
@@ -246,7 +247,7 @@ export const ListingPageComponent = props => {
 
   const handleOrderSubmit = values => {
     const isCurrentlyClosed = currentListing.attributes.state === LISTING_STATE_CLOSED;
-    if (isOwnListing || isCurrentlyClosed) {
+    if (isBuyingBlocked || isCurrentlyClosed) {
       window.scrollTo(0, 0);
     } else if (isNegotiation && unitType === REQUEST) {
       // This is to navigate to MakeOfferPage when NegotiationForm is submitted
@@ -446,7 +447,7 @@ export const ListingPageComponent = props => {
               />
               {/* XOLOLO: Cart.2b — botón "Agregar al carrito" abajo del
                 OrderPanel para consolidar productos del mismo seller. */}
-              {!isOwnListing ? (
+              {!isBuyingBlocked ? (
                 <AddToCartCta
                   listing={listingForOrderPanel}
                   author={ensuredAuthor}

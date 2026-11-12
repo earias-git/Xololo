@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { useIntl } from 'react-intl';
+import { FormattedMessage, useIntl } from 'react-intl';
 
 // Import contexts and util modules
 import { useConfiguration } from '../../context/configurationContext';
@@ -145,10 +145,14 @@ const EnhancedCheckoutPage = props => {
   // a ListingPage igual que si fuera el dueño mismo.
   const isAuthorSelf =
     !!(currentUser?.id && listing?.author?.id?.uuid === currentUser?.id?.uuid);
+  const activeWorkspace = getCurrentWorkspace(currentUser);
   const workspaceOwnsListing =
-    !!(listing?.author?.id?.uuid &&
-      getCurrentWorkspace(currentUser)?.sellerId === listing.author.id.uuid);
+    !!(listing?.author?.id?.uuid && activeWorkspace?.sellerId === listing.author.id.uuid);
   const isOwnListing = isAuthorSelf || workspaceOwnsListing;
+  // XOLOLO · E9: en modo colaborador (workspace activo) bloqueamos TODO
+  // checkout — el colaborador opera como el admin, no como comprador.
+  // Para comprar debe salir del workspace y usar su cuenta personal.
+  const isCollaboratorBlocked = !!activeWorkspace;
   const hasRequiredData = !!(listing?.id && listing?.author?.id && processName);
   const shouldRedirect = isDataLoaded && !(hasRequiredData && (!isOwnListing || isRequest));
   const shouldRedirectUnathorizedUser = isDataLoaded && !isUserAuthorized(currentUser);
@@ -160,6 +164,31 @@ const EnhancedCheckoutPage = props => {
       // - or when they are sending the order (if the operator removed transaction rights
       // when they were already on the checkout page and the user has not refreshed the page)
       isErrorNoPermissionForInitiateTransactions(initiateOrderError));
+
+  // XOLOLO · E9: colaborador no puede comprar nada mientras esté en
+  // modo workspace. Mostramos pantalla explicativa en vez de redirigir
+  // silenciosamente para que no quede confuso.
+  if (isCollaboratorBlocked) {
+    return (
+      <Page title={intl.formatMessage({ id: 'CheckoutPage.workspaceBlockedTitle' })} scrollingDisabled={scrollingDisabled}>
+        <TopbarSimplified />
+        <div style={{
+          maxWidth: 560,
+          margin: '48px auto',
+          padding: '32px 24px',
+          textAlign: 'center',
+          fontFamily: 'var(--fontFamily, system-ui)',
+        }}>
+          <h1 style={{ fontSize: 22, marginBottom: 12 }}>
+            <FormattedMessage id="CheckoutPage.workspaceBlockedTitle" />
+          </h1>
+          <p style={{ fontSize: 15, color: '#374151', lineHeight: 1.5 }}>
+            <FormattedMessage id="CheckoutPage.workspaceBlockedBody" />
+          </p>
+        </div>
+      </Page>
+    );
+  }
 
   // Redirect back to ListingPage if data is missing.
   // Redirection must happen before any data format error is thrown (e.g. wrong currency)

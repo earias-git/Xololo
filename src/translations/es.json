@@ -61,6 +61,8 @@
   "BookingTimeForm.seatsTitle": "Plazas disponibles",
   "BookingTimeForm.timeSlotsError": "Encontramos un error al cargar las fechas disponibles. Por favor, actualiza la página.",
   "CheckoutPage.bookingTimeNotAvailableMessage": "Desafortunadamente, el horario solicitado acaba de ser reservado.",
+  "CheckoutPage.workspaceBlockedTitle": "No puedes comprar mientras operas como colaborador",
+  "CheckoutPage.workspaceBlockedBody": "Estás operando en modo colaborador del Negocio. La función de compra no está autorizada en este modo. Si quieres comprar este anuncio, sal del workspace (botón arriba a la derecha) y vuelve a entrar con tu cuenta personal.",
   "CheckoutPage.chargeDisabledMessage": "Esta transacción no se puede mover adelante porque la información de pago del proveedor está incompleta. Por favor, contacta al equipo de soporte.",
   "CheckoutPage.correctQuantityInformationMissing": "A los datos del pedido les falta información sobre la cantidad correcta.",
   "CheckoutPage.default-booking.orderBreakdown": "Desglose de la reserva",
