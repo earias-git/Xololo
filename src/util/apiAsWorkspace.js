@@ -48,8 +48,11 @@ const post = async (path, body) => {
   });
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
-    const err = new Error(errData?.error || 'team_as_failed');
+    // Prioriza detail > error-code para que message no se quede en
+    // 'internal'. El código corto queda en err.error para storableError.
+    const err = new Error(errData?.detail || errData?.error || 'team_as_failed');
     err.status = res.status;
+    err.error = errData?.error;
     err.data = errData;
     throw err;
   }
