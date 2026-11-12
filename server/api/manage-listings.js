@@ -32,8 +32,22 @@ module.exports = async (req, res) => {
     // getOwnListingsById busca por ese tipo. Reescribimos el type para
     // que el reducer y el selector encuentren los listings.
     const toOwn = r => (r && r.type === 'listing' ? { ...r, type: 'ownListing' } : r);
-    const data = (resp.data.data || []).map(toOwn);
-    const included = (resp.data.included || []).map(toOwn);
+    // XOLOLO E9 fase 3: enmascarar state 'pendingApproval' → 'draft'
+    // para los listings creados via wizard colaborador (que llevan
+    // publicData.xololoWizardDraft:true). El colaborador debe verlos
+    // como drafts editables, no como pending approval sospechosos.
+    const maskDraft = r => {
+      if (!r || !r.attributes) return r;
+      if (
+        r.attributes.publicData?.xololoWizardDraft === true &&
+        r.attributes.state === 'pendingApproval'
+      ) {
+        return { ...r, attributes: { ...r.attributes, state: 'draft' } };
+      }
+      return r;
+    };
+    const data = (resp.data.data || []).map(toOwn).map(maskDraft);
+    const included = (resp.data.included || []).map(toOwn).map(maskDraft);
 
     // sendTransit preserva Money/UUID/LatLng/BigDecimal como instancias
     // del SDK (res.json() los pierde y crashea formatMoney en cliente).

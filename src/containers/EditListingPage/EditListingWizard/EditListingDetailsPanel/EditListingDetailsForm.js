@@ -42,41 +42,8 @@ const ErrorMessage = props => {
     <FormattedMessage id="EditListingDetailsForm.showListingFailed" />
   ) : null;
 
-  // XOLOLO · E9 DEBUG: expone apiErrors (detalle del Integration SDK)
-  // del server para que en modo colaborador podamos ver qué rechaza
-  // Sharetribe sin pasar por DevTools. Temporal; sacar cuando el flujo
-  // esté estable.
-  const underlyingError =
-    updateListingError || createListingDraftError || showListingsError || null;
-  const apiErrors = underlyingError?.apiErrors;
-  const message = underlyingError?.message;
-  const sdkDataRaw = underlyingError?.sdkDataRaw;
-  const payloadKeys = underlyingError?.payloadKeys;
-
   if (errorMessage) {
-    return (
-      <>
-        <p className={css.error}>{errorMessage}</p>
-        {(message || apiErrors?.length || sdkDataRaw || payloadKeys) && (
-          <pre style={{
-            background: '#fff3f3',
-            border: '1px solid #f99',
-            padding: '8px',
-            fontSize: '11px',
-            overflow: 'auto',
-            maxHeight: '320px',
-            whiteSpace: 'pre-wrap',
-          }}>
-            {message ? `message: ${message}\n` : ''}
-            {sdkDataRaw ? `sdkDataRaw: ${sdkDataRaw}\n` : ''}
-            {payloadKeys ? `payloadKeys: ${JSON.stringify(payloadKeys, null, 2)}\n` : ''}
-            {apiErrors && apiErrors.length
-              ? `apiErrors:\n${JSON.stringify(apiErrors, null, 2)}`
-              : ''}
-          </pre>
-        )}
-      </>
-    );
+    return <p className={css.error}>{errorMessage}</p>;
   }
   return null;
 };

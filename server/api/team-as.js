@@ -88,6 +88,28 @@ const sanitizeQueryParams = raw => {
 // resource en el store de Redux.
 const toOwnListingType = r => (r && r.type === 'listing' ? { ...r, type: 'ownListing' } : r);
 
+// XOLOLO E9 fase 3: Integration SDK no soporta state:'draft' — un
+// listing recién creado solo puede ser 'pendingApproval' o 'published'.
+// Para mantener el flow del wizard idéntico al nativo (ownListings),
+// creamos como 'pendingApproval' y en el shape de respuesta mentimos:
+// convertimos state:'pendingApproval' a 'draft' SOLO cuando el listing
+// tiene publicData.xololoWizardDraft:true. Al publicar al final del
+// wizard, quitamos el marker y hacemos approve/open.
+const WIZARD_DRAFT_MARKER = 'xololoWizardDraft';
+const maskDraftState = resource => {
+  if (!resource || !resource.attributes) return resource;
+  const isWizardDraft =
+    resource.attributes.publicData?.[WIZARD_DRAFT_MARKER] === true;
+  const isPending = resource.attributes.state === 'pendingApproval';
+  if (isWizardDraft && isPending) {
+    return {
+      ...resource,
+      attributes: { ...resource.attributes, state: 'draft' },
+    };
+  }
+  return resource;
+};
+
 // Devuelve el payload interno {data, included, meta} — el caller lo
 // envía via sendTransit. En el cliente, el shape final equivalente al
 // del SDK (`response.data.data`) viene de que fetch wrappea el body
@@ -98,7 +120,7 @@ const rehydrateAsSdk = async (isdk, listingId, queryParams) => {
     ...sanitizeQueryParams(queryParams),
   });
   return {
-    data: toOwnListingType(resp.data.data),
+    data: maskDraftState(toOwnListingType(resp.data.data)),
     included: (resp.data.included || []).map(toOwnListingType),
     meta: resp.data.meta || {},
   };
@@ -130,13 +152,18 @@ const createDraft = async (req, res) => {
   if (!listing || typeof listing !== 'object') {
     return res.status(400).json({ error: 'listing_body_required' });
   }
-  // Payload tal cual lo enviamos al Integration SDK (lo usamos también
-  // para el diagnóstico si falla). Keys que llegan por transit incluye
-  // instancias Money/UUID/LatLng.
+  // XOLOLO E9 fase 3: Integration SDK rechaza state:'draft'. Creamos
+  // en 'pendingApproval' y marcamos el listing con xololoWizardDraft
+  // para que rehydrateAsSdk lo "enmascare" como draft hacia el cliente
+  // (mantiene el flow del wizard sin cambios).
   const sdkPayload = {
     ...listing,
     authorId: asUUID(req.actingAs.adminId),
-    state: 'draft',
+    state: 'pendingApproval',
+    publicData: {
+      ...(listing?.publicData || {}),
+      [WIZARD_DRAFT_MARKER]: true,
+    },
   };
   try {
     const resp = await isdk.listings.create(sdkPayload);
@@ -297,8 +324,13 @@ const publishDraft = async (req, res) => {
     const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
     if (guard) return res.status(guard.status).json(guard.body);
 
-    // Integration SDK: publish mueve el state draft → pendingApproval o
-    // published según la política del marketplace.
+    // XOLOLO E9 fase 3: quitamos el marker xololoWizardDraft para que
+    // rehydrateAsSdk ya no enmascare state como 'draft'. Y aprobamos
+    // (si moderation ON) o update state:'published' (si está OFF).
+    await isdk.listings.update({
+      id: asUUID(listingId),
+      publicData: { [WIZARD_DRAFT_MARKER]: null },
+    });
     await isdk.listings.approve({ id: asUUID(listingId) }).catch(async () => {
       // Si approve falla (no moderado), probamos con update state.
       await isdk.listings.update({ id: asUUID(listingId), state: 'published' });
