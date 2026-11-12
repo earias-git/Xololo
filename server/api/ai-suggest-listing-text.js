@@ -47,8 +47,11 @@ module.exports = async (req, res) => {
     } catch (_) {
       return res.status(401).json({ error: 'unauthenticated' });
     }
-    const meResp = await trustedSdk.currentUser.show();
-    const currentUserId = meResp?.data?.data?.id?.uuid;
+    const meResp = await trustedSdk.currentUser.show({
+      'fields.user': ['profile.publicData'],
+    });
+    const currentUser = meResp?.data?.data;
+    const currentUserId = currentUser?.id?.uuid;
     if (!currentUserId) return res.status(401).json({ error: 'unauthenticated' });
 
     // 2. Fetch del listing (Integration SDK — necesitamos publicData completo).
@@ -60,7 +63,14 @@ module.exports = async (req, res) => {
     if (!listing) return res.status(404).json({ error: 'listing_not_found' });
 
     const authorId = listing.relationships?.author?.data?.id?.uuid;
-    if (authorId !== currentUserId) {
+    // XOLOLO · E9: colaborador operando como el admin del workspace
+    // también cuenta como "dueño" para pedir IA. Validamos que el
+    // listing sea del admin del currentWorkspace activo.
+    const currentWorkspaceSellerId =
+      currentUser?.attributes?.profile?.publicData?.xololoWorkspaces?.currentWorkspace || null;
+    const isOwnedByCurrentWorkspace =
+      !!currentWorkspaceSellerId && authorId === currentWorkspaceSellerId;
+    if (authorId !== currentUserId && !isOwnedByCurrentWorkspace) {
       return res.status(403).json({ error: 'not_your_listing' });
     }
 
