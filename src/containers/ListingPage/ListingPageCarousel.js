@@ -53,6 +53,7 @@ import {
 import Notifications from './Notifications/Notifications';
 import SectionReviews from './SectionReviews';
 import SectionAuthorMaybe from './SectionAuthorMaybe';
+import WorkspaceBuyBlockedNotice from './WorkspaceBuyBlockedNotice';
 import SectionMapMaybe from './SectionMapMaybe';
 import SectionEventMaybe from './SectionEventMaybe';
 import SectionEventAttendeesMaybe from './SectionEventAttendeesMaybe';
@@ -153,6 +154,7 @@ export const ListingPageComponent = props => {
     richTitle,
     isOwnListing,
     isBuyingBlocked,
+    isBlockedByWorkspace,
     showListingImage,
     showDescription,
     processType,
@@ -446,6 +448,9 @@ export const ListingPageComponent = props => {
                 Cart.4 aún, se acumula en localStorage pero al comprar
                 se cierra con transacción individual — se soluciona en
                 Cart.5. */}
+              {/* XOLOLO · E9: aviso explícito del bloqueo cuando el user
+                está en modo colaborador. */}
+              {isBlockedByWorkspace ? <WorkspaceBuyBlockedNotice /> : null}
               {!isBuyingBlocked ? (
                 <AddToCartCta
                   listing={listingForOrderPanel}

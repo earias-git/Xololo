@@ -607,6 +607,8 @@
   "ListingPage.reviewsTitle": "Reviews ({count})",
   "ListingPage.schemaTitle": "{title} | {marketplaceName}",
   "ListingPage.viewImagesButton": "View photos ({count})",
+  "ListingPage.workspaceBlockTitle": "Purchasing is disabled in collaborator mode",
+  "ListingPage.workspaceBlockBody": "You are acting as a collaborator of the Business. Your role does not include the purchase function — you operate the Business account, not a buyer account. To buy this listing, leave the workspace (button at the top right) and sign in with your personal account.",
   "LoadableComponentErrorBoundaryPage.description": "It looks like the app needs to be updated! Please refresh the page or go back to {link}.",
   "LoadableComponentErrorBoundaryPage.heading": "Oops, we couldn't fetch the page.",
   "LoadableComponentErrorBoundaryPage.landingPageLink": "landing page",

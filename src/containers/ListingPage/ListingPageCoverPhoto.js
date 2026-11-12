@@ -53,6 +53,7 @@ import {
 import SectionHero from './SectionHero';
 import SectionReviews from './SectionReviews';
 import SectionAuthorMaybe from './SectionAuthorMaybe';
+import WorkspaceBuyBlockedNotice from './WorkspaceBuyBlockedNotice';
 import SectionEventMaybe from './SectionEventMaybe';
 import SectionEventAttendeesMaybe from './SectionEventAttendeesMaybe';
 import SectionMapMaybe from './SectionMapMaybe';
@@ -153,6 +154,7 @@ export const ListingPageComponent = props => {
     richTitle,
     isOwnListing,
     isBuyingBlocked,
+    isBlockedByWorkspace,
     showListingImage,
     showDescription,
     processType,
@@ -446,6 +448,10 @@ export const ListingPageComponent = props => {
                 marketplaceName={config.marketplaceName}
                 showListingImage={showListingImage}
               />
+              {/* XOLOLO · E9: aviso específico cuando el bloqueo viene del
+                modo colaborador (workspace activo). El admin dueño del
+                listing o un visitante normal no lo ve. */}
+              {isBlockedByWorkspace ? <WorkspaceBuyBlockedNotice /> : null}
               {/* XOLOLO: Cart.2b — botón "Agregar al carrito" abajo del
                 OrderPanel para consolidar productos del mismo seller. */}
               {!isBuyingBlocked ? (

@@ -595,6 +595,8 @@
   "ListingPage.reviewsTitle": "Evaluaciones ({count})",
   "ListingPage.schemaTitle": "{title} | {marketplaceName}",
   "ListingPage.viewImagesButton": "Ver fotos ({count})",
+  "ListingPage.workspaceBlockTitle": "La compra está deshabilitada en modo colaborador",
+  "ListingPage.workspaceBlockBody": "Estás operando como colaborador del Negocio. Tu rol no tiene habilitada la función de comprar — operas la cuenta del Negocio, no actúas como comprador. Si quieres adquirir este anuncio, sal del workspace (botón arriba a la derecha) y regresa con tu cuenta personal.",
   "LoadableComponentErrorBoundaryPage.description": "¡Parece que es necesario actualizar la aplicación! Actualiza la página o regresa a {link}.",
   "LoadableComponentErrorBoundaryPage.heading": "No pudimos obtener la página.",
   "LoadableComponentErrorBoundaryPage.landingPageLink": "Página principal",

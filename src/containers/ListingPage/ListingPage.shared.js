@@ -207,6 +207,11 @@ export const getDerivedRenderData = ({
   // misma flag para forzar el bloqueo cuando hay workspace activo.
   // (El checkout tiene su propio gate con una pantalla explicativa.)
   const isBuyingBlocked = isOwnListing || !!activeWorkspace;
+  // "Bloqueado específicamente porque está en modo colaborador" —
+  // distinto de "es dueño del listing". Lo usamos para mostrar un
+  // aviso en la ListingPage con la causa; el admin propio del listing
+  // ya ve el botón Editar y no necesita explicación.
+  const isBlockedByWorkspace = !!activeWorkspace && !isAuthorSelf;
 
   const { listingType, transactionProcessAlias, unitType } = publicData;
   const hasInvalidListingData = !(listingType && transactionProcessAlias && unitType);
@@ -291,6 +296,7 @@ export const getDerivedRenderData = ({
     richTitle,
     isOwnListing,
     isBuyingBlocked,
+    isBlockedByWorkspace,
     showListingImage,
     showDescription,
     processType,
