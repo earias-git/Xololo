@@ -366,7 +366,11 @@ export const EditListingDeliveryForm = props => (
                 <p className={css.xxHint} style={{ marginTop: -8 }}>
                   Captura el peso <strong>en kilos enteros</strong> (1, 2, 3…). Si tu paquete pesa
                   1.2 kg, declara 2. Skydropx cobra penalizaciones si el peso real supera el
-                  declarado, así que conviene redondear hacia arriba.
+                  declarado, así que conviene redondear hacia arriba.{' '}
+                  <strong>
+                    Importante: cuando realices el envío, el paquete debe coincidir con el peso y
+                    tamaño registrados. ¡Evita penalizaciones por parte de la paquetería!
+                  </strong>
                 </p>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   <FieldTextInput
