@@ -149,8 +149,18 @@ const createDraft = async (req, res) => {
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[team-as.createDraft] error:', e?.message || e);
+    if (e?.data?.errors) {
+      // eslint-disable-next-line no-console
+      console.error('[team-as.createDraft] sdk errors:', JSON.stringify(e.data.errors, null, 2));
+    }
+    // eslint-disable-next-line no-console
+    console.error('[team-as.createDraft] payload keys:', Object.keys(listing || {}));
     auditOk(req, 'listing.create_draft', { error: e?.message }, 'failed');
-    return res.status(500).json({ error: 'internal', detail: e?.message });
+    return res.status(500).json({
+      error: 'internal',
+      detail: e?.message,
+      sdkErrors: e?.data?.errors || null,
+    });
   }
 };
 
@@ -238,8 +248,16 @@ const updateListing = async (req, res) => {
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[team-as.updateListing] error:', e?.message || e);
+    if (e?.data?.errors) {
+      // eslint-disable-next-line no-console
+      console.error('[team-as.updateListing] sdk errors:', JSON.stringify(e.data.errors, null, 2));
+    }
     auditOk(req, 'listing.edit', { listingId, error: e?.message }, 'failed');
-    return res.status(500).json({ error: 'internal', detail: e?.message });
+    return res.status(500).json({
+      error: 'internal',
+      detail: e?.message,
+      sdkErrors: e?.data?.errors || null,
+    });
   }
 };
 
