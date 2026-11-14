@@ -29,6 +29,7 @@ const SmartSearchPage = loadable(() => import(/* webpackChunkName: "SmartSearchP
 const CotizarEnvioPage = loadable(() => import(/* webpackChunkName: "CotizarEnvioPage" */ '../containers/CotizarEnvioPage/CotizarEnvioPage'));
 const TiendasVerifiedPage = loadable(() => import(/* webpackChunkName: "TiendasVerifiedPage" */ '../containers/TiendasVerifiedPage/TiendasVerifiedPage'));
 const VerifiedPage = loadable(() => import(/* webpackChunkName: "VerifiedPage" */ '../containers/VerifiedPage/VerifiedPage'));
+const NosotrosPage = loadable(() => import(/* webpackChunkName: "NosotrosPage" */ '../containers/NosotrosPage/NosotrosPage'));
 const PlanesPage = loadable(() => import(/* webpackChunkName: "PlanesPage" */ '../containers/PlanesPage/PlanesPage'));
 const ListingPageCoverPhoto = loadable(() => import(/* webpackChunkName: "ListingPageCoverPhoto" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCoverPhoto'));
 const ListingPageCarousel = loadable(() => import(/* webpackChunkName: "ListingPageCarousel" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCarousel'));
@@ -132,6 +133,15 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/verified',
       name: 'VerifiedPage',
       component: VerifiedPage,
+    },
+    // XOLOLO 2026-11-14: página pública /nosotros. Misión, visión,
+    // valores y los 3 objetivos (vida del seller + tejido social +
+    // economía del equipo Xololo). Copy editable directo en el .js
+    // (no viene de hosted config — queda versionado en git).
+    {
+      path: '/nosotros',
+      name: 'NosotrosPage',
+      component: NosotrosPage,
     },
     // XOLOLO: página pública /planes con tabla comparativa de los 3
     // tipos de seller (Segunda Mano, Starter, Empresarial) + CTAs que

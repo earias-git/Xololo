@@ -49,6 +49,9 @@ const XololoContactBand = () => (
     >
       WhatsApp Xololo (soporte y ventas): {XOLOLO_WHATSAPP_RAW}
     </a>
+    <a href="/nosotros" style={{ color: '#e2e8f0', textDecoration: 'underline' }}>
+      Nosotros
+    </a>
   </div>
 );
 

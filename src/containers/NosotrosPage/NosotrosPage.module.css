@@ -1,0 +1,303 @@
+@import '../../styles/customMediaQueries.css';
+
+.main {
+  background: #fff;
+}
+
+/* ===== Hero ===== */
+
+.hero {
+  background: linear-gradient(135deg, #1e1b4b 0%, #6d28d9 100%);
+  color: #fff;
+  padding: 56px 24px;
+}
+
+@media (--viewportMedium) {
+  .hero {
+    padding: 88px 32px;
+  }
+}
+
+.heroInner {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.heroTitle {
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 800;
+  margin: 0 0 16px;
+  letter-spacing: -0.01em;
+}
+
+@media (--viewportMedium) {
+  .heroTitle {
+    font-size: 44px;
+  }
+}
+
+.heroLead {
+  font-size: 17px;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 720px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* ===== Secciones genéricas ===== */
+
+.section {
+  padding: 56px 24px;
+  background: #fff;
+}
+
+.sectionAlt {
+  padding: 56px 24px;
+  background: #f8fafc;
+}
+
+@media (--viewportMedium) {
+  .section,
+  .sectionAlt {
+    padding: 80px 32px;
+  }
+}
+
+.sectionInner {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.sectionTitle {
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 800;
+  margin: 0 0 12px;
+  color: #0f172a;
+}
+
+@media (--viewportMedium) {
+  .sectionTitle {
+    font-size: 32px;
+  }
+}
+
+.sectionLead {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0 0 32px;
+  max-width: 720px;
+}
+
+/* ===== Misión + Visión ===== */
+
+.twoCol {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr;
+}
+
+@media (--viewportMedium) {
+  .twoCol {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.cardTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+}
+
+.cardBody {
+  font-size: 15px;
+  line-height: 1.55;
+  color: #334155;
+  margin: 0;
+}
+
+/* ===== Valores (grid) ===== */
+
+.valoresGrid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+}
+
+@media (--viewportMedium) {
+  .valoresGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (--viewportLarge) {
+  .valoresGrid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.valueItem {
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid #6d28d9;
+  border-radius: 10px;
+}
+
+.valueTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+
+.valueBody {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0;
+}
+
+/* ===== 3 objetivos (stack) ===== */
+
+.objetivosStack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.objetivoItem {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.objetivoEyebrow {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #ede9fe;
+  color: #5b21b6;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.objetivoTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 10px;
+}
+
+.objetivoBody {
+  font-size: 15px;
+  line-height: 1.55;
+  color: #334155;
+  margin: 0;
+}
+
+/* ===== CTA ===== */
+
+.cta {
+  background: #0f172a;
+  color: #fff;
+  padding: 56px 24px;
+  text-align: center;
+}
+
+@media (--viewportMedium) {
+  .cta {
+    padding: 72px 32px;
+  }
+}
+
+.ctaInner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.ctaTitle {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 12px;
+}
+
+@media (--viewportMedium) {
+  .ctaTitle {
+    font-size: 32px;
+  }
+}
+
+.ctaBody {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 24px;
+}
+
+.ctaButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.ctaPrimary,
+.ctaSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  min-height: 44px;
+}
+
+.ctaPrimary {
+  background: #a78bfa;
+  color: #0f172a;
+}
+
+.ctaPrimary:hover {
+  background: #c4b5fd;
+}
+
+.ctaSecondary {
+  background: transparent;
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+}
+
+.ctaSecondary:hover {
+  border-color: #fff;
+}
