@@ -231,6 +231,61 @@ export const axisValuesWithStock = (siblings, axis) => {
 };
 
 /**
+ * XOLOLO 2026-11-14 — reparar regresión del selector de variantes.
+ *
+ * Problema: axisValuesWithStock sólo pinta valores que aparecen en los
+ * siblings cargados. Si el master define una matrix de talla × color
+ * en el wizard pero los siblings físicos aún no se crearon, el selector
+ * mostraba un único pill (el valor del master) y se veía "sin variantes".
+ *
+ * Esta versión combina dos fuentes:
+ *   1. `master.publicData.variantsMatrix` (definición completa de
+ *      combinaciones) → catálogo autoritativo de valores por eje.
+ *   2. siblings cargados → stock por valor y siblingCount.
+ *
+ * Si una matrix tiene un valor que no tiene sibling (p.ej. talla 30
+ * definida pero sin listing creado), queda con stock=0 y siblingCount=0.
+ * El selector lo pinta disabled, pero al menos el buyer lo VE.
+ *
+ * Si el master NO tiene matrix, cae al comportamiento viejo: deriva
+ * valores sólo de siblings.
+ *
+ * @param {object} master — listing master con publicData.variantsMatrix
+ * @param {object[]} siblings — listings del grupo (incluye master)
+ * @param {string} axis — nombre del eje
+ * @returns {Array<{value, stock, siblingCount}>}
+ */
+export const axisValuesFromMatrixAndSiblings = (master, siblings, axis) => {
+  const byValue = new Map();
+  // 1) Catálogo autoritativo desde la matrix del master.
+  const matrix = master?.attributes?.publicData?.variantsMatrix;
+  if (Array.isArray(matrix)) {
+    for (const row of matrix) {
+      const v = row?.variantValues?.[axis];
+      if (v == null) continue;
+      if (!byValue.has(v)) {
+        byValue.set(v, { value: v, stock: 0, siblingCount: 0 });
+      }
+    }
+  }
+  // 2) Acumular stock + siblingCount desde siblings cargados.
+  if (Array.isArray(siblings)) {
+    for (const l of siblings) {
+      const v = getVariantValues(l)[axis];
+      if (v == null) continue;
+      if (!byValue.has(v)) {
+        byValue.set(v, { value: v, stock: 0, siblingCount: 0 });
+      }
+      const entry = byValue.get(v);
+      const q = getListingStock(l);
+      entry.stock += typeof q === 'number' ? q : 0;
+      entry.siblingCount += 1;
+    }
+  }
+  return Array.from(byValue.values());
+};
+
+/**
  * Encuentra el hermano cuyo variantValues coincide EXACTAMENTE con la
  * selección parcial o completa provista.
  *

@@ -2,6 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 
 import {
+  axisValuesFromMatrixAndSiblings,
   axisValuesWithStock,
   findSiblingBySelection,
   getVariantAxes,
@@ -66,8 +67,13 @@ const VariantSelector = props => {
         partialSelection[prevAxis] = selection[prevAxis];
       }
     }
-    // Todos los valores que ofrece el grupo para este eje (sin filtrar).
-    const allValues = axisValuesWithStock(siblings, axis);
+    // XOLOLO 2026-11-14: enumeramos valores desde el catálogo del
+    // master (publicData.variantsMatrix). Si un valor está en la matrix
+    // pero no tiene sibling físico creado aún, queda como pill
+    // disabled en vez de desaparecer. Asegura que el buyer vea todas
+    // las tallas/colores del listing incluso si falta spawnear algún
+    // sibling.
+    const allValues = axisValuesFromMatrixAndSiblings(masterListing, siblings, axis);
     // Para cada valor, re-calcular su stock SOLO entre siblings que
     // cumplen la selección previa. Si cero, queda disabled.
     return allValues.map(({ value }) => {
