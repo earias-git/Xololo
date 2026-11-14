@@ -73,7 +73,8 @@ const trustItems = [
   {
     id: 'soporte-real',
     title: 'Soporte real',
-    description: 'Chat y WhatsApp humano si algo no sale como esperabas',
+    description:
+      'Chat y WhatsApp humano directo con el proveedor. No estorbamos en la relación: solo aseguramos la transacción con escrow.',
     icon: <Icon>{chatPath}</Icon>,
   },
 ];
