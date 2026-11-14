@@ -7,13 +7,17 @@
 
 const promoCards = [
   {
-    id: 'ofertas-dia',
-    kicker: 'Ofertas del día',
-    title: 'Hasta 30% off en artesanías mexicanas',
-    description: 'Piezas hechas a mano de vendedores Verified en Oaxaca, Puebla y Michoacán.',
-    cta: 'Ver ofertas',
-    href: '/s?pub_categoryLevel1=artesanias',
+    id: 'xololealo',
+    kicker: 'Tu pista de despegue',
+    title: 'Xololéalo en tus redes sociales',
+    description:
+      'Conecta tu tienda con tus redes y amplifica cada anuncio en Instagram, TikTok, Facebook, WhatsApp y X en un clic.',
+    cta: 'Cómo funciona',
+    href: '/p/como-funciona',
     variant: 'amber',
+    // XOLOLO: iconos que se pintan al final de la card promo.
+    // Mantener en orden de alcance (Instagram y TikTok primero).
+    socialIcons: ['instagram', 'tiktok', 'facebook', 'whatsapp', 'x'],
   },
   {
     id: 'reserva-servicios',

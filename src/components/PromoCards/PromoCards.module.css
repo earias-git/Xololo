@@ -89,6 +89,33 @@
   gap: 4px;
 }
 
+/* XOLOLO 2026-11-14: fila de iconos de redes sociales para la card
+   "Xololéalo". Sobre el CTA, abajo de la descripción. */
+.socialIcons {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 6px;
+  align-items: center;
+}
+
+.socialIcon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.socialIcon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
 /* Decorative rounded shape in the bottom-right corner of each card. Purely
    ornamental; hidden from AT via aria-hidden on the parent element. */
 .deco {
