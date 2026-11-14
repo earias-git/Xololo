@@ -978,6 +978,7 @@
   "SearchPage.detailYes": "Yes",
   "SearchPage.invalidDatesFilter": "Invalid date range filter values in URL. The filter was ignored.",
   "SearchPage.noResults": "Couldn't find any listings that match your search criteria.",
+  "SearchPage.noResultsSecondHand": "No second-hand listings yet. Check back soon — resale items from every category will appear here.",
   "SearchPage.resetAllFilters": "Reset filters",
   "SearchPage.schemaDescription": "Showing search results",
   "SearchPage.schemaForSearch": "a query",

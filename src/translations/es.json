@@ -967,6 +967,7 @@
   "SearchPage.detailYes": "Sí",
   "SearchPage.invalidDatesFilter": "Valores de filtro de intervalo de fechas no válidos en la URL. El filtro fue ignorado.",
   "SearchPage.noResults": "No se pudo encontrar ningún anuncio que coincida con tus criterios de búsqueda.",
+  "SearchPage.noResultsSecondHand": "Aún no hay productos de segunda mano publicados. Vuelve pronto: pronto encontrarás reventa en todas las categorías.",
   "SearchPage.resetAllFilters": "Limpiar filtros",
   "SearchPage.schemaDescription": "Mostrando resultados de la búsqueda",
   "SearchPage.schemaForSearch": "una consulta",

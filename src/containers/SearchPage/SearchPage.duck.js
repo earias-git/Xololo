@@ -330,8 +330,43 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
       const listingFields = config?.listing?.listingFields;
       const sanitizeConfig = { listingFields };
 
-      dispatch(addMarketplaceEntities(response, sanitizeConfig));
-      return response;
+      // XOLOLO (variantes · PR 4 follow-up 2026-11-14): excluir los
+      // children de un grupo de variantes (el storage del selector del
+      // master NO debe aparecer como resultado independiente en la
+      // lista de búsqueda). Sharetribe SDK no soporta filtro negativo
+      // para campos ausentes, así que lo hacemos client-side. Masters
+      // y simples pasan intactos.
+      const all = response.data?.data || [];
+      const filtered = all.filter(l => {
+        const pd = l.attributes?.publicData || {};
+        return !(pd.variantGroupId && pd.isVariantMaster !== true);
+      });
+      // Ajustar meta.totalItems para no mostrar "30 resultados" cuando
+      // el filtro eliminó todos los children (síntoma reportado al
+      // clickear "Segunda mano" con solo hermanos como resultados).
+      // Solo tocamos meta si existía — si no, conservamos el shape.
+      const originalMeta = response.data?.meta;
+      const removedInPage = all.length - filtered.length;
+      const metaMaybe =
+        originalMeta && typeof originalMeta.totalItems === 'number'
+          ? {
+              meta: {
+                ...originalMeta,
+                totalItems: Math.max(0, originalMeta.totalItems - removedInPage),
+              },
+            }
+          : {};
+      const filteredResponse = {
+        ...response,
+        data: {
+          ...response.data,
+          data: filtered,
+          ...metaMaybe,
+        },
+      };
+
+      dispatch(addMarketplaceEntities(filteredResponse, sanitizeConfig));
+      return filteredResponse;
     })
     .catch(e => {
       const error = storableError(e);
