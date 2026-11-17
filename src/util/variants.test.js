@@ -18,6 +18,7 @@ import {
   buildMatrix,
   isSearchable,
   filterSearchable,
+  selectSiblingsForReplicate,
 } from './variants';
 
 const mkListing = ({ id, publicData = {}, stock = null } = {}) => ({
@@ -451,6 +452,81 @@ describe('variants helpers', () => {
       const m = buildMatrix(siblings, []);
       expect(m.rows).toEqual([]);
       expect(m.cell('M', 'azul')).toBeNull();
+    });
+  });
+
+  // XOLOLO 2026-11-17 — Blinda regresión del bug commit 0b100d554:
+  // replicateMasterSharedFields pisaba títulos de listings ajenos al
+  // grupo cuando Sharetribe ignoraba el filtro pub_variantGroupId.
+  describe('selectSiblingsForReplicate', () => {
+    const GROUP_A = 'group-a';
+    const GROUP_B = 'group-b';
+    const MASTER_ID = 'master-id';
+
+    const mk = (id, groupId) =>
+      mkListing({ id, publicData: groupId ? { variantGroupId: groupId } : {} });
+
+    it('returns all group-A siblings when master is in group-A', () => {
+      const all = [
+        mk(MASTER_ID, GROUP_A),
+        mk('sib-1', GROUP_A),
+        mk('sib-2', GROUP_A),
+      ];
+      const siblings = selectSiblingsForReplicate(all, MASTER_ID, GROUP_A);
+      expect(siblings.map(s => s.id.uuid).sort()).toEqual(['sib-1', 'sib-2']);
+    });
+
+    it('excludes listings of other variantGroupId (prevents cross-group overwrite)', () => {
+      const all = [
+        mk(MASTER_ID, GROUP_A),
+        mk('sib-a', GROUP_A),
+        mk('foreign-b', GROUP_B),
+        mk('foreign-c', GROUP_B),
+      ];
+      const siblings = selectSiblingsForReplicate(all, MASTER_ID, GROUP_A);
+      expect(siblings.map(s => s.id.uuid)).toEqual(['sib-a']);
+    });
+
+    it('excludes listings without publicData.variantGroupId', () => {
+      const all = [
+        mk(MASTER_ID, GROUP_A),
+        mk('sib-a', GROUP_A),
+        mk('nogroup-1', null),
+        mk('nogroup-2', null),
+      ];
+      const siblings = selectSiblingsForReplicate(all, MASTER_ID, GROUP_A);
+      expect(siblings.map(s => s.id.uuid)).toEqual(['sib-a']);
+    });
+
+    it('excludes the master listing itself', () => {
+      const all = [mk(MASTER_ID, GROUP_A), mk('sib-a', GROUP_A)];
+      const siblings = selectSiblingsForReplicate(all, MASTER_ID, GROUP_A);
+      expect(siblings.map(s => s.id.uuid)).toEqual(['sib-a']);
+    });
+
+    it('accepts master id as UUID object or string', () => {
+      const all = [mk(MASTER_ID, GROUP_A), mk('sib-a', GROUP_A)];
+      const asObj = selectSiblingsForReplicate(all, { uuid: MASTER_ID }, GROUP_A);
+      const asStr = selectSiblingsForReplicate(all, MASTER_ID, GROUP_A);
+      expect(asObj).toEqual(asStr);
+    });
+
+    it('returns empty array for empty or nullish inputs', () => {
+      expect(selectSiblingsForReplicate([], MASTER_ID, GROUP_A)).toEqual([]);
+      expect(selectSiblingsForReplicate(null, MASTER_ID, GROUP_A)).toEqual([]);
+      expect(selectSiblingsForReplicate(undefined, MASTER_ID, GROUP_A)).toEqual([]);
+      expect(selectSiblingsForReplicate([mk('x', GROUP_A)], null, GROUP_A)).toEqual([]);
+      expect(selectSiblingsForReplicate([mk('x', GROUP_A)], MASTER_ID, null)).toEqual([]);
+    });
+
+    it('skips entries without id (malformed data)', () => {
+      const all = [
+        mk(MASTER_ID, GROUP_A),
+        { attributes: { publicData: { variantGroupId: GROUP_A } } },
+        mk('sib-a', GROUP_A),
+      ];
+      const siblings = selectSiblingsForReplicate(all, MASTER_ID, GROUP_A);
+      expect(siblings.map(s => s.id.uuid)).toEqual(['sib-a']);
     });
   });
 });

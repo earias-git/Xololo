@@ -47,7 +47,7 @@ import {
 } from '../../util/apiAsWorkspace';
 // XOLOLO (variantes · PR 2b): helper para construir siblings consistentes
 // con el master. buildSiblingPayload clona lo esencial + aplica override.
-import { buildSiblingPayload } from '../../util/variants';
+import { buildSiblingPayload, selectSiblingsForReplicate } from '../../util/variants';
 
 const { UUID, Money } = sdkTypes;
 
@@ -801,20 +801,42 @@ export const replicateMasterSharedFieldsThunk = createAsyncThunk(
     // a listings AJENOS al grupo. Síntoma: 8 listings del seller con
     // el mismo título "Oxford bostoniano…" aunque sean de distintas
     // categorías. Fix: filtrar explícitamente por variantGroupId.
+    // El filtro es un helper testeado — ver src/util/variants.test.js.
     let siblings = [];
     try {
       const queryBody = { pub_variantGroupId: groupId, perPage: 100 };
       const res = workspace
         ? await queryListingsAs(queryBody)
         : await sdk.ownListings.query(queryBody);
-      siblings = (res.data?.data || []).filter(
-        l =>
-          l.id?.uuid !== masterListingId.uuid &&
-          l.attributes?.publicData?.variantGroupId === groupId
-      );
+      siblings = selectSiblingsForReplicate(res.data?.data || [], masterListingId, groupId);
     } catch (e) {
       log.error(e, 'replicate-query-failed', { groupId });
       return rejectWithValue(storableError(e));
+    }
+
+    // XOLOLO 2026-11-17 — guard defensivo. variantsMatrix del master
+    // describe N combinaciones del grupo, así que el máximo esperado
+    // de siblings reales es N-1 (menos el master). Si recibimos más,
+    // significa que el filtro no cazó algo (schema cambió, groupId
+    // colisionado, bug nuevo). Abortamos y alertamos para evitar
+    // re-ocurrencia del bug del 2026-11-17 donde el replicate pisó 8
+    // listings fuera del grupo.
+    const matrix = master.attributes?.publicData?.variantsMatrix;
+    const matrixRows = Array.isArray(matrix) ? matrix.length : 0;
+    const maxExpected = Math.max(matrixRows - 1, 0);
+    if (maxExpected > 0 && siblings.length > maxExpected) {
+      log.error(new Error('replicate_overshoot'), 'replicate-overshoot', {
+        masterListingId: masterListingId?.uuid || masterListingId,
+        groupId,
+        tab,
+        maxExpected,
+        actual: siblings.length,
+        // Primeros 20 ids para diagnóstico sin inflar el payload.
+        siblingIdsSample: siblings.slice(0, 20).map(s => s.id?.uuid),
+      });
+      return rejectWithValue(
+        storableError(new Error('replicate_overshoot_abort'))
+      );
     }
 
     // Aplica el patch a cada sibling. Sequential + fail-soft.

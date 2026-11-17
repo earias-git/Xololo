@@ -255,6 +255,40 @@ export const axisValuesWithStock = (siblings, axis) => {
  * @param {string} axis — nombre del eje
  * @returns {Array<{value, stock, siblingCount}>}
  */
+/**
+ * XOLOLO 2026-11-17 — blindaje post-bug: filtro puro, aislado, testeado
+ * para el query de siblings dentro de replicateMasterSharedFieldsThunk.
+ *
+ * Bug original (commit 0b100d554): el thunk hacía
+ *   sdk.ownListings.query({ pub_variantGroupId: groupId })
+ * y filtraba solo `l.id !== master.id`. Como Sharetribe ignora
+ * pub_variantGroupId (el campo NO está registrado en el search schema
+ * de Console), la query devolvía TODOS los listings del seller y el
+ * patch de replicación pisaba listings fuera del grupo. 8 anuncios
+ * del seller kikeagri quedaron con el título del master "Oxford
+ * bostoniano...".
+ *
+ * Este helper garantiza, con tests de regresión, que un sibling solo
+ * cuenta cuando su publicData.variantGroupId coincide EXACTAMENTE con
+ * el grupo del master. Si alguien reintroduce el bug quitando la
+ * condición, los tests revientan.
+ *
+ * @param {object[]} allListings — resultado raw de la query (puede
+ *   contener listings ajenos al grupo).
+ * @param {object} masterListingId — UUID instance o string del master.
+ * @param {string} groupId — publicData.variantGroupId del master.
+ * @returns {object[]} siblings del grupo, excluyendo al master.
+ */
+export const selectSiblingsForReplicate = (allListings, masterListingId, groupId) => {
+  if (!Array.isArray(allListings) || !masterListingId || !groupId) return [];
+  const masterIdUuid = masterListingId?.uuid || masterListingId;
+  return allListings.filter(l => {
+    const sibId = l?.id?.uuid;
+    if (!sibId || sibId === masterIdUuid) return false;
+    return l?.attributes?.publicData?.variantGroupId === groupId;
+  });
+};
+
 export const axisValuesFromMatrixAndSiblings = (master, siblings, axis) => {
   const byValue = new Map();
   // 1) Catálogo autoritativo desde la matrix del master.
