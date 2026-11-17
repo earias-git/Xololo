@@ -4,6 +4,7 @@ import { useLocation, useHistory } from 'react-router-dom';
 
 import { apiBaseUrl } from '../../util/api';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
+import { getCurrentWorkspace } from '../../util/xololoTeam';
 import { Page } from '../../components';
 
 import MfaEnrollView from './MfaEnrollView';
@@ -524,6 +525,14 @@ const Dashboard = ({ operator, onLogout, onNavigate }) => {
 
 const OpsConsolePage = () => {
   const scrollingDisabled = useSelector(isScrollingDisabled);
+  // XOLOLO 2026-11-17 (bug): si el user tiene workspace activo
+  // (ribbon "Operando como X"), NO debe acceder a OPS aunque tenga
+  // cookie admin válida. Combinar privilegios de operador Xololo con
+  // los de "actuar como admin de otro Negocio" es un fallo de
+  // separación de rol: lo que haga en OPS afectaría al workspace que
+  // está operando, confundiendo contexto y auditoría.
+  const currentUser = useSelector(state => state.user?.currentUser);
+  const activeWorkspace = getCurrentWorkspace(currentUser);
   const session = useOperatorSession();
   const location = useLocation();
   const history = useHistory();
@@ -533,7 +542,18 @@ const OpsConsolePage = () => {
 
   let content;
 
-  if (session.loading) {
+  if (activeWorkspace) {
+    content = (
+      <div className={css.card}>
+        <h1 className={css.title}>OPS no disponible en modo colaborador</h1>
+        <p className={css.subtitle}>
+          Estás operando como colaborador de un Negocio. Para acceder al panel de operaciones de
+          Xololo, primero sal del workspace (botón arriba a la derecha) y vuelve a entrar con tu
+          cuenta personal.
+        </p>
+      </div>
+    );
+  } else if (session.loading) {
     content = (
       <div className={css.card}>
         <p className={css.subtitle}>Cargando…</p>
