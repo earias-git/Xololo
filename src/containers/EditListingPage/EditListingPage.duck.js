@@ -792,13 +792,26 @@ export const replicateMasterSharedFieldsThunk = createAsyncThunk(
 
     // Query siblings (excluyendo al master). En modo colaborador va al
     // wrapper /api/manage-listings (scope admin).
+    //
+    // XOLOLO 2026-11-17 (bug crítico): Sharetribe NO filtra por
+    // pub_variantGroupId porque el campo no está registrado en el
+    // search schema de Console — la query devuelve TODOS los listings
+    // del seller. Sin el filtro client-side por variantGroupId, el
+    // patch de replicación (título, descripción, imágenes) se aplica
+    // a listings AJENOS al grupo. Síntoma: 8 listings del seller con
+    // el mismo título "Oxford bostoniano…" aunque sean de distintas
+    // categorías. Fix: filtrar explícitamente por variantGroupId.
     let siblings = [];
     try {
       const queryBody = { pub_variantGroupId: groupId, perPage: 100 };
       const res = workspace
         ? await queryListingsAs(queryBody)
         : await sdk.ownListings.query(queryBody);
-      siblings = (res.data?.data || []).filter(l => l.id?.uuid !== masterListingId.uuid);
+      siblings = (res.data?.data || []).filter(
+        l =>
+          l.id?.uuid !== masterListingId.uuid &&
+          l.attributes?.publicData?.variantGroupId === groupId
+      );
     } catch (e) {
       log.error(e, 'replicate-query-failed', { groupId });
       return rejectWithValue(storableError(e));
