@@ -321,7 +321,12 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
     ...stockMaybe,
     ...seatsMaybe,
     ...sortMaybe,
-    perPage,
+    // XOLOLO 2026-11-17 — Para "Segunda mano" forzamos perPage alto
+    // porque Sharetribe no filtra pub_condition (campo no registrado
+    // en Console) y el filtro cliente necesita ver todos los listings
+    // para dar un conteo honesto. Marketplace chico (<100 publicados);
+    // escalar requiere registrar `condition` como listing field.
+    perPage: apiParamsRaw.pub_condition === 'used' ? 100 : perPage,
   };
 
   return sdk.listings
@@ -337,22 +342,50 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
       // para campos ausentes, así que lo hacemos client-side. Masters
       // y simples pasan intactos.
       const all = response.data?.data || [];
-      const filtered = all.filter(l => {
+      // Filtro 1: excluir children de un grupo de variantes (PR 4
+      // follow-up 2026-11-14).
+      let filtered = all.filter(l => {
         const pd = l.attributes?.publicData || {};
         return !(pd.variantGroupId && pd.isVariantMaster !== true);
       });
-      // Ajustar meta.totalItems para no mostrar "30 resultados" cuando
-      // el filtro eliminó todos los children (síntoma reportado al
-      // clickear "Segunda mano" con solo hermanos como resultados).
-      // Solo tocamos meta si existía — si no, conservamos el shape.
+      // XOLOLO 2026-11-17 — Filtro 2: "Segunda mano".
+      // El campo `condition` NO está registrado como listing field
+      // searchable en Console, por lo que Sharetribe ignora
+      // `pub_condition=used` y devuelve todos los listings. Filtramos
+      // en cliente: un listing es segunda mano si publicData.condition
+      // === 'used' O taxClassification.code === 'exento_9_iv' (Art. 9
+      // IV LIVA sólo aplica a particulares ocasionales = usado).
+      // El total honesto es el que sale de este filtro, no el meta
+      // del server. Para que el conteo del header coincida con el
+      // grid, la query ya se hizo con perPage=100 (abajo) y aquí
+      // sobrescribimos meta.totalItems.
+      // TODO: cuando `condition` se registre en Console, eliminar
+      // este filtro y el override de perPage en searchListingsPayloadCreator.
+      const isSegundaManoQuery = params.pub_condition === 'used';
+      if (isSegundaManoQuery) {
+        filtered = filtered.filter(l => {
+          const pd = l.attributes?.publicData || {};
+          return pd.condition === 'used' || pd.taxClassification?.code === 'exento_9_iv';
+        });
+      }
+      // Ajustar meta.totalItems: para "Segunda mano" el total honesto
+      // ES filtered.length (la query trajo todo el marketplace con
+      // perPage=100). Para otros filtros, restamos sólo lo removido
+      // en la página actual.
       const originalMeta = response.data?.meta;
       const removedInPage = all.length - filtered.length;
+      const adjustedTotal = isSegundaManoQuery
+        ? filtered.length
+        : Math.max(0, (originalMeta?.totalItems || 0) - removedInPage);
       const metaMaybe =
         originalMeta && typeof originalMeta.totalItems === 'number'
           ? {
               meta: {
                 ...originalMeta,
-                totalItems: Math.max(0, originalMeta.totalItems - removedInPage),
+                totalItems: adjustedTotal,
+                ...(isSegundaManoQuery
+                  ? { totalPages: 1, page: 1, perPage: filtered.length || 1 }
+                  : {}),
               },
             }
           : {};
@@ -484,6 +517,12 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
         'publicData.shippingEnabled',
         'publicData.priceVariationsEnabled',
         'publicData.priceVariants',
+        // XOLOLO: necesarios para filtros cliente en el thunk
+        // (siblings de variantes + condition=used segunda mano).
+        'publicData.variantGroupId',
+        'publicData.isVariantMaster',
+        'publicData.condition',
+        'publicData.taxClassification',
       ],
       'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
       'fields.image': [

@@ -308,6 +308,10 @@ const getSearchParams = config => {
       'publicData.shippingEnabled',
       'publicData.priceVariationsEnabled',
       'publicData.priceVariants',
+      'publicData.variantGroupId',
+      'publicData.isVariantMaster',
+      'publicData.condition',
+      'publicData.taxClassification',
     ],
     'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
     'fields.image': [
