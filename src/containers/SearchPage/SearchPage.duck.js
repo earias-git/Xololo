@@ -352,20 +352,34 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
       // El campo `condition` NO está registrado como listing field
       // searchable en Console, por lo que Sharetribe ignora
       // `pub_condition=used` y devuelve todos los listings. Filtramos
-      // en cliente: un listing es segunda mano si publicData.condition
-      // === 'used' O taxClassification.code === 'exento_9_iv' (Art. 9
-      // IV LIVA sólo aplica a particulares ocasionales = usado).
-      // El total honesto es el que sale de este filtro, no el meta
-      // del server. Para que el conteo del header coincida con el
-      // grid, la query ya se hizo con perPage=100 (abajo) y aquí
-      // sobrescribimos meta.totalItems.
+      // en cliente con las MISMAS 3 señales que usa el landing
+      // (src/ducks/landingListings.duck.js#isUsedListing) para que
+      // ambas vistas coincidan:
+      //   a) publicData.condition === 'used'
+      //   b) publicData.taxClassification.code === 'exento_9_iv'
+      //      (Art. 9 IV LIVA sólo aplica a particulares ocasionales).
+      //   c) author.profile.publicData.sellerMode === 'casual_reseller'
+      //      (captura legacy sin (a) ni (b) persistidos).
+      // El total honesto es filtered.length. La query va con
+      // perPage=100 (abajo) para traer todo el marketplace.
       // TODO: cuando `condition` se registre en Console, eliminar
-      // este filtro y el override de perPage en searchListingsPayloadCreator.
+      // este filtro y el override de perPage.
       const isSegundaManoQuery = params.pub_condition === 'used';
       if (isSegundaManoQuery) {
+        const includedUsersById = new Map(
+          (response.data?.included || [])
+            .filter(i => i.type === 'user')
+            .map(u => [u.id?.uuid, u])
+        );
         filtered = filtered.filter(l => {
           const pd = l.attributes?.publicData || {};
-          return pd.condition === 'used' || pd.taxClassification?.code === 'exento_9_iv';
+          if (pd.condition === 'used') return true;
+          if (pd.taxClassification?.code === 'exento_9_iv') return true;
+          const authorId = l.relationships?.author?.data?.id?.uuid;
+          const author = authorId ? includedUsersById.get(authorId) : null;
+          const sellerMode = author?.attributes?.profile?.publicData?.sellerMode;
+          if (sellerMode === 'casual_reseller') return true;
+          return false;
         });
       }
       // Ajustar meta.totalItems: para "Segunda mano" el total honesto
@@ -524,7 +538,13 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
         'publicData.condition',
         'publicData.taxClassification',
       ],
-      'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
+      'fields.user': [
+        'profile.displayName',
+        'profile.abbreviatedName',
+        // XOLOLO: casual_reseller publica SIEMPRE usado; necesario
+        // para la señal (c) del filtro Segunda mano.
+        'profile.publicData.sellerMode',
+      ],
       'fields.image': [
         'variants.scaled-small',
         'variants.scaled-medium',

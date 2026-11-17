@@ -313,7 +313,11 @@ const getSearchParams = config => {
       'publicData.condition',
       'publicData.taxClassification',
     ],
-    'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
+    'fields.user': [
+      'profile.displayName',
+      'profile.abbreviatedName',
+      'profile.publicData.sellerMode',
+    ],
     'fields.image': [
       'variants.scaled-small',
       'variants.scaled-medium',
