@@ -174,11 +174,12 @@ const BannerCarousel = ({ banners }) => {
   );
 };
 
-const buildWhatsAppUrl = (number, sellerName) => {
+const buildWhatsAppUrl = (number, sellerName, storeSlug) => {
   if (!number) return null;
   const clean = String(number).replace(/[^\d]/g, '');
+  const storeUrl = storeSlug ? `https://${storeSlug}.xololo.mx` : 'Xololo.mx';
   const text = encodeURIComponent(
-    `Hola${sellerName ? ` ${sellerName}` : ''}, vi tu tienda en Xololo.mx y me interesa saber más.`
+    `Hola${sellerName ? ` ${sellerName}` : ''}, vi tu tienda ${storeUrl} y me interesa saber más.`
   );
   return `https://wa.me/${clean}?text=${text}`;
 };
@@ -340,7 +341,7 @@ const StorefrontPageComponent = props => {
   const ogTitle = `${seller.displayName} en Xololo`;
   const ogDescription =
     pd.shortDescription || pd.tagline || `Conoce la tienda de ${seller.displayName} en Xololo.mx`;
-  const whatsappUrl = buildWhatsAppUrl(pd.whatsapp, seller.displayName);
+  const whatsappUrl = buildWhatsAppUrl(pd.whatsapp, seller.displayName, pd.slug);
   const instagramUrl = buildInstagramUrl(pd.instagram);
   const facebookUrl = buildFacebookUrl(pd.facebook);
   const showCalendar = pd.showCalendar === 'yes';
