@@ -351,10 +351,15 @@ export const ListingPageComponent = props => {
                 listing={currentListing}
                 variantPrefix={config.layout.listingImage.variantPrefix}
                 /* XOLOLO LOCKED — ADR-003 Fase 3: foto por color.
-                   Si moda + feature ON + hay master + color del sibling
-                   coincide con una foto registrada en el master,
-                   resolvemos esa image desde master.images y la pasamos
-                   para que la galería la muestre como la primera.
+                   Dos escenarios:
+                   (a) El listing visible es SIBLING → el color viene
+                       de currentListing.publicData.variantValues.color.
+                   (b) El listing visible es MASTER → el color viene
+                       de la selección interactiva del buyer
+                       (variantSelection.color), que se sincroniza con
+                       los chips del selector de variantes.
+                   En ambos casos resolvemos el imageId desde el master
+                   y lo pasamos a la galería para que se muestre primero.
                    Fallback silencioso en cualquier otro caso. */
                 prependImage={(() => {
                   const flagOn =
@@ -362,8 +367,9 @@ export const ListingPageComponent = props => {
                   if (!flagOn) return null;
                   if (!variantMaster) return null;
                   if (!isFashionCategory(variantMaster)) return null;
-                  const colorValue =
-                    currentListing?.attributes?.publicData?.variantValues?.color;
+                  const colorValue = isMaster
+                    ? variantSelection?.color
+                    : currentListing?.attributes?.publicData?.variantValues?.color;
                   if (!colorValue) return null;
                   const imageId = getColorImageIdForValue(variantMaster, colorValue);
                   if (!imageId) return null;
