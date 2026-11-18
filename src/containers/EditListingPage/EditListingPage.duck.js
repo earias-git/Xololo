@@ -539,6 +539,27 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
         l => l.attributes?.publicData?.variantGroupId === pd.variantGroupId
       );
       existingSiblings = inGroup.filter(l => l.id?.uuid !== masterListingId.uuid);
+      // XOLOLO LOCKED — ADR-004 Fase 3c: construir mapa
+      // siblingId → stock REAL desde el included[] raw, para no
+      // depender del shape de Redux (addMarketplaceEntities puede
+      // no normalizar currentStock en attributes.quantity).
+      const rawIncluded = res.data?.included || [];
+      const stockEntitiesById = new Map();
+      rawIncluded.forEach(inc => {
+        if (inc.type === 'stock') {
+          stockEntitiesById.set(inc.id?.uuid || inc.id, inc);
+        }
+      });
+      existingSiblings.forEach(sib => {
+        const rel = sib.relationships?.currentStock?.data;
+        const stockId = rel?.id?.uuid || rel?.id;
+        const stockEnt = stockId ? stockEntitiesById.get(stockId) : null;
+        if (typeof stockEnt?.attributes?.quantity === 'number') {
+          // Anexamos un campo auxiliar (no muta Redux) para que
+          // la rama `existing` de abajo lea de aquí primero.
+          sib.__rawStockQty = stockEnt.attributes.quantity;
+        }
+      });
       // Dispatch SOLO los del grupo para no inyectar basura en Redux.
       const filteredRes = {
         ...res,
@@ -648,15 +669,61 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
         if (existing) {
           // Match → update stock + precio si cambiaron.
           matchedExistingIds.add(existing.id.uuid);
-          const curStock = existing.currentStock?.attributes?.quantity;
+          // XOLOLO LOCKED — ADR-004 Fase 3c: priorizar el stock
+          // leído del raw included[] (__rawStockQty), que es
+          // confiable. Fallback a Redux shape; luego a null.
+          const curStock =
+            typeof existing.__rawStockQty === 'number'
+              ? existing.__rawStockQty
+              : existing.currentStock?.attributes?.quantity;
           if (typeof row.stock === 'number' && row.stock !== curStock) {
-            await dispatch(
-              setStockThunk({
-                listingId: existing.id,
-                oldTotal: typeof curStock === 'number' ? curStock : null,
-                newTotal: row.stock,
-              })
-            ).unwrap();
+            try {
+              await dispatch(
+                setStockThunk({
+                  listingId: existing.id,
+                  oldTotal: typeof curStock === 'number' ? curStock : null,
+                  newTotal: row.stock,
+                })
+              ).unwrap();
+            } catch (firstErr) {
+              // Reintento: re-leer stock real desde Sharetribe.
+              try {
+                const stockRes = workspace
+                  ? await showListingAs(workspace.sellerId, existing.id.uuid, {
+                      include: ['currentStock'],
+                    })
+                  : await sdk.ownListings.show({
+                      id: existing.id,
+                      include: ['currentStock'],
+                    });
+                const sIncluded = stockRes.data?.included || [];
+                const sRel = stockRes.data?.data?.relationships?.currentStock?.data;
+                const sId = sRel?.id?.uuid || sRel?.id;
+                const sEnt = sIncluded.find(
+                  i => i.type === 'stock' && (i.id?.uuid || i.id) === sId
+                );
+                const realCur =
+                  typeof sEnt?.attributes?.quantity === 'number'
+                    ? sEnt.attributes.quantity
+                    : null;
+                if (realCur !== row.stock) {
+                  await dispatch(
+                    setStockThunk({
+                      listingId: existing.id,
+                      oldTotal: realCur,
+                      newTotal: row.stock,
+                    })
+                  ).unwrap();
+                }
+              } catch (secondErr) {
+                log.error(secondErr, 'sync-variants-existing-sibling-stock-failed', {
+                  listingId: existing.id?.uuid,
+                  firstErr: firstErr?.message,
+                  oldTotalFirstTry: curStock,
+                  newTotalSent: row.stock,
+                });
+              }
+            }
           }
           const newPrice = toMoneyFromNumber(row.priceOverride, currency);
           if (newPrice && !moneyEquals(newPrice, existing.attributes?.price)) {
@@ -700,39 +767,65 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
             : await sdk.ownListings.publishDraft({ id: newListingId }, queryParams);
           dispatch(addMarketplaceEntities(pubRes));
 
-          // XOLOLO LOCKED — ADR-004 Fase 3b: leer oldTotal del
-          // response raw del publishDraft. El sibling recién
-          // creado puede tener stock=0 implícito (no null). Si
-          // pasamos oldTotal:null, Sharetribe responde 409 porque
-          // el stock YA existe (en 0 o lo que Sharetribe asigne).
-          const newSibIncluded = pubRes.data?.included || [];
-          const newSibStockRel = pubRes.data?.data?.relationships?.currentStock?.data;
-          const newSibStockId = newSibStockRel?.id?.uuid || newSibStockRel?.id;
-          const newSibStockEntity = newSibIncluded.find(
-            i => i.type === 'stock' && (i.id?.uuid || i.id) === newSibStockId
-          );
-          const newSibOldTotal =
-            typeof newSibStockEntity?.attributes?.quantity === 'number'
-              ? newSibStockEntity.attributes.quantity
-              : null;
-
-          if (typeof row.stock === 'number' && row.stock !== newSibOldTotal) {
-            try {
-              await dispatch(
+          // XOLOLO LOCKED — ADR-004 Fase 3c: Sharetribe
+          // compareAndSet es estricto: si stock NO existe, oldTotal
+          // debe ser null; si existe, oldTotal debe coincidir
+          // EXACTO con el valor actual. Después de publishDraft, el
+          // sibling recién creado puede tener stock=null (no
+          // existe aún) o stock=0 (creado explícitamente). Para
+          // evitar el 409, intentamos primero con oldTotal:null
+          // (el caso "no existe"); si falla con 409, hacemos un
+          // show del listing con include:['currentStock'] para
+          // leer el valor real y reintentamos con el oldTotal
+          // correcto. Idempotente, hasta 2 intentos máximo.
+          if (typeof row.stock === 'number' && row.stock > 0) {
+            const trySetStock = async oldTotal => {
+              return dispatch(
                 setStockThunk({
                   listingId: newListingId,
-                  oldTotal: newSibOldTotal,
+                  oldTotal,
                   newTotal: row.stock,
                 })
               ).unwrap();
-            } catch (stockErr) {
-              log.error(stockErr, 'sync-variants-sibling-stock-failed', {
-                listingId: newListingId?.uuid,
-                oldTotalSent: newSibOldTotal,
-                newTotalSent: row.stock,
-              });
-              // No reventamos el sync — el sibling queda creado
-              // pero con stock=0 hasta siguiente edición.
+            };
+
+            try {
+              await trySetStock(null);
+            } catch (firstErr) {
+              // Reintento: leer stock real del sibling y usar como oldTotal.
+              try {
+                const stockRes = workspace
+                  ? await showListingAs(
+                      workspace.sellerId,
+                      newListingId.uuid,
+                      { include: ['currentStock'] }
+                    )
+                  : await sdk.ownListings.show({
+                      id: newListingId,
+                      include: ['currentStock'],
+                    });
+                const sIncluded = stockRes.data?.included || [];
+                const sRel = stockRes.data?.data?.relationships?.currentStock?.data;
+                const sId = sRel?.id?.uuid || sRel?.id;
+                const sEnt = sIncluded.find(
+                  i => i.type === 'stock' && (i.id?.uuid || i.id) === sId
+                );
+                const realOldTotal =
+                  typeof sEnt?.attributes?.quantity === 'number'
+                    ? sEnt.attributes.quantity
+                    : null;
+                if (realOldTotal !== null && realOldTotal !== row.stock) {
+                  await trySetStock(realOldTotal);
+                }
+              } catch (secondErr) {
+                log.error(secondErr, 'sync-variants-sibling-stock-failed', {
+                  listingId: newListingId?.uuid,
+                  firstErr: firstErr?.message,
+                  attemptedAfterShow: true,
+                });
+                // Sibling creado pero con stock=0; el seller puede
+                // corregirlo en próxima edición.
+              }
             }
           }
           siblingsCreated += 1;
