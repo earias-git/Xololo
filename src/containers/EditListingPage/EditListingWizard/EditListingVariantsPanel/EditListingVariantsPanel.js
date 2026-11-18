@@ -203,6 +203,14 @@ const EditListingVariantsPanel = props => {
           ? { variantValueImages: variantValueImages || null }
           : {}),
       },
+      // XOLOLO LOCKED — ADR-003: si subimos fotos por color al master,
+      // incluimos `images` en el update para que Sharetribe las deje
+      // attachadas (si no, quedan huérfanas y Sharetribe las descarta).
+      // El `images` prop viene del WizardTab y ya contiene las
+      // originales del master + las nuevas del wizard.
+      ...(flagOn && fashion && axes.includes('color') && Array.isArray(images)
+        ? { images }
+        : {}),
     };
     onSubmit(updateValues);
   };

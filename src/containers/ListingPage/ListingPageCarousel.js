@@ -67,6 +67,9 @@ import {
   getVariantAxes,
   getVariantValues,
   findSiblingBySelection,
+  // XOLOLO LOCKED — ADR-003 Fase 3: foto por color (lectura pull del master)
+  isFashionCategory,
+  getColorImageIdForValue,
 } from '../../util/variants';
 
 import css from './ListingPage.module.css';
@@ -185,6 +188,29 @@ export const ListingPageComponent = props => {
     const refs = variantSiblingIdsRaw.map(id => ({ id, type: 'listing' }));
     return getMarketplaceEntities(state, refs).filter(Boolean);
   });
+
+  // XOLOLO LOCKED — ADR-003 Fase 3: si el listing actual es SIBLING,
+  // buscar el master de su grupo en el store. El master viene del
+  // fetchVariantSiblings disparado desde loadData. Lectura pull — no
+  // mutamos el sibling ni el master.
+  const groupListings = useSelector(state => {
+    const ids = state.ListingPage.variantSiblingIds || [];
+    if (ids.length === 0) return [];
+    const refs = ids.map(id => ({ id, type: 'listing' }));
+    return getMarketplaceEntities(state, refs).filter(Boolean);
+  });
+  const variantMaster = React.useMemo(() => {
+    const currentPd = currentListing?.attributes?.publicData || {};
+    if (!currentPd.variantGroupId) return null;
+    if (currentPd.isVariantMaster === true) return currentListing;
+    return (
+      groupListings.find(
+        l =>
+          l?.attributes?.publicData?.variantGroupId === currentPd.variantGroupId &&
+          l?.attributes?.publicData?.isVariantMaster === true
+      ) || null
+    );
+  }, [currentListing, groupListings]);
   const [variantSelection, setVariantSelection] = useState(() =>
     isMaster ? getVariantValues(currentListing) : {}
   );
@@ -324,6 +350,33 @@ export const ListingPageComponent = props => {
               <SectionGallery
                 listing={currentListing}
                 variantPrefix={config.layout.listingImage.variantPrefix}
+                /* XOLOLO LOCKED — ADR-003 Fase 3: foto por color.
+                   Si moda + feature ON + hay master + color del sibling
+                   coincide con una foto registrada en el master,
+                   resolvemos esa image desde master.images y la pasamos
+                   para que la galería la muestre como la primera.
+                   Fallback silencioso en cualquier otro caso. */
+                prependImage={(() => {
+                  const flagOn =
+                    process.env.REACT_APP_FEATURE_VARIANT_COLOR_IMAGES === 'true';
+                  if (!flagOn) return null;
+                  if (!variantMaster) return null;
+                  if (!isFashionCategory(variantMaster)) return null;
+                  const colorValue =
+                    currentListing?.attributes?.publicData?.variantValues?.color;
+                  if (!colorValue) return null;
+                  const imageId = getColorImageIdForValue(variantMaster, colorValue);
+                  if (!imageId) return null;
+                  const masterImages = Array.isArray(variantMaster.images)
+                    ? variantMaster.images
+                    : [];
+                  return (
+                    masterImages.find(img => {
+                      const uuid = img?.id?.uuid || img?.id;
+                      return uuid === imageId;
+                    }) || null
+                  );
+                })()}
               />
             )}
             <div

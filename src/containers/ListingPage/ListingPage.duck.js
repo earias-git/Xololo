@@ -680,8 +680,17 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
     // XOLOLO (variantes · PR 3): si el listing es master de un grupo,
     // precarga siblings para que el selector del carousel pueda
     // renderizar sin fetches extras tras la hidratación.
+    //
+    // XOLOLO LOCKED — ADR-003 Fase 3: también precargamos el grupo
+    // cuando el listing actual es SIBLING (child). Esto trae el master
+    // al store para que la galería pueda leer
+    // master.publicData.variantValueImages.color[sibling.color] y
+    // mostrar la foto del color del sibling. Lectura pull, no push —
+    // no se modifica ningún sibling. Falla silenciosa (fail-open).
     const pd = listing?.attributes?.publicData || {};
-    if (pd.isVariantMaster === true && pd.variantGroupId) {
+    const isGroupMember =
+      pd.variantGroupId && (pd.isVariantMaster === true || pd.isVariantMaster === false);
+    if (isGroupMember) {
       // Fire-and-forget: errores no abortan loadData (fail-open —
       // el selector cae a "sin variantes" y muestra solo el master).
       dispatch(fetchVariantSiblings(pd.variantGroupId, config)).catch(() => {});
