@@ -294,7 +294,16 @@ const EditListingWizardTab = props => {
       return <EditListingTextPanel {...panelProps(TEXT)} />;
     }
     case VARIANTS: {
-      return <EditListingVariantsPanel {...panelProps(VARIANTS)} />;
+      return (
+        <EditListingVariantsPanel
+          {...panelProps(VARIANTS)}
+          // XOLOLO ADR-003 Fase 2: foto por color — reusa el pipeline
+          // de upload del master (mismo que PhotosPanel usa).
+          images={images}
+          onImageUpload={onImageUpload}
+          onRemoveImage={onRemoveImage}
+        />
+      );
     }
     default:
       return null;

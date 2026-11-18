@@ -1,9 +1,17 @@
 import React, { useMemo, useState } from 'react';
 
 import { Button } from '../../../../components';
-import { MAX_VARIANT_AXES } from '../../../../util/variants';
+import { MAX_VARIANT_AXES, slugifyAxisValue } from '../../../../util/variants';
 
 import css from './EditListingVariantsPanel.module.css';
+
+// XOLOLO LOCKED — ADR-003 Fase 2: config mínimo de aspect para upload.
+// Reutilizamos la convención del wizard (1:1 listing-card).
+const COLOR_IMAGE_CONFIG = {
+  aspectWidth: 1,
+  aspectHeight: 1,
+  variantPrefix: 'listing-card',
+};
 
 // XOLOLO (Variantes · PR 2) — Form del tab de SKU variantes.
 //
@@ -47,6 +55,11 @@ const EditListingVariantsForm = props => {
     updated,
     updateInProgress,
     fetchErrors,
+    // XOLOLO ADR-003 Fase 2
+    enableColorImages,
+    images,
+    onImageUpload,
+    onRemoveImage,
   } = props;
 
   const { createListingDraftError, updateListingError } = fetchErrors || {};
@@ -63,6 +76,14 @@ const EditListingVariantsForm = props => {
 
   // Stock y precio por combinación (clave = "val1||val2").
   const [rowData, setRowData] = useState(initialValues.rowData || {});
+
+  // XOLOLO LOCKED — ADR-003: mapa { <slug-color>: <imageId> }. Se persiste
+  // en publicData.variantValueImages.color al submit. SOLO se escribe en
+  // el master. Nunca se replica a siblings.
+  const [colorImagesMap, setColorImagesMap] = useState(
+    initialValues.colorImagesMap || {}
+  );
+  const [uploadingColor, setUploadingColor] = useState(null);
 
   const toggleValue = (axis, value) => {
     setValuesByAxis(prev => {
@@ -123,6 +144,51 @@ const EditListingVariantsForm = props => {
   }
   const isValid = errors.length === 0;
 
+  // XOLOLO LOCKED — ADR-003 Fase 2: handler para subir foto de un color.
+  // Reutiliza el thunk de upload del master (onImageUpload). No crea una
+  // imagen separada ni la asigna a otro listing — simplemente guarda
+  // el imageId en el mapa local. Al submit, el panel la escribe en
+  // publicData.variantValueImages.color del master.
+  const handleColorImageUpload = (colorValue, file) => {
+    if (!file || !onImageUpload) return;
+    const slug = slugifyAxisValue(colorValue);
+    if (!slug) return;
+    setUploadingColor(slug);
+    // Temp id prefijado para poder identificar uploads de este feature
+    // si fuera necesario; Sharetribe retorna el imageId real.
+    const tempId = `color__${slug}__${Date.now()}`;
+    onImageUpload({ id: tempId, file }, COLOR_IMAGE_CONFIG)
+      .then(resp => {
+        // resp es el payload desenrollado: { ...img, id, imageId, file }
+        const imageId =
+          typeof resp?.imageId?.uuid === 'string'
+            ? resp.imageId.uuid
+            : typeof resp?.imageId === 'string'
+            ? resp.imageId
+            : null;
+        if (imageId) {
+          setColorImagesMap(prev => ({ ...prev, [slug]: imageId }));
+        }
+      })
+      .catch(() => {
+        // silencioso; el componente de upload del wizard ya muestra
+        // el error general cuando aplica.
+      })
+      .finally(() => {
+        setUploadingColor(null);
+      });
+  };
+
+  const handleColorImageRemove = colorValue => {
+    const slug = slugifyAxisValue(colorValue);
+    if (!slug) return;
+    setColorImagesMap(prev => {
+      const next = { ...prev };
+      delete next[slug];
+      return next;
+    });
+  };
+
   const handleSubmit = e => {
     e?.preventDefault?.();
     if (!isValid) return;
@@ -143,7 +209,15 @@ const EditListingVariantsForm = props => {
             : Number(r.price),
       };
     });
-    onSubmit({ enabled: true, axes: axesActive, rows });
+    // XOLOLO ADR-003: incluir mapa de colorImages + valuesByAxis para
+    // que el panel pueda purgar danglings al construir el publicData.
+    onSubmit({
+      enabled: true,
+      axes: axesActive,
+      rows,
+      colorImagesMap,
+      valuesByAxis,
+    });
   };
 
   // ---- Render helpers ----
@@ -244,6 +318,147 @@ const EditListingVariantsForm = props => {
     );
   };
 
+  // XOLOLO LOCKED — ADR-003 Fase 2: resolver URL de una imagen por imageId
+  // desde el array `images` que viene del redux state (mismo que
+  // alimenta el panel de fotos del master).
+  const resolveImageUrl = imageId => {
+    if (!imageId || !Array.isArray(images)) return null;
+    const match = images.find(img => {
+      const idUuid = img?.imageId?.uuid || img?.imageId || img?.id?.uuid;
+      return idUuid === imageId;
+    });
+    if (!match) return null;
+    const variants = match?.attributes?.variants || {};
+    return (
+      variants['listing-card']?.url ||
+      variants['scaled-small']?.url ||
+      variants['default']?.url ||
+      null
+    );
+  };
+
+  // XOLOLO LOCKED — ADR-003 Fase 2: render de slots de foto por color.
+  // Gate: enableColorImages (moda + flag ON del panel) + eje color
+  // seleccionado + onImageUpload disponible.
+  const renderColorImagesBlock = () => {
+    if (!enableColorImages) return null;
+    if (!axesActive.includes('color')) return null;
+    if (!onImageUpload) return null;
+    const colorValues = (valuesByAxis.color || []).filter(Boolean);
+    if (colorValues.length === 0) return null;
+
+    return (
+      <div className={css.axisBlock}>
+        <div className={css.axisLabel}>📷 Foto por color (Moda)</div>
+        <div className={css.axisHint} style={{ marginBottom: 8 }}>
+          Sube una foto específica para cada color. Si no la pones, se
+          usará la foto principal del producto.
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          {colorValues.map(colorVal => {
+            const slug = slugifyAxisValue(colorVal);
+            const imageId = colorImagesMap[slug];
+            const url = resolveImageUrl(imageId);
+            const isUploading = uploadingColor === slug;
+            return (
+              <div
+                key={slug}
+                style={{
+                  width: 140,
+                  border: '1px solid var(--colorGrey200)',
+                  borderRadius: 8,
+                  padding: 8,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                  alignItems: 'center',
+                }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{colorVal}</div>
+                <div
+                  style={{
+                    width: 120,
+                    height: 120,
+                    background: '#f3f4f6',
+                    borderRadius: 6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    position: 'relative',
+                  }}
+                >
+                  {url ? (
+                    <img
+                      src={url}
+                      alt={`Foto color ${colorVal}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : imageId ? (
+                    <span style={{ fontSize: 11, color: '#6b7280' }}>Subida…</span>
+                  ) : (
+                    <span style={{ fontSize: 11, color: '#9ca3af' }}>Sin foto</span>
+                  )}
+                  {isUploading ? (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(255,255,255,0.6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 11,
+                      }}
+                    >
+                      Subiendo…
+                    </div>
+                  ) : null}
+                </div>
+                <label
+                  style={{
+                    fontSize: 12,
+                    cursor: isUploading ? 'wait' : 'pointer',
+                    color: '#1e3a8a',
+                  }}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={isUploading}
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) handleColorImageUpload(colorVal, file);
+                      e.target.value = '';
+                    }}
+                  />
+                  {imageId ? 'Cambiar foto' : 'Subir foto'}
+                </label>
+                {imageId ? (
+                  <button
+                    type="button"
+                    onClick={() => handleColorImageRemove(colorVal)}
+                    style={{
+                      fontSize: 11,
+                      color: '#dc2626',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    Quitar
+                  </button>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const noEligibleAxes = eligibleAxes.length === 0;
   const submitDisabled =
     disabled || updateInProgress || (enabled && !isValid);
@@ -319,6 +534,9 @@ const EditListingVariantsForm = props => {
 
           {renderAxisBlock(axis1, eligibleAxes.find(a => a.key === axis1)?.label || axis1)}
           {renderAxisBlock(axis2, eligibleAxes.find(a => a.key === axis2)?.label || axis2)}
+
+          {/* XOLOLO ADR-003 Fase 2: slots de foto por color (gated) */}
+          {renderColorImagesBlock()}
 
           {hasRows ? (
             <div className={css.summary}>

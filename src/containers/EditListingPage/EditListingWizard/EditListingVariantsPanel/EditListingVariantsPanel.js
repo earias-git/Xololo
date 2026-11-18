@@ -10,6 +10,10 @@ import {
   isVariantMaster,
   getVariantAxes,
   getVariantValues,
+  // XOLOLO LOCKED — ADR-003 Foto por color (Fase 2)
+  isFashionCategory,
+  slugifyAxisValue,
+  pruneDanglingColorImages,
 } from '../../../../util/variants';
 
 import { H3, ListingLink } from '../../../../components';
@@ -46,11 +50,15 @@ const findCategoryLevel1 = publicData => {
 // Hidrata el form a partir del master.
 // Si el master ya es master de un grupo (isVariantMaster=true + variantGroupId),
 // reconstruye axes + valuesByAxis + rowData desde publicData.variantsMatrix.
+// XOLOLO ADR-003: también hidrata colorImagesMap desde
+// publicData.variantValueImages.color para que el seller vea las fotos
+// previamente guardadas al reabrir el wizard.
 const buildInitialValues = listing => {
   const publicData = listing?.attributes?.publicData || {};
+  const colorImagesMap = publicData.variantValueImages?.color || {};
   const alreadyGroup = isVariantMaster(listing) && !!getVariantGroupId(listing);
   if (!alreadyGroup) {
-    return { enabled: false, axes: [], valuesByAxis: {}, rowData: {} };
+    return { enabled: false, axes: [], valuesByAxis: {}, rowData: {}, colorImagesMap };
   }
   const axes = getVariantAxes(listing);
   const matrix = Array.isArray(publicData.variantsMatrix) ? publicData.variantsMatrix : [];
@@ -70,8 +78,14 @@ const buildInitialValues = listing => {
       price: row.priceOverride ?? '',
     };
   }
-  return { enabled: true, axes, valuesByAxis, rowData };
+  return { enabled: true, axes, valuesByAxis, rowData, colorImagesMap };
 };
+
+// XOLOLO LOCKED — ADR-003: feature flag para "Foto por color".
+// Lee en tiempo de render (no en module scope) para que el test runner
+// pueda overridearlo si lo necesita.
+const isColorImagesFeatureOn = () =>
+  process.env.REACT_APP_FEATURE_VARIANT_COLOR_IMAGES === 'true';
 
 const EditListingVariantsPanel = props => {
   const {
@@ -85,6 +99,11 @@ const EditListingVariantsPanel = props => {
     panelUpdated,
     updateInProgress,
     errors,
+    // XOLOLO ADR-003: upload de foto por color (Fase 2).
+    // Opcionales; si no llegan, el form no renderiza slots.
+    images,
+    onImageUpload,
+    onRemoveImage,
   } = props;
 
   const publicData = listing?.attributes?.publicData || {};
@@ -144,6 +163,34 @@ const EditListingVariantsPanel = props => {
       if (v != null && v !== '') masterValues[ax] = v;
     }
 
+    // XOLOLO LOCKED — ADR-003: incluir variantValueImages del eje color.
+    // Sólo escribe al master (este listing). Zero propagación a siblings.
+    // El form entrega form.colorImagesMap sincronizado con los uploads.
+    let variantValueImages;
+    const flagOn = isColorImagesFeatureOn();
+    const fashion = isFashionCategory(listing);
+    const colorValuesCurrent = (valuesByAxis => {
+      const v = valuesByAxis?.color;
+      return Array.isArray(v) ? v : [];
+    })(form.valuesByAxis);
+    if (flagOn && fashion && axes.includes('color')) {
+      const rawMap = form.colorImagesMap || {};
+      // Construir el mapa final con slugs normalizados.
+      const colorMap = {};
+      for (const [k, v] of Object.entries(rawMap)) {
+        if (typeof v === 'string' && v.length > 0) {
+          const slug = slugifyAxisValue(k);
+          if (slug) colorMap[slug] = v;
+        }
+      }
+      // Purgar slugs que ya no están entre los valores seleccionados.
+      const purged = pruneDanglingColorImages(
+        { variantValueImages: { color: colorMap } },
+        colorValuesCurrent
+      );
+      variantValueImages = purged.variantValueImages || null;
+    }
+
     const updateValues = {
       publicData: {
         variantGroupId: groupId,
@@ -151,6 +198,10 @@ const EditListingVariantsPanel = props => {
         variantAxes: axes,
         variantValues: masterValues,
         variantsMatrix: rows,
+        // Solo setear si el feature aplica; si quedó null, lo limpia.
+        ...(flagOn && fashion && axes.includes('color')
+          ? { variantValueImages: variantValueImages || null }
+          : {}),
       },
     };
     onSubmit(updateValues);
@@ -200,6 +251,11 @@ const EditListingVariantsPanel = props => {
         updated={panelUpdated}
         updateInProgress={updateInProgress}
         fetchErrors={errors}
+        // XOLOLO ADR-003 Fase 2
+        enableColorImages={isColorImagesFeatureOn() && isFashionCategory(listing)}
+        images={images}
+        onImageUpload={onImageUpload}
+        onRemoveImage={onRemoveImage}
       />
     </main>
   );
