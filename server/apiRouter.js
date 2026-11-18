@@ -290,16 +290,28 @@ router.post(
   bodyParser.json(),
   opsUsersNotes.create
 );
-// XOLOLO 2026-11-18 — endpoint ad-hoc para que un operador envíe
-// un email directo a cualquier user (resincronizaciones, avisos
-// de bug, comunicaciones puntuales). Ver docs en
-// server/api/ops-send-notification.js.
+// XOLOLO 2026-11-18 — módulo Notificaciones OPS:
+// - POST send-notification: envía un email ad-hoc vía Resend.
+// - GET notification-templates: plantillas config como código.
+// - GET send-notification/log: últimos 100 envíos (in-memory).
 router.post(
   '/admin/ops/send-notification',
   limits.ops,
   adminAuth.requireOperator(),
   bodyParser.json(),
   opsSendNotification.send
+);
+router.get(
+  '/admin/ops/notification-templates',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsSendNotification.listTemplates
+);
+router.get(
+  '/admin/ops/send-notification/log',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsSendNotification.listLog
 );
 router.delete(
   '/admin/ops/users/:userId/notes/:noteId',

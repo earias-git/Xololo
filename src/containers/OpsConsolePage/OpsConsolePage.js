@@ -10,6 +10,7 @@ import { Page } from '../../components';
 import MfaEnrollView from './MfaEnrollView';
 import OperatorsView from './OperatorsView';
 import TaxReviewsView from './TaxReviewsView';
+import NotificationsView from './NotificationsView';
 import PayoutQueueView from './PayoutQueueView';
 import LegalModerationView from './LegalModerationView';
 import BackfillVerifiedView from './BackfillVerifiedView';
@@ -345,6 +346,14 @@ const MODULE_CARDS = [
     hint: 'Registro cronológico de todas las acciones ops cross-user (suspend, impersonate, resync, notas…) con filtros por operator / acción / rango.',
     route: '/ops/audit-log',
   },
+  {
+    key: 'notifications',
+    label: 'Notificaciones',
+    emoji: '📨',
+    hint:
+      'Envía emails ad-hoc a sellers/users desde plantillas o parte de cero. Historial de envíos. Útil para avisos de resincronización, nuevas funciones, recordatorios.',
+    route: '/ops/notifications',
+  },
 ];
 
 const AiMetricsPanel = () => {
@@ -602,6 +611,8 @@ const OpsConsolePage = () => {
     content = <UsersView onBack={backToDashboard} />;
   } else if (location.pathname === '/ops/audit-log') {
     content = <AuditLogView onBack={backToDashboard} />;
+  } else if (location.pathname === '/ops/notifications') {
+    content = <NotificationsView onBack={backToDashboard} />;
   } else {
     content = (
       <Dashboard operator={session.operator} onLogout={session.logout} onNavigate={navigate} />

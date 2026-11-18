@@ -13,6 +13,8 @@
 // mandó qué.
 
 const { sendAdminMessage } = require('../api-util/notifications/sendAdminMessage');
+const { OPS_TEMPLATES, AVAILABLE_PLACEHOLDERS } = require('../api-util/notifications/opsTemplates');
+const opsSendLog = require('../api-util/notifications/opsSendLog');
 
 const send = async (req, res) => {
   const { to, subject, bodyText, bodyHtml, replyTo } = req.body || {};
@@ -24,11 +26,25 @@ const send = async (req, res) => {
   const result = await sendAdminMessage({ to, subject, bodyText, bodyHtml, replyTo });
 
   if (!result.sent) {
+    opsSendLog.push({
+      to,
+      subject,
+      operator: req.operator,
+      status: 'failed',
+      error: result.error || result.reason || 'send_failed',
+    });
     return res
       .status(result.error === 'invalid_recipient' || result.error === 'missing_subject_or_body' ? 400 : 502)
       .json({ error: result.error || result.reason || 'send_failed' });
   }
 
+  opsSendLog.push({
+    to,
+    subject,
+    operator: req.operator,
+    status: 'sent',
+    resendId: result.id,
+  });
   // eslint-disable-next-line no-console
   console.log(
     `[ops-send-notification] by ${req.operator?.email || 'unknown'} → ${to} · "${subject}" · id=${result.id}`
@@ -37,4 +53,12 @@ const send = async (req, res) => {
   return res.status(200).json({ sent: true, id: result.id });
 };
 
-module.exports = { send };
+const listTemplates = (req, res) => {
+  res.status(200).json({ templates: OPS_TEMPLATES, placeholders: AVAILABLE_PLACEHOLDERS });
+};
+
+const listLog = (req, res) => {
+  res.status(200).json({ log: opsSendLog.list({ limit: 100 }) });
+};
+
+module.exports = { send, listTemplates, listLog };
