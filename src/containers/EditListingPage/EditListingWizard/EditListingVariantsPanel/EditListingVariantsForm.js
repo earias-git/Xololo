@@ -159,12 +159,15 @@ const EditListingVariantsForm = props => {
     const tempId = `color__${slug}__${Date.now()}`;
     onImageUpload({ id: tempId, file }, COLOR_IMAGE_CONFIG)
       .then(resp => {
-        // resp es el payload desenrollado: { ...img, id, imageId, file }
+        // El payload del uploadImageThunk es { data: { ...img, id,
+        // imageId: img.id (UUID obj), file } }. img.id es UUID obj
+        // de Sharetribe → leemos .uuid.
+        const raw = resp?.data?.imageId ?? resp?.imageId;
         const imageId =
-          typeof resp?.imageId?.uuid === 'string'
-            ? resp.imageId.uuid
-            : typeof resp?.imageId === 'string'
-            ? resp.imageId
+          typeof raw?.uuid === 'string'
+            ? raw.uuid
+            : typeof raw === 'string'
+            ? raw
             : null;
         if (imageId) {
           setColorImagesMap(prev => ({ ...prev, [slug]: imageId }));
