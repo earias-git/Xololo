@@ -198,3 +198,12 @@ código marcado `XOLOLO LOCKED`, leer el ADR correspondiente.
   deben coincidir con la versión del cliente (SearchPage).
   Cambios al shape de retorno o a las señales requieren actualizar
   este ADR + smoke tests.
+- **ADR-006** — Categorización en 3 capas + Comunidades.
+  (PROPUESTA — en revisión). Reemplaza el `categoryLevel1` plano
+  con 3 capas independientes: categoría primaria (1 por listing),
+  facetas (N por listing, transversales), comunidades (N por
+  seller). Las comunidades (sectorial, modelo, geográfica)
+  comparten 1 entidad backend con URLs distintas por tipo
+  (`/comunidad/X`, `/region/X`, `/programa/X`). Primera comunidad
+  oficial: OPF – Sector Verde. Taxonomía inicial en
+  `docs/TAXONOMIA_SECTOR_VERDE.md`.
