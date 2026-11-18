@@ -169,3 +169,18 @@ Prettier: single quotes, 2 spaces, trailing commas, max line 100
 - Prefer functional components and React hooks
 - Add JSDoc comments for the component and any exported functions
 - Components should use semantic HTML elements
+
+## 🔒 LOCKED decisions (no tocar sin ADR)
+
+Decisiones con ADR activo en `docs/decisions/`. Antes de modificar
+código marcado `XOLOLO LOCKED`, leer el ADR correspondiente.
+
+- **ADR-001** — orden del motor de búsqueda (`/api/search`).
+- **ADR-002** — Stripe OXXO/SPEI CERRADO hasta nueva orden explícita.
+- **ADR-003** — Foto por color en variantes de Moda.
+  `publicData.variantValueImages` se escribe **exclusivamente** en
+  el listing master desde `EditListingVariantsPanel`. **Nunca** se
+  replica a siblings. **No** entrar a `REPLICABLE_TABS` de
+  `replicateMasterSharedFieldsThunk`. ListingPage del sibling lee
+  pull vía `getColorImageIdForValue(master, value)` en
+  `src/util/variants.js`.
