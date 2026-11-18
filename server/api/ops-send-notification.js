@@ -16,6 +16,24 @@ const { sendAdminMessage } = require('../api-util/notifications/sendAdminMessage
 const { OPS_TEMPLATES, AVAILABLE_PLACEHOLDERS } = require('../api-util/notifications/opsTemplates');
 const opsSendLog = require('../api-util/notifications/opsSendLog');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const opsGroups = require('../api-util/notifications/opsGroups');
+
+// XOLOLO 2026-11-18 — Mejora B: regex para sustituir placeholders
+// por-destinatario en envíos a grupos. {{name}} se reemplaza con el
+// displayName del recipient; otros placeholders quedan como estén
+// (el operador ya los sustituyó antes del send).
+const PLACEHOLDER_RE = /\{\{(\w+)\}\}/g;
+const substitutePerRecipient = (text, recipient) =>
+  text.replace(PLACEHOLDER_RE, (match, key) => {
+    if (key === 'name') return recipient.displayName || match;
+    if (key === 'email') return recipient.email || match;
+    return match;
+  });
+
+// Throttle: Resend permite ~10 req/seg en el tier free. Dormimos
+// 200ms entre sends (= 5/seg) para dejar margen.
+const SEND_THROTTLE_MS = 200;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // XOLOLO 2026-11-18: slug URL-friendly del título de un listing.
 // Replica la lógica interna de Sharetribe para construir URLs
@@ -202,4 +220,168 @@ const listUserListings = async (req, res) => {
   }
 };
 
-module.exports = { send, listTemplates, listLog, searchUsers, listUserListings };
+// XOLOLO 2026-11-18 — Mejora B: listar grupos predefinidos.
+// GET /admin/ops/notification-groups
+//   Respuesta: { groups: [{id,label,description}], maxPerGroup }
+// No resuelve miembros (puede ser costoso); usa el endpoint
+// /notification-groups/:id/preview para ver counts + top emails.
+const listGroups = (req, res) => {
+  res.status(200).json({
+    groups: opsGroups.listGroupsMetaOnly(),
+    maxPerGroup: opsGroups.MAX_RECIPIENTS_PER_GROUP,
+  });
+};
+
+// XOLOLO 2026-11-18 — Mejora B: preview de un grupo (count + first N).
+// GET /admin/ops/notification-groups/:groupId/preview
+//   Respuesta: { group, count, previewRecipients }
+//   404 si el groupId no existe.
+const previewGroup = async (req, res) => {
+  const groupId = req.params?.groupId;
+  try {
+    const resolved = await opsGroups.resolveGroup(groupId);
+    if (!resolved) return res.status(404).json({ error: 'group_not_found' });
+    const { group, recipients } = resolved;
+    return res.status(200).json({
+      group: { id: group.id, label: group.label, description: group.description },
+      count: recipients.length,
+      previewRecipients: recipients.slice(0, 5).map(r => ({
+        displayName: r.displayName,
+        email: r.email,
+      })),
+      cap: opsGroups.MAX_RECIPIENTS_PER_GROUP,
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[ops-send-notification:previewGroup]', e?.message);
+    return res.status(500).json({ error: e?.message || 'preview_failed' });
+  }
+};
+
+// XOLOLO 2026-11-18 — Mejora B: envío masivo a un grupo.
+// POST /admin/ops/send-notification/group
+//   Body: { groupId, subject, bodyText, dryRun? }
+//   Respuesta éxito:
+//     { attempted, sent, failed, errors: [{to, error}], duration_ms }
+//   dryRun: true solo valida y devuelve el count sin enviar.
+//
+// Guardarraíles:
+//   - groupId debe existir en opsGroups.
+//   - subject y bodyText requeridos.
+//   - Rate limit: 200ms entre sends (5/seg).
+//   - Cada envío queda en opsSendLog individualmente.
+const sendGroup = async (req, res) => {
+  const t0 = Date.now();
+  const { groupId, subject, bodyText, dryRun } = req.body || {};
+
+  if (typeof groupId !== 'string' || !groupId) {
+    return res.status(400).json({ error: 'invalid_group' });
+  }
+  if (typeof subject !== 'string' || !subject.trim()) {
+    return res.status(400).json({ error: 'missing_subject' });
+  }
+  if (typeof bodyText !== 'string' || !bodyText.trim()) {
+    return res.status(400).json({ error: 'missing_body' });
+  }
+
+  let resolved;
+  try {
+    resolved = await opsGroups.resolveGroup(groupId);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[ops-send-notification:sendGroup]', e?.message);
+    return res.status(500).json({ error: e?.message || 'resolve_failed' });
+  }
+  if (!resolved) return res.status(404).json({ error: 'group_not_found' });
+
+  const { group, recipients } = resolved;
+
+  if (dryRun === true) {
+    return res.status(200).json({
+      dryRun: true,
+      group: { id: group.id, label: group.label },
+      count: recipients.length,
+      sampleRecipients: recipients.slice(0, 10).map(r => r.email),
+    });
+  }
+
+  // Envío real: iterar con throttle.
+  let sent = 0;
+  let failed = 0;
+  const errors = [];
+
+  // eslint-disable-next-line no-console
+  console.log(
+    `[ops-send-notification:group] by ${req.operator?.email || 'unknown'} → group=${
+      group.id
+    } · ${recipients.length} recipients · "${subject}"`
+  );
+
+  for (const r of recipients) {
+    const perSubject = substitutePerRecipient(subject, r);
+    const perBody = substitutePerRecipient(bodyText, r);
+    try {
+      const result = await sendAdminMessage({
+        to: r.email,
+        subject: perSubject,
+        bodyText: perBody,
+      });
+      if (result.sent) {
+        sent += 1;
+        opsSendLog.push({
+          to: r.email,
+          subject: perSubject,
+          operator: req.operator,
+          status: 'sent',
+          resendId: result.id,
+          groupId: group.id,
+        });
+      } else {
+        failed += 1;
+        const errMsg = result.error || result.reason || 'send_failed';
+        errors.push({ to: r.email, error: errMsg });
+        opsSendLog.push({
+          to: r.email,
+          subject: perSubject,
+          operator: req.operator,
+          status: 'failed',
+          error: errMsg,
+          groupId: group.id,
+        });
+      }
+    } catch (e) {
+      failed += 1;
+      errors.push({ to: r.email, error: e?.message || 'exception' });
+      opsSendLog.push({
+        to: r.email,
+        subject: perSubject,
+        operator: req.operator,
+        status: 'failed',
+        error: e?.message || 'exception',
+        groupId: group.id,
+      });
+    }
+    // Throttle — no bloquear si es el último
+    if (r !== recipients[recipients.length - 1]) await sleep(SEND_THROTTLE_MS);
+  }
+
+  return res.status(200).json({
+    attempted: recipients.length,
+    sent,
+    failed,
+    errors: errors.slice(0, 20),
+    duration_ms: Date.now() - t0,
+    group: { id: group.id, label: group.label },
+  });
+};
+
+module.exports = {
+  send,
+  listTemplates,
+  listLog,
+  searchUsers,
+  listUserListings,
+  listGroups,
+  previewGroup,
+  sendGroup,
+};

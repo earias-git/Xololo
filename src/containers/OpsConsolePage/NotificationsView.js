@@ -52,6 +52,16 @@ const NotificationsView = ({ onBack }) => {
   const [loadingListings, setLoadingListings] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState('');
 
+  // XOLOLO 2026-11-18 — Mejora B: envío a grupos.
+  const [sendMode, setSendMode] = useState('individual'); // 'individual' | 'group'
+  const [groups, setGroups] = useState([]);
+  const [maxPerGroup, setMaxPerGroup] = useState(100);
+  const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [groupPreview, setGroupPreview] = useState(null); // { count, previewRecipients[] }
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [confirmingGroupSend, setConfirmingGroupSend] = useState(false);
+  const [groupSendResult, setGroupSendResult] = useState(null);
+
   const loadTemplates = useCallback(async () => {
     const r = await fetch(`${apiBaseUrl()}/api/admin/ops/notification-templates`, {
       credentials: 'include',
@@ -73,9 +83,55 @@ const NotificationsView = ({ onBack }) => {
     }
   }, []);
 
+  // XOLOLO 2026-11-18 — Mejora B: cargar lista de grupos al montar.
+  const loadGroups = useCallback(async () => {
+    const r = await fetch(`${apiBaseUrl()}/api/admin/ops/notification-groups`, {
+      credentials: 'include',
+    });
+    if (r.ok) {
+      const data = await r.json();
+      setGroups(data.groups || []);
+      setMaxPerGroup(data.maxPerGroup || 100);
+    }
+  }, []);
+
   useEffect(() => {
-    Promise.all([loadTemplates(), loadLog()]).finally(() => setLoading(false));
-  }, [loadTemplates, loadLog]);
+    Promise.all([loadTemplates(), loadLog(), loadGroups()]).finally(() => setLoading(false));
+  }, [loadTemplates, loadLog, loadGroups]);
+
+  // XOLOLO 2026-11-18 — Mejora B: al elegir grupo, pedir preview
+  // (count + first 5). El preview revela qué sellers están en el
+  // grupo, útil para que el operador no mande a nadie por error.
+  useEffect(() => {
+    if (!selectedGroupId) {
+      setGroupPreview(null);
+      return;
+    }
+    let cancelled = false;
+    setLoadingPreview(true);
+    setGroupPreview(null);
+    (async () => {
+      try {
+        const r = await fetch(
+          `${apiBaseUrl()}/api/admin/ops/notification-groups/${selectedGroupId}/preview`,
+          { credentials: 'include' }
+        );
+        if (!cancelled && r.ok) {
+          const data = await r.json();
+          setGroupPreview(data);
+        } else if (!cancelled) {
+          setGroupPreview({ count: 0, previewRecipients: [], error: `HTTP ${r.status}` });
+        }
+      } catch (e) {
+        if (!cancelled) setGroupPreview({ count: 0, previewRecipients: [], error: e.message });
+      } finally {
+        if (!cancelled) setLoadingPreview(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedGroupId]);
 
   // XOLOLO 2026-11-18 — debounced search. Al teclear 2+ chars,
   // consultar el endpoint de autocomplete 350ms después de la
@@ -193,6 +249,49 @@ const NotificationsView = ({ onBack }) => {
   const finalSubject = substitute(subject, placeholderValues);
   const finalBody = substitute(body, placeholderValues);
 
+  // XOLOLO 2026-11-18 — Mejora B: envío a grupo.
+  // Flujo: click "Enviar al grupo" → modal de confirmación con count
+  // real → click "Confirmar" → POST real → mostrar resumen.
+  const handleSendGroup = async () => {
+    if (!selectedGroupId) {
+      setGroupSendResult({ ok: false, error: 'Selecciona un grupo.' });
+      return;
+    }
+    if (!subject.trim() || !body.trim()) {
+      setGroupSendResult({ ok: false, error: 'Faltan asunto o cuerpo.' });
+      return;
+    }
+    setConfirmingGroupSend(false);
+    setSending(true);
+    setGroupSendResult(null);
+    try {
+      const r = await fetch(`${apiBaseUrl()}/api/admin/ops/send-notification/group`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          groupId: selectedGroupId,
+          // En envío a grupo NO sustituimos {{name}} en el cliente —
+          // el server lo hace per-recipient. Los otros placeholders
+          // sí pueden venir resueltos del form.
+          subject: substitute(subject, { ...placeholderValues, name: '{{name}}' }),
+          bodyText: substitute(body, { ...placeholderValues, name: '{{name}}' }),
+        }),
+      });
+      const data = await r.json();
+      if (r.ok) {
+        setGroupSendResult({ ok: true, ...data });
+        loadLog();
+      } else {
+        setGroupSendResult({ ok: false, error: data.error || `HTTP ${r.status}` });
+      }
+    } catch (e) {
+      setGroupSendResult({ ok: false, error: e.message });
+    } finally {
+      setSending(false);
+    }
+  };
+
   const handleSend = async () => {
     if (!to.trim() || !finalSubject.trim() || !finalBody.trim()) {
       setSendResult({ ok: false, error: 'Faltan destinatario, asunto o cuerpo.' });
@@ -285,9 +384,151 @@ const NotificationsView = ({ onBack }) => {
           ) : null}
         </label>
 
+        {/* XOLOLO 2026-11-18 — Mejora B: toggle modo envío. */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            marginBottom: 16,
+            background: '#f3f4f6',
+            borderRadius: 6,
+            padding: 4,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setSendMode('individual');
+              setGroupSendResult(null);
+            }}
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              background: sendMode === 'individual' ? '#fff' : 'transparent',
+              border: 'none',
+              borderRadius: 4,
+              fontWeight: sendMode === 'individual' ? 600 : 400,
+              fontSize: 13,
+              cursor: 'pointer',
+              boxShadow: sendMode === 'individual' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >
+            👤 Individual
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSendMode('group');
+              setSendResult(null);
+            }}
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              background: sendMode === 'group' ? '#fff' : 'transparent',
+              border: 'none',
+              borderRadius: 4,
+              fontWeight: sendMode === 'group' ? 600 : 400,
+              fontSize: 13,
+              cursor: 'pointer',
+              boxShadow: sendMode === 'group' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >
+            👥 Grupo (masivo)
+          </button>
+        </div>
+
+        {/* XOLOLO 2026-11-18 — Mejora B: selector de grupo. Solo
+            visible en modo 'group'. Muestra preview (count + first 5)
+            al seleccionar. */}
+        {sendMode === 'group' ? (
+          <div
+            style={{
+              background: '#fef3c7',
+              border: '1px solid #fcd34d',
+              borderRadius: 6,
+              padding: 12,
+              marginBottom: 12,
+            }}
+          >
+            <label style={{ display: 'block', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>
+                Grupo destinatario
+              </span>
+              <select
+                value={selectedGroupId}
+                onChange={e => {
+                  setSelectedGroupId(e.target.value);
+                  setGroupSendResult(null);
+                }}
+                style={{
+                  width: '100%',
+                  padding: 8,
+                  borderRadius: 6,
+                  border: '1px solid #d1d5db',
+                }}
+              >
+                <option value="">— Elige un grupo —</option>
+                {groups.map(g => (
+                  <option key={g.id} value={g.id}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
+              {selectedGroupId ? (
+                <span
+                  style={{ fontSize: 12, color: '#6b7280', display: 'block', marginTop: 4 }}
+                >
+                  {groups.find(g => g.id === selectedGroupId)?.description}
+                </span>
+              ) : null}
+            </label>
+            {loadingPreview ? (
+              <div style={{ fontSize: 12, color: '#6b7280' }}>Calculando destinatarios…</div>
+            ) : groupPreview ? (
+              <div style={{ fontSize: 12, color: '#78350f' }}>
+                {groupPreview.error ? (
+                  <span style={{ color: '#991b1b' }}>Error: {groupPreview.error}</span>
+                ) : (
+                  <>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                      📊 Destinatarios: {groupPreview.count}
+                      {groupPreview.count >= maxPerGroup
+                        ? ` (cap de ${maxPerGroup} alcanzado — hay más usuarios)`
+                        : ''}
+                    </div>
+                    {groupPreview.previewRecipients?.length > 0 ? (
+                      <ul style={{ margin: '4px 0 0 20px', padding: 0 }}>
+                        {groupPreview.previewRecipients.map(r => (
+                          <li key={r.email}>
+                            {r.displayName || '(sin nombre)'}{' '}
+                            <span style={{ color: '#9ca3af' }}>&lt;{r.email}&gt;</span>
+                          </li>
+                        ))}
+                        {groupPreview.count > groupPreview.previewRecipients.length ? (
+                          <li style={{ color: '#9ca3af' }}>
+                            ...y {groupPreview.count - groupPreview.previewRecipients.length} más
+                          </li>
+                        ) : null}
+                      </ul>
+                    ) : (
+                      <span>Este grupo no tiene miembros.</span>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : null}
+            <div style={{ fontSize: 11, color: '#92400e', marginTop: 8 }}>
+              ⚠️ Envío masivo. Para <code>{'{{name}}'}</code>, el server usa el nombre de cada
+              destinatario. Los demás placeholders se aplican con los valores de arriba.
+            </div>
+          </div>
+        ) : null}
+
         {/* XOLOLO 2026-11-18 — autocomplete user. Al elegir, se
             pre-llenan `to` y `{{name}}`, y aparece dropdown con
-            sus listings para pre-llenar {{listingTitle/Url/expectedVariants}}. */}
+            sus listings para pre-llenar {{listingTitle/Url/expectedVariants}}.
+            Solo visible en modo 'individual'. */}
+        {sendMode === 'individual' ? (
         <label style={{ display: 'block', marginBottom: 12, position: 'relative' }}>
           <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>
             Para (busca por email o nombre, o pega email directo)
@@ -378,9 +619,10 @@ const NotificationsView = ({ onBack }) => {
             </div>
           ) : null}
         </label>
+        ) : null}
 
-        {/* Dropdown de listings del user (si lo elegimos) */}
-        {selectedUser ? (
+        {/* Dropdown de listings del user (si lo elegimos). Solo modo individual. */}
+        {sendMode === 'individual' && selectedUser ? (
           <label style={{ display: 'block', marginBottom: 12 }}>
             <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>
               Anuncio del user (opcional — pre-llena placeholders del listing)
@@ -507,24 +749,52 @@ const NotificationsView = ({ onBack }) => {
           </details>
         ) : null}
 
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={sending}
-            style={{
-              background: '#1e3a8a',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              padding: '10px 20px',
-              fontWeight: 600,
-              cursor: sending ? 'wait' : 'pointer',
-              opacity: sending ? 0.6 : 1,
-            }}
-          >
-            {sending ? 'Enviando…' : 'Enviar email'}
-          </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          {sendMode === 'individual' ? (
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={sending}
+              style={{
+                background: '#1e3a8a',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                padding: '10px 20px',
+                fontWeight: 600,
+                cursor: sending ? 'wait' : 'pointer',
+                opacity: sending ? 0.6 : 1,
+              }}
+            >
+              {sending ? 'Enviando…' : 'Enviar email'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmingGroupSend(true)}
+              disabled={
+                sending || !selectedGroupId || !groupPreview?.count || !subject.trim() || !body.trim()
+              }
+              style={{
+                background: '#b45309',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                padding: '10px 20px',
+                fontWeight: 600,
+                cursor:
+                  sending || !selectedGroupId || !groupPreview?.count
+                    ? 'not-allowed'
+                    : 'pointer',
+                opacity:
+                  sending || !selectedGroupId || !groupPreview?.count ? 0.5 : 1,
+              }}
+            >
+              {sending
+                ? `Enviando a ${groupPreview?.count || '?'} destinatarios…`
+                : `Enviar a ${groupPreview?.count || 0} destinatarios`}
+            </button>
+          )}
           {sendResult ? (
             <span
               style={{
@@ -537,7 +807,124 @@ const NotificationsView = ({ onBack }) => {
                 : `✗ Error: ${sendResult.error}`}
             </span>
           ) : null}
+          {groupSendResult ? (
+            <div
+              style={{
+                width: '100%',
+                marginTop: 12,
+                padding: 12,
+                borderRadius: 6,
+                background: groupSendResult.ok ? '#ecfdf5' : '#fef2f2',
+                border: `1px solid ${groupSendResult.ok ? '#6ee7b7' : '#fca5a5'}`,
+                fontSize: 13,
+                color: groupSendResult.ok ? '#065f46' : '#991b1b',
+              }}
+            >
+              {groupSendResult.ok ? (
+                <>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                    ✓ Envío completado · {Math.round(groupSendResult.duration_ms / 100) / 10}s
+                  </div>
+                  <div>
+                    Grupo: <strong>{groupSendResult.group?.label}</strong>
+                  </div>
+                  <div>
+                    Intentados: {groupSendResult.attempted} · Enviados:{' '}
+                    <strong>{groupSendResult.sent}</strong> · Fallidos:{' '}
+                    <strong>{groupSendResult.failed}</strong>
+                  </div>
+                  {groupSendResult.errors?.length > 0 ? (
+                    <details style={{ marginTop: 8 }}>
+                      <summary style={{ cursor: 'pointer' }}>
+                        Ver {groupSendResult.errors.length} errores
+                      </summary>
+                      <ul style={{ margin: '4px 0 0 20px', fontSize: 12 }}>
+                        {groupSendResult.errors.map((e, i) => (
+                          <li key={i}>
+                            {e.to}: {e.error}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  ) : null}
+                </>
+              ) : (
+                <span>✗ Error: {groupSendResult.error}</span>
+              )}
+            </div>
+          ) : null}
         </div>
+
+        {/* Modal de confirmación para envío a grupo. */}
+        {confirmingGroupSend ? (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 100,
+            }}
+            onClick={() => setConfirmingGroupSend(false)}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: '#fff',
+                borderRadius: 8,
+                padding: 24,
+                maxWidth: 480,
+                width: '90%',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+              }}
+            >
+              <h3 style={{ marginTop: 0, fontSize: 18 }}>⚠️ Confirmar envío masivo</h3>
+              <p style={{ fontSize: 14, color: '#374151' }}>
+                Vas a enviar <strong>{groupPreview?.count}</strong> emails al grupo{' '}
+                <strong>{groups.find(g => g.id === selectedGroupId)?.label}</strong>.
+              </p>
+              <p style={{ fontSize: 13, color: '#6b7280' }}>
+                Esta acción no se puede deshacer. Verifica que el asunto y el cuerpo estén
+                correctos; cada destinatario recibirá <code>{'{{name}}'}</code> reemplazado con
+                su propio nombre.
+              </p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingGroupSend(false)}
+                  style={{
+                    background: '#fff',
+                    border: '1px solid #d1d5db',
+                    borderRadius: 6,
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSendGroup}
+                  style={{
+                    background: '#b45309',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
+                  Confirmar envío a {groupPreview?.count}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {/* Historial */}

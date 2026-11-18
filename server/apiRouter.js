@@ -332,6 +332,26 @@ router.get(
   adminAuth.requireOperator(),
   opsSendNotification.listUserListings
 );
+// XOLOLO 2026-11-18 — Mejora B: envío a grupos.
+router.get(
+  '/admin/ops/notification-groups',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsSendNotification.listGroups
+);
+router.get(
+  '/admin/ops/notification-groups/:groupId/preview',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsSendNotification.previewGroup
+);
+router.post(
+  '/admin/ops/send-notification/group',
+  limits.ops,
+  adminAuth.requireOperator(),
+  bodyParser.json(),
+  opsSendNotification.sendGroup
+);
 router.delete(
   '/admin/ops/users/:userId/notes/:noteId',
   limits.ops,
