@@ -56,6 +56,7 @@ const opsUsersExport = require('./api/ops-users-export');
 const opsUsersActions = require('./api/ops-users-actions');
 const opsUsersBulk = require('./api/ops-users-bulk');
 const opsAuditLog = require('./api/ops-audit-log');
+const opsSendNotification = require('./api/ops-send-notification');
 const team = require('./api/team');
 const teamAs = require('./api/team-as');
 const teamAsUploadImage = require('./api/team-as-upload-image');
@@ -288,6 +289,17 @@ router.post(
   adminAuth.requireOperator(),
   bodyParser.json(),
   opsUsersNotes.create
+);
+// XOLOLO 2026-11-18 — endpoint ad-hoc para que un operador envíe
+// un email directo a cualquier user (resincronizaciones, avisos
+// de bug, comunicaciones puntuales). Ver docs en
+// server/api/ops-send-notification.js.
+router.post(
+  '/admin/ops/send-notification',
+  limits.ops,
+  adminAuth.requireOperator(),
+  bodyParser.json(),
+  opsSendNotification.send
 );
 router.delete(
   '/admin/ops/users/:userId/notes/:noteId',
