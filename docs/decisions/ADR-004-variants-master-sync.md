@@ -1,9 +1,10 @@
 # ADR-004: Sincronización de stock master ↔ matriz de variantes
 
 Fecha: 2026-11-17
-Status: **ACTIVA — en implementación**
+Status: **ACTIVA — implementada y validada en producción**
 Owner: @earias
 Supersede: n/a
+Última revisión: 2026-11-18 (Fase 6 — cierre)
 
 ## Decisión
 
@@ -151,10 +152,69 @@ listings.
 
 ## Estado por fase
 
-- [x] Fase 0: ADR + LOCKED (este commit)
-- [ ] Fase 1: Debug siblings faltantes
-- [ ] Fase 2: Fix master stock sync
-- [ ] Fase 3: Fix spawn siblings
-- [ ] Fase 4: UI preventiva
-- [ ] Fase 5: Smoke tests
-- [ ] Fase 6: QA + docs cierre
+- [x] Fase 0: ADR + LOCKED + scripts diag — commit `a5ee9c31e`
+- [x] Fase 1: Debug siblings faltantes — logs del browser revelaron
+  `image-invalid` (Sharetribe rechaza compartir imageIds).
+- [x] Fase 2: Fix master stock sync — commit `5eb407e5f`
+- [x] Fase 2b: oldTotal del master desde response raw — commit `9d1fa824b`
+- [x] Fase 3: Fix spawn siblings sin images + fallback galería — commit `2ab5f79f1`
+- [x] Fase 3b: publishDraft con include + retry stock sibling — commit `154e82726`
+- [x] Fase 3c: Retry robusto + mapa raw stock siblings existentes — commit `77b33df32`
+- [x] Fase 4: UI preventiva (banner Precio + badge Principal) — commit `8d48c0464`
+- [x] Fase 5: Smoke tests (13 nuevos, 39/39 total) — este commit
+- [x] Fase 6: Docs cierre — este commit
+
+## Verificación QA en producción (2026-11-17/18)
+
+Caso real: Traje de baño rojo de dos piezas
+`6adbbafd-9dbd-477b-80a5-227f1f049e76`.
+
+**Antes del fix:**
+- Master `currentStock = 98`
+- `publicData.variantsMatrix` dice `Blanco/XS = 20`
+- `0 siblings` creados (fallaban con `image-invalid`)
+- Buyer veía 98 en stock del master; siblings inexistentes.
+
+**Después del fix (validado por diag + logs browser):**
+- Master `currentStock = 20` (sincronizado con fila Blanco/XS)
+- 3 siblings creados: Rojo/XS = 20, Rojo/S = 20, Blanco/S = 20
+- `[variants-sync] done {synced:3, masterUpdated, siblingsCreated:3, siblingsFailed:0}`
+- UI del tab Precio e inventario muestra banner "este producto tiene
+  variantes" y campo Inventario deshabilitado.
+- UI del tab Variantes muestra badge `PRINCIPAL` en la fila
+  Blanco/XS.
+
+## Patrones replicables
+
+Dos patrones aprendidos que servirán para futuros thunks que
+toquen Sharetribe:
+
+1. **`currentStock` siempre leer del response raw**, no de Redux.
+   `addMarketplaceEntities` no garantiza normalizar `currentStock`
+   en `attributes.quantity`. Shape confiable:
+   `response.data.included[].type === 'stock'` con
+   `attributes.quantity`.
+
+2. **`compareAndSet` con retry**: si el primer intento con
+   `oldTotal` presumido falla con 409, hacer `show` del listing
+   para leer el stock real y reintentar con `oldTotal` correcto.
+   Idempotente (máx 2 intentos). Evita fallos silenciosos cuando
+   el shape de stock cambia o hay race condition.
+
+Ambos patrones están documentados en los comentarios `XOLOLO
+LOCKED — ADR-004` del archivo
+`src/containers/EditListingPage/EditListingPage.duck.js`.
+
+## Cómo encender
+
+No requiere flag ni acción adicional. El fix se aplica a cualquier
+guardado del tab Variantes de cualquier listing. Los listings que
+ya tenían el bug (siblings con stock=undefined) se corrigen
+automáticamente al re-guardar el panel.
+
+## Rollback
+
+Revertir commits en orden inverso (`8d48c0464` → `77b33df32` →
+`154e82726` → `2ab5f79f1` → `9d1fa824b` → `5eb407e5f`). El código
+previo deja el master con stock stale pero no corrompe listings
+ajenos.
