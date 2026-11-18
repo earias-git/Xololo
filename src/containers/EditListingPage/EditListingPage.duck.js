@@ -691,15 +691,49 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
           dispatch(addMarketplaceEntities(createRes));
           const newListingId = createRes.data.data.id;
 
+          // XOLOLO LOCKED — ADR-004 Fase 3b: pedir currentStock
+          // también en modo propio (antes solo lo pedía workspace).
+          // Necesario para leer el stock implícito del sibling
+          // recién publicado y pasarlo como oldTotal al setStock.
           const pubRes = workspace
             ? await publishDraftAs(workspace.sellerId, newListingId.uuid, queryParams)
-            : await sdk.ownListings.publishDraft({ id: newListingId }, { expand: true });
+            : await sdk.ownListings.publishDraft({ id: newListingId }, queryParams);
           dispatch(addMarketplaceEntities(pubRes));
 
-          if (typeof row.stock === 'number' && row.stock > 0) {
-            await dispatch(
-              setStockThunk({ listingId: newListingId, oldTotal: null, newTotal: row.stock })
-            ).unwrap();
+          // XOLOLO LOCKED — ADR-004 Fase 3b: leer oldTotal del
+          // response raw del publishDraft. El sibling recién
+          // creado puede tener stock=0 implícito (no null). Si
+          // pasamos oldTotal:null, Sharetribe responde 409 porque
+          // el stock YA existe (en 0 o lo que Sharetribe asigne).
+          const newSibIncluded = pubRes.data?.included || [];
+          const newSibStockRel = pubRes.data?.data?.relationships?.currentStock?.data;
+          const newSibStockId = newSibStockRel?.id?.uuid || newSibStockRel?.id;
+          const newSibStockEntity = newSibIncluded.find(
+            i => i.type === 'stock' && (i.id?.uuid || i.id) === newSibStockId
+          );
+          const newSibOldTotal =
+            typeof newSibStockEntity?.attributes?.quantity === 'number'
+              ? newSibStockEntity.attributes.quantity
+              : null;
+
+          if (typeof row.stock === 'number' && row.stock !== newSibOldTotal) {
+            try {
+              await dispatch(
+                setStockThunk({
+                  listingId: newListingId,
+                  oldTotal: newSibOldTotal,
+                  newTotal: row.stock,
+                })
+              ).unwrap();
+            } catch (stockErr) {
+              log.error(stockErr, 'sync-variants-sibling-stock-failed', {
+                listingId: newListingId?.uuid,
+                oldTotalSent: newSibOldTotal,
+                newTotalSent: row.stock,
+              });
+              // No reventamos el sync — el sibling queda creado
+              // pero con stock=0 hasta siguiente edición.
+            }
           }
           siblingsCreated += 1;
         }
