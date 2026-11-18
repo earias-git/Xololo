@@ -89,6 +89,54 @@ describe('landingListingsService · smoke', () => {
     expect(productIds).not.toContain('sib2');
   });
 
+  test('used bucket incluye listings de casual_reseller (señal c)', async () => {
+    // Un seller casual_reseller publica listings sin
+    // condition='used' ni taxCode='exento_9_iv' explícitos pero
+    // igual deben aparecer en el bucket used.
+    const casualAuthor = {
+      id: { uuid: 'casual-1' },
+      type: 'user',
+      attributes: {
+        profile: {
+          displayName: 'kike usado',
+          publicData: { sellerMode: 'casual_reseller' },
+        },
+      },
+    };
+    const normalAuthor = {
+      id: { uuid: 'normal-1' },
+      type: 'user',
+      attributes: {
+        profile: { displayName: 'tienda', publicData: {} },
+      },
+    };
+    const listingFrom = (id, authorId) => ({
+      id: { uuid: id },
+      type: 'listing',
+      attributes: {
+        title: id,
+        publicData: { listingType: 'product' },
+      },
+      relationships: { author: { data: { id: { uuid: authorId }, type: 'user' } } },
+    });
+
+    mockIsdk.listings.setPages([
+      {
+        data: [
+          listingFrom('guantes', 'casual-1'),
+          listingFrom('nuevo-normal', 'normal-1'),
+        ],
+        included: [casualAuthor, normalAuthor],
+      },
+    ]);
+    const { getLandingListings } = require('../api-util/landingListingsService');
+    const payload = await getLandingListings();
+
+    const usedIds = payload.used.data.map(l => l.id.uuid);
+    expect(usedIds).toContain('guantes');
+    expect(usedIds).not.toContain('nuevo-normal');
+  });
+
   test('used bucket filtra por condition O taxCode', async () => {
     mockIsdk.listings.setPages([
       {

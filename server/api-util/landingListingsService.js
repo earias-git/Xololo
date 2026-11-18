@@ -49,10 +49,26 @@ const isSibling = l => {
 
 const isEvent = l => l.attributes?.publicData?.isEvent === true;
 
-const isUsedByCondition = l => l.attributes?.publicData?.condition === 'used';
-
-const isUsedByTaxCode = l =>
-  l.attributes?.publicData?.taxClassification?.code === 'exento_9_iv';
+// XOLOLO: un listing es "usado" por 3 señales (OR), coincidentes
+// con las de src/ducks/landingListings.duck.js#isUsedListing:
+//   a) publicData.condition === 'used'
+//   b) publicData.taxClassification.code === 'exento_9_iv'
+//   c) author.profile.publicData.sellerMode === 'casual_reseller'
+// La señal (c) necesita el author (viene en included cuando la
+// query incluye `author`). Si no llegó el author, cae en (a)+(b)
+// (fallback defensivo).
+const isUsedListing = (l, authorsById) => {
+  const pd = l.attributes?.publicData || {};
+  if (pd.condition === 'used') return true;
+  if (pd.taxClassification?.code === 'exento_9_iv') return true;
+  if (authorsById) {
+    const authorId = l.relationships?.author?.data?.id?.uuid;
+    const author = authorId ? authorsById.get(authorId) : null;
+    const sellerMode = author?.attributes?.profile?.publicData?.sellerMode;
+    if (sellerMode === 'casual_reseller') return true;
+  }
+  return false;
+};
 
 // -------- query paginada --------
 // Pagina hasta reunir `targetCount` listings válidos (tras filtro) o
@@ -64,6 +80,10 @@ const fetchFilteredBucket = async ({ isdk, query, isValidFn, targetCount = 50, m
   const dataOut = [];
   const includedOut = [];
   const seenIncludedIds = new Set();
+  // Mapa autor por id, se va alimentando con cada página. Lo
+  // pasamos al predicado para que pueda consultar
+  // `author.profile.publicData.sellerMode` (señal (c) de usado).
+  const authorsById = new Map();
 
   for (let page = 1; page <= maxPages && dataOut.length < targetCount; page++) {
     let resp;
@@ -80,8 +100,17 @@ const fetchFilteredBucket = async ({ isdk, query, isValidFn, targetCount = 50, m
     const included = resp.data?.included || [];
     const meta = resp.data?.meta || {};
 
+    // Alimenta el índice de autores ANTES del filter para que
+    // isValidFn tenga disponible profile.publicData.sellerMode.
+    for (const inc of included) {
+      if (inc.type === 'user') {
+        const uid = inc.id?.uuid || inc.id;
+        if (uid) authorsById.set(uid, inc);
+      }
+    }
+
     for (const l of data) {
-      if (!isValidFn(l)) continue;
+      if (!isValidFn(l, authorsById)) continue;
       if (dataOut.length >= targetCount) break;
       dataOut.push(l);
     }
@@ -110,6 +139,14 @@ const COMMON_FIELDS = {
     'variants.listing-card',
     'variants.listing-card-2x',
   ],
+  // XOLOLO: pedir sellerMode del author para la señal (c) de usado.
+  // Si no se pide, el casual_reseller no se detecta y sus listings
+  // sin condition='used' quedan fuera del bucket used.
+  'fields.user': [
+    'profile.displayName',
+    'profile.abbreviatedName',
+    'profile.publicData.sellerMode',
+  ],
   'imageVariant.listing-card': 'w:400;h:400;fit:crop',
   'imageVariant.listing-card-2x': 'w:800;h:800;fit:crop',
   sort: 'createdAt', // más nuevos primero (Sharetribe doc says createdAt = DESC)
@@ -124,18 +161,18 @@ const getLandingListings = async () => {
     throw new Error('integration_api_missing');
   }
 
-  // 3 buckets paralelos. Cada uno filtrado para que el cliente reciba
-  // solo lo que debe pintar.
+  // 3 buckets paralelos. Cada predicado recibe (listing, authorsById)
+  // para que pueda consultar `author.profile.publicData.sellerMode`
+  // si lo necesita (señal (c) de usado).
   const [products, services, used] = await Promise.all([
-    // Products: no siblings, no events. Incluye new+used? Sí, el
-    // bucket products trae todo y el selector filterea used aparte.
-    // Aquí filtramos solo siblings/events para mantener compat con
-    // los selectores existentes (selectFeaturedProducts tambien
-    // filtra used, pero necesita verlos para su propio selectFeaturedUsed).
+    // Products: no siblings, no events. El selector del cliente
+    // (selectFeaturedProducts) seguirá filtrando los usados para
+    // su propio riel; aquí solo quitamos siblings y events (los
+    // events van al bucket services).
     fetchFilteredBucket({
       isdk,
       query: { ...COMMON_FIELDS, pub_listingType: 'product' },
-      isValidFn: l => !isSibling(l),
+      isValidFn: l => !isSibling(l) && !isEvent(l),
       targetCount: 50,
     }),
     fetchFilteredBucket({
@@ -145,14 +182,12 @@ const getLandingListings = async () => {
       isValidFn: l => !isSibling(l),
       targetCount: 30,
     }),
-    // Used: filtro cliente más estricto (condition='used' O exento_9_iv).
-    // El pub_condition=used de Sharetribe es no-op (field no registrado)
-    // → nos apoyamos 100% en el filtro server.
+    // Used: 3 señales (condition, taxCode, casual_reseller). Mismas
+    // que el landing original aplicaba client-side.
     fetchFilteredBucket({
       isdk,
       query: { ...COMMON_FIELDS, pub_listingType: 'product' },
-      isValidFn: l =>
-        !isSibling(l) && (isUsedByCondition(l) || isUsedByTaxCode(l)),
+      isValidFn: (l, authorsById) => !isSibling(l) && isUsedListing(l, authorsById),
       targetCount: 30,
     }),
   ]);
