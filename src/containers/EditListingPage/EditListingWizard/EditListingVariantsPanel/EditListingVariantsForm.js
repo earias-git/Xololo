@@ -60,6 +60,10 @@ const EditListingVariantsForm = props => {
     images,
     onImageUpload,
     onRemoveImage,
+    // XOLOLO LOCKED — ADR-004 Fase 4: valores de los atributos del
+    // master (p.ej. {color:'Blanco', talla:'XS'}) para marcar en el
+    // matrix la fila que corresponde al listing principal.
+    masterVariantValues,
   } = props;
 
   const { createListingDraftError, updateListingError } = fetchErrors || {};
@@ -285,9 +289,39 @@ const EditListingVariantsForm = props => {
             {matrix.map(combo => {
               const k = rowKey(combo);
               const r = rowData[k] || {};
+              // XOLOLO LOCKED — ADR-004 Fase 4: ¿esta fila es la
+              // que corresponde al listing master? (match EXACTO
+              // de los valores del combo contra masterVariantValues
+              // en el orden de axesActive).
+              const isMasterRow =
+                masterVariantValues &&
+                axesActive.length > 0 &&
+                axesActive.every((ax, i) => masterVariantValues[ax] === combo[i]);
               return (
                 <tr key={k}>
-                  <td className={css.rowLabel}>{combo[0]}</td>
+                  <td className={css.rowLabel}>
+                    {combo[0]}
+                    {isMasterRow ? (
+                      <span
+                        title="Esta variante es el anuncio principal. Su stock pisa el del tab Precio e inventario."
+                        style={{
+                          display: 'inline-block',
+                          marginLeft: 6,
+                          padding: '1px 6px',
+                          background: '#1e3a8a',
+                          color: '#fff',
+                          fontSize: 10,
+                          fontWeight: 600,
+                          borderRadius: 999,
+                          letterSpacing: '0.3px',
+                          textTransform: 'uppercase',
+                          verticalAlign: 'middle',
+                        }}
+                      >
+                        Principal
+                      </span>
+                    ) : null}
+                  </td>
                   {twoAxes ? <td className={css.rowLabel}>{combo[1]}</td> : null}
                   <td>
                     <input

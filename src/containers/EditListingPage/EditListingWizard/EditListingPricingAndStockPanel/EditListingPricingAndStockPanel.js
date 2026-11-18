@@ -245,6 +245,17 @@ const EditListingPricingAndStockPanel = props => {
           sellerMode={getSellerMode(effectiveUser)}
           isEvent={publicData?.isEvent === true}
           eventCapacity={publicData?.event?.capacity || null}
+          /* XOLOLO LOCKED — ADR-004 Fase 4: si el listing es master
+             de un grupo de variantes, el stock se gestiona desde el
+             tab Variantes (la fila del matrix que matchea los
+             atributos del master pisa este valor). Deshabilitamos
+             el input + banner informativo. */
+          isVariantMaster={
+            publicData?.isVariantMaster === true &&
+            !!publicData?.variantGroupId &&
+            Array.isArray(publicData?.variantsMatrix) &&
+            publicData.variantsMatrix.length > 0
+          }
           onSubmit={values => {
             const { price, stockTypeInfinity } = values;
 

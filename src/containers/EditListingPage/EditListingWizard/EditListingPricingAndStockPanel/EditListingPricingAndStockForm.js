@@ -160,6 +160,7 @@ export const EditListingPricingAndStockForm = props => (
         sellerMode,
         isEvent,
         eventCapacity,
+        isVariantMaster,
       } = formRenderProps;
 
       const isCasual = sellerMode === SELLER_MODES.CASUAL_RESELLER;
@@ -352,6 +353,32 @@ export const EditListingPricingAndStockForm = props => (
             />
           ) : null}
 
+          {/* XOLOLO LOCKED — ADR-004 Fase 4: banner preventivo si
+              el listing es master de variantes. El stock se
+              gestiona desde el tab Variantes (la fila del matrix
+              que matchea los atributos del master pisa este
+              valor). Evita confusión del seller. */}
+          {hasStockManagement && !isEvent && isVariantMaster ? (
+            <div
+              style={{
+                marginTop: 16,
+                marginBottom: 8,
+                padding: 12,
+                background: '#eef2ff',
+                border: '1px solid #c7d2fe',
+                borderRadius: 8,
+                color: '#1e3a8a',
+                fontSize: 13,
+                lineHeight: 1.4,
+              }}
+            >
+              <strong>ℹ️ Este producto tiene variantes activas.</strong>{' '}
+              El inventario se gestiona desde el tab <strong>Variantes</strong>;
+              la fila que coincide con los atributos de este anuncio principal
+              (talla + color) pisa el valor que pongas aquí.
+            </div>
+          ) : null}
+
           {hasStockManagement && !isEvent ? (
             <FieldTextInput
               className={css.input}
@@ -364,6 +391,7 @@ export const EditListingPricingAndStockForm = props => (
               type="number"
               min={0}
               validate={stockValidator}
+              disabled={isVariantMaster}
               onWheel={e => {
                 // fix: number input should not change value on scroll
                 if (e.target === document.activeElement) {

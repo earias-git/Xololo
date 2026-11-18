@@ -264,6 +264,10 @@ const EditListingVariantsPanel = props => {
         images={images}
         onImageUpload={onImageUpload}
         onRemoveImage={onRemoveImage}
+        /* XOLOLO LOCKED — ADR-004 Fase 4: valores del master
+           (talla + color + lo que aplique) para marcar su fila
+           en el matrix con el badge "Principal". */
+        masterVariantValues={getVariantValues(listing)}
       />
     </main>
   );
