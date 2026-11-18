@@ -263,8 +263,8 @@ Zero migración destructiva.
 
 ## Estado por fase
 
-- [x] Fase 0: ADR + decisión (este commit)
-- [ ] Fase 1: Taxonomía Sector Verde — [docs/TAXONOMIA_SECTOR_VERDE.md](../TAXONOMIA_SECTOR_VERDE.md)
-- [ ] Fase 2: Modelo Comunidades V1 — docs/MODEL_COMMUNITIES_V1.md
+- [x] Fase 0: ADR + decisión
+- [~] Fase 1: Taxonomía Sector Verde — [docs/TAXONOMIA_SECTOR_VERDE.md](../TAXONOMIA_SECTOR_VERDE.md) (draft; pendiente validación OPF)
+- [x] Fase 2: Modelo Comunidades V1 — [docs/MODEL_COMMUNITIES_V1.md](../MODEL_COMMUNITIES_V1.md)
 - [ ] Fase 3: Validación fiscal con contador
 - [ ] Fase 4-7: Implementación
