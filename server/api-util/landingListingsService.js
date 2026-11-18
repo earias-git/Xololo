@@ -1,17 +1,18 @@
-// XOLOLO 2026-11-18 — service server-side para la landing.
+// XOLOLO LOCKED — ADR-005: Hidratación del landing vía endpoint
+// server-side. Ver docs/decisions/ADR-005-landing-hydration.md.
 //
-// Propósito: eliminar la dependencia del landing de la paginación
-// de Sharetribe (que se saturaba de siblings tras ADR-004). El
-// server pagina lo necesario, aplica filtros de negocio y devuelve
-// al cliente SOLO los listings válidos (sin siblings, sin events
-// en el bucket products, sin usados fuera del bucket used, etc.).
+// Reglas duras (no cambiar sin ADR update):
+//   1. Las 3 señales de "usado" (condition, taxCode, casual_reseller)
+//      viven aquí en isUsedListing() y deben coincidir con las de
+//      SearchPage.duck.js (filtro condition=used del /s).
+//   2. Shape de retorno {products, services, used} con data+included
+//      es contrato — los selectores del cliente lo asumen.
+//   3. El predicado isValidFn recibe (listing, authorsById) para que
+//      pueda filtrar por señales que dependen del author.
+//   4. Endpoint es PÚBLICO sin auth; NO exponer expand=true ni
+//      datos sensibles.
 //
-// Cache in-memory 60s por bucket para no hammerear Sharetribe cuando
-// varios buyers cargan el landing simultáneamente. Se invalida solo.
-//
-// Shape de retorno idéntico al que tenía el thunk client-side, para
-// que `src/ducks/landingListings.duck.js` solo cambie el fetcher sin
-// tocar selectores.
+// Smoke tests obligatorios: server/smoke/landingListings.smoke.test.js
 
 const { getIntegrationSdk } = require('./integrationSdk');
 

@@ -190,3 +190,11 @@ código marcado `XOLOLO LOCKED`, leer el ADR correspondiente.
   `setStockThunk` desde este thunk requiere `oldTotal` real (no
   `null` cuando el master está published). **NO tocar**
   `setStockThunk` ni `replicateMasterSharedFieldsThunk`.
+- **ADR-005** — Hidratación del landing vía endpoint server-side.
+  La LandingPage pega a `GET /api/landing-listings`; zero queries
+  Sharetribe directo desde el cliente. Las 3 señales de "usado"
+  (condition, taxCode, casual_reseller) viven en
+  `server/api-util/landingListingsService.js#isUsedListing` y
+  deben coincidir con la versión del cliente (SearchPage).
+  Cambios al shape de retorno o a las señales requieren actualizar
+  este ADR + smoke tests.

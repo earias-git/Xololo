@@ -4,14 +4,17 @@ import { types as sdkTypes } from '../util/sdkLoader';
 import { storableError } from '../util/errors';
 import { apiBaseUrl } from '../util/api';
 
-// XOLOLO: fetch de los últimos listings publicados (productos y servicios)
-// para el landing. Se dispara al montar la LandingPage y alimenta las
-// secciones "Productos destacados" y "Servicios populares" con datos
-// reales del marketplace en vez de los placeholders de config.
+// XOLOLO LOCKED — ADR-005: la LandingPage hidrata vía un solo
+// fetch al endpoint propio /api/landing-listings. El filtrado
+// (siblings, events, 3 señales de usado) vive 100% en el server.
+// Ver docs/decisions/ADR-005-landing-hydration.md.
 //
-// Es client-side por ahora (no SSR) — para SEO/first paint conviene migrar
-// a loadData en una iteración futura. Pero visualmente el usuario ve las
-// listings reales apenas hidrata.
+// Cambios al fetcher o al shape {products, services, used} requieren
+// actualizar el ADR y los smoke tests
+// (server/smoke/landingListings.smoke.test.js).
+//
+// Es client-side por ahora (no SSR) — para SEO/first paint conviene
+// migrar a loadData en una iteración futura.
 
 // XOLOLO 2026-11-18 — RECENT_LISTINGS_LIMIT ya no se usa. El
 // server pagina lo necesario y devuelve el shape listo (ver
