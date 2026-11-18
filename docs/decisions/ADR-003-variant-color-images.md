@@ -1,9 +1,10 @@
 # ADR-003: Foto por color en variantes de Moda
 
 Fecha: 2026-11-17
-Status: **ACTIVA** (en implementación por fases)
+Status: **ACTIVA — implementada, flag OFF en producción**
 Owner: @earias
 Supersede: n/a
+Última revisión: 2026-11-17 (Fase 6 — cierre)
 
 ## Decisión
 
@@ -114,10 +115,50 @@ los siblings.
 
 ## Estado por fase
 
-- [ ] Fase 0: ADR + flag + LOCKED notes (este commit)
-- [ ] Fase 1: helpers puros + tests unitarios
-- [ ] Fase 2: wizard UI
-- [ ] Fase 3: lectura pull en ListingPage
-- [ ] Fase 4: smoke anti-Oxford + tests de integración
-- [ ] Fase 5: QA local + rollout con byGastelum
-- [ ] Fase 6: docs de cierre
+- [x] Fase 0: ADR + flag + LOCKED notes — commit `743f7e3dd`
+- [x] Fase 1: helpers puros + tests unitarios (99/99) — commit `04b1005fb`
+- [x] Fase 2: wizard UI con slot por color — commit `2a6ecfdb7`
+  - Fix lectura imageId del payload — commit `f171727f4`
+- [x] Fase 3: lectura pull en ListingPage — commit `82e66342f`
+  - Fix swap galería en master al cambiar color — commit `5c294c644`
+- [x] Fase 4: smoke anti-Oxford (7 tests, 26/26 suite) — commit `3413eb94b`
+- [x] Fase 5: QA local con chamarra verde — validado 2026-11-17
+- [x] Fase 6: docs de cierre — este commit
+
+## Cómo encender en producción
+
+El flag `REACT_APP_FEATURE_VARIANT_COLOR_IMAGES` **está en OFF** por
+default en `.env-template`. Para encenderlo en Render (prod):
+
+1. Dashboard de Render → servicio `xololo-marketplace` → Environment.
+2. Agregar variable: `REACT_APP_FEATURE_VARIANT_COLOR_IMAGES=true`.
+3. Save Changes → Render reinicia el servicio solo (~1 min).
+4. Verificar en una pestaña incógnita que:
+   - Entrando a un master de moda con variantes color → el selector
+     funciona y la galería swap al cambiar color.
+   - Entrando a un sibling directo → la galería muestra la foto
+     correcta del color del sibling.
+   - Un listing moda sin eje color → sin cambios.
+   - Un listing fuera de moda → sin cambios.
+
+Para apagarlo: borrar la variable o setear `false` → restart
+automático. Los datos `publicData.variantValueImages` ya guardados
+permanecen; el feature se reactiva al encender el flag otra vez
+(zero pérdida).
+
+## Verificación QA (chamarra verde, 2026-11-17)
+
+Caso real: `/l/chamarra-verde-para-hombre-talla-m-oto-o-invierno/6af2188d-…`
+
+- Seller subió 4 fotos (Verde, Blanco, Rojo, Rosa) desde el wizard
+  de Variantes. Todas quedaron attachadas al master.
+- Buyer en incógnito: al cambiar el chip de color en la ListingPage
+  del master, la galería hace swap a la foto correspondiente.
+- Buyer en incógnito: al abrir un sibling directo (ej. via selector
+  de tienda), la galería muestra la foto del color del sibling como
+  primera.
+- `replicateMasterSharedFieldsThunk` **no fue invocado** en ningún
+  guardado del panel de variantes (confirmado por ausencia del log
+  `replicate-overshoot` y por inspección del thunk, que requiere
+  `REPLICABLE_TABS` y esos no se tocaron).
+- Los smoke anti-Oxford pasan: 26/26.
