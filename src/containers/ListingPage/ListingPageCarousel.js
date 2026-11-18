@@ -350,6 +350,12 @@ export const ListingPageComponent = props => {
               <SectionGallery
                 listing={currentListing}
                 variantPrefix={config.layout.listingImage.variantPrefix}
+                /* XOLOLO LOCKED — ADR-004 Fase 3: siblings de
+                   variantes no heredan imageIds del master
+                   (Sharetribe los rechaza). Si el sibling no tiene
+                   imágenes propias, usar las del master como base
+                   de galería. */
+                fallbackImages={!isMaster ? variantMaster?.images : undefined}
                 /* XOLOLO LOCKED — ADR-003 Fase 3: foto por color.
                    Dos escenarios:
                    (a) El listing visible es SIBLING → el color viene

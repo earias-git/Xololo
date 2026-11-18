@@ -27,8 +27,18 @@ const prependExternalImage = (images, externalImage) => {
 };
 
 const SectionGallery = props => {
-  const { listing, variantPrefix, prependImage } = props;
-  const images = prependExternalImage(listing.images, prependImage);
+  const { listing, variantPrefix, prependImage, fallbackImages } = props;
+  // XOLOLO LOCKED — ADR-004 Fase 3: si el listing (sibling) no tiene
+  // imágenes propias, usar las del master como base. Zero write —
+  // solo lectura. El master vive en el store gracias a
+  // fetchVariantSiblings (ADR-003 Fase 3).
+  const baseImages =
+    Array.isArray(listing.images) && listing.images.length > 0
+      ? listing.images
+      : Array.isArray(fallbackImages)
+      ? fallbackImages
+      : listing.images;
+  const images = prependExternalImage(baseImages, prependImage);
   const imageVariants = ['scaled-small', 'scaled-medium', 'scaled-large', 'scaled-xlarge'];
   const thumbnailVariants = [variantPrefix, `${variantPrefix}-2x`, `${variantPrefix}-4x`];
   return (

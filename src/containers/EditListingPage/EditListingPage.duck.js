@@ -481,7 +481,9 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
 
     const workspace = getCurrentWorkspace(state.user?.currentUser);
     const currency = master.attributes?.price?.currency || config.currency;
-    const imageIdsFromMaster = (master.relationships?.images?.data || []).map(i => i.id);
+    // XOLOLO ADR-004 Fase 3: los siblings NO heredan imageIds del
+    // master (Sharetribe los rechaza con image-invalid). La galería
+    // del sibling lee pull del master en runtime.
 
     const imageVariantInfo = getImageVariantInfo(config.layout.listingImage);
     const queryParams = {
@@ -637,13 +639,19 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
           siblingsUpdated += 1;
         } else {
           // Nuevo sibling → createDraft + publish + setStock.
+          //
+          // XOLOLO LOCKED — ADR-004 Fase 3: NO pasar imageIds del
+          // master al sibling. Sharetribe rechaza con 409
+          // 'image-invalid' porque las imágenes pertenecen al
+          // listing al que fueron asignadas; no se pueden
+          // compartir entre listings. El sibling se crea sin
+          // imágenes propias, y la ListingPage en runtime las
+          // jala del master (lectura pull, misma filosofía del
+          // ADR-003). Ver ListingPageCarousel + SectionGallery.
           const payload = buildSiblingPayload(master, {
             variantValues: row.variantValues,
             priceOverride: toMoneyFromNumber(row.priceOverride, currency),
           });
-          if (imageIdsFromMaster.length > 0) {
-            payload.images = imageIdsFromMaster;
-          }
 
           const createRes = workspace
             ? await createDraftAs(workspace.sellerId, payload, queryParams)
