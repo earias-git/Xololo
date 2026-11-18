@@ -423,3 +423,153 @@ export const buildMatrix = (siblings, axes) => {
     cell: (rowVal, colVal) => index.get(`${rowVal}||${colVal == null ? '' : colVal}`) || null,
   };
 };
+
+// ============================================================================
+// XOLOLO LOCKED — ADR-003: Foto por color en variantes de Moda
+// ============================================================================
+//
+// Helpers puros para el feature "foto por color". Reglas duras (ver
+// docs/decisions/ADR-003-variant-color-images.md y AGENTS.md → LOCKED):
+//
+//   1. `variantValueImages` se escribe SOLO en el master, nunca en siblings.
+//   2. ListingPage del sibling hace lectura pull vía
+//      `getColorImageIdForValue(master, value)`.
+//   3. Este módulo NO toca `replicateMasterSharedFieldsThunk` ni los
+//      `publicData` de los siblings.
+//
+// Shape del dato en master.publicData:
+//   variantValueImages: { color: { "<slug>": "<sharetribe-image-id>" } }
+//
+// Modificar cualquier cosa aquí requiere actualizar el ADR y justificar.
+
+const COLOR_AXIS = 'color';
+const FASHION_CATEGORY = 'moda';
+
+/**
+ * Normaliza un valor de eje para usarlo como key en el mapa
+ * variantValueImages. Minúsculas sin acentos, espacios → guion.
+ * "Blanco Roto" → "blanco-roto". "Rojo vino" → "rojo-vino".
+ */
+export const slugifyAxisValue = value => {
+  if (value == null) return '';
+  return String(value)
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
+/**
+ * True si el listing pertenece a la categoría Moda (cualquier
+ * subcategoría). Gate principal del feature "foto por color".
+ */
+export const isFashionCategory = listing => {
+  const cat = listing?.attributes?.publicData?.categoryLevel1;
+  return cat === FASHION_CATEGORY;
+};
+
+/**
+ * Valores del eje `color` definidos en el master. Devuelve array
+ * vacío si el master no tiene eje color o publicData malformado.
+ * Lee de publicData.variantsMatrix (fuente de verdad del wizard).
+ */
+export const getColorAxisValues = master => {
+  const matrix = master?.attributes?.publicData?.variantsMatrix;
+  if (!Array.isArray(matrix)) return [];
+  const set = new Set();
+  for (const row of matrix) {
+    const v = row?.variantValues?.[COLOR_AXIS];
+    if (v != null && v !== '') set.add(String(v));
+  }
+  return Array.from(set);
+};
+
+/**
+ * Lookup del imageId del color en el master. Acepta tanto el valor
+ * crudo del eje ("Rojo") como un slug ya normalizado ("rojo") —
+ * siempre compara por slug.
+ *
+ * Retorna el imageId (string) o null. Nunca throwea.
+ */
+export const getColorImageIdForValue = (master, value) => {
+  const map = master?.attributes?.publicData?.variantValueImages?.[COLOR_AXIS];
+  if (!map || typeof map !== 'object') return null;
+  const slug = slugifyAxisValue(value);
+  if (!slug) return null;
+  const id = map[slug];
+  return typeof id === 'string' && id.length > 0 ? id : null;
+};
+
+/**
+ * Actualización inmutable del mapa de fotos por color.
+ * Retorna un NUEVO publicData (no muta el input).
+ *
+ * Si imageId es null/'', borra la entrada del mapa para ese valor.
+ * Si value normaliza a '', retorna el publicData sin cambios.
+ */
+export const setColorImageId = (publicData, value, imageId) => {
+  const slug = slugifyAxisValue(value);
+  if (!slug) return publicData || {};
+  const pd = publicData || {};
+  const prev = pd.variantValueImages || {};
+  const prevColor = prev[COLOR_AXIS] || {};
+  const nextColor = { ...prevColor };
+  if (imageId == null || imageId === '') {
+    delete nextColor[slug];
+  } else {
+    nextColor[slug] = String(imageId);
+  }
+  // Si el mapa de color queda vacío, lo removemos para no dejar
+  // ruido en publicData.
+  const colorKeys = Object.keys(nextColor);
+  const nextMap = { ...prev };
+  if (colorKeys.length === 0) {
+    delete nextMap[COLOR_AXIS];
+  } else {
+    nextMap[COLOR_AXIS] = nextColor;
+  }
+  // Si TODO variantValueImages queda vacío, lo removemos también.
+  const mapKeys = Object.keys(nextMap);
+  const next = { ...pd };
+  if (mapKeys.length === 0) {
+    delete next.variantValueImages;
+  } else {
+    next.variantValueImages = nextMap;
+  }
+  return next;
+};
+
+/**
+ * Purga entradas del mapa de colores cuyo valor ya no está en el
+ * eje color actual del master. Se llama al guardar el panel de
+ * variantes para que un seller que quitó "amarillo" del eje no
+ * deje la foto huérfana en publicData.
+ *
+ * currentColorValues es un array de valores crudos (ej. del
+ * variantsMatrix o del state del wizard). Internamente se
+ * normaliza a slugs para comparar.
+ *
+ * Retorna un NUEVO publicData (inmutable). Si no hay nada que
+ * purgar, retorna la misma referencia del input para no forzar
+ * re-renders innecesarios.
+ */
+export const pruneDanglingColorImages = (publicData, currentColorValues) => {
+  const pd = publicData || {};
+  const map = pd.variantValueImages?.[COLOR_AXIS];
+  if (!map || typeof map !== 'object') return pd;
+  const validSlugs = new Set(
+    (Array.isArray(currentColorValues) ? currentColorValues : [])
+      .map(slugifyAxisValue)
+      .filter(Boolean)
+  );
+  const dangling = Object.keys(map).filter(slug => !validSlugs.has(slug));
+  if (dangling.length === 0) return pd;
+  // Reutilizamos setColorImageId para consistencia del shape.
+  let next = pd;
+  for (const slug of dangling) {
+    next = setColorImageId(next, slug, null);
+  }
+  return next;
+};

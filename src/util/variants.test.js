@@ -19,6 +19,12 @@ import {
   isSearchable,
   filterSearchable,
   selectSiblingsForReplicate,
+  slugifyAxisValue,
+  isFashionCategory,
+  getColorAxisValues,
+  getColorImageIdForValue,
+  setColorImageId,
+  pruneDanglingColorImages,
 } from './variants';
 
 const mkListing = ({ id, publicData = {}, stock = null } = {}) => ({
@@ -527,6 +533,228 @@ describe('variants helpers', () => {
       ];
       const siblings = selectSiblingsForReplicate(all, MASTER_ID, GROUP_A);
       expect(siblings.map(s => s.id.uuid)).toEqual(['sib-a']);
+    });
+  });
+
+  // XOLOLO LOCKED — ADR-003: tests de "Foto por color" en Moda.
+  // Blindaje contra regresiones: helpers puros, inmutabilidad y
+  // gate estricto por categoría + eje.
+  describe('slugifyAxisValue', () => {
+    it('normaliza a minúsculas sin acentos', () => {
+      expect(slugifyAxisValue('Rojo')).toBe('rojo');
+      expect(slugifyAxisValue('ÁZUL')).toBe('azul');
+      expect(slugifyAxisValue('Café')).toBe('cafe');
+    });
+    it('convierte espacios y caracteres especiales a guiones', () => {
+      expect(slugifyAxisValue('Blanco Roto')).toBe('blanco-roto');
+      expect(slugifyAxisValue('  Rojo   vino  ')).toBe('rojo-vino');
+      expect(slugifyAxisValue('Verde / Lima')).toBe('verde-lima');
+    });
+    it('no deja guiones al inicio o final', () => {
+      expect(slugifyAxisValue('---rojo---')).toBe('rojo');
+      expect(slugifyAxisValue('!!!verde!!!')).toBe('verde');
+    });
+    it('retorna "" para inputs vacíos o nullish', () => {
+      expect(slugifyAxisValue('')).toBe('');
+      expect(slugifyAxisValue(null)).toBe('');
+      expect(slugifyAxisValue(undefined)).toBe('');
+      expect(slugifyAxisValue('   ')).toBe('');
+    });
+    it('coerciona no-strings sin romperse', () => {
+      expect(slugifyAxisValue(123)).toBe('123');
+      expect(slugifyAxisValue(true)).toBe('true');
+    });
+  });
+
+  describe('isFashionCategory', () => {
+    const mkCat = cat => ({ attributes: { publicData: { categoryLevel1: cat } } });
+    it('true para moda', () => {
+      expect(isFashionCategory(mkCat('moda'))).toBe(true);
+    });
+    it('false para cualquier otra categoría', () => {
+      expect(isFashionCategory(mkCat('hogar'))).toBe(false);
+      expect(isFashionCategory(mkCat('alimentos'))).toBe(false);
+      expect(isFashionCategory(mkCat('electronica'))).toBe(false);
+    });
+    it('false para listings sin categoría', () => {
+      expect(isFashionCategory(mkCat(undefined))).toBe(false);
+      expect(isFashionCategory({ attributes: { publicData: {} } })).toBe(false);
+      expect(isFashionCategory({})).toBe(false);
+      expect(isFashionCategory(null)).toBe(false);
+    });
+    it('case-sensitive estricto (gate duro)', () => {
+      expect(isFashionCategory(mkCat('Moda'))).toBe(false);
+      expect(isFashionCategory(mkCat('MODA'))).toBe(false);
+    });
+  });
+
+  describe('getColorAxisValues', () => {
+    const mkMaster = matrix => ({
+      attributes: { publicData: { variantsMatrix: matrix } },
+    });
+    it('extrae valores únicos del eje color desde variantsMatrix', () => {
+      const master = mkMaster([
+        { variantValues: { talla: 'S', color: 'rojo' } },
+        { variantValues: { talla: 'M', color: 'rojo' } },
+        { variantValues: { talla: 'S', color: 'verde' } },
+      ]);
+      expect(getColorAxisValues(master).sort()).toEqual(['rojo', 'verde']);
+    });
+    it('retorna [] si no hay eje color en las filas', () => {
+      const master = mkMaster([
+        { variantValues: { talla: 'S' } },
+        { variantValues: { talla: 'M' } },
+      ]);
+      expect(getColorAxisValues(master)).toEqual([]);
+    });
+    it('retorna [] si no hay variantsMatrix', () => {
+      expect(getColorAxisValues({ attributes: { publicData: {} } })).toEqual([]);
+      expect(getColorAxisValues({})).toEqual([]);
+      expect(getColorAxisValues(null)).toEqual([]);
+    });
+    it('ignora valores vacíos o nullish', () => {
+      const master = mkMaster([
+        { variantValues: { color: 'rojo' } },
+        { variantValues: { color: '' } },
+        { variantValues: { color: null } },
+        { variantValues: { color: 'verde' } },
+      ]);
+      expect(getColorAxisValues(master).sort()).toEqual(['rojo', 'verde']);
+    });
+  });
+
+  describe('getColorImageIdForValue', () => {
+    const mkMaster = map => ({
+      attributes: { publicData: { variantValueImages: { color: map } } },
+    });
+    it('devuelve imageId hit directo', () => {
+      const master = mkMaster({ rojo: 'img-123', verde: 'img-456' });
+      expect(getColorImageIdForValue(master, 'rojo')).toBe('img-123');
+    });
+    it('matchea por slug (acentos, mayúsculas)', () => {
+      const master = mkMaster({ 'cafe-con-leche': 'img-abc' });
+      expect(getColorImageIdForValue(master, 'Café con Leche')).toBe('img-abc');
+    });
+    it('retorna null para miss', () => {
+      const master = mkMaster({ rojo: 'img-123' });
+      expect(getColorImageIdForValue(master, 'azul')).toBeNull();
+    });
+    it('retorna null para publicData sin el mapa', () => {
+      expect(getColorImageIdForValue({ attributes: { publicData: {} } }, 'rojo')).toBeNull();
+      expect(getColorImageIdForValue({}, 'rojo')).toBeNull();
+      expect(getColorImageIdForValue(null, 'rojo')).toBeNull();
+    });
+    it('retorna null para value vacío/nullish', () => {
+      const master = mkMaster({ rojo: 'img-123' });
+      expect(getColorImageIdForValue(master, '')).toBeNull();
+      expect(getColorImageIdForValue(master, null)).toBeNull();
+      expect(getColorImageIdForValue(master, undefined)).toBeNull();
+    });
+    it('retorna null si el valor del mapa no es string no-vacío', () => {
+      expect(getColorImageIdForValue(mkMaster({ rojo: '' }), 'rojo')).toBeNull();
+      expect(getColorImageIdForValue(mkMaster({ rojo: null }), 'rojo')).toBeNull();
+      expect(getColorImageIdForValue(mkMaster({ rojo: 123 }), 'rojo')).toBeNull();
+    });
+  });
+
+  describe('setColorImageId', () => {
+    it('agrega entrada al mapa cuando no existía', () => {
+      const result = setColorImageId({}, 'Rojo', 'img-1');
+      expect(result).toEqual({ variantValueImages: { color: { rojo: 'img-1' } } });
+    });
+    it('actualiza entrada existente', () => {
+      const pd = { variantValueImages: { color: { rojo: 'img-old' } } };
+      const result = setColorImageId(pd, 'rojo', 'img-new');
+      expect(result.variantValueImages.color.rojo).toBe('img-new');
+    });
+    it('conserva otras entradas del mapa de color', () => {
+      const pd = { variantValueImages: { color: { rojo: 'img-r', verde: 'img-v' } } };
+      const result = setColorImageId(pd, 'azul', 'img-a');
+      expect(result.variantValueImages.color).toEqual({
+        rojo: 'img-r',
+        verde: 'img-v',
+        azul: 'img-a',
+      });
+    });
+    it('borra entrada con imageId null', () => {
+      const pd = { variantValueImages: { color: { rojo: 'img-r', verde: 'img-v' } } };
+      const result = setColorImageId(pd, 'rojo', null);
+      expect(result.variantValueImages.color).toEqual({ verde: 'img-v' });
+    });
+    it('remueve el eje color cuando queda vacío', () => {
+      const pd = { variantValueImages: { color: { rojo: 'img-r' } } };
+      const result = setColorImageId(pd, 'rojo', null);
+      expect(result.variantValueImages).toBeUndefined();
+    });
+    it('no muta el publicData original (inmutable)', () => {
+      const pd = { variantValueImages: { color: { rojo: 'img-r' } } };
+      const snapshot = JSON.parse(JSON.stringify(pd));
+      setColorImageId(pd, 'verde', 'img-v');
+      expect(pd).toEqual(snapshot);
+    });
+    it('conserva otros campos de publicData intactos', () => {
+      const pd = { title: 'foo', categoryLevel1: 'moda', variantValueImages: { color: {} } };
+      const result = setColorImageId(pd, 'rojo', 'img-r');
+      expect(result.title).toBe('foo');
+      expect(result.categoryLevel1).toBe('moda');
+    });
+    it('no hace nada si value normaliza a vacío', () => {
+      const pd = { variantValueImages: { color: { rojo: 'img-r' } } };
+      expect(setColorImageId(pd, '', 'img-x')).toBe(pd);
+      expect(setColorImageId(pd, '   ', 'img-x')).toBe(pd);
+    });
+  });
+
+  describe('pruneDanglingColorImages', () => {
+    it('elimina colores que no están en currentColorValues', () => {
+      const pd = {
+        variantValueImages: { color: { rojo: 'img-r', verde: 'img-v', azul: 'img-a' } },
+      };
+      const result = pruneDanglingColorImages(pd, ['Rojo', 'Verde']);
+      expect(result.variantValueImages.color).toEqual({ rojo: 'img-r', verde: 'img-v' });
+    });
+    it('conserva todos si todos están vigentes', () => {
+      const pd = { variantValueImages: { color: { rojo: 'img-r', verde: 'img-v' } } };
+      const result = pruneDanglingColorImages(pd, ['rojo', 'verde']);
+      expect(result).toBe(pd);
+    });
+    it('retorna misma ref si no hay mapa (evita re-render)', () => {
+      const pd = { title: 'foo' };
+      expect(pruneDanglingColorImages(pd, ['rojo'])).toBe(pd);
+    });
+    it('matchea por slug (normaliza acentos y case antes de comparar)', () => {
+      const pd = { variantValueImages: { color: { 'cafe-con-leche': 'img-c' } } };
+      const result = pruneDanglingColorImages(pd, ['Café con Leche']);
+      expect(result.variantValueImages.color['cafe-con-leche']).toBe('img-c');
+    });
+    it('remueve eje color si TODOS los colores son dangling', () => {
+      const pd = { variantValueImages: { color: { rojo: 'img-r' } } };
+      const result = pruneDanglingColorImages(pd, []);
+      expect(result.variantValueImages).toBeUndefined();
+    });
+    it('no toca otros campos de publicData', () => {
+      const pd = {
+        title: 'foo',
+        categoryLevel1: 'moda',
+        variantValueImages: { color: { rojo: 'img-r', azul: 'img-a' } },
+      };
+      const result = pruneDanglingColorImages(pd, ['rojo']);
+      expect(result.title).toBe('foo');
+      expect(result.categoryLevel1).toBe('moda');
+      expect(result.variantValueImages.color).toEqual({ rojo: 'img-r' });
+    });
+    it('no muta el publicData original', () => {
+      const pd = { variantValueImages: { color: { rojo: 'img-r', azul: 'img-a' } } };
+      const snapshot = JSON.parse(JSON.stringify(pd));
+      pruneDanglingColorImages(pd, ['rojo']);
+      expect(pd).toEqual(snapshot);
+    });
+    it('acepta currentColorValues no-array sin romperse', () => {
+      const pd = { variantValueImages: { color: { rojo: 'img-r' } } };
+      // null/undefined/no-array → considera que no hay colores vigentes
+      // → todo dangling → el eje color se purga.
+      const result = pruneDanglingColorImages(pd, null);
+      expect(result.variantValueImages).toBeUndefined();
     });
   });
 });
