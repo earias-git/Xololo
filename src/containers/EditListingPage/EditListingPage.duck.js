@@ -447,11 +447,27 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
     };
     const preState = getState();
     const preWorkspace = getCurrentWorkspace(preState.user?.currentUser);
+    // Capturamos el stock directo del response para no depender del
+    // shape de Redux (addMarketplaceEntities puede guardar el
+    // currentStock en un path distinto a attributes.quantity).
+    let masterStockFromRehydrate;
     try {
       const rehyRes = preWorkspace
         ? await showListingAs(preWorkspace.sellerId, masterListingId.uuid, rehydrateParams)
         : await sdk.ownListings.show({ id: masterListingId, ...rehydrateParams });
       dispatch(addMarketplaceEntities(rehyRes));
+      // Buscar currentStock en el response raw. Shape Sharetribe:
+      // data.data.relationships.currentStock.data.id (apunta a included)
+      // data.included[].type === 'stock' con attributes.quantity.
+      const included = rehyRes.data?.included || [];
+      const stockRel = rehyRes.data?.data?.relationships?.currentStock?.data;
+      const stockId = stockRel?.id?.uuid || stockRel?.id;
+      const stockEntity = included.find(
+        i => i.type === 'stock' && (i.id?.uuid || i.id) === stockId
+      );
+      if (typeof stockEntity?.attributes?.quantity === 'number') {
+        masterStockFromRehydrate = stockEntity.attributes.quantity;
+      }
     } catch (e) {
       log.error(e, 'sync-variants-master-rehydrate-failed', {
         masterListingId: masterListingId?.uuid,
@@ -560,19 +576,35 @@ export const syncVariantSiblingsThunk = createAsyncThunk(
 
     let masterUpdated = 0;
     if (masterRow) {
-      // Stock
-      if (typeof masterRow.stock === 'number' && masterRow.stock !== masterStock) {
+      // Stock — oldTotal viene con prioridad del response del
+      // rehydrate (raw included[].type==='stock') > Redux > null.
+      // El null solo pasa si el master realmente no tiene stock,
+      // caso en que compareAndSet con oldTotal:null es correcto.
+      const effectiveMasterStock =
+        typeof masterStockFromRehydrate === 'number'
+          ? masterStockFromRehydrate
+          : typeof masterStock === 'number'
+          ? masterStock
+          : null;
+      if (
+        typeof masterRow.stock === 'number' &&
+        masterRow.stock !== effectiveMasterStock
+      ) {
         try {
           await dispatch(
             setStockThunk({
               listingId: masterListingId,
-              oldTotal: typeof masterStock === 'number' ? masterStock : null,
+              oldTotal: effectiveMasterStock,
               newTotal: masterRow.stock,
             })
           ).unwrap();
           masterUpdated += 1;
         } catch (e) {
-          log.error(e, 'sync-variants-master-stock-failed', { masterListingId });
+          log.error(e, 'sync-variants-master-stock-failed', {
+            masterListingId,
+            oldTotalSent: effectiveMasterStock,
+            newTotalSent: masterRow.stock,
+          });
         }
       }
       // Precio
