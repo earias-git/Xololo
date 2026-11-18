@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-import { createImageVariantConfig } from '../util/sdkLoader';
+import { types as sdkTypes } from '../util/sdkLoader';
 import { storableError } from '../util/errors';
-import { filterSearchable } from '../util/variants';
+import { apiBaseUrl } from '../util/api';
 
 // XOLOLO: fetch de los últimos listings publicados (productos y servicios)
 // para el landing. Se dispara al montar la LandingPage y alimenta las
@@ -13,20 +13,11 @@ import { filterSearchable } from '../util/variants';
 // a loadData en una iteración futura. Pero visualmente el usuario ve las
 // listings reales apenas hidrata.
 
-// XOLOLO: 24 listings crudos por bucket. Después del filtro cliente
-// (quitar eventos/usados en productos, parear ubicación, etc.) nos
-// quedamos con suficiente material para llenar 12 slots por riel aunque
-// se caiga la mitad al filtro.
-// XOLOLO 2026-11-18 — subido de 24 → 100 (max Sharetribe permite).
-// Causa: tras ADR-004 (sync real de siblings de variantes) un solo
-// master puede generar 10-15 siblings en una sola edición. La page 1
-// con perPage=24 se saturaba de siblings y los masters "viejos"
-// (Oxford, Chuleta, Mezcal, Cempasúchil) quedaban en page 2 → nunca
-// llegaban a landing. 100 deja 80+ slots reales de masters/simples
-// tras filtrar siblings, suficiente margen para marketplace <~200
-// published. Si crece mucho, migrar a fetch por filtro server-side
-// (requiere registrar variantGroupId como listing field en Console).
-const RECENT_LISTINGS_LIMIT = 100;
+// XOLOLO 2026-11-18 — RECENT_LISTINGS_LIMIT ya no se usa. El
+// server pagina lo necesario y devuelve el shape listo (ver
+// server/api-util/landingListingsService.js + server/api/landing-listings.js).
+// Se mantiene la constante aquí porque algún selector legacy podría
+// referenciarla; eliminar en limpieza posterior cuando se audite.
 
 // XOLOLO: tope visible por riel. Se aplica en los selectores después
 // de filtrar y reordenar, para que la UI siempre vea un número parejo.
@@ -49,55 +40,54 @@ const TONES = [
   'jade',
 ];
 
-const commonQueryParams = () => ({
-  include: ['author', 'images'],
-  'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],
-  ...createImageVariantConfig('listing-card', 400, 1),
-  ...createImageVariantConfig('listing-card-2x', 800, 1),
-  perPage: RECENT_LISTINGS_LIMIT,
-  // XOLOLO: la Sharetribe Marketplace API responde invertido respecto a
-  // su documentación — `sort: 'createdAt'` (sin prefijo) devuelve DESC
-  // (más nuevos primero), que es lo que queremos aquí. Verificado contra
-  // los 8 productos reales del marketplace en producción: con '-createdAt'
-  // el producto más nuevo (Diadema FLORES, 6-oct) salía al final y el
-  // landing dejaba de mostrarlo. Con 'createdAt' sale primero correcto.
-  sort: 'createdAt',
-});
+// XOLOLO 2026-11-18 — un solo fetch al endpoint server-side
+// /api/landing-listings. El server pagina, filtra siblings y
+// devuelve el shape {products, services, used} con data+included
+// deserializado al formato Sharetribe. Zero filtros cliente
+// necesarios.
+//
+// Ventajas vs. 3 queries sdk.listings.query directo:
+// - 1 round-trip en vez de 3.
+// - Server pagina internamente hasta reunir N válidos (no se
+//   satura de siblings).
+// - Cache in-memory 60s + Cache-Control 30s, reduce carga en
+//   Sharetribe cuando varios buyers cargan landing simultáneo.
+// - Lógica de filtrado centralizada (sibling, event, used) en
+//   server/api-util/landingListingsService.js.
 
-const fetchLandingListingsPayloadCreator = async (_, { extra: sdk, rejectWithValue }) => {
+// Re-deserializa el payload del endpoint server para que las
+// UUIDs/Money/LatLng vuelvan a ser instancias del SDK (como las
+// que devolvía sdk.listings.query). Sharetribe Integration SDK
+// las serializa a un formato JSON plano con un `_sdkType` marker.
+const reviveSdkTypes = obj => {
+  if (Array.isArray(obj)) return obj.map(reviveSdkTypes);
+  if (obj && typeof obj === 'object') {
+    if (obj._sdkType === 'UUID' && obj.uuid) return new sdkTypes.UUID(obj.uuid);
+    if (obj._sdkType === 'Money' && typeof obj.amount === 'number' && obj.currency) {
+      return new sdkTypes.Money(obj.amount, obj.currency);
+    }
+    if (obj._sdkType === 'LatLng' && typeof obj.lat === 'number' && typeof obj.lng === 'number') {
+      return new sdkTypes.LatLng(obj.lat, obj.lng);
+    }
+    if (obj._sdkType === 'BigDecimal' && obj.value) return new sdkTypes.BigDecimal(obj.value);
+    const out = {};
+    for (const k of Object.keys(obj)) out[k] = reviveSdkTypes(obj[k]);
+    return out;
+  }
+  return obj;
+};
+
+const fetchLandingListingsPayloadCreator = async (_, { rejectWithValue }) => {
   try {
-    const [productsRes, servicesRes, usedRes] = await Promise.all([
-      sdk.listings.query({ pub_listingType: 'product', ...commonQueryParams() }),
-      sdk.listings.query({
-        pub_listingType: 'service,service-day',
-        ...commonQueryParams(),
-      }),
-      // XOLOLO: tercera query para la sección "Segunda mano destacada" del
-      // landing. Filtra por publicData.condition='used' Y SÓLO productos
-      // (los servicios no tienen condición, y si algún servicio quedó con
-      // condition='used' por un submit viejo no debe aparecer aquí).
-      sdk.listings.query({
-        pub_condition: 'used',
-        pub_listingType: 'product',
-        ...commonQueryParams(),
-      }),
-    ]);
-    // XOLOLO (variantes · PR 4): excluir children del grupo. Masters y
-    // simples sí entran. Fallback cliente mientras Algolia reindexa.
-    return {
-      products: {
-        data: filterSearchable(productsRes.data.data || []),
-        included: productsRes.data.included || [],
-      },
-      services: {
-        data: filterSearchable(servicesRes.data.data || []),
-        included: servicesRes.data.included || [],
-      },
-      used: {
-        data: filterSearchable(usedRes.data.data || []),
-        included: usedRes.data.included || [],
-      },
-    };
+    const url = `${apiBaseUrl()}/api/landing-listings`;
+    const res = await fetch(url, { credentials: 'include' });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      return rejectWithValue(storableError(new Error(`landing-listings HTTP ${res.status}: ${txt}`)));
+    }
+    const payload = await res.json();
+    // Server ya devuelve {products, services, used}; revive SDK types.
+    return reviveSdkTypes(payload);
   } catch (err) {
     return rejectWithValue(storableError(err));
   }

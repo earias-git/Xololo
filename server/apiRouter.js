@@ -57,6 +57,7 @@ const opsUsersActions = require('./api/ops-users-actions');
 const opsUsersBulk = require('./api/ops-users-bulk');
 const opsAuditLog = require('./api/ops-audit-log');
 const opsSendNotification = require('./api/ops-send-notification');
+const landingListings = require('./api/landing-listings');
 const team = require('./api/team');
 const teamAs = require('./api/team-as');
 const teamAsUploadImage = require('./api/team-as-upload-image');
@@ -267,6 +268,11 @@ router.get('/admin-check', adminCheck);
 // "última actividad". El propio endpoint maneja la auth con el SDK del
 // marketplace y hace el bump async (fire-and-forget).
 router.post('/me/heartbeat', limits.generic, meHeartbeat);
+// XOLOLO 2026-11-18 — landing hydration server-side. Reemplaza las
+// 3 queries sdk.listings.query que el frontend hacía directo a
+// Sharetribe. Server pagina, filtra siblings, devuelve el shape
+// ya listo para pintar. Cache 60s in-memory + 30s cliente/CDN.
+router.get('/landing-listings', limits.generic, landingListings.get);
 // XOLOLO OPS Users 360 · Fase A: roster + perfil 360 de users. Gated por
 // requireOperator (MFA requerida — info sensible: email, verified, legal).
 router.get('/admin/ops/users-roster', limits.ops, adminAuth.requireOperator(), opsUsersRoster);
