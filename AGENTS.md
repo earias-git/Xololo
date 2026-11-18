@@ -184,3 +184,9 @@ código marcado `XOLOLO LOCKED`, leer el ADR correspondiente.
   `replicateMasterSharedFieldsThunk`. ListingPage del sibling lee
   pull vía `getColorImageIdForValue(master, value)` en
   `src/util/variants.js`.
+- **ADR-004** — Sincronización master ↔ matriz de variantes.
+  `syncVariantSiblingsThunk` debe re-hidratar el master con
+  `currentStock` antes de llamar `setStockThunk`. Toda llamada a
+  `setStockThunk` desde este thunk requiere `oldTotal` real (no
+  `null` cuando el master está published). **NO tocar**
+  `setStockThunk` ni `replicateMasterSharedFieldsThunk`.
