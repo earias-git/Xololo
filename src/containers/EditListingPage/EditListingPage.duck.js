@@ -430,6 +430,35 @@ const moneyEquals = (a, b) => {
 export const syncVariantSiblingsThunk = createAsyncThunk(
   'EditListingPage/syncVariantSiblings',
   async ({ masterListingId, config }, { dispatch, getState, rejectWithValue, extra: sdk }) => {
+    // XOLOLO LOCKED — ADR-004 Fase 2: re-hidratar el master con
+    // currentStock antes de leer masterStock. Si no, Redux puede
+    // tener el master sin currentStock (típicamente cuando el
+    // seller entra directo al tab Variantes), masterStock queda
+    // undefined, setStockThunk se llama con oldTotal:null y
+    // Sharetribe responde 409 silenciosamente — el stock del
+    // master nunca se actualiza. Fail-open: si el fetch falla,
+    // seguimos con el master de Redux (lo que había antes).
+    const imageVariantInfoForRehydrate = getImageVariantInfo(config.layout.listingImage);
+    const rehydrateParams = {
+      expand: true,
+      include: ['currentStock', 'author', 'images'],
+      'fields.image': imageVariantInfoForRehydrate.fieldsImage,
+      ...imageVariantInfoForRehydrate.imageVariants,
+    };
+    const preState = getState();
+    const preWorkspace = getCurrentWorkspace(preState.user?.currentUser);
+    try {
+      const rehyRes = preWorkspace
+        ? await showListingAs(preWorkspace.sellerId, masterListingId.uuid, rehydrateParams)
+        : await sdk.ownListings.show({ id: masterListingId, ...rehydrateParams });
+      dispatch(addMarketplaceEntities(rehyRes));
+    } catch (e) {
+      log.error(e, 'sync-variants-master-rehydrate-failed', {
+        masterListingId: masterListingId?.uuid,
+      });
+      // continuamos con lo que haya en Redux
+    }
+
     const state = getState();
     const master = state.marketplaceData.entities.ownListing[masterListingId?.uuid];
     if (!master) {
