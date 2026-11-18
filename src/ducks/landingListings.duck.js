@@ -17,7 +17,16 @@ import { filterSearchable } from '../util/variants';
 // (quitar eventos/usados en productos, parear ubicación, etc.) nos
 // quedamos con suficiente material para llenar 12 slots por riel aunque
 // se caiga la mitad al filtro.
-const RECENT_LISTINGS_LIMIT = 24;
+// XOLOLO 2026-11-18 — subido de 24 → 100 (max Sharetribe permite).
+// Causa: tras ADR-004 (sync real de siblings de variantes) un solo
+// master puede generar 10-15 siblings en una sola edición. La page 1
+// con perPage=24 se saturaba de siblings y los masters "viejos"
+// (Oxford, Chuleta, Mezcal, Cempasúchil) quedaban en page 2 → nunca
+// llegaban a landing. 100 deja 80+ slots reales de masters/simples
+// tras filtrar siblings, suficiente margen para marketplace <~200
+// published. Si crece mucho, migrar a fetch por filtro server-side
+// (requiere registrar variantGroupId como listing field en Console).
+const RECENT_LISTINGS_LIMIT = 100;
 
 // XOLOLO: tope visible por riel. Se aplica en los selectores después
 // de filtrar y reordenar, para que la UI siempre vea un número parejo.
