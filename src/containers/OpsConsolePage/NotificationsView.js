@@ -42,6 +42,16 @@ const NotificationsView = ({ onBack }) => {
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState(null);
 
+  // XOLOLO 2026-11-18 — autocomplete user + listings.
+  const [userQuery, setUserQuery] = useState('');
+  const [userSuggestions, setUserSuggestions] = useState([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userListings, setUserListings] = useState([]);
+  const [loadingListings, setLoadingListings] = useState(false);
+  const [selectedListingId, setSelectedListingId] = useState('');
+
   const loadTemplates = useCallback(async () => {
     const r = await fetch(`${apiBaseUrl()}/api/admin/ops/notification-templates`, {
       credentials: 'include',
@@ -66,6 +76,94 @@ const NotificationsView = ({ onBack }) => {
   useEffect(() => {
     Promise.all([loadTemplates(), loadLog()]).finally(() => setLoading(false));
   }, [loadTemplates, loadLog]);
+
+  // XOLOLO 2026-11-18 — debounced search. Al teclear 2+ chars,
+  // consultar el endpoint de autocomplete 350ms después de la
+  // última tecla.
+  useEffect(() => {
+    if (userQuery.length < 2) {
+      setUserSuggestions([]);
+      return undefined;
+    }
+    let cancelled = false;
+    setSearchingUsers(true);
+    const handle = setTimeout(async () => {
+      try {
+        const r = await fetch(
+          `${apiBaseUrl()}/api/admin/ops/notification-users-search?q=${encodeURIComponent(
+            userQuery
+          )}&limit=10`,
+          { credentials: 'include' }
+        );
+        if (!cancelled && r.ok) {
+          const data = await r.json();
+          setUserSuggestions(data.users || []);
+        }
+      } catch (_) {
+        if (!cancelled) setUserSuggestions([]);
+      } finally {
+        if (!cancelled) setSearchingUsers(false);
+      }
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [userQuery]);
+
+  // Al seleccionar un user del autocomplete: setear `to`,
+  // `{{name}}`, y pedir sus listings.
+  const handleSelectUser = async user => {
+    setSelectedUser(user);
+    setTo(user.email || '');
+    setUserQuery(user.email || user.displayName || '');
+    setShowSuggestions(false);
+    setPlaceholderValues(prev => ({
+      ...prev,
+      name: user.displayName || (user.email || '').split('@')[0] || '',
+    }));
+    setSelectedListingId('');
+    setUserListings([]);
+    setLoadingListings(true);
+    try {
+      const r = await fetch(
+        `${apiBaseUrl()}/api/admin/ops/notification-user/${user.id}/listings`,
+        { credentials: 'include' }
+      );
+      if (r.ok) {
+        const data = await r.json();
+        setUserListings(data.listings || []);
+      }
+    } catch (_) {
+      // silencioso
+    } finally {
+      setLoadingListings(false);
+    }
+  };
+
+  // Al seleccionar un listing del user, pre-llenar placeholders
+  // {{listingTitle}}, {{listingUrl}}, {{expectedVariants}}.
+  const handleSelectListing = listingId => {
+    setSelectedListingId(listingId);
+    const listing = userListings.find(l => l.id === listingId);
+    if (!listing) return;
+    setPlaceholderValues(prev => ({
+      ...prev,
+      listingTitle: listing.title || '',
+      listingUrl: listing.editVariantsUrl || listing.url || '',
+      expectedVariants: listing.expectedVariants
+        ? String(listing.expectedVariants)
+        : prev.expectedVariants || '',
+    }));
+  };
+
+  const clearSelectedUser = () => {
+    setSelectedUser(null);
+    setUserListings([]);
+    setSelectedListingId('');
+    setUserQuery('');
+    setTo('');
+  };
 
   // Al cambiar plantilla, hidratar subject + body
   const applyTemplate = tplId => {
@@ -187,18 +285,131 @@ const NotificationsView = ({ onBack }) => {
           ) : null}
         </label>
 
-        <label style={{ display: 'block', marginBottom: 12 }}>
+        {/* XOLOLO 2026-11-18 — autocomplete user. Al elegir, se
+            pre-llenan `to` y `{{name}}`, y aparece dropdown con
+            sus listings para pre-llenar {{listingTitle/Url/expectedVariants}}. */}
+        <label style={{ display: 'block', marginBottom: 12, position: 'relative' }}>
           <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>
-            Para (email)
+            Para (busca por email o nombre, o pega email directo)
           </span>
           <input
-            type="email"
-            value={to}
-            onChange={e => setTo(e.target.value)}
-            placeholder="seller@email.com"
+            type="text"
+            value={userQuery}
+            onChange={e => {
+              setUserQuery(e.target.value);
+              setTo(e.target.value);
+              setShowSuggestions(true);
+              if (selectedUser && e.target.value !== (selectedUser.email || selectedUser.displayName)) {
+                setSelectedUser(null);
+                setUserListings([]);
+                setSelectedListingId('');
+              }
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            placeholder="ej. bygastelum, byg@hotmail.com, kike pruebas…"
             style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}
+            autoComplete="off"
           />
+          {showSuggestions && userQuery.length >= 2 && (userSuggestions.length > 0 || searchingUsers) ? (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                background: '#fff',
+                border: '1px solid #d1d5db',
+                borderRadius: 6,
+                marginTop: 2,
+                maxHeight: 240,
+                overflowY: 'auto',
+                zIndex: 10,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+              }}
+            >
+              {searchingUsers ? (
+                <div style={{ padding: 10, fontSize: 12, color: '#6b7280' }}>Buscando…</div>
+              ) : (
+                userSuggestions.map(u => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onMouseDown={e => e.preventDefault()}
+                    onClick={() => handleSelectUser(u)}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '8px 12px',
+                      background: 'none',
+                      border: 'none',
+                      borderBottom: '1px solid #f3f4f6',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                    }}
+                  >
+                    <div style={{ fontWeight: 600 }}>{u.displayName || '(sin nombre)'}</div>
+                    <div style={{ color: '#6b7280', fontSize: 12 }}>{u.email}</div>
+                  </button>
+                ))
+              )}
+            </div>
+          ) : null}
+          {selectedUser ? (
+            <div style={{ fontSize: 12, color: '#065f46', marginTop: 4 }}>
+              ✓ User cargado: <strong>{selectedUser.displayName || selectedUser.email}</strong>
+              {' · '}
+              <button
+                type="button"
+                onClick={clearSelectedUser}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#dc2626',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: 12,
+                  textDecoration: 'underline',
+                }}
+              >
+                Limpiar
+              </button>
+            </div>
+          ) : null}
         </label>
+
+        {/* Dropdown de listings del user (si lo elegimos) */}
+        {selectedUser ? (
+          <label style={{ display: 'block', marginBottom: 12 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>
+              Anuncio del user (opcional — pre-llena placeholders del listing)
+            </span>
+            {loadingListings ? (
+              <div style={{ fontSize: 12, color: '#6b7280', padding: 8 }}>Cargando listings…</div>
+            ) : userListings.length === 0 ? (
+              <div style={{ fontSize: 12, color: '#6b7280', padding: 8 }}>
+                Este user no tiene listings publicados.
+              </div>
+            ) : (
+              <select
+                value={selectedListingId}
+                onChange={e => handleSelectListing(e.target.value)}
+                style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}
+              >
+                <option value="">— Sin anuncio específico —</option>
+                {userListings.map(l => (
+                  <option key={l.id} value={l.id}>
+                    {l.isVariantMaster ? '🎨 ' : ''}
+                    {l.title?.slice(0, 60)}
+                    {l.isVariantMaster ? ` · ${l.expectedVariants} variantes` : ''}
+                    {l.state === 'closed' ? ' (cerrado)' : ''}
+                  </option>
+                ))}
+              </select>
+            )}
+          </label>
+        ) : null}
 
         {currentPlaceholders.length > 0 ? (
           <div

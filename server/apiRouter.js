@@ -313,6 +313,19 @@ router.get(
   adminAuth.requireOperator(),
   opsSendNotification.listLog
 );
+// Autocomplete de users + listings del user — módulo Notificaciones.
+router.get(
+  '/admin/ops/notification-users-search',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsSendNotification.searchUsers
+);
+router.get(
+  '/admin/ops/notification-user/:userId/listings',
+  limits.ops,
+  adminAuth.requireOperator(),
+  opsSendNotification.listUserListings
+);
 router.delete(
   '/admin/ops/users/:userId/notes/:noteId',
   limits.ops,
