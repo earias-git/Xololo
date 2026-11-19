@@ -17,6 +17,7 @@ import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
 import ManageStoreForm from './ManageStoreForm/ManageStoreForm';
+import CommunitiesPanel from './CommunitiesPanel/CommunitiesPanel';
 
 import { saveStore, saveStoreClear } from './ManageStorePage.duck';
 import css from './ManageStorePage.module.css';
@@ -226,15 +227,21 @@ export const ManageStorePageComponent = props => {
             </p>
           ) : null}
           {user.id ? (
-            <ManageStoreForm
-              className={css.form}
-              initialValues={initialValues}
-              onSubmit={handleSubmit}
-              onChange={onChange}
-              inProgress={saveStoreInProgress}
-              ready={storeSaved}
-              saveStoreError={saveStoreError}
-            />
+            <>
+              {/* XOLOLO 2026-11-18 — ADR-006 PR-7: panel "Comunidades"
+                  arriba del form principal. Seller ve a qué comunidades
+                  pertenece y puede unirse a nuevas desde aquí. */}
+              <CommunitiesPanel />
+              <ManageStoreForm
+                className={css.form}
+                initialValues={initialValues}
+                onSubmit={handleSubmit}
+                onChange={onChange}
+                inProgress={saveStoreInProgress}
+                ready={storeSaved}
+                saveStoreError={saveStoreError}
+              />
+            </>
           ) : null}
         </div>
       </LayoutSideNavigation>

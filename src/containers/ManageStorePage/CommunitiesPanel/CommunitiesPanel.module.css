@@ -1,0 +1,352 @@
+/* XOLOLO 2026-11-18 — Panel de Comunidades en ManageStorePage. */
+
+.panel {
+  background: #fff;
+  border: 1px solid var(--colorGrey100, #e5e7eb);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.header {
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: var(--colorGrey900, #111827);
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--colorGrey600, #4b5563);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.alertError {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.alertOk {
+  position: relative;
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+  color: #065f46;
+  padding: 10px 36px 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.alertDismiss {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #065f46;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 6px;
+}
+
+.loading {
+  padding: 16px;
+  text-align: center;
+  color: var(--colorGrey500, #6b7280);
+  font-size: 13px;
+}
+
+.emptyState {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--colorGrey600, #4b5563);
+  font-size: 13px;
+  background: var(--colorGrey50, #f9fafb);
+  border-radius: 6px;
+}
+
+/* --- Chips de comunidades actuales --- */
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 640px) {
+  .chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--colorGrey50, #f9fafb);
+  border: 1px solid var(--colorGrey100, #e5e7eb);
+  border-radius: 999px;
+  min-height: 56px;
+}
+
+.chipStale {
+  opacity: 0.7;
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+
+.chipLogo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.chipBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.chipName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--colorGrey900, #111827);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chipMeta {
+  font-size: 11px;
+  color: var(--colorGrey500, #6b7280);
+}
+
+.chipLeave {
+  background: #fff;
+  border: 1px solid var(--colorGrey300, #d1d5db);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--colorGrey700, #374151);
+  min-height: 32px;
+}
+
+.chipLeave:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.chipLeave:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+/* --- Toggle explorar --- */
+
+.exploreToggleWrap {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.exploreToggle {
+  background: none;
+  border: 1px dashed var(--colorGrey300, #d1d5db);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--marketplaceColor, #1e3a8a);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.exploreToggle:hover {
+  background: var(--colorGrey50, #f9fafb);
+}
+
+/* --- Explorar: grid de cards --- */
+
+.discover {
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--colorGrey100, #e5e7eb);
+}
+
+.discoverList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .discoverList {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.discoverCard {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--colorGrey100, #e5e7eb);
+  border-radius: 8px;
+  background: #fff;
+  align-items: flex-start;
+}
+
+.discoverLogo {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.discoverBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.discoverTitle {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--colorGrey900, #111827);
+}
+
+.discoverTagline {
+  font-size: 12px;
+  color: var(--colorGrey600, #4b5563);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.discoverMeta {
+  font-size: 11px;
+  color: var(--colorGrey500, #6b7280);
+}
+
+.discoverNote {
+  font-size: 11px;
+  color: #92400e;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.discoverJoin {
+  background: var(--marketplaceColor, #1e3a8a);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.discoverJoin:hover:not(:disabled) {
+  background: var(--marketplaceColorDark, #1e3a8a);
+}
+
+.discoverJoin:disabled {
+  background: var(--colorGrey300, #d1d5db);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* --- Modal confirm --- */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.modalBox {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.3);
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.modalBody {
+  font-size: 14px;
+  color: var(--colorGrey700, #374151);
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.modalBtnCancel {
+  background: #fff;
+  border: 1px solid var(--colorGrey300, #d1d5db);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.modalBtnConfirm {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.modalBtnConfirm:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
