@@ -6,7 +6,7 @@ import {
   OFFER,
 } from '../../transactions/transaction';
 
-import { Heading, Modal } from '../../components';
+import { Heading, Modal, CommunityBadges } from '../../components';
 import UserCard from './UserCard/UserCard';
 import InquiryForm from './InquiryForm/InquiryForm';
 
@@ -57,6 +57,11 @@ const SectionAuthorMaybe = props => {
         showContact={showContact}
         contactLinkId={CONTACT_USER_LINK}
       />
+      {/* XOLOLO 2026-11-18 — ADR-006 PR-8: chips de comunidades del
+          author. Click lleva a /comunidad|region|programa/:slug. Si
+          el author no pertenece a ninguna comunidad publicada, no
+          renderiza nada. */}
+      <CommunityBadges profile={listing.author?.attributes?.profile} />
       <Modal
         id="ListingPage.inquiry"
         contentClassName={css.inquiryModalContent}

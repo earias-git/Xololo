@@ -1,0 +1,114 @@
+/* XOLOLO 2026-11-18 — CommunityBadges (ADR-006 PR-8). */
+
+.root {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rootInline {
+  flex-direction: row;
+}
+
+.rootStack {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.prefix {
+  font-size: 12px;
+  color: var(--colorGrey600, #4b5563);
+  font-weight: 500;
+}
+
+.rootDark .prefix {
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.chipsRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  background: #fff;
+  border: 1px solid var(--colorGrey200, #d1d5db);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--colorGrey900, #111827);
+  text-decoration: none;
+  transition: transform 0.1s, border-color 0.1s;
+  min-height: 32px;
+  line-height: 1;
+}
+
+.chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--colorGrey400, #9ca3af);
+  text-decoration: none;
+}
+
+.chipSm {
+  min-height: 26px;
+  font-size: 11px;
+  padding: 2px 8px 2px 2px;
+}
+
+.chipDark {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.chipDark:hover {
+  background: #fff;
+}
+
+.logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.chipSm .logo {
+  width: 20px;
+  height: 20px;
+}
+
+.logoPlaceholder {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+}
+
+.chipSm .logoPlaceholder {
+  width: 20px;
+  height: 20px;
+  font-size: 9px;
+}
+
+.name {
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

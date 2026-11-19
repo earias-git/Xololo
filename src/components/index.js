@@ -132,6 +132,8 @@ export { default as UserNav } from './UserNav/UserNav';
 ///////////////////////////////////////////////
 
 export { default as Avatar, AvatarSmall, AvatarMedium, AvatarLarge } from './Avatar/Avatar';
+// XOLOLO 2026-11-18 — ADR-006 PR-8: chips de comunidades del seller.
+export { default as CommunityBadges } from './CommunityBadges/CommunityBadges';
 export { default as CustomExtendedDataField } from './CustomExtendedDataField/CustomExtendedDataField';
 export const CustomExtendedDataSection = loadable(() => import(/* webpackChunkName: "CustomExtendedDataSection" */ './CustomExtendedDataSection/CustomExtendedDataSection'));
 export { default as FileUpload } from './FileUpload/FileUpload'
