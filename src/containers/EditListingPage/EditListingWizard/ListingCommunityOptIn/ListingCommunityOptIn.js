@@ -16,7 +16,7 @@
  * Desacoplado del submit del wizard — PATCH directo al endpoint.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { apiBaseUrl } from '../../../../util/api';
 
@@ -44,6 +44,13 @@ const ListingCommunityOptIn = ({ listing }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [savedAt, setSavedAt] = useState(null);
+  // XOLOLO 2026-11-19 — ref anti-doble-click. El `disabled={saving}`
+  // sobre el checkbox no protege lo suficiente: React setState es
+  // async, hay 1 frame de ventana donde un segundo click revierte
+  // el toggle optimista (included: [] → ['opf'] → [] con un
+  // double-click). El ref se actualiza sincrono en el click handler
+  // y bloquea re-entries inmediatamente.
+  const inflightRef = useRef(false);
 
   const listingId = listing?.id?.uuid;
   // XOLOLO 2026-11-19 — authorId del Negocio dueño del listing.
@@ -84,6 +91,13 @@ const ListingCommunityOptIn = ({ listing }) => {
       if (!listingId) return;
       setSaving(true);
       setError(null);
+      // XOLOLO 2026-11-19 — log del PATCH body para debug bug earias.
+      const payload = {
+        includeInCommunities: nextIncluded,
+        excludeFromCommunities: nextExcluded,
+      };
+      // eslint-disable-next-line no-console
+      console.log('[ListingCommunityOptIn] PATCH body:', JSON.stringify(payload));
       try {
         const res = await fetch(
           `${apiBaseUrl()}/api/me/listings/${listingId}/communities`,
@@ -91,10 +105,7 @@ const ListingCommunityOptIn = ({ listing }) => {
             method: 'PATCH',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              includeInCommunities: nextIncluded,
-              excludeFromCommunities: nextExcluded,
-            }),
+            body: JSON.stringify(payload),
           }
         );
         const data = await res.json().catch(() => ({}));
@@ -137,6 +148,7 @@ const ListingCommunityOptIn = ({ listing }) => {
         setSavedAt(null);
       } finally {
         setSaving(false);
+        inflightRef.current = false;
       }
     },
     [listingId]
@@ -145,6 +157,13 @@ const ListingCommunityOptIn = ({ listing }) => {
   // Toggle de check (cualquier tipo). Usa el modo del community para
   // decidir si mete/quita del include o del exclude.
   const toggle = community => {
+    // XOLOLO 2026-11-19 — guard anti-doble-click síncrono.
+    if (inflightRef.current) {
+      // eslint-disable-next-line no-console
+      console.log('[ListingCommunityOptIn] toggle ignorado (request en vuelo)');
+      return;
+    }
+    inflightRef.current = true;
     const mode = defaultInclusionFor(community);
     const previousIncluded = included;
     const previousExcluded = excluded;

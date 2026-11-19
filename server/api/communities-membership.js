@@ -178,6 +178,16 @@ const setListingCommunities = async (req, res) => {
     return res.status(400).json({ error: 'invalid_exclude_list' });
   }
 
+  // XOLOLO 2026-11-19 — log del body EXACTO que llega al endpoint
+  // para debug del bug reportado por earias (el body puede estar
+  // llegando con includeInCommunities=[] en vez de ['opf']).
+  // eslint-disable-next-line no-console
+  console.log(
+    `[communities-membership:PATCH] listingId=${listingId} rawBody=${JSON.stringify(
+      req.body || null
+    )}`
+  );
+
   try {
     const result = await communityMembership.setListingCommunities({
       sellerId,
