@@ -163,9 +163,10 @@ const myCommunities = async (req, res) => {
 };
 
 // XOLOLO 2026-11-18 — PATCH /api/me/listings/:id/communities
-// Body: { excludeFromCommunities: string[] }
-// Permite al seller marcar que un listing específico NO aparezca en
-// ciertas comunidades suyas (nochebuena → OPF sí; escritorio → OPF no).
+// Body: { includeInCommunities?: string[], excludeFromCommunities?: string[] }
+// Permite al seller marcar que un listing específico aparezca
+// (opt-in para sectoriales) o no aparezca (opt-out para geográficas)
+// en ciertas comunidades suyas.
 const setListingCommunities = async (req, res) => {
   const sellerId = await _authSeller(req, res);
   if (!sellerId) return;
@@ -173,14 +174,28 @@ const setListingCommunities = async (req, res) => {
   const listingId = req.params?.id;
   if (!listingId) return res.status(400).json({ error: 'missing_listing_id' });
 
+  // XOLOLO 2026-11-19 — bug fix crítico: antes solo extraíamos
+  // excludeFromCommunities del body, ignorando includeInCommunities.
+  // Esto causaba que el toggle de OPF (sectorial opt-in) siempre
+  // guardara included=[] en el server, aunque el frontend mandaba
+  // ['opf']. Reportado por earias con logs del server que mostraban
+  // rawBody con ['opf'] pero requestedInclude=[] en el helper.
+  const includeInCommunities = req.body?.includeInCommunities;
   const excludeFromCommunities = req.body?.excludeFromCommunities;
-  if (!Array.isArray(excludeFromCommunities)) {
+
+  // Al menos uno debe venir; ambos deben ser arrays si vienen.
+  if (includeInCommunities !== undefined && !Array.isArray(includeInCommunities)) {
+    return res.status(400).json({ error: 'invalid_include_list' });
+  }
+  if (excludeFromCommunities !== undefined && !Array.isArray(excludeFromCommunities)) {
     return res.status(400).json({ error: 'invalid_exclude_list' });
+  }
+  if (includeInCommunities === undefined && excludeFromCommunities === undefined) {
+    return res.status(400).json({ error: 'missing_include_or_exclude' });
   }
 
   // XOLOLO 2026-11-19 — log del body EXACTO que llega al endpoint
-  // para debug del bug reportado por earias (el body puede estar
-  // llegando con includeInCommunities=[] en vez de ['opf']).
+  // para debug.
   // eslint-disable-next-line no-console
   console.log(
     `[communities-membership:PATCH] listingId=${listingId} rawBody=${JSON.stringify(
@@ -192,6 +207,7 @@ const setListingCommunities = async (req, res) => {
     const result = await communityMembership.setListingCommunities({
       sellerId,
       listingId,
+      includeInCommunities,
       excludeFromCommunities,
     });
     return res.status(200).json(result);
@@ -199,8 +215,11 @@ const setListingCommunities = async (req, res) => {
     const msg = e?.message || 'set_failed';
     const status =
       msg === 'not_listing_owner' ? 403 :
+      msg === 'author_not_found' ? 404 :
       msg === 'missing_listing_id' ? 400 :
+      msg === 'invalid_include_list' ? 400 :
       msg === 'invalid_exclude_list' ? 400 :
+      msg === 'missing_include_or_exclude' ? 400 :
       500;
     // eslint-disable-next-line no-console
     console.error('[communities-membership:setListingCommunities]', msg);
