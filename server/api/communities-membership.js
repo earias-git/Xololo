@@ -116,13 +116,44 @@ const leave = async (req, res) => {
   }
 };
 
-// GET /api/me/communities
+// GET /api/me/communities?targetSellerId=<uuid>
+// targetSellerId opcional — útil cuando el user es colaborador y
+// está editando listings del Negocio: devuelve las comunidades del
+// Negocio (author), no las del colaborador. Si no viene, usa el
+// currentUser (comportamiento legacy).
 const myCommunities = async (req, res) => {
   const sellerId = await _authSeller(req, res);
   if (!sellerId) return;
 
+  const targetSellerId = req.query?.targetSellerId
+    ? String(req.query.targetSellerId)
+    : sellerId;
+
+  // Validación de permiso cuando el target es otro seller:
+  // el user debe tener workspace activo con el target.
+  if (targetSellerId !== sellerId) {
+    try {
+      const { getIntegrationSdk } = require('../api-util/integrationSdk');
+      const isdk = getIntegrationSdk();
+      const uResp = await isdk.users.show({ id: sellerId });
+      const workspaces =
+        uResp.data?.data?.attributes?.profile?.publicData?.xololoWorkspaces
+          ?.workspaces || [];
+      const hasActive = workspaces.some(
+        w => w?.adminId === targetSellerId && w?.status === 'active'
+      );
+      if (!hasActive) {
+        return res.status(403).json({ error: 'not_a_collaborator' });
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[communities-membership:myCommunities] auth check', e?.message);
+      return res.status(500).json({ error: 'auth_check_failed' });
+    }
+  }
+
   try {
-    const communities = await communityMembership.listSellerMemberships(sellerId);
+    const communities = await communityMembership.listSellerMemberships(targetSellerId);
     return res.status(200).json({ communities });
   } catch (e) {
     // eslint-disable-next-line no-console

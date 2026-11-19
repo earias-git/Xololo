@@ -46,11 +46,17 @@ const ListingCommunityOptIn = ({ listing }) => {
   const [savedAt, setSavedAt] = useState(null);
 
   const listingId = listing?.id?.uuid;
+  // XOLOLO 2026-11-19 — authorId del Negocio dueño del listing.
+  // Lo pasamos a /api/me/communities para que, si el user es
+  // colaborador, se listen las comunidades del Negocio (no las
+  // del colaborador). Para admin directo, authorId === currentUser.
+  const authorId = listing?.author?.id?.uuid;
 
-  // Carga las comunidades del seller.
+  // Carga las comunidades del seller (Negocio).
   useEffect(() => {
     let cancelled = false;
-    fetch(`${apiBaseUrl()}/api/me/communities`, { credentials: 'include' })
+    const qs = authorId ? `?targetSellerId=${encodeURIComponent(authorId)}` : '';
+    fetch(`${apiBaseUrl()}/api/me/communities${qs}`, { credentials: 'include' })
       .then(r => r.json())
       .then(data => {
         if (!cancelled) setMyCommunities(data?.communities || []);
@@ -61,7 +67,7 @@ const ListingCommunityOptIn = ({ listing }) => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authorId]);
 
   // XOLOLO 2026-11-19 — bug fix: hidratar SOLO cuando cambia el
   // listingId. Antes dependía de [listing] y el padre pasa una nueva
@@ -98,9 +104,25 @@ const ListingCommunityOptIn = ({ listing }) => {
           setError(data?.error || `HTTP ${res.status}`);
           setSavedAt(null);
         } else {
-          setIncluded(data.included || []);
-          setExcluded(data.excluded || []);
-          setSavedAt(Date.now());
+          const serverIncluded = data.included || [];
+          const serverExcluded = data.excluded || [];
+          // XOLOLO 2026-11-19 — detectar sanitize silencioso del server:
+          // si pedimos incluir X pero el server lo filtró (porque el
+          // seller no está unido a X), avisamos al user en vez de
+          // mostrar "✓ Guardado" engañosamente.
+          const requestedButDropped = (nextIncluded || []).filter(
+            id => !serverIncluded.includes(id)
+          );
+          setIncluded(serverIncluded);
+          setExcluded(serverExcluded);
+          if (requestedButDropped.length > 0) {
+            setError(
+              `No perteneces a: ${requestedButDropped.join(', ')}. Únete primero desde "Mi tienda" → Comunidades.`
+            );
+            setSavedAt(null);
+          } else {
+            setSavedAt(Date.now());
+          }
         }
       } catch (e) {
         setIncluded(previousIncluded);
