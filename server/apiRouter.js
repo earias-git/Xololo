@@ -299,6 +299,13 @@ router.post(
   communitiesMembership.leave
 );
 router.get('/me/communities', limits.generic, communitiesMembership.myCommunities);
+// XOLOLO 2026-11-18 — opt-out por listing (nochebuena vs escritorio).
+router.patch(
+  '/me/listings/:id/communities',
+  limits.community,
+  bodyParser.json(),
+  communitiesMembership.setListingCommunities
+);
 
 // XOLOLO 2026-11-18 — ADR-006 PR-4: admin de comunidades.
 // Gated por adminAuth.requireOperator (MFA). Un operador puede

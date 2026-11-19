@@ -132,6 +132,26 @@ const getListingCommunityMirror = profile => {
 };
 
 /**
+ * XOLOLO 2026-11-18 — espejo POR LISTING que respeta el opt-out del seller.
+ *
+ * Caso de uso: un vivero pertenece a OPF y publica nochebuenas +
+ * un escritorio usado. La nochebuena aplica a OPF, el escritorio no.
+ * El seller marca el escritorio con `excludeFromCommunities: ['opf']`
+ * y este helper devuelve el mirror correcto para cada listing.
+ *
+ * @param {object} profile — profile del seller (fuente de memberships)
+ * @param {object} listingPublicData — publicData del listing concreto
+ * @returns {string[]} — mirror filtrado
+ */
+const computeMirrorForListing = (profile, listingPublicData) => {
+  const baseMirror = getListingCommunityMirror(profile);
+  const exclude = listingPublicData?.excludeFromCommunities;
+  if (!Array.isArray(exclude) || exclude.length === 0) return baseMirror;
+  const excludeSet = new Set(exclude.filter(isValidCommunityId));
+  return baseMirror.filter(id => !excludeSet.has(id));
+};
+
+/**
  * Inmutablemente agrega al seller a una comunidad.
  * Devuelve el nuevo objeto `communities` (NO el profile completo).
  *
@@ -220,6 +240,7 @@ module.exports = {
   removeCommunityMembership,
   // Mirror listing↔profile
   getListingCommunityMirror,
+  computeMirrorForListing,
   // Backend helpers
   metadataKey,
 };

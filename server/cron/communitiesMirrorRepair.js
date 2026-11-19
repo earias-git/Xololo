@@ -24,7 +24,7 @@
 
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const {
-  getListingCommunityMirror,
+  computeMirrorForListing,
   isValidCommunityId,
 } = require('../../src/util/communities');
 
@@ -131,14 +131,17 @@ const repairMirror = async ({ dryRun = false, isdk = null } = {}) => {
 
     stats.usersWithMemberships += 1;
 
-    const expectedMirror = getListingCommunityMirror(profile).filter(isValidCommunityId);
     const listings = await _pageSellerListings(sdk, userId);
     stats.listingsScanned += listings.length;
 
     for (const l of listings) {
       const listingId = l.id?.uuid;
       if (!listingId) continue;
-      const current = l.attributes?.publicData?.sellerCommunities || [];
+      // XOLOLO 2026-11-18 — mirror esperado POR LISTING (respeta
+      // publicData.excludeFromCommunities del listing).
+      const pd = l.attributes?.publicData || {};
+      const expectedMirror = computeMirrorForListing(profile, pd).filter(isValidCommunityId);
+      const current = pd.sellerCommunities || [];
       if (sameSet(current, expectedMirror)) {
         stats.listingsSkipped += 1;
         continue;

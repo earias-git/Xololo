@@ -131,4 +131,40 @@ const myCommunities = async (req, res) => {
   }
 };
 
-module.exports = { join, leave, myCommunities };
+// XOLOLO 2026-11-18 — PATCH /api/me/listings/:id/communities
+// Body: { excludeFromCommunities: string[] }
+// Permite al seller marcar que un listing específico NO aparezca en
+// ciertas comunidades suyas (nochebuena → OPF sí; escritorio → OPF no).
+const setListingCommunities = async (req, res) => {
+  const sellerId = await _authSeller(req, res);
+  if (!sellerId) return;
+
+  const listingId = req.params?.id;
+  if (!listingId) return res.status(400).json({ error: 'missing_listing_id' });
+
+  const excludeFromCommunities = req.body?.excludeFromCommunities;
+  if (!Array.isArray(excludeFromCommunities)) {
+    return res.status(400).json({ error: 'invalid_exclude_list' });
+  }
+
+  try {
+    const result = await communityMembership.setListingCommunities({
+      sellerId,
+      listingId,
+      excludeFromCommunities,
+    });
+    return res.status(200).json(result);
+  } catch (e) {
+    const msg = e?.message || 'set_failed';
+    const status =
+      msg === 'not_listing_owner' ? 403 :
+      msg === 'missing_listing_id' ? 400 :
+      msg === 'invalid_exclude_list' ? 400 :
+      500;
+    // eslint-disable-next-line no-console
+    console.error('[communities-membership:setListingCommunities]', msg);
+    return res.status(status).json({ error: msg });
+  }
+};
+
+module.exports = { join, leave, myCommunities, setListingCommunities };

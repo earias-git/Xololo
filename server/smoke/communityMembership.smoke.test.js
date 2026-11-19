@@ -222,6 +222,130 @@ describe('communityMembership · smoke', () => {
     });
   });
 
+  describe('setListingCommunities (opt-out por listing)', () => {
+    test('actualiza listing con excludeFromCommunities + mirror recalculado', async () => {
+      // Seller con 2 comunidades. Listing excluye solo opf.
+      // Debe quedar sellerCommunities=['morelos'].
+      const listing = {
+        id: { uuid: 'lx' },
+        relationships: { author: { data: { id: { uuid: 'u1' } } } },
+        attributes: { publicData: { title: 'escritorio usado' } },
+      };
+      mockIsdk.listings.show = jest.fn(() =>
+        Promise.resolve({ data: { data: listing } })
+      );
+      mockIsdk.users.show.mockResolvedValueOnce({
+        data: {
+          data: makeUser('u1', { sectorial: ['opf'], geografica: ['morelos'] }),
+        },
+      });
+      const { setListingCommunities } = require('../api-util/communityMembership');
+      const result = await setListingCommunities({
+        sellerId: 'u1',
+        listingId: 'lx',
+        excludeFromCommunities: ['opf'],
+      });
+      expect(result.excluded).toEqual(['opf']);
+      expect(result.mirror).toEqual(['morelos']);
+      expect(mockIsdk.listings.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'lx',
+          publicData: expect.objectContaining({
+            excludeFromCommunities: ['opf'],
+            sellerCommunities: ['morelos'],
+          }),
+        })
+      );
+    });
+
+    test('rechaza listings que no son del seller autenticado', async () => {
+      const listing = {
+        id: { uuid: 'lx' },
+        relationships: { author: { data: { id: { uuid: 'OTRO' } } } },
+        attributes: { publicData: {} },
+      };
+      mockIsdk.listings.show = jest.fn(() =>
+        Promise.resolve({ data: { data: listing } })
+      );
+      const { setListingCommunities } = require('../api-util/communityMembership');
+      await expect(
+        setListingCommunities({
+          sellerId: 'u1',
+          listingId: 'lx',
+          excludeFromCommunities: ['opf'],
+        })
+      ).rejects.toThrow('not_listing_owner');
+      expect(mockIsdk.listings.update).not.toHaveBeenCalled();
+    });
+
+    test('ignora excludes de comunidades a las que el seller no pertenece', async () => {
+      const listing = {
+        id: { uuid: 'lx' },
+        relationships: { author: { data: { id: { uuid: 'u1' } } } },
+        attributes: { publicData: {} },
+      };
+      mockIsdk.listings.show = jest.fn(() =>
+        Promise.resolve({ data: { data: listing } })
+      );
+      mockIsdk.users.show.mockResolvedValueOnce({
+        data: { data: makeUser('u1', { sectorial: ['opf'] }) },
+      });
+      const { setListingCommunities } = require('../api-util/communityMembership');
+      const result = await setListingCommunities({
+        sellerId: 'u1',
+        listingId: 'lx',
+        excludeFromCommunities: ['opf', 'inexistente', 'otra'],
+      });
+      expect(result.excluded).toEqual(['opf']);
+      expect(result.mirror).toEqual([]);
+    });
+  });
+
+  describe('join/leave respeta excludeFromCommunities existente en listings', () => {
+    test('al hacer join, listings con excludeFromCommunities mantienen el mirror correcto', async () => {
+      // Seller tenía ya `morelos`. Un listing suyo tiene
+      // excludeFromCommunities=['morelos']. Al unirse a opf, ese
+      // listing debe quedar sellerCommunities=['opf'] (no morelos).
+      mockIsdk.users.show.mockResolvedValueOnce({
+        data: { data: makeUser('u1', { geografica: ['morelos'] }) },
+      });
+      mockIsdk.listings.query.mockResolvedValueOnce({
+        data: {
+          data: [
+            {
+              id: { uuid: 'l-normal' },
+              attributes: { publicData: {} },
+            },
+            {
+              id: { uuid: 'l-sin-morelos' },
+              attributes: {
+                publicData: { excludeFromCommunities: ['morelos'] },
+              },
+            },
+          ],
+          meta: { page: 1, totalPages: 1 },
+        },
+      });
+      const { joinCommunity } = require('../api-util/communityMembership');
+      await joinCommunity('u1', { id: 'opf', type: 'sectorial' });
+
+      // l-normal debe tener mirror completo
+      expect(mockIsdk.listings.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'l-normal',
+          publicData: { sellerCommunities: expect.arrayContaining(['morelos', 'opf']) },
+        })
+      );
+      // l-sin-morelos debe excluir morelos
+      expect(mockIsdk.listings.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'l-sin-morelos',
+          publicData: { sellerCommunities: ['opf'] },
+        })
+      );
+    });
+  });
+
   describe('listSellerMemberships', () => {
     test('devuelve comunidades públicas que el seller tiene', async () => {
       mockIsdk.users.show.mockResolvedValueOnce({

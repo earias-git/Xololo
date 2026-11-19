@@ -152,6 +152,47 @@ describe('repairMirror · smoke', () => {
     expect(sdk.listings.query).not.toHaveBeenCalled();
   });
 
+  test('respeta excludeFromCommunities del listing', async () => {
+    // Seller con 2 comunidades. Un listing tiene exclude de opf.
+    // El mirror esperado para ese listing es solo ['morelos'].
+    const listing1 = {
+      id: { uuid: 'nochebuena' },
+      attributes: { publicData: { sellerCommunities: [] } },
+    };
+    const listing2 = {
+      id: { uuid: 'escritorio' },
+      attributes: {
+        publicData: {
+          sellerCommunities: ['opf', 'morelos'], // drift que hay que corregir
+          excludeFromCommunities: ['opf'],
+        },
+      },
+    };
+    const sdk = buildSdk({
+      users: [makeUser('u1', { sectorial: ['opf'], geografica: ['morelos'] })],
+      listingsBySeller: {
+        u1: [listing1, listing2],
+      },
+    });
+    const stats = await repairMirror({ dryRun: false, isdk: sdk });
+    // Ambos listings tienen drift y se corrigen.
+    expect(stats.listingsUpdated).toBe(2);
+    // nochebuena: ambos ids.
+    expect(sdk.listings.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'nochebuena',
+        publicData: { sellerCommunities: expect.arrayContaining(['opf', 'morelos']) },
+      })
+    );
+    // escritorio: sin opf (respeta exclude).
+    expect(sdk.listings.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'escritorio',
+        publicData: { sellerCommunities: ['morelos'] },
+      })
+    );
+  });
+
   test('error en listings.update no aborta el run', async () => {
     const sdk = buildSdk({
       users: [makeUser('u1', { sectorial: ['opf'] })],

@@ -15,6 +15,7 @@ const {
   addCommunityMembership,
   removeCommunityMembership,
   getListingCommunityMirror,
+  computeMirrorForListing,
   metadataKey,
 } = require('./communities');
 
@@ -262,6 +263,63 @@ describe('getListingCommunityMirror', () => {
       },
     };
     expect(getListingCommunityMirror(profile)).toEqual(['opf']);
+  });
+});
+
+describe('computeMirrorForListing', () => {
+  const profile = {
+    publicData: {
+      communities: {
+        sectorial: ['opf', 'alimentos-organicos'],
+        geografica: ['morelos'],
+      },
+    },
+  };
+
+  test('sin excludeFromCommunities → mirror completo', () => {
+    const mirror = computeMirrorForListing(profile, {});
+    expect(mirror.sort()).toEqual(['alimentos-organicos', 'morelos', 'opf'].sort());
+  });
+
+  test('excludeFromCommunities=[] → mirror completo', () => {
+    const mirror = computeMirrorForListing(profile, { excludeFromCommunities: [] });
+    expect(mirror.sort()).toEqual(['alimentos-organicos', 'morelos', 'opf'].sort());
+  });
+
+  test('excluye solo las ids marcadas (caso nochebuena vs escritorio)', () => {
+    const mirror = computeMirrorForListing(profile, {
+      excludeFromCommunities: ['opf'],
+    });
+    expect(mirror.sort()).toEqual(['alimentos-organicos', 'morelos'].sort());
+    expect(mirror).not.toContain('opf');
+  });
+
+  test('excluir una id que NO tiene no es error', () => {
+    const mirror = computeMirrorForListing(profile, {
+      excludeFromCommunities: ['comunidad-inexistente'],
+    });
+    expect(mirror.sort()).toEqual(['alimentos-organicos', 'morelos', 'opf'].sort());
+  });
+
+  test('excluir TODAS deja mirror vacío', () => {
+    const mirror = computeMirrorForListing(profile, {
+      excludeFromCommunities: ['opf', 'alimentos-organicos', 'morelos'],
+    });
+    expect(mirror).toEqual([]);
+  });
+
+  test('null-safe con listingPublicData undefined', () => {
+    expect(computeMirrorForListing(profile)).toEqual(
+      expect.arrayContaining(['opf', 'alimentos-organicos', 'morelos'])
+    );
+  });
+
+  test('ids inválidos en exclude se filtran (defensive)', () => {
+    const mirror = computeMirrorForListing(profile, {
+      excludeFromCommunities: ['BAD_ID', 'opf'],
+    });
+    expect(mirror).not.toContain('opf');
+    expect(mirror).toContain('alimentos-organicos');
   });
 });
 
