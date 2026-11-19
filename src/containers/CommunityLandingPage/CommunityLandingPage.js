@@ -21,9 +21,20 @@ import { useSelector } from 'react-redux';
 import { Helmet } from 'react-helmet-async';
 
 import { isScrollingDisabled } from '../../ducks/ui.duck';
-import { createSlug } from '../../util/urlHelpers';
+import { useBuyerLocation } from '../../hooks/useBuyerLocation';
+// XOLOLO 2026-11-19: reutiliza los mismos helpers del landing
+// principal para mantener coherencia entre /comunidad/* y /.
+import {
+  listingToFeaturedItem,
+  isUsedListing,
+  isEventListing,
+  buildAuthorIndex,
+  filterByBuyerState,
+  VISIBLE_PER_RAIL,
+} from '../../ducks/landingListings.duck';
 
 import { Page, LayoutSingleColumn } from '../../components';
+import FeaturedListings from '../../components/FeaturedListings/FeaturedListings';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
@@ -47,40 +58,6 @@ const initialsOf = name => {
     .filter(Boolean);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + (parts[1][0] || '')).toUpperCase();
-};
-
-const resolveImageUrl = (listing, included) => {
-  const imgRef = listing?.relationships?.images?.data?.[0];
-  if (!imgRef) return null;
-  const image = (included || []).find(
-    i => i.type === 'image' && i.id?.uuid === imgRef.id?.uuid
-  );
-  const variants = image?.attributes?.variants;
-  return variants?.['listing-card-2x']?.url || variants?.['listing-card']?.url || null;
-};
-
-const resolveSellerName = (listing, included) => {
-  const authorRef = listing?.relationships?.author?.data;
-  if (!authorRef) return null;
-  const user = (included || []).find(
-    i => i.type === 'user' && i.id?.uuid === authorRef.id?.uuid
-  );
-  return (
-    user?.attributes?.profile?.displayName ||
-    user?.attributes?.profile?.abbreviatedName ||
-    null
-  );
-};
-
-const formatPrice = money => {
-  if (!money || typeof money.amount !== 'number') return null;
-  const amount = money.amount / 100;
-  const currency = money.currency || 'MXN';
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
 };
 
 // --- subcomponentes ---
@@ -228,35 +205,6 @@ const listingMatchesFilter = (listing, filterGroup) => {
   return true;
 };
 
-const ListingTile = ({ listing, included }) => {
-  const id = listing?.id?.uuid;
-  const title = listing?.attributes?.title || 'Sin título';
-  const slug = createSlug(title);
-  const imageUrl = resolveImageUrl(listing, included);
-  const sellerName = resolveSellerName(listing, included);
-  const price = formatPrice(listing?.attributes?.price);
-  const href = `/l/${slug}/${id}`;
-
-  return (
-    <a className={css.tile} href={href} aria-label={`Ver ${title}`}>
-      <div className={css.tileImageWrap}>
-        {imageUrl ? (
-          <img className={css.tileImage} src={imageUrl} alt={title} loading="lazy" />
-        ) : (
-          <div className={css.tilePlaceholder} aria-hidden="true">
-            {initialsOf(title)}
-          </div>
-        )}
-      </div>
-      <div className={css.tileBody}>
-        <div className={css.tileTitle}>{title}</div>
-        {sellerName ? <div className={css.tileSeller}>{sellerName}</div> : null}
-        {price ? <div className={css.tilePrice}>{price}</div> : null}
-      </div>
-    </a>
-  );
-};
-
 // --- página ---
 
 const EmptyState = ({ community }) => (
@@ -281,6 +229,8 @@ const CommunityLandingPage = () => {
   const loading = useSelector(selectCommunityLoading);
   const notFound = useSelector(selectCommunityNotFound);
   const scrollingDisabled = useSelector(isScrollingDisabled);
+  const { location: buyerLocation } = useBuyerLocation();
+  const buyerState = buyerLocation?.state || null;
 
   const data = listings?.data || [];
   const included = listings?.included || [];
@@ -302,19 +252,50 @@ const CommunityLandingPage = () => {
     return Array.from(set).sort();
   }, [data, filterGroups]);
 
-  // Selected: en modo filterGroups, el objeto del group; en legacy, el
-  // string del categoryLevel1.
   const [selected, setSelected] = useState(null);
 
-  const filteredListings = useMemo(() => {
+  // Scope base: si hay un chip de filtro seleccionado, los 3 rieles
+  // se limitan a los listings que lo cumplen. Sin chip → todos.
+  const scopedListings = useMemo(() => {
     if (!selected) return data;
-    if (filterGroups) {
-      // selected es un filterGroup; aplica su matcher.
-      return data.filter(l => listingMatchesFilter(l, selected));
-    }
-    // Legacy: selected es un string de categoryLevel1.
+    if (filterGroups) return data.filter(l => listingMatchesFilter(l, selected));
     return data.filter(l => l?.attributes?.publicData?.categoryLevel1 === selected);
   }, [data, selected, filterGroups]);
+
+  // XOLOLO 2026-11-19 (Mejora 5) — mismos 3 rieles de la landing
+  // principal: Productos / Servicios / Segunda mano. Con los mismos
+  // criterios: usados por 3 señales (condition/taxCode/casual_reseller),
+  // services incluye eventos, ordering por buyerState (locales primero).
+  const { productItems, serviceItems, usedItems } = useMemo(() => {
+    const authorsById = buildAuthorIndex(included);
+
+    // productos = no used, no event
+    const productsBase = scopedListings.filter(
+      l => !isUsedListing(l, authorsById) && !isEventListing(l)
+    );
+    // servicios = listingType service/service-day O listings con isEvent=true
+    const servicesBase = scopedListings.filter(l => {
+      const lt = l?.attributes?.publicData?.listingType;
+      return lt === 'service' || lt === 'service-day' || isEventListing(l);
+    });
+    // usados = isUsedListing (3 señales)
+    const usedBase = scopedListings.filter(l => isUsedListing(l, authorsById));
+
+    // Ordering por location + top VISIBLE_PER_RAIL + mapeo al shape
+    // de FeaturedListings.
+    const toRail = (kind, base) => {
+      const ordered = filterByBuyerState(base, buyerState, authorsById);
+      return ordered
+        .slice(0, VISIBLE_PER_RAIL)
+        .map((l, i) => listingToFeaturedItem(kind, l, included, i));
+    };
+
+    return {
+      productItems: toRail('product', productsBase),
+      serviceItems: toRail('service', servicesBase),
+      usedItems: toRail('product', usedBase),
+    };
+  }, [scopedListings, included, buyerState]);
 
   // Guard: 404
   if (notFound) {
@@ -377,20 +358,45 @@ const CommunityLandingPage = () => {
             onSelect={setSelected}
           />
 
-          {filteredListings.length === 0 ? (
-            data.length === 0 ? (
-              <EmptyState community={community} />
-            ) : (
-              <div className={css.empty}>
-                <p>Sin resultados para este filtro.</p>
-              </div>
-            )
+          {data.length === 0 ? (
+            <EmptyState community={community} />
           ) : (
-            <div className={css.grid}>
-              {filteredListings.map(l => (
-                <ListingTile key={l.id?.uuid} listing={l} included={included} />
-              ))}
-            </div>
+            <>
+              {/* XOLOLO 2026-11-19 (Mejora 5): 3 rieles idénticos a la
+                  landing principal. Si el usuario filtró por chip y el
+                  riel queda vacío, se oculta ese riel individualmente. */}
+              {productItems.length > 0 ? (
+                <FeaturedListings
+                  title="Productos"
+                  seeAllLabel="Ver todos los productos"
+                  seeAllHref={`/s?pub_sellerCommunities=has:${community.id}&pub_listingType=product`}
+                  items={productItems}
+                />
+              ) : null}
+              {serviceItems.length > 0 ? (
+                <FeaturedListings
+                  title="Servicios"
+                  seeAllLabel="Ver todos los servicios"
+                  seeAllHref={`/s?pub_sellerCommunities=has:${community.id}&pub_listingType=service,service-day`}
+                  items={serviceItems}
+                />
+              ) : null}
+              {usedItems.length > 0 ? (
+                <FeaturedListings
+                  title="Segunda mano"
+                  seeAllLabel="Ver todo lo usado"
+                  seeAllHref={`/s?pub_sellerCommunities=has:${community.id}&pub_condition=used`}
+                  items={usedItems}
+                />
+              ) : null}
+              {productItems.length === 0 &&
+              serviceItems.length === 0 &&
+              usedItems.length === 0 ? (
+                <div className={css.empty}>
+                  <p>Sin resultados para este filtro.</p>
+                </div>
+              ) : null}
+            </>
           )}
         </div>
       </LayoutSingleColumn>

@@ -433,6 +433,18 @@ export const selectFeaturedUsed = (buyerState = null) => state => {
 // fetch terminó sin resultados.
 export const selectLandingListingsLoading = state => state.landingListings?.inProgress === true;
 
+// XOLOLO 2026-11-19 — helpers reutilizados por CommunityLandingPage
+// para dividir en 3 rieles con los mismos criterios que el landing
+// principal. Expuestos deliberadamente aquí para no duplicar lógica.
+export {
+  listingToFeaturedItem,
+  isUsedListing,
+  isEventListing,
+  buildAuthorIndex,
+  filterByBuyerState,
+  VISIBLE_PER_RAIL,
+};
+
 // Backward compat action creator wrapper
 export const fetchLandingListings = () => dispatch =>
   dispatch(fetchLandingListingsThunk()).unwrap();
