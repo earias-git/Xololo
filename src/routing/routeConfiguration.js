@@ -30,6 +30,11 @@ const CotizarEnvioPage = loadable(() => import(/* webpackChunkName: "CotizarEnvi
 const TiendasVerifiedPage = loadable(() => import(/* webpackChunkName: "TiendasVerifiedPage" */ '../containers/TiendasVerifiedPage/TiendasVerifiedPage'));
 const VerifiedPage = loadable(() => import(/* webpackChunkName: "VerifiedPage" */ '../containers/VerifiedPage/VerifiedPage'));
 const NosotrosPage = loadable(() => import(/* webpackChunkName: "NosotrosPage" */ '../containers/NosotrosPage/NosotrosPage'));
+// XOLOLO 2026-11-18 — ADR-006 PR-6: landing de comunidades
+// (sectoriales /comunidad/:slug, geográficas /region/:slug,
+// programas /programa/:slug). Las 3 rutas apuntan al mismo
+// componente — el type se infiere del prefijo URL.
+const CommunityLandingPage = loadable(() => import(/* webpackChunkName: "CommunityLandingPage" */ '../containers/CommunityLandingPage/CommunityLandingPage'));
 const PlanesPage = loadable(() => import(/* webpackChunkName: "PlanesPage" */ '../containers/PlanesPage/PlanesPage'));
 const ListingPageCoverPhoto = loadable(() => import(/* webpackChunkName: "ListingPageCoverPhoto" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCoverPhoto'));
 const ListingPageCarousel = loadable(() => import(/* webpackChunkName: "ListingPageCarousel" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCarousel'));
@@ -150,6 +155,28 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/planes',
       name: 'PlanesPage',
       component: PlanesPage,
+    },
+    // XOLOLO 2026-11-18 — ADR-006 PR-6: landings de comunidad.
+    // Los 3 prefijos resuelven al mismo componente; el endpoint
+    // server acepta ?type= para desambiguar si en el futuro los
+    // slugs colisionan entre types (V1 no colisionan).
+    {
+      path: '/comunidad/:slug',
+      name: 'CommunityLandingPage',
+      component: CommunityLandingPage,
+      loadData: pageDataLoadingAPI.CommunityLandingPage.loadData,
+    },
+    {
+      path: '/region/:slug',
+      name: 'RegionLandingPage',
+      component: CommunityLandingPage,
+      loadData: pageDataLoadingAPI.CommunityLandingPage.loadData,
+    },
+    {
+      path: '/programa/:slug',
+      name: 'ProgramLandingPage',
+      component: CommunityLandingPage,
+      loadData: pageDataLoadingAPI.CommunityLandingPage.loadData,
     },
     {
       path: '/p/:pageId',

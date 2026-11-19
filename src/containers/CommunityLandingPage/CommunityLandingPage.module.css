@@ -1,0 +1,356 @@
+/* XOLOLO 2026-11-18 — CommunityLandingPage styles (ADR-006 PR-6). */
+
+.loading {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--colorGrey500);
+  font-size: 14px;
+}
+
+/* --- Hero --- */
+
+.hero {
+  width: 100%;
+  min-height: 320px;
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.heroInner {
+  max-width: 720px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.heroLogo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.heroLogoPlaceholder {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  letter-spacing: 1px;
+}
+
+.heroTitle {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.heroTagline {
+  font-size: 16px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  max-width: 540px;
+}
+
+.heroStats {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.heroStat {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  backdrop-filter: blur(4px);
+}
+
+.heroStat strong {
+  font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .hero {
+    min-height: 420px;
+    padding: 72px 24px;
+  }
+
+  .heroLogo,
+  .heroLogoPlaceholder {
+    width: 128px;
+    height: 128px;
+  }
+
+  .heroLogoPlaceholder {
+    font-size: 48px;
+  }
+
+  .heroTitle {
+    font-size: 48px;
+  }
+
+  .heroTagline {
+    font-size: 18px;
+  }
+}
+
+/* --- Content container --- */
+
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 72px;
+}
+
+@media (min-width: 768px) {
+  .content {
+    padding: 32px 24px 96px;
+  }
+}
+
+/* --- Bylaws (collapsible) --- */
+
+.bylaws {
+  background: var(--colorGrey50, #f9fafb);
+  border: 1px solid var(--colorGrey100, #e5e7eb);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+}
+
+.bylawsSummary {
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+  padding-right: 24px;
+}
+
+.bylawsSummary::after {
+  content: '▾';
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: transform 0.15s;
+  color: var(--colorGrey500);
+}
+
+.bylaws[open] .bylawsSummary::after {
+  transform: rotate(180deg);
+}
+
+.bylawsBody {
+  padding-top: 12px;
+  color: var(--colorGrey700, #374151);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.bylawsBody p {
+  margin: 0 0 12px;
+}
+
+.bylawsBody p:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Filters --- */
+
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--colorGrey100, #e5e7eb);
+}
+
+.filterChip {
+  background: #fff;
+  border: 1px solid var(--colorGrey200, #d1d5db);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--colorGrey700, #374151);
+  transition: background 0.1s, border-color 0.1s;
+  min-height: 44px;
+  line-height: 1;
+}
+
+.filterChip:hover {
+  background: var(--colorGrey50, #f9fafb);
+  border-color: var(--colorGrey400, #9ca3af);
+}
+
+.filterChipActive {
+  background: var(--marketplaceColor, #1e3a8a);
+  color: #fff;
+  border-color: var(--marketplaceColor, #1e3a8a);
+}
+
+.filterChipActive:hover {
+  background: var(--marketplaceColorDark, #1e3a8a);
+}
+
+/* --- Grid de listings --- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+/* --- Tile --- */
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.1s, box-shadow 0.1s;
+  border: 1px solid var(--colorGrey100, #e5e7eb);
+}
+
+.tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.tileImageWrap {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--colorGrey50, #f9fafb);
+}
+
+.tileImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tilePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--colorGrey300, #d1d5db);
+  background: var(--colorGrey50, #f9fafb);
+}
+
+.tileBody {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 72px;
+}
+
+.tileTitle {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--colorGrey900, #111827);
+}
+
+.tileSeller {
+  font-size: 12px;
+  color: var(--colorGrey500, #6b7280);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tilePrice {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--marketplaceColor, #1e3a8a);
+  margin-top: 4px;
+}
+
+/* --- Empty state --- */
+
+.empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--colorGrey600, #4b5563);
+}
+
+.empty h2 {
+  font-size: 20px;
+  margin: 0 0 12px;
+  color: var(--colorGrey900, #111827);
+}
+
+.empty p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.emptyCta {
+  display: inline-block;
+  background: var(--marketplaceColor, #1e3a8a);
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  min-height: 44px;
+  line-height: 24px;
+}
+
+.emptyCta:hover {
+  background: var(--marketplaceColorDark, #1e3a8a);
+}

@@ -52,8 +52,10 @@ const COMMUNITIES_SEED = [
       'floristería',
       'jardinería profesional',
     ],
-    isPublished: false, // se publica manualmente desde OPS cuando
-    //                     haya ≥1 seller membership
+    isPublished: true, // XOLOLO 2026-11-18: publicada para que la
+    // landing /comunidad/opf sea visible desde PR-6. Mientras no
+    // haya sellers con membership, muestra el EmptyState con CTA
+    // "Ir a mi tienda" (ver CommunityLandingPage.js).
     sellerCount: 0,
     createdAt: '2026-11-18T00:00:00Z',
     updatedAt: '2026-11-18T00:00:00Z',
