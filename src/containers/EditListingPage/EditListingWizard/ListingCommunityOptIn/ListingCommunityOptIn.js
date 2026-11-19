@@ -59,7 +59,7 @@ const ListingCommunityOptIn = ({ listing }) => {
   }, [listing]);
 
   const persist = useCallback(
-    async nextExcluded => {
+    async (nextExcluded, previousExcluded) => {
       if (!listingId) return;
       setSaving(true);
       setError(null);
@@ -75,9 +75,11 @@ const ListingCommunityOptIn = ({ listing }) => {
         );
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
+          // Revert visual al estado previo — la UI debe reflejar lo
+          // que realmente quedó persistido en el server.
+          setExcluded(previousExcluded);
           setError(data?.error || `HTTP ${res.status}`);
-          // revert visualmente — la UI muestra lo que pediste pero
-          // marcamos el error.
+          setSavedAt(null);
         } else {
           // El server devuelve excluded sanitizado — refleja lo que
           // realmente quedó persistido.
@@ -85,7 +87,9 @@ const ListingCommunityOptIn = ({ listing }) => {
           setSavedAt(Date.now());
         }
       } catch (e) {
+        setExcluded(previousExcluded);
         setError(e.message || 'save_failed');
+        setSavedAt(null);
       } finally {
         setSaving(false);
       }
@@ -94,11 +98,12 @@ const ListingCommunityOptIn = ({ listing }) => {
   );
 
   const toggle = communityId => {
-    const nextExcluded = excluded.includes(communityId)
-      ? excluded.filter(id => id !== communityId)
-      : [...excluded, communityId];
+    const previousExcluded = excluded;
+    const nextExcluded = previousExcluded.includes(communityId)
+      ? previousExcluded.filter(id => id !== communityId)
+      : [...previousExcluded, communityId];
     setExcluded(nextExcluded);
-    persist(nextExcluded);
+    persist(nextExcluded, previousExcluded);
   };
 
   if (myCommunities == null) {

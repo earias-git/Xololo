@@ -268,16 +268,41 @@ const setListingCommunities = async ({ sellerId, listingId, excludeFromCommuniti
   const isdk = getIntegrationSdk();
   if (!isdk) throw new Error('integration_api_missing');
 
-  // Validar ownership + traer el publicData actual del listing.
-  const listingResp = await isdk.listings.show({ id: listingId });
+  // XOLOLO 2026-11-19: include=['author'] es imprescindible para que
+  // relationships.author.data.id.uuid venga poblado. Sin él, el ownership
+  // check siempre fallaba con not_listing_owner.
+  const listingResp = await isdk.listings.show({
+    id: listingId,
+    include: ['author'],
+  });
   const listing = listingResp.data.data;
   const authorId = listing.relationships?.author?.data?.id?.uuid;
-  if (authorId !== sellerId) {
-    throw new Error('not_listing_owner');
+  if (!authorId) {
+    throw new Error('author_not_found');
   }
 
-  // Traer profile del seller para calcular el mirror correcto.
-  const { profile } = await _fetchSellerProfile(isdk, sellerId);
+  // XOLOLO 2026-11-19: ownership flexible — el currentUser es dueño si:
+  //   a) es directamente el author, o
+  //   b) es colaborador con workspace activo en el author (modo Equipo).
+  // El target del update es siempre el author (el Negocio real).
+  if (sellerId !== authorId) {
+    // Soporte colaborador: ver si el currentUser tiene workspace activo
+    // con el author.
+    const currentUserResp = await isdk.users.show({ id: sellerId });
+    const currentUser = currentUserResp.data?.data;
+    const workspaces =
+      currentUser?.attributes?.profile?.publicData?.xololoWorkspaces?.workspaces || [];
+    const activeWs = workspaces.find(
+      ws => ws?.adminId === authorId && ws?.status === 'active'
+    );
+    if (!activeWs) {
+      throw new Error('not_listing_owner');
+    }
+    // OK: es colaborador. El target del profile/mirror es el author.
+  }
+
+  // Traer profile del Negocio (author) para calcular el mirror correcto.
+  const { profile } = await _fetchSellerProfile(isdk, authorId);
   const sellerMemberships = new Set(getListingCommunityMirror(profile));
 
   // Sanitizar exclude: ids válidas Y que el seller tenga membership.

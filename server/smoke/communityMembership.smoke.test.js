@@ -258,7 +258,7 @@ describe('communityMembership · smoke', () => {
       );
     });
 
-    test('rechaza listings que no son del seller autenticado', async () => {
+    test('rechaza listings que no son del seller autenticado (y no es colaborador)', async () => {
       const listing = {
         id: { uuid: 'lx' },
         relationships: { author: { data: { id: { uuid: 'OTRO' } } } },
@@ -267,6 +267,17 @@ describe('communityMembership · smoke', () => {
       mockIsdk.listings.show = jest.fn(() =>
         Promise.resolve({ data: { data: listing } })
       );
+      // El user u1 no tiene workspace con OTRO → rechaza.
+      mockIsdk.users.show.mockResolvedValueOnce({
+        data: {
+          data: {
+            id: { uuid: 'u1' },
+            attributes: {
+              profile: { publicData: {} /* no workspaces */ },
+            },
+          },
+        },
+      });
       const { setListingCommunities } = require('../api-util/communityMembership');
       await expect(
         setListingCommunities({
@@ -276,6 +287,51 @@ describe('communityMembership · smoke', () => {
         })
       ).rejects.toThrow('not_listing_owner');
       expect(mockIsdk.listings.update).not.toHaveBeenCalled();
+    });
+
+    test('colaborador con workspace activo SÍ puede actualizar listings del Negocio', async () => {
+      const listing = {
+        id: { uuid: 'lx' },
+        relationships: { author: { data: { id: { uuid: 'adminAbc' } } } },
+        attributes: { publicData: { title: 'escritorio' } },
+      };
+      mockIsdk.listings.show = jest.fn(() =>
+        Promise.resolve({ data: { data: listing } })
+      );
+      // colaboradorU1 tiene workspace activo con adminAbc.
+      mockIsdk.users.show
+        .mockResolvedValueOnce({
+          data: {
+            data: {
+              id: { uuid: 'colaboradorU1' },
+              attributes: {
+                profile: {
+                  publicData: {
+                    xololoWorkspaces: {
+                      workspaces: [
+                        { adminId: 'adminAbc', status: 'active' },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        })
+        // segundo show: el profile del adminAbc para calcular mirror.
+        .mockResolvedValueOnce({
+          data: {
+            data: makeUser('adminAbc', { sectorial: ['opf'] }),
+          },
+        });
+      const { setListingCommunities } = require('../api-util/communityMembership');
+      const result = await setListingCommunities({
+        sellerId: 'colaboradorU1',
+        listingId: 'lx',
+        excludeFromCommunities: ['opf'],
+      });
+      expect(result.excluded).toEqual(['opf']);
+      expect(mockIsdk.listings.update).toHaveBeenCalled();
     });
 
     test('ignora excludes de comunidades a las que el seller no pertenece', async () => {
