@@ -306,12 +306,6 @@ router.patch(
   bodyParser.json(),
   communitiesMembership.setListingCommunities
 );
-// XOLOLO 2026-11-19 — endpoint de diagnóstico para debug del bug.
-router.get(
-  '/me/listings/:id/communities-debug',
-  limits.generic,
-  communitiesMembership.debugListingContext
-);
 
 // XOLOLO 2026-11-18 — ADR-006 PR-4: admin de comunidades.
 // Gated por adminAuth.requireOperator (MFA). Un operador puede

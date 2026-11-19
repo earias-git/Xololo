@@ -91,13 +91,6 @@ const ListingCommunityOptIn = ({ listing }) => {
       if (!listingId) return;
       setSaving(true);
       setError(null);
-      // XOLOLO 2026-11-19 — log del PATCH body para debug bug earias.
-      const payload = {
-        includeInCommunities: nextIncluded,
-        excludeFromCommunities: nextExcluded,
-      };
-      // eslint-disable-next-line no-console
-      console.log('[ListingCommunityOptIn] PATCH body:', JSON.stringify(payload));
       try {
         const res = await fetch(
           `${apiBaseUrl()}/api/me/listings/${listingId}/communities`,
@@ -105,7 +98,10 @@ const ListingCommunityOptIn = ({ listing }) => {
             method: 'PATCH',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({
+              includeInCommunities: nextIncluded,
+              excludeFromCommunities: nextExcluded,
+            }),
           }
         );
         const data = await res.json().catch(() => ({}));
@@ -158,11 +154,7 @@ const ListingCommunityOptIn = ({ listing }) => {
   // decidir si mete/quita del include o del exclude.
   const toggle = community => {
     // XOLOLO 2026-11-19 — guard anti-doble-click síncrono.
-    if (inflightRef.current) {
-      // eslint-disable-next-line no-console
-      console.log('[ListingCommunityOptIn] toggle ignorado (request en vuelo)');
-      return;
-    }
+    if (inflightRef.current) return;
     inflightRef.current = true;
     const mode = defaultInclusionFor(community);
     const previousIncluded = included;
