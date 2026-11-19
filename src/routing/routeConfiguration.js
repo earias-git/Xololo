@@ -482,6 +482,12 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: OpsConsolePage,
     },
     {
+      // XOLOLO 2026-11-18 — ADR-006 PR-9: admin de comunidades.
+      path: '/ops/communities',
+      name: 'OpsCommunitiesPage',
+      component: OpsConsolePage,
+    },
+    {
       // XOLOLO: puente para que un buyer logueado se convierta en
       // vendedor casual con 1 click + aceptación de T&C. Después de
       // activar, redirige a /l/new.

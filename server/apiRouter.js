@@ -62,6 +62,8 @@ const landingListings = require('./api/landing-listings');
 const communities = require('./api/communities');
 // XOLOLO 2026-11-18 — ADR-006 PR-3: join/leave de comunidades.
 const communitiesMembership = require('./api/communities-membership');
+// XOLOLO 2026-11-18 — ADR-006 PR-4: admin de comunidades (OPS).
+const communitiesAdmin = require('./api/communities-admin');
 const team = require('./api/team');
 const teamAs = require('./api/team-as');
 const teamAsUploadImage = require('./api/team-as-upload-image');
@@ -297,6 +299,34 @@ router.post(
   communitiesMembership.leave
 );
 router.get('/me/communities', limits.generic, communitiesMembership.myCommunities);
+
+// XOLOLO 2026-11-18 — ADR-006 PR-4: admin de comunidades.
+// Gated por adminAuth.requireOperator (MFA). Un operador puede
+// publicar/despublicar sin redeploy (overlay in-memory).
+router.get(
+  '/admin/communities',
+  limits.ops,
+  adminAuth.requireOperator(),
+  communitiesAdmin.list
+);
+router.post(
+  '/admin/communities/:id/publish',
+  limits.ops,
+  adminAuth.requireOperator(),
+  communitiesAdmin.publish
+);
+router.post(
+  '/admin/communities/:id/unpublish',
+  limits.ops,
+  adminAuth.requireOperator(),
+  communitiesAdmin.unpublish
+);
+router.post(
+  '/admin/communities/:id/recount-sellers',
+  limits.ops,
+  adminAuth.requireOperator(),
+  communitiesAdmin.recountSellers
+);
 // XOLOLO OPS Users 360 · Fase A: roster + perfil 360 de users. Gated por
 // requireOperator (MFA requerida — info sensible: email, verified, legal).
 router.get('/admin/ops/users-roster', limits.ops, adminAuth.requireOperator(), opsUsersRoster);

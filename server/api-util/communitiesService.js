@@ -18,6 +18,10 @@
 
 const { COMMUNITIES_SEED } = require('../../src/config/communities');
 const { getIntegrationSdk } = require('./integrationSdk');
+// XOLOLO 2026-11-18 — PR-4: overlay in-memory del admin para togglear
+// isPublished sin redeploy. Se aplica ANTES de las funciones públicas
+// de lectura para que un cambio del admin se refleje al instante.
+const adminOverlay = require('./communitiesAdminOverlay');
 
 // -------- cache --------
 const CACHE_TTL_MS = 60 * 1000;
@@ -61,12 +65,14 @@ const toPublic = c => ({
 });
 
 // Catálogo completo (con los campos privados). Solo para admin/OPS.
-const getAllRaw = () => COMMUNITIES_SEED;
+// Aplica el overlay para reflejar cambios en vivo.
+const getAllRaw = () => COMMUNITIES_SEED.map(c => adminOverlay.apply(c));
 
 // Listar comunidades publicadas (para el footer "Comunidades" o
 // una página /comunidades).
 const listPublic = () =>
   COMMUNITIES_SEED
+    .map(c => adminOverlay.apply(c))
     .filter(c => c.isPublished === true && !c.isDeleted)
     .map(toPublic);
 
@@ -74,7 +80,9 @@ const listPublic = () =>
 // coinciden slugs entre types).
 const getBySlug = (slug, type) => {
   if (!slug) return null;
-  const candidates = COMMUNITIES_SEED.filter(c => c.slug === slug && !c.isDeleted);
+  const candidates = COMMUNITIES_SEED
+    .map(c => adminOverlay.apply(c))
+    .filter(c => c.slug === slug && !c.isDeleted);
   const match = type
     ? candidates.find(c => c.type === type)
     : candidates[0];

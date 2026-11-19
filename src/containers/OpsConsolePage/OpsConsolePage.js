@@ -11,6 +11,7 @@ import MfaEnrollView from './MfaEnrollView';
 import OperatorsView from './OperatorsView';
 import TaxReviewsView from './TaxReviewsView';
 import NotificationsView from './NotificationsView';
+import CommunitiesView from './CommunitiesView';
 import PayoutQueueView from './PayoutQueueView';
 import LegalModerationView from './LegalModerationView';
 import BackfillVerifiedView from './BackfillVerifiedView';
@@ -354,6 +355,15 @@ const MODULE_CARDS = [
       'Envía emails ad-hoc a sellers/users desde plantillas o parte de cero. Historial de envíos. Útil para avisos de resincronización, nuevas funciones, recordatorios.',
     route: '/ops/notifications',
   },
+  // XOLOLO 2026-11-18 — ADR-006 PR-4: admin de comunidades.
+  {
+    key: 'communities',
+    label: 'Comunidades',
+    emoji: '🌳',
+    hint:
+      'Lista de comunidades (sectoriales / regionales / programas). Publicar/despublicar, recuento de sellers. OPF – Sector Verde es la primera.',
+    route: '/ops/communities',
+  },
 ];
 
 const AiMetricsPanel = () => {
@@ -613,6 +623,8 @@ const OpsConsolePage = () => {
     content = <AuditLogView onBack={backToDashboard} />;
   } else if (location.pathname === '/ops/notifications') {
     content = <NotificationsView onBack={backToDashboard} />;
+  } else if (location.pathname === '/ops/communities') {
+    content = <CommunitiesView onBack={backToDashboard} />;
   } else {
     content = (
       <Dashboard operator={session.operator} onLogout={session.logout} onNavigate={navigate} />
