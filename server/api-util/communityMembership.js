@@ -340,6 +340,21 @@ const setListingCommunities = async ({
   const { profile } = await _fetchSellerProfile(isdk, authorId);
   const sellerMemberships = new Set(getListingCommunityMirror(profile));
 
+  // XOLOLO 2026-11-19 — diagnostic log para debug del bug reportado
+  // por earias (sanitize silencioso). Muestra en server log:
+  // - currentUser id (el que hace el PATCH)
+  // - author id (del listing)
+  // - memberships del Negocio dueño
+  // - ids pedidas vs ids sanitizadas
+  // eslint-disable-next-line no-console
+  console.log(
+    `[setListingCommunities] listingId=${listingId} currentUserId=${sellerId} authorId=${authorId} businessMemberships=${JSON.stringify(
+      Array.from(sellerMemberships)
+    )} requestedInclude=${JSON.stringify(includeInCommunities || [])} requestedExclude=${JSON.stringify(
+      excludeFromCommunities || []
+    )}`
+  );
+
   // Sanitizar: ids válidas Y que el seller tenga membership.
   const listingPd = listing.attributes?.publicData || {};
   const sanitize = arr => {

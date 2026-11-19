@@ -116,8 +116,14 @@ const ListingCommunityOptIn = ({ listing }) => {
           setIncluded(serverIncluded);
           setExcluded(serverExcluded);
           if (requestedButDropped.length > 0) {
+            // El server sanitizó silenciosamente ids que el Negocio
+            // dueño del listing no tiene en su profile. Mensaje
+            // enfocado al caso real: el seller debe haberse unido ya
+            // (porque el checkbox se le mostró). Pide refresh.
             setError(
-              `No perteneces a: ${requestedButDropped.join(', ')}. Únete primero desde "Mi tienda" → Comunidades.`
+              `La comunidad "${requestedButDropped.join(
+                ', '
+              )}" no está activa en este anuncio. Si acabas de unirte en "Mi tienda", refresca la página. Si eres colaborador del Negocio, el dueño debe unirse primero.`
             );
             setSavedAt(null);
           } else {
