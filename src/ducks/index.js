@@ -6,6 +6,7 @@
 
 import auth from './auth.duck';
 import cart from './cart.duck';
+import communities from './communities.duck';
 import emailVerification from './emailVerification.duck';
 import routing from './routing.duck';
 import ui from './ui.duck';
@@ -24,6 +25,7 @@ import user from './user.duck';
 export {
   auth,
   cart,
+  communities,
   emailVerification,
   routing,
   ui,

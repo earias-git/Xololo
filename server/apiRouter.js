@@ -60,6 +60,8 @@ const opsSendNotification = require('./api/ops-send-notification');
 const landingListings = require('./api/landing-listings');
 // XOLOLO 2026-11-18 — ADR-006 PR-2: endpoints públicos de comunidades.
 const communities = require('./api/communities');
+// XOLOLO 2026-11-18 — ADR-006 PR-3: join/leave de comunidades.
+const communitiesMembership = require('./api/communities-membership');
 const team = require('./api/team');
 const teamAs = require('./api/team-as');
 const teamAsUploadImage = require('./api/team-as-upload-image');
@@ -280,6 +282,21 @@ router.get('/landing-listings', limits.generic, landingListings.get);
 router.get('/communities', limits.generic, communities.list);
 router.get('/communities/:slug', limits.generic, communities.show);
 router.get('/communities/:slug/listings', limits.generic, communities.listingsForCommunity);
+
+// XOLOLO 2026-11-18 — ADR-006 PR-3: membership (autenticado).
+router.post(
+  '/communities/:slug/join',
+  limits.community,
+  bodyParser.json(),
+  communitiesMembership.join
+);
+router.post(
+  '/communities/:slug/leave',
+  limits.community,
+  bodyParser.json(),
+  communitiesMembership.leave
+);
+router.get('/me/communities', limits.generic, communitiesMembership.myCommunities);
 // XOLOLO OPS Users 360 · Fase A: roster + perfil 360 de users. Gated por
 // requireOperator (MFA requerida — info sensible: email, verified, legal).
 router.get('/admin/ops/users-roster', limits.ops, adminAuth.requireOperator(), opsUsersRoster);

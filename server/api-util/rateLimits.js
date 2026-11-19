@@ -101,6 +101,16 @@ const shippingQuote = buildLimiter({
   name: 'shipping-quote',
 });
 
+// XOLOLO 2026-11-18 — ADR-006 PR-3: join/leave de comunidades.
+// Cada acción dispara writes a los N listings del seller (espejo),
+// así que es cara. 5/min por seller es suficiente para humano y
+// corta scripts de spam/flapping.
+const community = buildLimiter({
+  windowMs: 60 * 1000,
+  max: 5,
+  name: 'community',
+});
+
 module.exports = {
   generic,
   payment,
@@ -108,4 +118,5 @@ module.exports = {
   auth,
   ops,
   shippingQuote,
+  community,
 };
