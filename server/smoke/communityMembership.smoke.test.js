@@ -242,6 +242,23 @@ describe('communityMembership · smoke', () => {
     });
   });
 
+  describe('endpoint HTTP wrapper extrae ambos campos del body', () => {
+    // XOLOLO 2026-11-19 — test para prevenir regresión del bug
+    // donde el endpoint HTTP ignoraba includeInCommunities del body.
+    test('extrae includeInCommunities y excludeFromCommunities del body', () => {
+      // Lee el código del endpoint para verificar que ambos campos
+      // se extraen. Protección paranoica contra regresión futura.
+      const src = require('fs').readFileSync(
+        require.resolve('../api/communities-membership.js'),
+        'utf8'
+      );
+      expect(src).toMatch(/req\.body\?\.includeInCommunities/);
+      expect(src).toMatch(/req\.body\?\.excludeFromCommunities/);
+      // Verifica que ambos se pasan al helper.
+      expect(src).toMatch(/includeInCommunities,\s*\n?\s*excludeFromCommunities,/);
+    });
+  });
+
   describe('setListingCommunities (opt-out por listing)', () => {
     test('actualiza listing con excludeFromCommunities + mirror recalculado', async () => {
       // Seller con 2 comunidades. Listing excluye solo opf.
