@@ -154,14 +154,48 @@ const Bylaws = ({ community }) => {
   );
 };
 
-const Filters = ({ availableCategories, selectedCategory, onSelectCategory }) => {
+// XOLOLO 2026-11-18 — Filters nuevo: usa community.filterGroups si
+// está definido (taxonomía propia de la comunidad). Fallback a chips
+// derivados de los categoryLevel1 de los listings cuando la comunidad
+// no define filterGroups.
+const Filters = ({ filterGroups, availableCategories, selected, onSelect }) => {
+  // Preferimos los filterGroups definidos por la comunidad.
+  if (filterGroups?.length) {
+    return (
+      <div className={css.filters} role="group" aria-label="Filtros de la comunidad">
+        <button
+          type="button"
+          className={classNames(css.filterChip, !selected && css.filterChipActive)}
+          onClick={() => onSelect(null)}
+        >
+          Todos
+        </button>
+        {filterGroups.map(fg => (
+          <button
+            key={fg.id}
+            type="button"
+            className={classNames(
+              css.filterChip,
+              selected?.id === fg.id && css.filterChipActive
+            )}
+            onClick={() => onSelect(fg)}
+            title={fg.label}
+          >
+            {fg.emoji ? <span aria-hidden="true">{fg.emoji} </span> : null}
+            {fg.label}
+          </button>
+        ))}
+      </div>
+    );
+  }
+  // Fallback legacy — categoryLevel1 derivado de los listings.
   if (!availableCategories?.length) return null;
   return (
     <div className={css.filters} role="group" aria-label="Filtros de categoría">
       <button
         type="button"
-        className={classNames(css.filterChip, !selectedCategory && css.filterChipActive)}
-        onClick={() => onSelectCategory(null)}
+        className={classNames(css.filterChip, !selected && css.filterChipActive)}
+        onClick={() => onSelect(null)}
       >
         Todos
       </button>
@@ -171,15 +205,27 @@ const Filters = ({ availableCategories, selectedCategory, onSelectCategory }) =>
           type="button"
           className={classNames(
             css.filterChip,
-            selectedCategory === cat && css.filterChipActive
+            selected === cat && css.filterChipActive
           )}
-          onClick={() => onSelectCategory(cat)}
+          onClick={() => onSelect(cat)}
         >
           {cat}
         </button>
       ))}
     </div>
   );
+};
+
+// Matcher de un listing contra un filterGroup. Match es {categoryLevel1,
+// categoryLevel2?}. Un listing matchea si sus publicData coinciden.
+const listingMatchesFilter = (listing, filterGroup) => {
+  if (!filterGroup?.match) return false;
+  const pd = listing?.attributes?.publicData || {};
+  const m = filterGroup.match;
+  if (m.categoryLevel1 && pd.categoryLevel1 !== m.categoryLevel1) return false;
+  if (m.categoryLevel2 && pd.categoryLevel2 !== m.categoryLevel2) return false;
+  if (m.categoryLevel3 && pd.categoryLevel3 !== m.categoryLevel3) return false;
+  return true;
 };
 
 const ListingTile = ({ listing, included }) => {
@@ -239,24 +285,36 @@ const CommunityLandingPage = () => {
   const data = listings?.data || [];
   const included = listings?.included || [];
 
-  // Facetas client-side: categoryLevel1. Derivamos valores
-  // disponibles de los listings cargados (en V1 no pegamos al backend
-  // por filtros; cuando pase la landing a server-side se migra).
+  // XOLOLO 2026-11-18 — filtros propios de la comunidad (filterGroups)
+  // tienen prioridad sobre el fallback de categoryLevel1. Ver
+  // src/config/communities.js y Filters component abajo.
+  const filterGroups = community?.filterGroups || null;
+
+  // Fallback: derivar chips de los categoryLevel1 de los listings
+  // cuando la comunidad NO define filterGroups.
   const availableCategories = useMemo(() => {
+    if (filterGroups) return []; // ignorado si hay filterGroups
     const set = new Set();
     data.forEach(l => {
       const cat = l?.attributes?.publicData?.categoryLevel1;
       if (cat) set.add(cat);
     });
     return Array.from(set).sort();
-  }, [data]);
+  }, [data, filterGroups]);
 
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  // Selected: en modo filterGroups, el objeto del group; en legacy, el
+  // string del categoryLevel1.
+  const [selected, setSelected] = useState(null);
 
   const filteredListings = useMemo(() => {
-    if (!selectedCategory) return data;
-    return data.filter(l => l?.attributes?.publicData?.categoryLevel1 === selectedCategory);
-  }, [data, selectedCategory]);
+    if (!selected) return data;
+    if (filterGroups) {
+      // selected es un filterGroup; aplica su matcher.
+      return data.filter(l => listingMatchesFilter(l, selected));
+    }
+    // Legacy: selected es un string de categoryLevel1.
+    return data.filter(l => l?.attributes?.publicData?.categoryLevel1 === selected);
+  }, [data, selected, filterGroups]);
 
   // Guard: 404
   if (notFound) {
@@ -313,9 +371,10 @@ const CommunityLandingPage = () => {
           <Bylaws community={community} />
 
           <Filters
+            filterGroups={filterGroups}
             availableCategories={availableCategories}
-            selectedCategory={selectedCategory}
-            onSelectCategory={setSelectedCategory}
+            selected={selected}
+            onSelect={setSelected}
           />
 
           {filteredListings.length === 0 ? (

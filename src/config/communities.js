@@ -42,6 +42,63 @@ const COMMUNITIES_SEED = [
       sector: ['verde'],
       uso: ['ornamental', 'comestible'],
     },
+    // XOLOLO 2026-11-18 — chips de filtro propios de la comunidad.
+    // Si está definido, la landing /comunidad/:slug lo usa en vez de
+    // derivar los chips de los categoryLevel1 genéricos de Xololo.
+    // Taxonomía Sector Verde — ver docs/TAXONOMIA_SECTOR_VERDE.md.
+    // Cada chip tiene un matcher simple (categoryLevel1 + opcional
+    // categoryLevel2). Un listing sin esa taxonomía NO matchea y
+    // aparece solo bajo "Todos".
+    filterGroups: [
+      {
+        id: 'plantas-ornamentales',
+        label: 'Plantas ornamentales',
+        emoji: '🌿',
+        match: { categoryLevel1: 'hogar', categoryLevel2: 'jardineria' },
+      },
+      {
+        id: 'plantas-comestibles',
+        label: 'Plantas comestibles',
+        emoji: '🥬',
+        match: { categoryLevel1: 'alimentos', categoryLevel2: 'agricultura' },
+      },
+      {
+        id: 'flores-de-corte',
+        label: 'Flores de corte',
+        emoji: '🌸',
+        match: { categoryLevel1: 'hogar', categoryLevel2: 'flores-de-corte' },
+      },
+      {
+        id: 'servicios-jardineria',
+        label: 'Jardinería',
+        emoji: '✂️',
+        match: { categoryLevel1: 'servicios', categoryLevel2: 'jardineria' },
+      },
+      {
+        id: 'servicios-arboricultura',
+        label: 'Arboricultura',
+        emoji: '🌳',
+        match: { categoryLevel1: 'servicios', categoryLevel2: 'arboricultura' },
+      },
+      {
+        id: 'servicios-floristeria',
+        label: 'Floristería',
+        emoji: '💐',
+        match: { categoryLevel1: 'servicios', categoryLevel2: 'floristeria' },
+      },
+      {
+        id: 'servicios-agricultura',
+        label: 'Agricultura y horticultura',
+        emoji: '🚜',
+        match: { categoryLevel1: 'servicios', categoryLevel2: 'agricultura' },
+      },
+      {
+        id: 'insumos-agricolas',
+        label: 'Insumos agrícolas',
+        emoji: '🧪',
+        match: { categoryLevel1: 'alimentos', categoryLevel2: 'insumos-agricolas' },
+      },
+    ],
     seoKeywords: [
       'viveros méxico',
       'sector verde',
