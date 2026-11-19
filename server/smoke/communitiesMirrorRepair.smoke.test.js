@@ -9,6 +9,20 @@
 //   5. Users sin memberships se saltan (no escanea sus listings).
 //   6. Errors por listings.update individual no abortan el run.
 
+// XOLOLO 2026-11-19: mock del service de comunidades para controlar
+// el catalog que ve el computeMirrorForListing. Por default [] →
+// opt-out para todas las comunidades (shape legacy de estos tests).
+// Tests nuevos del opt-in setean FAKE_CATALOG antes del run.
+let FAKE_CATALOG = [];
+jest.mock('../api-util/communitiesService', () => ({
+  getAllRaw: () => FAKE_CATALOG,
+  invalidateCache: jest.fn(),
+}));
+const setCatalog = c => {
+  FAKE_CATALOG.length = 0;
+  FAKE_CATALOG.push(...c);
+};
+
 const { repairMirror, sameSet } = require('../cron/communitiesMirrorRepair');
 
 const makeUser = (id, communities = null) => ({

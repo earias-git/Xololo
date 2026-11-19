@@ -266,7 +266,7 @@ describe('getListingCommunityMirror', () => {
   });
 });
 
-describe('computeMirrorForListing', () => {
+describe('computeMirrorForListing (modelo opt-in/opt-out)', () => {
   const profile = {
     publicData: {
       communities: {
@@ -275,51 +275,86 @@ describe('computeMirrorForListing', () => {
       },
     },
   };
+  // Catálogo con los tipos correctos para que el default-por-type aplique.
+  const catalog = [
+    { id: 'opf', type: 'sectorial' },
+    { id: 'alimentos-organicos', type: 'sectorial' },
+    { id: 'morelos', type: 'geografica' },
+  ];
 
-  test('sin excludeFromCommunities → mirror completo', () => {
-    const mirror = computeMirrorForListing(profile, {});
-    expect(mirror.sort()).toEqual(['alimentos-organicos', 'morelos', 'opf'].sort());
-  });
-
-  test('excludeFromCommunities=[] → mirror completo', () => {
-    const mirror = computeMirrorForListing(profile, { excludeFromCommunities: [] });
-    expect(mirror.sort()).toEqual(['alimentos-organicos', 'morelos', 'opf'].sort());
-  });
-
-  test('excluye solo las ids marcadas (caso nochebuena vs escritorio)', () => {
-    const mirror = computeMirrorForListing(profile, {
-      excludeFromCommunities: ['opf'],
+  describe('default por tipo (sin catalog → opt-out)', () => {
+    test('sin exclude ni include, con catalog vacío → opt-out → todas', () => {
+      const mirror = computeMirrorForListing(profile, {});
+      expect(mirror.sort()).toEqual(['alimentos-organicos', 'morelos', 'opf'].sort());
     });
-    expect(mirror.sort()).toEqual(['alimentos-organicos', 'morelos'].sort());
-    expect(mirror).not.toContain('opf');
   });
 
-  test('excluir una id que NO tiene no es error', () => {
-    const mirror = computeMirrorForListing(profile, {
-      excludeFromCommunities: ['comunidad-inexistente'],
+  describe('con catalog (opt-in para sectorial, opt-out para geografica)', () => {
+    test('listing sin includeIn → sectoriales NO aparecen, geográfica SÍ', () => {
+      const mirror = computeMirrorForListing(profile, {}, catalog);
+      expect(mirror).toEqual(['morelos']);
     });
-    expect(mirror.sort()).toEqual(['alimentos-organicos', 'morelos', 'opf'].sort());
-  });
 
-  test('excluir TODAS deja mirror vacío', () => {
-    const mirror = computeMirrorForListing(profile, {
-      excludeFromCommunities: ['opf', 'alimentos-organicos', 'morelos'],
+    test('listing con includeInCommunities=["opf"] → opf SÍ aparece', () => {
+      const mirror = computeMirrorForListing(
+        profile,
+        { includeInCommunities: ['opf'] },
+        catalog
+      );
+      expect(mirror.sort()).toEqual(['morelos', 'opf'].sort());
     });
-    expect(mirror).toEqual([]);
-  });
 
-  test('null-safe con listingPublicData undefined', () => {
-    expect(computeMirrorForListing(profile)).toEqual(
-      expect.arrayContaining(['opf', 'alimentos-organicos', 'morelos'])
-    );
-  });
-
-  test('ids inválidos en exclude se filtran (defensive)', () => {
-    const mirror = computeMirrorForListing(profile, {
-      excludeFromCommunities: ['BAD_ID', 'opf'],
+    test('listing con exclude en geografica → morelos NO aparece', () => {
+      const mirror = computeMirrorForListing(
+        profile,
+        { excludeFromCommunities: ['morelos'] },
+        catalog
+      );
+      expect(mirror).toEqual([]);
     });
-    expect(mirror).not.toContain('opf');
-    expect(mirror).toContain('alimentos-organicos');
+
+    test('listing con include+exclude → cada comunidad respeta su modo', () => {
+      const mirror = computeMirrorForListing(
+        profile,
+        {
+          includeInCommunities: ['opf', 'alimentos-organicos'],
+          excludeFromCommunities: ['morelos'],
+        },
+        catalog
+      );
+      expect(mirror.sort()).toEqual(['alimentos-organicos', 'opf'].sort());
+    });
+
+    test('community override listingDefaultInclusion=opt-out → se comporta como geografica', () => {
+      const catalogOverride = [{ id: 'opf', type: 'sectorial', listingDefaultInclusion: 'opt-out' }];
+      const profileOnlyOpf = {
+        publicData: { communities: { sectorial: ['opf'] } },
+      };
+      const mirror = computeMirrorForListing(profileOnlyOpf, {}, catalogOverride);
+      expect(mirror).toEqual(['opf']);
+    });
+
+    test('ids inválidos en include/exclude se filtran', () => {
+      const mirror = computeMirrorForListing(
+        profile,
+        {
+          includeInCommunities: ['opf', 'BAD_ID'],
+          excludeFromCommunities: ['morelos', 'BAD_ID'],
+        },
+        catalog
+      );
+      expect(mirror).toEqual(['opf']);
+    });
+
+    test('null-safe con listingPublicData undefined', () => {
+      const mirror = computeMirrorForListing(profile, undefined, catalog);
+      expect(mirror).toEqual(['morelos']);
+    });
+
+    test('profile sin memberships → siempre vacío', () => {
+      const mirror = computeMirrorForListing({}, { includeInCommunities: ['opf'] }, catalog);
+      expect(mirror).toEqual([]);
+    });
   });
 });
 

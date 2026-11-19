@@ -1,20 +1,22 @@
 /**
- * XOLOLO 2026-11-18 — Opt-out de comunidades por listing.
+ * XOLOLO 2026-11-19 — Opt-in/Opt-out de comunidades por listing + taxonomía.
  *
- * Panel compacto que muestra las comunidades a las que pertenece el
- * seller y permite incluir/excluir ESTE listing específico.
+ * Panel compacto al final del tab Detalles. Lista las comunidades del
+ * seller con el modo correcto:
+ *   - Sectoriales (OPF): checkbox OFF por default (opt-in). Al tildar,
+ *     se muestran los filterGroups de esa comunidad para que el seller
+ *     elija a qué sección pertenece (y preseteamos categoryLevel1/2).
+ *   - Geográficas (Morelos): checkbox ON por default (opt-out).
  *
- * Diseño: componente standalone — hace su propio fetch+patch directo
- * al endpoint PATCH /api/me/listings/:id/communities. NO forma parte
- * del submit del wizard de EditListingDetailsPanel (desacoplado).
+ * Fuentes de verdad en el listing:
+ *   publicData.includeInCommunities[]   (opt-in explícito)
+ *   publicData.excludeFromCommunities[] (opt-out explícito)
+ *   publicData.categoryLevel1/2         (seteados al elegir filterGroup)
  *
- * Solo visible si el seller pertenece a ≥1 comunidad. Default: todas
- * las comunidades tildadas (el listing aparece en todas por defecto,
- * coincidente con el mirror). Al destildar, se agrega al array
- * excludeFromCommunities y el mirror del listing se recalcula server-side.
+ * Desacoplado del submit del wizard — PATCH directo al endpoint.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { apiBaseUrl } from '../../../../util/api';
 
@@ -26,8 +28,16 @@ const TYPE_LABEL = {
   modelo: 'Programa',
 };
 
+// Default de inclusión por tipo (mismo que el helper del server).
+const defaultInclusionFor = community =>
+  community?.listingDefaultInclusion ||
+  (community?.type === 'geografica' ? 'opt-out' : 'opt-in');
+
 const ListingCommunityOptIn = ({ listing }) => {
   const [myCommunities, setMyCommunities] = useState(null); // null = loading
+  const [included, setIncluded] = useState(
+    () => listing?.attributes?.publicData?.includeInCommunities || []
+  );
   const [excluded, setExcluded] = useState(
     () => listing?.attributes?.publicData?.excludeFromCommunities || []
   );
@@ -53,13 +63,14 @@ const ListingCommunityOptIn = ({ listing }) => {
     };
   }, []);
 
-  // Si cambia el listing (p.ej. post-save), refresca el exclude local.
+  // Refresca estado local si el listing cambia (post-save).
   useEffect(() => {
+    setIncluded(listing?.attributes?.publicData?.includeInCommunities || []);
     setExcluded(listing?.attributes?.publicData?.excludeFromCommunities || []);
   }, [listing]);
 
   const persist = useCallback(
-    async (nextExcluded, previousExcluded) => {
+    async ({ nextIncluded, nextExcluded, previousIncluded, previousExcluded }) => {
       if (!listingId) return;
       setSaving(true);
       setError(null);
@@ -70,23 +81,25 @@ const ListingCommunityOptIn = ({ listing }) => {
             method: 'PATCH',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ excludeFromCommunities: nextExcluded }),
+            body: JSON.stringify({
+              includeInCommunities: nextIncluded,
+              excludeFromCommunities: nextExcluded,
+            }),
           }
         );
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          // Revert visual al estado previo — la UI debe reflejar lo
-          // que realmente quedó persistido en el server.
+          setIncluded(previousIncluded);
           setExcluded(previousExcluded);
           setError(data?.error || `HTTP ${res.status}`);
           setSavedAt(null);
         } else {
-          // El server devuelve excluded sanitizado — refleja lo que
-          // realmente quedó persistido.
+          setIncluded(data.included || []);
           setExcluded(data.excluded || []);
           setSavedAt(Date.now());
         }
       } catch (e) {
+        setIncluded(previousIncluded);
         setExcluded(previousExcluded);
         setError(e.message || 'save_failed');
         setSavedAt(null);
@@ -97,22 +110,49 @@ const ListingCommunityOptIn = ({ listing }) => {
     [listingId]
   );
 
-  const toggle = communityId => {
+  // Toggle de check (cualquier tipo). Usa el modo del community para
+  // decidir si mete/quita del include o del exclude.
+  const toggle = community => {
+    const mode = defaultInclusionFor(community);
+    const previousIncluded = included;
     const previousExcluded = excluded;
-    const nextExcluded = previousExcluded.includes(communityId)
-      ? previousExcluded.filter(id => id !== communityId)
-      : [...previousExcluded, communityId];
+    let nextIncluded = previousIncluded;
+    let nextExcluded = previousExcluded;
+
+    if (mode === 'opt-in') {
+      // Modo opt-in: el checkbox tildado significa "incluir".
+      if (previousIncluded.includes(community.id)) {
+        nextIncluded = previousIncluded.filter(id => id !== community.id);
+      } else {
+        nextIncluded = [...previousIncluded, community.id];
+      }
+    } else {
+      // Modo opt-out: el checkbox tildado significa "no excluir".
+      if (previousExcluded.includes(community.id)) {
+        nextExcluded = previousExcluded.filter(id => id !== community.id);
+      } else {
+        nextExcluded = [...previousExcluded, community.id];
+      }
+    }
+
+    setIncluded(nextIncluded);
     setExcluded(nextExcluded);
-    persist(nextExcluded, previousExcluded);
+    persist({ nextIncluded, nextExcluded, previousIncluded, previousExcluded });
   };
 
-  if (myCommunities == null) {
-    // loading — no renderiza nada aún para evitar flash.
-    return null;
-  }
-  // Filtra las comunidades stale (que ya no existen en el catálogo)
-  // porque no se puede incluir/excluir de algo que no existe.
-  const active = myCommunities.filter(c => !c._stale);
+  // Chequea si el listing está "activo" en esta comunidad (visible).
+  const isActiveFor = community => {
+    const mode = defaultInclusionFor(community);
+    if (mode === 'opt-in') return included.includes(community.id);
+    return !excluded.includes(community.id);
+  };
+
+  const active = useMemo(
+    () => (myCommunities || []).filter(c => !c._stale),
+    [myCommunities]
+  );
+
+  if (myCommunities == null) return null;
   if (active.length === 0) return null;
 
   return (
@@ -120,41 +160,27 @@ const ListingCommunityOptIn = ({ listing }) => {
       <header className={css.header}>
         <h3 className={css.title}>¿Este anuncio aplica a tus comunidades?</h3>
         <p className={css.subtitle}>
-          Elige en cuáles comunidades debe aparecer. Ej: una nochebuena sí aplica
-          a OPF – Sector Verde, un escritorio usado no. Por default aparece en
-          todas tus comunidades. Los cambios se guardan automático.
+          Para comunidades por sector (como OPF – Sector Verde) debes activar
+          manualmente cada anuncio que aplique: ej. una nochebuena sí, un
+          escritorio usado no. Para comunidades por región (como Morelos) el
+          anuncio aparece por default. Los cambios se guardan automático.
         </p>
       </header>
 
       <div className={css.list}>
         {active.map(c => {
-          const checked = !excluded.includes(c.id);
+          const isActive = isActiveFor(c);
+          const mode = defaultInclusionFor(c);
           return (
-            <label key={`${c.type}:${c.id}`} className={css.row}>
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={() => toggle(c.id)}
-                disabled={saving}
-                className={css.checkbox}
-              />
-              <span
-                className={css.logo}
-                style={{ background: c.branding?.primaryColor || '#2d5016' }}
-              >
-                {c.name
-                  ?.split(/[^a-zA-Z0-9]+/)
-                  .filter(Boolean)
-                  .map(p => p[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase() || 'C'}
-              </span>
-              <span className={css.info}>
-                <span className={css.name}>{c.name}</span>
-                <span className={css.meta}>{TYPE_LABEL[c.type] || c.type}</span>
-              </span>
-            </label>
+            <CommunityRow
+              key={`${c.type}:${c.id}`}
+              community={c}
+              isActive={isActive}
+              mode={mode}
+              onToggle={() => toggle(c)}
+              saving={saving}
+              listingId={listingId}
+            />
           );
         })}
       </div>
@@ -165,6 +191,96 @@ const ListingCommunityOptIn = ({ listing }) => {
       ) : null}
       {error ? <div className={css.hintError}>Error: {error}</div> : null}
     </section>
+  );
+};
+
+// Fila por comunidad. Si está activa + tiene filterGroups, muestra
+// un selector de sub-categoría que escribe categoryLevel1/2 del listing
+// directamente via endpoint de team wrapper (si aplica) o via el
+// listings.update del server del PATCH. Para V1 ofrecemos un enlace
+// al tab Categoría del wizard para que el seller elija ahí.
+const CommunityRow = ({ community, isActive, mode, onToggle, saving, listingId }) => {
+  const [showTaxonomy, setShowTaxonomy] = useState(false);
+
+  return (
+    <div className={`${css.rowWrap} ${isActive ? css.rowWrapActive : ''}`}>
+      <label className={css.row}>
+        <input
+          type="checkbox"
+          checked={isActive}
+          onChange={onToggle}
+          disabled={saving}
+          className={css.checkbox}
+        />
+        <span
+          className={css.logo}
+          style={{ background: community.branding?.primaryColor || '#2d5016' }}
+        >
+          {community.name
+            ?.split(/[^a-zA-Z0-9]+/)
+            .filter(Boolean)
+            .map(p => p[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase() || 'C'}
+        </span>
+        <span className={css.info}>
+          <span className={css.name}>{community.name}</span>
+          <span className={css.meta}>
+            {TYPE_LABEL[community.type] || community.type}
+            {' · '}
+            <span className={css.modeChip}>
+              {mode === 'opt-in' ? 'activa manual' : 'incluido por región'}
+            </span>
+          </span>
+        </span>
+      </label>
+
+      {/* Taxonomía sugerida — solo cuando está activa y la comunidad
+          tiene filterGroups. Ayuda al seller a saber bajo qué chip
+          aparecerá en la landing. */}
+      {isActive && community.filterGroups?.length ? (
+        <div className={css.taxonomy}>
+          <button
+            type="button"
+            className={css.taxonomyToggle}
+            onClick={() => setShowTaxonomy(v => !v)}
+          >
+            {showTaxonomy
+              ? 'Ocultar categorías'
+              : `¿En qué sección de ${community.name}?`}
+          </button>
+          {showTaxonomy ? (
+            <div className={css.taxonomyBody}>
+              <p className={css.taxonomyNote}>
+                Asegúrate de que tu anuncio tenga la categoría correcta para
+                que aparezca bajo el chip apropiado en la landing de{' '}
+                {community.name}. Si no coincide ninguna, tu anuncio sigue
+                apareciendo bajo &quot;Todos&quot;.
+              </p>
+              <ul className={css.taxonomyList}>
+                {community.filterGroups.map(fg => (
+                  <li key={fg.id} className={css.taxonomyItem}>
+                    <span className={css.taxonomyEmoji}>{fg.emoji || '•'}</span>{' '}
+                    <strong>{fg.label}</strong>{' '}
+                    <code className={css.taxonomyMatch}>
+                      {fg.match?.categoryLevel1}
+                      {fg.match?.categoryLevel2 ? ` / ${fg.match.categoryLevel2}` : ''}
+                    </code>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={`/l/-/${listingId}/draft/details`}
+                className={css.taxonomyLink}
+              >
+                Ir al tab Detalles para cambiar la categoría →
+              </a>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 };
 

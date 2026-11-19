@@ -29,6 +29,26 @@ jest.mock('../api-util/integrationSdk', () => ({
   getIntegrationSdk: () => mockIsdk,
 }));
 
+// XOLOLO 2026-11-19: mock del service para controlar el catalog
+// que ve el computeMirrorForListing. Por default [] → se comporta
+// como opt-out para todas las comunidades (shape legacy de estos
+// tests). Los tests nuevos de opt-in setean FAKE_CATALOG.
+let FAKE_CATALOG = [];
+const setCatalog = c => {
+  FAKE_CATALOG.length = 0;
+  FAKE_CATALOG.push(...c);
+};
+jest.mock('../api-util/communitiesService', () => ({
+  getAllRaw: () => FAKE_CATALOG,
+  invalidateCache: jest.fn(),
+  getBySlugPublic: (slug, type) => {
+    const c = FAKE_CATALOG.find(
+      x => x.slug === slug && (!type || x.type === type)
+    );
+    return c ? { id: c.id, type: c.type, name: c.name || c.id } : null;
+  },
+}));
+
 // Mock del catálogo para poder controlar comunidades existentes.
 const FAKE_SEED = [];
 jest.mock('../../src/config/communities', () => ({
@@ -354,6 +374,82 @@ describe('communityMembership · smoke', () => {
       });
       expect(result.excluded).toEqual(['opf']);
       expect(result.mirror).toEqual([]);
+    });
+  });
+
+  describe('modo opt-in para sectoriales (Mejora 2)', () => {
+    test('join a sectorial con catalog sectorial → mirror vacío por default', async () => {
+      // Configura el catálogo con OPF sectorial (opt-in por default).
+      setCatalog([{ id: 'opf', type: 'sectorial' }]);
+      mockIsdk.users.show.mockResolvedValueOnce({ data: { data: makeUser('u1') } });
+      mockIsdk.listings.query.mockResolvedValueOnce({
+        data: {
+          data: [makeListing('l-sin-opt-in')],
+          meta: { page: 1, totalPages: 1 },
+        },
+      });
+      const { joinCommunity } = require('../api-util/communityMembership');
+      const result = await joinCommunity('u1', { id: 'opf', type: 'sectorial' });
+      expect(result.status).toBe('joined');
+      // El profile queda con opf, pero el mirror del listing NO
+      // porque sectorial es opt-in y el listing no está opted-in.
+      expect(mockIsdk.listings.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'l-sin-opt-in',
+          publicData: { sellerCommunities: [] },
+        })
+      );
+    });
+
+    test('listing con includeInCommunities=["opf"] SÍ aparece tras join sectorial', async () => {
+      setCatalog([{ id: 'opf', type: 'sectorial' }]);
+      mockIsdk.users.show.mockResolvedValueOnce({ data: { data: makeUser('u1') } });
+      mockIsdk.listings.query.mockResolvedValueOnce({
+        data: {
+          data: [
+            {
+              id: { uuid: 'l-nochebuena' },
+              attributes: {
+                publicData: { includeInCommunities: ['opf'] },
+              },
+            },
+          ],
+          meta: { page: 1, totalPages: 1 },
+        },
+      });
+      const { joinCommunity } = require('../api-util/communityMembership');
+      await joinCommunity('u1', { id: 'opf', type: 'sectorial' });
+      expect(mockIsdk.listings.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'l-nochebuena',
+          publicData: { sellerCommunities: ['opf'] },
+        })
+      );
+    });
+
+    test('join a geografica (opt-out) sigue incluyendo todos los listings', async () => {
+      setCatalog([{ id: 'morelos', type: 'geografica' }]);
+      mockIsdk.users.show.mockResolvedValueOnce({ data: { data: makeUser('u1') } });
+      mockIsdk.listings.query.mockResolvedValueOnce({
+        data: {
+          data: [makeListing('l1'), makeListing('l2')],
+          meta: { page: 1, totalPages: 1 },
+        },
+      });
+      const { joinCommunity } = require('../api-util/communityMembership');
+      await joinCommunity('u1', { id: 'morelos', type: 'geografica' });
+      expect(mockIsdk.listings.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'l1',
+          publicData: { sellerCommunities: ['morelos'] },
+        })
+      );
+      expect(mockIsdk.listings.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'l2',
+          publicData: { sellerCommunities: ['morelos'] },
+        })
+      );
     });
   });
 

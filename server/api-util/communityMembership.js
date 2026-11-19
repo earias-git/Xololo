@@ -51,12 +51,15 @@ const _fetchSellerProfile = async (isdk, sellerId) => {
 // Actualiza el mirror en TODOS los listings published del seller.
 // Mejor-esfuerzo: errores por listing se loggean, no se abortan.
 //
-// XOLOLO 2026-11-18 — ahora respeta `excludeFromCommunities` por
-// listing: la nochebuena aparece en OPF, el escritorio usado no.
-// Recibe `profile` para computar el mirror correcto por listing.
+// XOLOLO 2026-11-19 — respeta el modo opt-in/opt-out por comunidad:
+//   - Sectoriales (OPF) default opt-in: el listing NO aparece a menos
+//     que esté en includeInCommunities[].
+//   - Geográficas default opt-out: aparece salvo que esté en
+//     excludeFromCommunities[].
+// Recibe el catalog para resolver el modo de cada comunidad.
 //
 // Devuelve stats {updated, failed, total}.
-const _syncListingsMirror = async ({ isdk, sellerId, profile }) => {
+const _syncListingsMirror = async ({ isdk, sellerId, profile, catalog = [] }) => {
   let page = 1;
   let updated = 0;
   let failed = 0;
@@ -84,10 +87,12 @@ const _syncListingsMirror = async ({ isdk, sellerId, profile }) => {
     for (const l of data) {
       const listingId = l.id?.uuid;
       if (!listingId) continue;
-      // Mirror específico para este listing — respeta su opt-out.
+      // Mirror específico para este listing — respeta su modo
+      // opt-in/opt-out según el type de cada comunidad del seller.
       const perListingMirror = computeMirrorForListing(
         profile,
-        l.attributes?.publicData || {}
+        l.attributes?.publicData || {},
+        catalog
       );
       try {
         await isdk.listings.update({
@@ -155,8 +160,15 @@ const joinCommunity = async (sellerId, community) => {
     publicData: { communities: newCommunities },
   });
 
-  // Sync mirror en los listings — respeta excludeFromCommunities por listing.
-  const stats = await _syncListingsMirror({ isdk, sellerId, profile: newProfile });
+  // Sync mirror en los listings — respeta include/exclude por listing
+  // + catálogo (modo opt-in para sectoriales, opt-out para geográficas).
+  const catalog = communitiesService.getAllRaw();
+  const stats = await _syncListingsMirror({
+    isdk,
+    sellerId,
+    profile: newProfile,
+    catalog,
+  });
 
   // Invalida cache del service público.
   communitiesService.invalidateCache();
@@ -198,7 +210,13 @@ const leaveCommunity = async (sellerId, community) => {
     publicData: { communities: newCommunities },
   });
 
-  const stats = await _syncListingsMirror({ isdk, sellerId, profile: newProfile });
+  const catalog = communitiesService.getAllRaw();
+  const stats = await _syncListingsMirror({
+    isdk,
+    sellerId,
+    profile: newProfile,
+    catalog,
+  });
   communitiesService.invalidateCache();
 
   return { status: 'left', mirror: newMirror, stats };
@@ -237,32 +255,49 @@ const listSellerMemberships = async sellerId => {
 };
 
 /**
- * XOLOLO 2026-11-18 — Setter de exclusiones por listing.
+ * XOLOLO 2026-11-19 — Setter de inclusiones/exclusiones por listing.
  *
- * El seller puede marcar que un listing específico NO aparezca en
- * ciertas comunidades suyas. Ej: nochebuena → aparece en OPF;
- * escritorio usado → excludeFromCommunities=['opf'].
+ * El seller puede marcar explícitamente en qué comunidades aparece
+ * ESTE listing. Dos modos:
+ *   - includeInCommunities[]: opt-in (sectoriales como OPF). El
+ *     listing SOLO aparece si está aquí.
+ *   - excludeFromCommunities[]: opt-out (geográficas como Morelos).
+ *     El listing aparece salvo que esté aquí.
+ *
+ * El modo real se resuelve community por community según su
+ * listingDefaultInclusion ('opt-in' | 'opt-out', default por type).
  *
  * Valida que:
- * - El listing pertenece al seller autenticado (seguridad).
- * - Las ids del exclude son válidas y existen en las memberships
- *   del seller (no se puede excluir de una comunidad a la que no
- *   perteneces).
- *
- * Después escribe publicData.excludeFromCommunities + publicData
- * .sellerCommunities (recalculado) en un solo update.
+ * - El listing pertenece al seller (o es colaborador activo del
+ *   Negocio dueño).
+ * - Las ids en include/exclude son válidas y existen en las
+ *   memberships del seller (no se puede opt-in/opt-out a una
+ *   comunidad a la que el seller no pertenece).
  *
  * @param {object} args
- * @param {string} args.sellerId
+ * @param {string} args.sellerId — currentUser.id (puede ser colaborador)
  * @param {string} args.listingId
- * @param {string[]} args.excludeFromCommunities
- * @returns {Promise<{excluded, mirror, profileMirror}>}
+ * @param {string[]} [args.includeInCommunities]
+ * @param {string[]} [args.excludeFromCommunities]
+ * @returns {Promise<{included, excluded, mirror, profileMirror}>}
  */
-const setListingCommunities = async ({ sellerId, listingId, excludeFromCommunities }) => {
+const setListingCommunities = async ({
+  sellerId,
+  listingId,
+  includeInCommunities,
+  excludeFromCommunities,
+}) => {
   if (!sellerId) throw new Error('missing_seller_id');
   if (!listingId) throw new Error('missing_listing_id');
-  if (!Array.isArray(excludeFromCommunities)) {
+  // Al menos uno debe venir; ambos deben ser arrays si vienen.
+  if (includeInCommunities !== undefined && !Array.isArray(includeInCommunities)) {
+    throw new Error('invalid_include_list');
+  }
+  if (excludeFromCommunities !== undefined && !Array.isArray(excludeFromCommunities)) {
     throw new Error('invalid_exclude_list');
+  }
+  if (includeInCommunities === undefined && excludeFromCommunities === undefined) {
+    throw new Error('missing_include_or_exclude');
   }
 
   const isdk = getIntegrationSdk();
@@ -305,22 +340,44 @@ const setListingCommunities = async ({ sellerId, listingId, excludeFromCommuniti
   const { profile } = await _fetchSellerProfile(isdk, authorId);
   const sellerMemberships = new Set(getListingCommunityMirror(profile));
 
-  // Sanitizar exclude: ids válidas Y que el seller tenga membership.
-  const sanitizedExclude = excludeFromCommunities
-    .filter(isValidCommunityId)
-    .filter(id => sellerMemberships.has(id));
-
-  // Mirror esperado para este listing con el nuevo exclude.
+  // Sanitizar: ids válidas Y que el seller tenga membership.
   const listingPd = listing.attributes?.publicData || {};
+  const sanitize = arr => {
+    if (!Array.isArray(arr)) return undefined;
+    return arr
+      .filter(isValidCommunityId)
+      .filter(id => sellerMemberships.has(id));
+  };
+
+  // Si el campo no se pasó explícito, preservamos el valor actual
+  // del listing (upsert parcial).
+  const sanitizedInclude =
+    includeInCommunities !== undefined
+      ? sanitize(includeInCommunities)
+      : (Array.isArray(listingPd.includeInCommunities)
+          ? listingPd.includeInCommunities.filter(isValidCommunityId)
+          : []);
+  const sanitizedExclude =
+    excludeFromCommunities !== undefined
+      ? sanitize(excludeFromCommunities)
+      : (Array.isArray(listingPd.excludeFromCommunities)
+          ? listingPd.excludeFromCommunities.filter(isValidCommunityId)
+          : []);
+
+  // Mirror esperado para este listing con los nuevos include/exclude
+  // + catálogo.
+  const catalog = communitiesService.getAllRaw();
   const newListingPd = {
     ...listingPd,
+    includeInCommunities: sanitizedInclude,
     excludeFromCommunities: sanitizedExclude,
   };
-  const newMirror = computeMirrorForListing(profile, newListingPd);
+  const newMirror = computeMirrorForListing(profile, newListingPd, catalog);
 
   await isdk.listings.update({
     id: listingId,
     publicData: {
+      includeInCommunities: sanitizedInclude,
       excludeFromCommunities: sanitizedExclude,
       sellerCommunities: newMirror,
     },
@@ -331,6 +388,7 @@ const setListingCommunities = async ({ sellerId, listingId, excludeFromCommuniti
   communitiesService.invalidateCache();
 
   return {
+    included: sanitizedInclude,
     excluded: sanitizedExclude,
     mirror: newMirror,
     profileMirror: Array.from(sellerMemberships),

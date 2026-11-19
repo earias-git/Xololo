@@ -49,6 +49,93 @@
   border-color: #9ca3af;
 }
 
+.rowWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.rowWrapActive {
+  /* visualmente destaca cuando el listing está activo en la comunidad */
+}
+
+.modeChip {
+  font-size: 10px;
+  color: #6b7280;
+  background: #e5e7eb;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.taxonomy {
+  margin-top: 6px;
+  margin-left: 42px;
+}
+
+.taxonomyToggle {
+  background: none;
+  border: 1px dashed #c7d2fe;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: #1e3a8a;
+  cursor: pointer;
+}
+
+.taxonomyToggle:hover {
+  background: #eef2ff;
+}
+
+.taxonomyBody {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.taxonomyNote {
+  margin: 0 0 8px;
+  color: #374151;
+  line-height: 1.45;
+}
+
+.taxonomyList {
+  margin: 0 0 8px;
+  padding-left: 18px;
+}
+
+.taxonomyItem {
+  margin-bottom: 3px;
+  color: #1f2937;
+}
+
+.taxonomyEmoji {
+  display: inline-block;
+  margin-right: 2px;
+}
+
+.taxonomyMatch {
+  font-size: 10px;
+  color: #6b7280;
+  background: #fff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+.taxonomyLink {
+  display: inline-block;
+  font-size: 12px;
+  color: #1e3a8a;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.taxonomyLink:hover {
+  text-decoration: underline;
+}
+
 .checkbox {
   width: 18px;
   height: 18px;

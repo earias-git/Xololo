@@ -62,6 +62,10 @@ const toPublic = c => ({
   // XOLOLO 2026-11-18 — chips de filtro propios de la comunidad.
   // La landing los usa en vez de derivar de categoryLevel1 genérico.
   filterGroups: Array.isArray(c.filterGroups) ? c.filterGroups : null,
+  // XOLOLO 2026-11-19 — modo de inclusión por listing
+  // (opt-in vs opt-out). Lo necesita la UI del wizard para decidir
+  // si el checkbox parte tildado o destildado.
+  listingDefaultInclusion: c.listingDefaultInclusion || null,
   sellerCount: c.sellerCount || 0,
   seoKeywords: c.seoKeywords || [],
   createdAt: c.createdAt,

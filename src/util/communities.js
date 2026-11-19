@@ -131,24 +131,73 @@ const getListingCommunityMirror = profile => {
   return Array.from(ids);
 };
 
+// Default de inclusión por tipo de comunidad:
+//  - sectorial/modelo → 'opt-in' (el listing NO aparece hasta que el
+//    seller lo marca explícitamente en includeInCommunities[]).
+//  - geografica → 'opt-out' (todos aparecen salvo que el seller los
+//    excluya en excludeFromCommunities[]).
+// Un community puede override esto con `listingDefaultInclusion`.
+const DEFAULT_INCLUSION_BY_TYPE = {
+  sectorial: 'opt-in',
+  modelo: 'opt-in',
+  geografica: 'opt-out',
+};
+
+const getDefaultInclusion = community => {
+  if (!community) return 'opt-out';
+  if (community.listingDefaultInclusion) return community.listingDefaultInclusion;
+  return DEFAULT_INCLUSION_BY_TYPE[community.type] || 'opt-out';
+};
+
 /**
- * XOLOLO 2026-11-18 — espejo POR LISTING que respeta el opt-out del seller.
+ * XOLOLO 2026-11-18 — espejo POR LISTING que respeta el modo de
+ * inclusión (opt-in/opt-out) de cada comunidad del seller.
  *
- * Caso de uso: un vivero pertenece a OPF y publica nochebuenas +
- * un escritorio usado. La nochebuena aplica a OPF, el escritorio no.
- * El seller marca el escritorio con `excludeFromCommunities: ['opf']`
- * y este helper devuelve el mirror correcto para cada listing.
+ * Shape nuevo (2026-11-19):
+ *   - `includeInCommunities: ['opf']` → listing explícitamente
+ *     opt-in a esas comunidades (requerido para sectorial/modelo).
+ *   - `excludeFromCommunities: ['morelos']` → listing explícitamente
+ *     opt-out (útil para geográficas).
+ *
+ * Reglas por comunidad del seller:
+ *   - opt-in: aparece SOLO si el id está en includeInCommunities[].
+ *   - opt-out: aparece SIEMPRE salvo que el id esté en
+ *     excludeFromCommunities[].
  *
  * @param {object} profile — profile del seller (fuente de memberships)
  * @param {object} listingPublicData — publicData del listing concreto
- * @returns {string[]} — mirror filtrado
+ * @param {Array<object>} communityCatalog — catálogo completo para
+ *   resolver {id, type, listingDefaultInclusion}. Pasar un array
+ *   vacío cae de nuevo al default-por-type.
+ * @returns {string[]} — mirror filtrado para este listing
  */
-const computeMirrorForListing = (profile, listingPublicData) => {
+const computeMirrorForListing = (profile, listingPublicData, communityCatalog = []) => {
   const baseMirror = getListingCommunityMirror(profile);
-  const exclude = listingPublicData?.excludeFromCommunities;
-  if (!Array.isArray(exclude) || exclude.length === 0) return baseMirror;
-  const excludeSet = new Set(exclude.filter(isValidCommunityId));
-  return baseMirror.filter(id => !excludeSet.has(id));
+  if (baseMirror.length === 0) return [];
+
+  const include = Array.isArray(listingPublicData?.includeInCommunities)
+    ? new Set(listingPublicData.includeInCommunities.filter(isValidCommunityId))
+    : new Set();
+  const exclude = Array.isArray(listingPublicData?.excludeFromCommunities)
+    ? new Set(listingPublicData.excludeFromCommunities.filter(isValidCommunityId))
+    : new Set();
+
+  // Index catalog por id para lookup O(1).
+  const catalogById = new Map();
+  for (const c of communityCatalog || []) {
+    if (c?.id) catalogById.set(c.id, c);
+  }
+
+  return baseMirror.filter(id => {
+    const community = catalogById.get(id);
+    const mode = getDefaultInclusion(community);
+    if (mode === 'opt-in') {
+      // Solo si está en includeInCommunities[].
+      return include.has(id);
+    }
+    // opt-out: aparece salvo exclude.
+    return !exclude.has(id);
+  });
 };
 
 /**
@@ -241,6 +290,8 @@ module.exports = {
   // Mirror listing↔profile
   getListingCommunityMirror,
   computeMirrorForListing,
+  getDefaultInclusion,
+  DEFAULT_INCLUSION_BY_TYPE,
   // Backend helpers
   metadataKey,
 };

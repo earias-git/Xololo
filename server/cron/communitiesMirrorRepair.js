@@ -23,6 +23,7 @@
 // veces seguidas la segunda no cambia nada.
 
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+const communitiesService = require('../api-util/communitiesService');
 const {
   computeMirrorForListing,
   isValidCommunityId,
@@ -106,6 +107,10 @@ const repairMirror = async ({ dryRun = false, isdk = null } = {}) => {
     dryRun,
   };
 
+  // Catálogo con el modo de inclusión por comunidad (opt-in/opt-out).
+  // Se lee una vez por run y se pasa al helper por listing.
+  const catalog = communitiesService.getAllRaw();
+
   const users = await _pageUsers(sdk);
   stats.usersScanned = users.length;
 
@@ -137,10 +142,12 @@ const repairMirror = async ({ dryRun = false, isdk = null } = {}) => {
     for (const l of listings) {
       const listingId = l.id?.uuid;
       if (!listingId) continue;
-      // XOLOLO 2026-11-18 — mirror esperado POR LISTING (respeta
-      // publicData.excludeFromCommunities del listing).
+      // XOLOLO 2026-11-19 — mirror esperado POR LISTING (respeta
+      // include/exclude + modo opt-in/opt-out según catalog).
       const pd = l.attributes?.publicData || {};
-      const expectedMirror = computeMirrorForListing(profile, pd).filter(isValidCommunityId);
+      const expectedMirror = computeMirrorForListing(profile, pd, catalog).filter(
+        isValidCommunityId
+      );
       const current = pd.sellerCommunities || [];
       if (sameSet(current, expectedMirror)) {
         stats.listingsSkipped += 1;

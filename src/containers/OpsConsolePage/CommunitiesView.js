@@ -357,7 +357,11 @@ const CommunitiesView = ({ onBack }) => {
         <strong>🔧 Reparación del mirror listing↔profile:</strong>{' '}
         resincroniza <code>listing.publicData.sellerCommunities</code> para
         todos los sellers con memberships. Útil tras un join/leave con error
-        parcial o cambios en el catálogo. Ejecuta primero dry-run.
+        parcial, cambios en el catálogo, o <strong>limpiar sectoriales</strong>{' '}
+        tras el cambio a opt-in: listings legacy sin{' '}
+        <code>includeInCommunities</code> se sacarán automáticamente de la
+        landing (quedan en el profile del seller, listos para que el seller
+        los active manualmente desde el wizard). Ejecuta primero dry-run.
         <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button
             type="button"
