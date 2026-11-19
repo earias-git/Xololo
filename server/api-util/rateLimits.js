@@ -102,15 +102,13 @@ const shippingQuote = buildLimiter({
 });
 
 // XOLOLO 2026-11-18 — ADR-006 PR-3: join/leave de comunidades y
-// opt-in/opt-out por listing. join/leave dispara writes a los N
-// listings del seller (cara). El toggle por listing es barato pero
-// puede acumular si el seller edita varios — 15/min da margen a un
-// humano editando una tanda de anuncios sin bloquearse, y sigue
-// cortando scripts de spam (antes 5/min causaba 429 reportado por
-// earias al editar 1 listing varias veces en sucesión).
+// opt-in/opt-out por listing. join/leave es cara pero poco frecuente;
+// opt-in/opt-out por listing es barato y puede acumular mientras el
+// seller debuggea. 60/min = 1/seg. Anti-spam suficiente contra
+// scripts, generoso para humano.
 const community = buildLimiter({
   windowMs: 60 * 1000,
-  max: 15,
+  max: 60,
   name: 'community',
 });
 
