@@ -198,4 +198,57 @@ const setListingCommunities = async (req, res) => {
   }
 };
 
-module.exports = { join, leave, myCommunities, setListingCommunities };
+// XOLOLO 2026-11-19 — endpoint de diagnóstico para el bug reportado
+// por earias. GET /api/me/listings/:id/communities-debug devuelve:
+//   currentUserId, authorId, isSameUser, workspacesActive,
+//   businessProfileHasCommunities (lo que ve el server)
+// Permite comparar con el estado visible en /account/store.
+const debugListingContext = async (req, res) => {
+  const sellerId = await _authSeller(req, res);
+  if (!sellerId) return;
+  const listingId = req.params?.id;
+  if (!listingId) return res.status(400).json({ error: 'missing_listing_id' });
+
+  try {
+    const { getIntegrationSdk } = require('../api-util/integrationSdk');
+    const isdk = getIntegrationSdk();
+
+    const listingResp = await isdk.listings.show({
+      id: listingId,
+      include: ['author'],
+    });
+    const listing = listingResp.data.data;
+    const authorId = listing.relationships?.author?.data?.id?.uuid || null;
+
+    const userResp = await isdk.users.show({
+      id: authorId || sellerId,
+      'fields.user': [
+        'profile.publicData',
+        'profile.metadata',
+      ],
+    });
+    const authorProfile = userResp.data.data?.attributes?.profile || {};
+
+    return res.status(200).json({
+      currentUserId: sellerId,
+      authorId,
+      isSameUser: sellerId === authorId,
+      listingPublicData: listing.attributes?.publicData || {},
+      authorPublicDataCommunities:
+        authorProfile?.publicData?.communities || null,
+      authorPublicDataKeys: Object.keys(authorProfile?.publicData || {}),
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[debugListingContext]', e?.message);
+    return res.status(500).json({ error: e?.message || 'debug_failed' });
+  }
+};
+
+module.exports = {
+  join,
+  leave,
+  myCommunities,
+  setListingCommunities,
+  debugListingContext,
+};
