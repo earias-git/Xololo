@@ -26,6 +26,8 @@ import { H3, ListingLink } from '../../../../components';
 // Import modules from this directory
 import ErrorMessage from './ErrorMessage';
 import EditListingDetailsForm from './EditListingDetailsForm';
+// XOLOLO 2026-11-18 — ADR-006: opt-out de comunidades por listing.
+import ListingCommunityOptIn from '../ListingCommunityOptIn/ListingCommunityOptIn';
 import css from './EditListingDetailsPanel.module.css';
 
 /**
@@ -567,6 +569,12 @@ const EditListingDetailsPanel = props => {
           invalidExistingListingType={!hasValidExistingListingType}
         />
       )}
+
+      {/* XOLOLO 2026-11-18 — ADR-006: opt-out de comunidades por
+          listing. Solo visible si el seller pertenece a ≥1 comunidad.
+          Desacoplado del submit del wizard: tiene su propio
+          PATCH /api/me/listings/:id/communities. */}
+      {listing?.id?.uuid ? <ListingCommunityOptIn listing={listing} /> : null}
     </main>
   );
 };
