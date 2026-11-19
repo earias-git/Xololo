@@ -63,11 +63,15 @@ const ListingCommunityOptIn = ({ listing }) => {
     };
   }, []);
 
-  // Refresca estado local si el listing cambia (post-save).
+  // XOLOLO 2026-11-19 — bug fix: hidratar SOLO cuando cambia el
+  // listingId. Antes dependía de [listing] y el padre pasa una nueva
+  // referencia en cada render → re-hidrataba a los valores originales,
+  // haciendo parpadear el checkbox y descartando el estado optimista.
   useEffect(() => {
     setIncluded(listing?.attributes?.publicData?.includeInCommunities || []);
     setExcluded(listing?.attributes?.publicData?.excludeFromCommunities || []);
-  }, [listing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listingId]);
 
   const persist = useCallback(
     async ({ nextIncluded, nextExcluded, previousIncluded, previousExcluded }) => {

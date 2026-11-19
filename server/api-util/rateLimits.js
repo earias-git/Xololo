@@ -101,13 +101,16 @@ const shippingQuote = buildLimiter({
   name: 'shipping-quote',
 });
 
-// XOLOLO 2026-11-18 — ADR-006 PR-3: join/leave de comunidades.
-// Cada acción dispara writes a los N listings del seller (espejo),
-// así que es cara. 5/min por seller es suficiente para humano y
-// corta scripts de spam/flapping.
+// XOLOLO 2026-11-18 — ADR-006 PR-3: join/leave de comunidades y
+// opt-in/opt-out por listing. join/leave dispara writes a los N
+// listings del seller (cara). El toggle por listing es barato pero
+// puede acumular si el seller edita varios — 15/min da margen a un
+// humano editando una tanda de anuncios sin bloquearse, y sigue
+// cortando scripts de spam (antes 5/min causaba 429 reportado por
+// earias al editar 1 listing varias veces en sucesión).
 const community = buildLimiter({
   windowMs: 60 * 1000,
-  max: 5,
+  max: 15,
   name: 'community',
 });
 
