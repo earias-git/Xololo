@@ -14,6 +14,8 @@
 const service = require('../api-util/communitiesService');
 const adminOverlay = require('../api-util/communitiesAdminOverlay');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
+// XOLOLO 2026-11-18 — PR-5: cron de reparación del mirror.
+const { repairMirror } = require('../cron/communitiesMirrorRepair');
 
 const list = (req, res) => {
   const communities = service.getAllRaw().map(c => ({
@@ -106,4 +108,27 @@ const recountSellers = async (req, res) => {
   });
 };
 
-module.exports = { list, publish, unpublish, recountSellers };
+// XOLOLO 2026-11-18 — PR-5: endpoint on-demand del cron. En Render
+// se agenda como Cron Job (comando: `node scripts/communities-mirror-repair.js
+// --apply`), pero también lo exponemos aquí para que un operador
+// pueda disparar un dry-run/apply desde la UI (/ops/communities).
+//
+// POST /api/admin/communities/mirror-repair
+//   Body: { dryRun?: boolean }  (default true, para no sorpresa)
+const mirrorRepair = async (req, res) => {
+  const dryRun = req.body?.dryRun !== false; // default true
+  try {
+    const stats = await repairMirror({ dryRun });
+    // eslint-disable-next-line no-console
+    console.log(
+      `[communities-admin:mirrorRepair] by ${req.operator?.email || 'unknown'} dryRun=${dryRun} updated=${stats.listingsUpdated} errors=${stats.errors}`
+    );
+    return res.status(200).json(stats);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[communities-admin:mirrorRepair]', e?.message);
+    return res.status(500).json({ error: e?.message || 'repair_failed' });
+  }
+};
+
+module.exports = { list, publish, unpublish, recountSellers, mirrorRepair };

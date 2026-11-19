@@ -327,6 +327,14 @@ router.post(
   adminAuth.requireOperator(),
   communitiesAdmin.recountSellers
 );
+// XOLOLO 2026-11-18 — PR-5: mirror repair on-demand.
+router.post(
+  '/admin/communities/mirror-repair',
+  limits.ops,
+  adminAuth.requireOperator(),
+  bodyParser.json(),
+  communitiesAdmin.mirrorRepair
+);
 // XOLOLO OPS Users 360 · Fase A: roster + perfil 360 de users. Gated por
 // requireOperator (MFA requerida — info sensible: email, verified, legal).
 router.get('/admin/ops/users-roster', limits.ops, adminAuth.requireOperator(), opsUsersRoster);

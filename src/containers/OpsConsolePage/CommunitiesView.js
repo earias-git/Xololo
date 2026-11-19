@@ -183,6 +183,9 @@ const CommunitiesView = ({ onBack }) => {
   const [error, setError] = useState(null);
   const [mutating, setMutating] = useState(null);
   const [recountMsg, setRecountMsg] = useState(null);
+  // XOLOLO PR-5: estado del repair del mirror.
+  const [repairState, setRepairState] = useState(null); // {dryRun, stats} | null
+  const [repairing, setRepairing] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -221,6 +224,38 @@ const CommunitiesView = ({ onBack }) => {
       setError(r.data?.error || `HTTP ${r.status}`);
     }
     await load();
+  };
+
+  // XOLOLO PR-5: dispara el repair del mirror. En dryRun=true cuenta
+  // cuántos listings tienen drift sin modificar nada; con dryRun=false
+  // actualiza. El cron de Render corre esto apply nightly; el botón
+  // aquí sirve para un repair manual tras un incidente.
+  const handleRepair = async dryRun => {
+    if (!dryRun && !window.confirm(
+      '¿Ejecutar reparación REAL del mirror? Puede actualizar muchos listings. Confirma solo si corres tras un dry-run previo.'
+    )) {
+      return;
+    }
+    setRepairing(true);
+    setRepairState(null);
+    try {
+      const res = await fetch(`${apiBaseUrl()}/api/admin/communities/mirror-repair`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setRepairState({ dryRun, stats: data });
+      } else {
+        setError(data?.error || `HTTP ${res.status}`);
+      }
+    } catch (e) {
+      setError(e.message || 'repair_failed');
+    } finally {
+      setRepairing(false);
+    }
   };
 
   const handleRecount = async id => {
@@ -307,6 +342,94 @@ const CommunitiesView = ({ onBack }) => {
           {recountMsg}
         </div>
       ) : null}
+
+      {/* XOLOLO PR-5: panel de reparación del mirror. */}
+      <div
+        style={{
+          background: '#eef2ff',
+          border: '1px solid #c7d2fe',
+          borderRadius: 6,
+          padding: 12,
+          marginBottom: 16,
+          fontSize: 13,
+        }}
+      >
+        <strong>🔧 Reparación del mirror listing↔profile:</strong>{' '}
+        resincroniza <code>listing.publicData.sellerCommunities</code> para
+        todos los sellers con memberships. Útil tras un join/leave con error
+        parcial o cambios en el catálogo. Ejecuta primero dry-run.
+        <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => handleRepair(true)}
+            disabled={repairing}
+            style={{
+              background: '#fff',
+              border: '1px solid #c7d2fe',
+              borderRadius: 6,
+              padding: '6px 12px',
+              fontSize: 12,
+              cursor: repairing ? 'wait' : 'pointer',
+            }}
+          >
+            {repairing ? 'Ejecutando…' : 'Dry-run'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleRepair(false)}
+            disabled={repairing}
+            style={{
+              background: '#1e3a8a',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 6,
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: repairing ? 'wait' : 'pointer',
+            }}
+          >
+            Apply (REAL)
+          </button>
+        </div>
+        {repairState ? (
+          <div
+            style={{
+              marginTop: 8,
+              padding: 10,
+              background: '#fff',
+              borderRadius: 6,
+              border: '1px solid #c7d2fe',
+              fontSize: 12,
+            }}
+          >
+            <div style={{ fontWeight: 600, color: '#1e3a8a', marginBottom: 4 }}>
+              {repairState.dryRun ? '📋 Dry-run' : '✓ Apply'}{' '}
+              · {Math.round((repairState.stats.durationMs || 0) / 100) / 10}s
+            </div>
+            <div>
+              Users escaneados: {repairState.stats.usersScanned} ·
+              Con memberships: {repairState.stats.usersWithMemberships}
+            </div>
+            <div>
+              Listings escaneados: {repairState.stats.listingsScanned} ·
+              {repairState.dryRun ? 'Drift detectado' : 'Actualizados'}: <strong>{repairState.stats.listingsUpdated}</strong> ·
+              Saltados: {repairState.stats.listingsSkipped} ·
+              Errores: {repairState.stats.errors}
+            </div>
+            {repairState.stats.drift?.length > 0 ? (
+              <details style={{ marginTop: 6 }}>
+                <summary style={{ cursor: 'pointer' }}>
+                  Ver {repairState.stats.drift.length} drifts (sample)
+                </summary>
+                <pre style={{ fontSize: 11, marginTop: 4, overflowX: 'auto' }}>
+                  {JSON.stringify(repairState.stats.drift, null, 2)}
+                </pre>
+              </details>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
       {loading ? (
         <div style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>Cargando…</div>
