@@ -401,6 +401,18 @@ const setListingCommunities = async ({
   };
   const newMirror = computeMirrorForListing(profile, newListingPd, catalog);
 
+  // XOLOLO 2026-11-19 — log adicional para el bug persistente.
+  // eslint-disable-next-line no-console
+  console.log(
+    `[setListingCommunities:result] listingId=${listingId} sanitizedInclude=${JSON.stringify(
+      sanitizedInclude
+    )} sanitizedExclude=${JSON.stringify(sanitizedExclude)} newMirror=${JSON.stringify(
+      newMirror
+    )} catalogSize=${catalog.length} profileHasCommunities=${JSON.stringify(
+      profile?.publicData?.communities || null
+    )}`
+  );
+
   await isdk.listings.update({
     id: listingId,
     publicData: {
