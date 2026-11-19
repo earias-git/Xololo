@@ -58,6 +58,8 @@ const opsUsersBulk = require('./api/ops-users-bulk');
 const opsAuditLog = require('./api/ops-audit-log');
 const opsSendNotification = require('./api/ops-send-notification');
 const landingListings = require('./api/landing-listings');
+// XOLOLO 2026-11-18 — ADR-006 PR-2: endpoints públicos de comunidades.
+const communities = require('./api/communities');
 const team = require('./api/team');
 const teamAs = require('./api/team-as');
 const teamAsUploadImage = require('./api/team-as-upload-image');
@@ -273,6 +275,11 @@ router.post('/me/heartbeat', limits.generic, meHeartbeat);
 // Sharetribe. Server pagina, filtra siblings, devuelve el shape
 // ya listo para pintar. Cache 60s in-memory + 30s cliente/CDN.
 router.get('/landing-listings', limits.generic, landingListings.get);
+
+// XOLOLO 2026-11-18 — ADR-006 PR-2: endpoints públicos de comunidades.
+router.get('/communities', limits.generic, communities.list);
+router.get('/communities/:slug', limits.generic, communities.show);
+router.get('/communities/:slug/listings', limits.generic, communities.listingsForCommunity);
 // XOLOLO OPS Users 360 · Fase A: roster + perfil 360 de users. Gated por
 // requireOperator (MFA requerida — info sensible: email, verified, legal).
 router.get('/admin/ops/users-roster', limits.ops, adminAuth.requireOperator(), opsUsersRoster);
