@@ -40,8 +40,20 @@ const {
 const communitiesService = require('./communitiesService');
 
 // Lee el profile del seller. Devuelve {profile, publicData, raw}.
+// XOLOLO 2026-11-19: fields.user explícito. Sin él, publicData puede
+// no venir populado por el Integration SDK y getCommunitiesForType
+// devolvería [] aunque el user esté unido a comunidades. Mismo pitfall
+// que listings.show sin include:['author'].
 const _fetchSellerProfile = async (isdk, sellerId) => {
-  const resp = await isdk.users.show({ id: sellerId });
+  const resp = await isdk.users.show({
+    id: sellerId,
+    'fields.user': [
+      'profile.displayName',
+      'profile.abbreviatedName',
+      'profile.publicData',
+      'profile.metadata',
+    ],
+  });
   const user = resp.data.data;
   const profile = user.attributes?.profile || {};
   const publicData = profile.publicData || {};
