@@ -159,7 +159,19 @@ const fetchCommunityListings = async ({
     return { data: [], included: [], meta: { totalItems: 0, totalPages: 0, page } };
   }
 
-  const data = (resp.data?.data || []).filter(l => !isSibling(l));
+  // XOLOLO 2026-11-21 — post-filter defensivo: el `pub_sellerCommunities:
+  // has:<id>` sólo funciona si Sharetribe tiene el campo indexado como
+  // filterable en Console. Si no lo está, Sharetribe ignora el filtro y
+  // devuelve TODOS los listings. Garantizamos aquí que sólo salgan los
+  // listings cuyo mirror actual incluye la comunidad — así la landing
+  // respeta el opt-in del seller aunque el campo no esté indexado.
+  const inCommunity = l => {
+    const sc = l.attributes?.publicData?.sellerCommunities;
+    return Array.isArray(sc) && sc.includes(communityId);
+  };
+  const data = (resp.data?.data || [])
+    .filter(l => !isSibling(l))
+    .filter(inCommunity);
   const included = resp.data?.included || [];
   const meta = resp.data?.meta || {};
 

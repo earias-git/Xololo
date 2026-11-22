@@ -354,3 +354,344 @@
 .emptyCta:hover {
   background: var(--marketplaceColorDark, #1e3a8a);
 }
+
+/* ----------------------------------------------------------------
+ * XOLOLO 2026-11-21 — Banner co-branded OPF × Xololo (slug = 'opf')
+ * Reemplaza al Hero genérico sólo en /comunidad/opf.
+ * ---------------------------------------------------------------- */
+.opfBanner {
+  position: relative;
+  width: 100%;
+  background: #ffffff;
+  color: #1a2219;
+  overflow: hidden;
+  padding: 36px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  text-align: center;
+}
+
+@media (--viewportMedium) {
+  .opfBanner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    padding: 56px 40px;
+    gap: 24px;
+    min-height: 420px;
+    text-align: left;
+  }
+}
+
+.opfRainbow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.opfLogoStage {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  width: 100%;
+}
+
+@media (--viewportMedium) {
+  .opfLogoStage {
+    padding: 0 32px 0 48px;
+  }
+}
+
+.opfLogo {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  display: block;
+}
+
+@media (--viewportMedium) {
+  .opfLogo {
+    max-width: 520px;
+  }
+}
+
+.opfDivider {
+  display: none;
+}
+
+@media (--viewportMedium) {
+  .opfDivider {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 80px;
+    bottom: 80px;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(26, 43, 27, 0.12) 20%,
+      rgba(26, 43, 27, 0.12) 80%,
+      transparent
+    );
+    z-index: 2;
+  }
+}
+
+.opfCopy {
+  position: relative;
+  z-index: 2;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  align-items: center;
+}
+
+@media (--viewportMedium) {
+  .opfCopy {
+    padding: 0 48px 0 32px;
+    gap: 18px;
+    align-items: flex-start;
+  }
+}
+
+.opfEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #1e6f28;
+}
+
+.opfDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5157a;
+  flex-shrink: 0;
+}
+
+.opfHeadline {
+  font-weight: 500;
+  font-size: 26px;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: #1e6f28;
+  margin: 0;
+  max-width: 560px;
+  text-wrap: balance;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+@media (--viewportMedium) {
+  .opfHeadline {
+    font-size: 36px;
+  }
+}
+
+.opfHeadline em {
+  font-style: italic;
+  color: #e5157a;
+}
+
+.opfSubline {
+  font-size: 14px;
+  color: #4a5248;
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+
+.opfPwr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 18px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(26, 43, 27, 0.12);
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 560px;
+  justify-content: center;
+}
+
+@media (--viewportMedium) {
+  .opfPwr {
+    justify-content: flex-start;
+  }
+}
+
+.opfPwrLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #4a5248;
+}
+
+.opfXmark {
+  width: 28px;
+  height: 24px;
+  display: block;
+}
+
+.opfBrand {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+  font-style: italic;
+  font-size: 20px;
+  color: #2a3b5c;
+  letter-spacing: 0.005em;
+  line-height: 1;
+}
+
+.opfSellers {
+  margin-left: auto;
+  font-size: 13px;
+  color: #4a5248;
+}
+
+.opfSellers strong {
+  color: #1e6f28;
+  font-weight: 700;
+}
+
+/* ----------------------------------------------------------------
+ * XOLOLO 2026-11-21 — Filtros tile-style (reemplazan pill chips
+ * cuando la comunidad define filterGroups con iconId). Mirror del
+ * Xololo CategoryRail (src/components/CategoryRail/CategoryRail.module.css).
+ * ---------------------------------------------------------------- */
+.filterRail {
+  list-style: none;
+  margin: 24px 0 8px;
+  padding: 4px 0 6px;
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+@media (--viewportMedium) {
+  .filterRail {
+    gap: 10px;
+  }
+}
+
+.filterRail::-webkit-scrollbar {
+  height: 6px;
+}
+
+.filterRail::-webkit-scrollbar-thumb {
+  background: #e2e5ed;
+  border-radius: 3px;
+}
+
+.filterItem {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+@media (--viewportMedium) {
+  .filterItem {
+    flex: 1 1 0;
+    max-width: 112px;
+  }
+}
+
+.filterTile {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 96px;
+  padding: 14px 8px;
+  background-color: #ffffff;
+  border: 1px solid #e6e1d6;
+  border-radius: 12px;
+  text-align: center;
+  color: #232d40;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+@media (--viewportMedium) {
+  .filterTile {
+    width: auto;
+    padding: 16px 8px;
+  }
+}
+
+.filterTile:hover {
+  border-color: #6bcb8c;
+  box-shadow: 0 6px 18px -8px rgba(35, 45, 64, 0.18);
+  transform: translateY(-1px);
+}
+
+.filterTileActive {
+  border-color: #1f8f52;
+  background-color: #f4fbf6;
+  box-shadow: 0 6px 18px -10px rgba(31, 143, 82, 0.35);
+}
+
+.filterTileActive:hover {
+  border-color: #1f8f52;
+  transform: none;
+}
+
+.filterIconRing {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #e4f5ea;
+  color: #1f8f52;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (--viewportMedium) {
+  .filterIconRing {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.filterIconRing > svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+}
+
+@media (--viewportMedium) {
+  .filterIconRing > svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.filterTileLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #232d40;
+  line-height: 1.25;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filterTile {
+    transition: none;
+  }
+}

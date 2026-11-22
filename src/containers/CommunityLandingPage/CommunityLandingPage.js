@@ -47,6 +47,11 @@ import {
   selectCommunityNotFound,
 } from './CommunityLandingPage.duck';
 
+// XOLOLO 2026-11-21 — iconos outline estilo Xololo para los chips de
+// filtro (reemplazan los emoji del seed cuando la comunidad define
+// `iconId` en sus filterGroups).
+import { getCommunityFilterIcon } from './communityFilterIcons';
+
 import css from './CommunityLandingPage.module.css';
 
 // --- helpers ---
@@ -113,6 +118,102 @@ const Hero = ({ community }) => {
   );
 };
 
+// XOLOLO 2026-11-21 — Banner co-branded OPF × Xololo para la landing
+// de /comunidad/opf. Replica el treatment del artifact aprobado:
+// fondo blanco limpio (fondo propio de OPF), arco rainbow como su
+// avatar de FB, logo OPF intacto, "powered by Xololo" en el mismo
+// estilo que su "pwr. by IPM Essen".
+//
+// Único por slug. Se delega desde el render principal cuando
+// community.slug === 'opf'. Otras comunidades siguen usando <Hero/>.
+const OpfBanner = ({ community }) => (
+  <section
+    className={css.opfBanner}
+    role="banner"
+    aria-label={`Banner de ${community.name}`}
+  >
+    <svg
+      className={css.opfRainbow}
+      viewBox="0 0 1600 500"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="opfArcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#d6228b" />
+          <stop offset="15%" stopColor="#7a3fb4" />
+          <stop offset="32%" stopColor="#2b55b0" />
+          <stop offset="50%" stopColor="#1fa5a8" />
+          <stop offset="68%" stopColor="#4caf3c" />
+          <stop offset="84%" stopColor="#f2c012" />
+          <stop offset="100%" stopColor="#e5273c" />
+        </linearGradient>
+        <mask id="opfArcMask">
+          <rect width="1600" height="500" fill="black" />
+          <circle cx="1480" cy="250" r="420" fill="white" />
+          <circle cx="1480" cy="250" r="300" fill="black" />
+        </mask>
+        <mask id="opfArcMask2">
+          <rect width="1600" height="500" fill="black" />
+          <circle cx="60" cy="520" r="340" fill="white" />
+          <circle cx="60" cy="520" r="250" fill="black" />
+        </mask>
+      </defs>
+      <rect width="1600" height="500" fill="url(#opfArcGrad)" mask="url(#opfArcMask)" />
+      <g opacity="0.55" style={{ mixBlendMode: 'multiply' }}>
+        <rect width="1600" height="500" fill="url(#opfArcGrad)" mask="url(#opfArcMask2)" />
+      </g>
+    </svg>
+
+    <div className={css.opfLogoStage}>
+      <img
+        src="/static/community/opf-logo.png"
+        alt={community.name}
+        className={css.opfLogo}
+      />
+    </div>
+
+    <div className={css.opfDivider} aria-hidden="true" />
+
+    <div className={css.opfCopy}>
+      <span className={css.opfEyebrow}>
+        <span className={css.opfDot} aria-hidden="true" />
+        Comunidad oficial · México
+      </span>
+      <h1 className={css.opfHeadline}>
+        Donde florece el <em>sector verde</em> mexicano.
+      </h1>
+      <p className={css.opfSubline}>
+        Viveristas · Floricultores · Paisajistas · Distribuidores
+      </p>
+      <div className={css.opfPwr}>
+        <span className={css.opfPwrLabel}>powered by</span>
+        <svg className={css.opfXmark} viewBox="0 -14 100 92" aria-hidden="true">
+          <path
+            d="M 8 4 L 28 4 Q 55 38 92 76 L 72 76 Q 45 38 8 4 Z"
+            fill="#2a3b5c"
+          />
+          <path
+            d="M 72 4 L 92 4 Q 55 38 28 76 L 8 76 Q 45 38 72 4 Z"
+            fill="#2a3b5c"
+          />
+          <path
+            d="M 82 -4 C 90 -12 100 -8 96 2 C 90 0 84 0 82 -4 Z"
+            fill="#3bc86a"
+          />
+        </svg>
+        <span className={css.opfBrand}>Xololo</span>
+        {community.sellerCount ? (
+          <span className={css.opfSellers}>
+            <strong>{community.sellerCount}</strong>{' '}
+            {community.sellerCount === 1 ? 'negocio' : 'negocios'}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  </section>
+);
+
 const Bylaws = ({ community }) => {
   const [open, setOpen] = useState(false);
   if (!community.bylaws) return null;
@@ -131,13 +232,63 @@ const Bylaws = ({ community }) => {
   );
 };
 
-// XOLOLO 2026-11-18 — Filters nuevo: usa community.filterGroups si
-// está definido (taxonomía propia de la comunidad). Fallback a chips
-// derivados de los categoryLevel1 de los listings cuando la comunidad
-// no define filterGroups.
+// XOLOLO 2026-11-18 — Filters: usa community.filterGroups cuando la
+// comunidad lo define (taxonomía propia). Fallback a pill chips
+// derivados de los categoryLevel1 de los listings cuando no.
+//
+// XOLOLO 2026-11-21 — cuando los filterGroups traen `iconId`, los
+// renderizamos como tile-cards estilo Xololo CategoryRail (ring
+// circular verde + ícono outline + label debajo). Más limpio y
+// profesional que los emoji; igual al landing principal.
+const AllIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="4" y="4" width="7" height="7" rx="1.5" />
+    <rect x="13" y="4" width="7" height="7" rx="1.5" />
+    <rect x="4" y="13" width="7" height="7" rx="1.5" />
+    <rect x="13" y="13" width="7" height="7" rx="1.5" />
+  </svg>
+);
+
 const Filters = ({ filterGroups, availableCategories, selected, onSelect }) => {
-  // Preferimos los filterGroups definidos por la comunidad.
   if (filterGroups?.length) {
+    const hasIcons = filterGroups.some(fg => fg.iconId);
+    if (hasIcons) {
+      return (
+        <ul className={css.filterRail} role="group" aria-label="Filtros de la comunidad">
+          <li className={css.filterItem}>
+            <button
+              type="button"
+              className={classNames(css.filterTile, !selected && css.filterTileActive)}
+              onClick={() => onSelect(null)}
+              aria-pressed={!selected}
+            >
+              <span className={css.filterIconRing}>{AllIcon}</span>
+              <span className={css.filterTileLabel}>Todos</span>
+            </button>
+          </li>
+          {filterGroups.map(fg => {
+            const icon = getCommunityFilterIcon(fg.iconId);
+            const isActive = selected?.id === fg.id;
+            return (
+              <li key={fg.id} className={css.filterItem}>
+                <button
+                  type="button"
+                  className={classNames(css.filterTile, isActive && css.filterTileActive)}
+                  onClick={() => onSelect(fg)}
+                  aria-pressed={isActive}
+                  title={fg.label}
+                >
+                  <span className={css.filterIconRing}>{icon}</span>
+                  <span className={css.filterTileLabel}>{fg.label}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      );
+    }
+    // Comunidad con filterGroups pero sin iconId: fallback a pill chips.
     return (
       <div className={css.filters} role="group" aria-label="Filtros de la comunidad">
         <button
@@ -158,7 +309,6 @@ const Filters = ({ filterGroups, availableCategories, selected, onSelect }) => {
             onClick={() => onSelect(fg)}
             title={fg.label}
           >
-            {fg.emoji ? <span aria-hidden="true">{fg.emoji} </span> : null}
             {fg.label}
           </button>
         ))}
@@ -346,7 +496,11 @@ const CommunityLandingPage = () => {
         />
       </Helmet>
       <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
-        <Hero community={community} />
+        {community.slug === 'opf' ? (
+          <OpfBanner community={community} />
+        ) : (
+          <Hero community={community} />
+        )}
 
         <div className={css.content}>
           <Bylaws community={community} />

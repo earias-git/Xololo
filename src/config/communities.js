@@ -21,7 +21,7 @@ const COMMUNITIES_SEED = [
     description:
       'Red fundacional del sector verde en México. Agrupa viveros, productores, floristas, paisajistas y comerciantes del sector que reciben el respaldo de 13 años de trayectoria del programa OPF, ahora integrado como primera comunidad vertical de Xololo.',
     bylaws:
-      'OPF nació en 2013 como red del Prof. Enrique Arias para conectar productores del sector verde mexicano con compradores institucionales y particulares, con énfasis en comercio justo y trazabilidad del productor directo. En 2026 se integra a Xololo como primera comunidad comercial, manteniendo sus valores: respaldo al productor, transparencia y vocación educativa del sector.',
+      'OPF nació en 2013 como red del sector verde mexicano para conectar productores con compradores institucionales y particulares, con énfasis en comercio justo y trazabilidad del productor directo. En 2026 se integra a Xololo como primera comunidad comercial, manteniendo sus valores: respaldo al productor, transparencia y vocación educativa del sector.',
     branding: {
       // Se llenan cuando lleguen assets reales. Null fuerza
       // fallback visual (iniciales + gradient) — ver §6 del
@@ -49,53 +49,51 @@ const COMMUNITIES_SEED = [
     // Cada chip tiene un matcher simple (categoryLevel1 + opcional
     // categoryLevel2). Un listing sin esa taxonomía NO matchea y
     // aparece solo bajo "Todos".
+    // XOLOLO 2026-11-21 — iconId mapea a un SVG outlined estilo Xololo
+    // (ver src/containers/CommunityLandingPage/communityFilterIcons.js).
+    // El seed sigue siendo puro JSON para que server y client lo
+    // compartan sin JSX.
     filterGroups: [
       {
         id: 'plantas-ornamentales',
         label: 'Plantas ornamentales',
-        emoji: '🌿',
+        iconId: 'leaf',
         match: { categoryLevel1: 'hogar', categoryLevel2: 'jardineria' },
-      },
-      {
-        id: 'plantas-comestibles',
-        label: 'Plantas comestibles',
-        emoji: '🥬',
-        match: { categoryLevel1: 'alimentos', categoryLevel2: 'agricultura' },
       },
       {
         id: 'flores-de-corte',
         label: 'Flores de corte',
-        emoji: '🌸',
+        iconId: 'flower',
         match: { categoryLevel1: 'hogar', categoryLevel2: 'flores-de-corte' },
       },
       {
         id: 'servicios-jardineria',
         label: 'Jardinería',
-        emoji: '✂️',
+        iconId: 'scissors',
         match: { categoryLevel1: 'servicios', categoryLevel2: 'jardineria' },
       },
       {
         id: 'servicios-arboricultura',
         label: 'Arboricultura',
-        emoji: '🌳',
+        iconId: 'tree',
         match: { categoryLevel1: 'servicios', categoryLevel2: 'arboricultura' },
       },
       {
         id: 'servicios-floristeria',
         label: 'Floristería',
-        emoji: '💐',
+        iconId: 'bouquet',
         match: { categoryLevel1: 'servicios', categoryLevel2: 'floristeria' },
       },
       {
         id: 'servicios-agricultura',
         label: 'Agricultura y horticultura',
-        emoji: '🚜',
+        iconId: 'tractor',
         match: { categoryLevel1: 'servicios', categoryLevel2: 'agricultura' },
       },
       {
         id: 'insumos-agricolas',
         label: 'Insumos agrícolas',
-        emoji: '🧪',
+        iconId: 'vial',
         match: { categoryLevel1: 'alimentos', categoryLevel2: 'insumos-agricolas' },
       },
     ],
