@@ -747,6 +747,42 @@
   }
 }
 
+/* XOLOLO 2026-11-22 — Card de producto más baja (-20% aprox) para que
+   entren más productos en el primer viewport (estilo ML). Scoped sólo
+   a las cards dentro de la comunidad: la landing principal conserva
+   el aspect-ratio 1:1 original. */
+.content [class*='FeaturedListings_thumb'] {
+  aspect-ratio: 5 / 4;
+}
+
+.content [class*='FeaturedListings_body'] {
+  padding: 8px 10px 10px;
+  gap: 2px;
+}
+
+.content [class*='FeaturedListings_name'] {
+  font-size: 12.5px;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.content [class*='FeaturedListings_seller'] {
+  font-size: 11px;
+}
+
+.content [class*='FeaturedListings_price'] {
+  font-size: 14px;
+  margin-top: 1px;
+}
+
+.content [class*='FeaturedListings_protectedRow'] {
+  font-size: 10px;
+  margin-top: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .filterTile {
     transition: none;
