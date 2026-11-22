@@ -38,6 +38,11 @@ import FeaturedListings from '../../components/FeaturedListings/FeaturedListings
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
+// XOLOLO 2026-11-22 — logo oficial Xololo (X azul + hoja verde) para el
+// badge "powered by" del banner OPF. Reemplaza el SVG custom anterior,
+// que no respetaba la silueta oficial de la marca.
+import xololoXmark from '../../assets/xololo-logo-mobile.png';
+
 import NotFoundPage from '../NotFoundPage/NotFoundPage';
 
 import {
@@ -194,20 +199,12 @@ const OpfBanner = ({ community }) => (
       </p>
       <div className={css.opfPwr}>
         <span className={css.opfPwrLabel}>powered by</span>
-        <svg className={css.opfXmark} viewBox="0 -14 100 92" aria-hidden="true">
-          <path
-            d="M 8 4 L 28 4 Q 55 38 92 76 L 72 76 Q 45 38 8 4 Z"
-            fill="#2a3b5c"
-          />
-          <path
-            d="M 72 4 L 92 4 Q 55 38 28 76 L 8 76 Q 45 38 72 4 Z"
-            fill="#2a3b5c"
-          />
-          <path
-            d="M 82 -4 C 90 -12 100 -8 96 2 C 90 0 84 0 82 -4 Z"
-            fill="#3bc86a"
-          />
-        </svg>
+        <img
+          className={css.opfXmark}
+          src={xololoXmark}
+          alt=""
+          aria-hidden="true"
+        />
         <span className={css.opfBrand}>Xololo</span>
         {community.sellerCount ? (
           <span className={css.opfSellers}>

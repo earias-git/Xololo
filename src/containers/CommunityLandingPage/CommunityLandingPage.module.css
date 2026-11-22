@@ -536,10 +536,19 @@
   }
 }
 
+/* XOLOLO 2026-11-22 — marca X oficial de Xololo (PNG 120×96, ratio 1.25). */
 .opfXmark {
-  width: 14px;
+  width: 15px;
   height: 12px;
   display: block;
+  object-fit: contain;
+}
+
+@media (--viewportMedium) {
+  .opfXmark {
+    width: 18px;
+    height: 14px;
+  }
 }
 
 .opfBrand {
