@@ -132,9 +132,13 @@ const OpfBanner = ({ community }) => (
     role="banner"
     aria-label={`Banner de ${community.name}`}
   >
+    {/* Rainbow slim: viewBox adaptado al banner compacto (ratio ~16:1).
+        Halos: uno a la derecha asomando desde fuera (anillo parcial)
+        y otro a la izquierda saliendo desde abajo. Baja opacidad para
+        que el logo y el copy sean lo que domina. */}
     <svg
       className={css.opfRainbow}
-      viewBox="0 0 1600 500"
+      viewBox="0 0 1600 100"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
     >
@@ -149,19 +153,21 @@ const OpfBanner = ({ community }) => (
           <stop offset="100%" stopColor="#e5273c" />
         </linearGradient>
         <mask id="opfArcMask">
-          <rect width="1600" height="500" fill="black" />
-          <circle cx="1520" cy="250" r="260" fill="white" />
-          <circle cx="1520" cy="250" r="190" fill="black" />
+          <rect width="1600" height="100" fill="black" />
+          <circle cx="1560" cy="50" r="120" fill="white" />
+          <circle cx="1560" cy="50" r="90" fill="black" />
         </mask>
         <mask id="opfArcMask2">
-          <rect width="1600" height="500" fill="black" />
-          <circle cx="80" cy="500" r="200" fill="white" />
-          <circle cx="80" cy="500" r="150" fill="black" />
+          <rect width="1600" height="100" fill="black" />
+          <circle cx="40" cy="100" r="90" fill="white" />
+          <circle cx="40" cy="100" r="65" fill="black" />
         </mask>
       </defs>
-      <rect width="1600" height="500" fill="url(#opfArcGrad)" mask="url(#opfArcMask)" />
-      <g opacity="0.55" style={{ mixBlendMode: 'multiply' }}>
-        <rect width="1600" height="500" fill="url(#opfArcGrad)" mask="url(#opfArcMask2)" />
+      <g opacity="0.65">
+        <rect width="1600" height="100" fill="url(#opfArcGrad)" mask="url(#opfArcMask)" />
+      </g>
+      <g opacity="0.4" style={{ mixBlendMode: 'multiply' }}>
+        <rect width="1600" height="100" fill="url(#opfArcGrad)" mask="url(#opfArcMask2)" />
       </g>
     </svg>
 

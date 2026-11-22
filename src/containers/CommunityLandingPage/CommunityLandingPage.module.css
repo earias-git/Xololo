@@ -130,13 +130,15 @@
   min-width: 0;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 16px 72px;
+  /* Padding top mínimo para que el listing entre en el primer viewport
+     (estilo MercadoLibre: banner + filtros + oferta visible sin scroll). */
+  padding: 8px 16px 72px;
   box-sizing: border-box;
 }
 
 @media (min-width: 768px) {
   .content {
-    padding: 32px 24px 96px;
+    padding: 12px 24px 96px;
   }
 }
 
@@ -146,8 +148,9 @@
   background: var(--colorGrey50, #f9fafb);
   border: 1px solid var(--colorGrey100, #e5e7eb);
   border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 24px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
 }
 
 .bylawsSummary {
@@ -156,6 +159,8 @@
   list-style: none;
   position: relative;
   padding-right: 24px;
+  font-size: 13px;
+  color: var(--colorGrey700, #374151);
 }
 
 .bylawsSummary::after {
@@ -375,23 +380,22 @@
   background: #ffffff;
   color: #1a2219;
   overflow: hidden;
-  padding: 14px 16px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  /* Layout horizontal compacto estilo header de tienda ML: logo a la
+     izquierda, copy a la derecha, siempre en una sola franja slim. */
+  padding: 10px 16px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
-  text-align: center;
+  text-align: left;
 }
 
 @media (--viewportMedium) {
   .opfBanner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: center;
-    padding: 28px 40px;
-    gap: 20px;
-    min-height: 240px;
-    text-align: left;
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 14px 40px;
+    gap: 24px;
+    min-height: 0;
   }
 }
 
@@ -406,52 +410,32 @@
 .opfLogoStage {
   position: relative;
   z-index: 2;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
-  width: 100%;
-}
-
-@media (--viewportMedium) {
-  .opfLogoStage {
-    padding: 0 24px 0 32px;
-  }
+  width: auto;
+  flex-shrink: 0;
 }
 
 .opfLogo {
-  width: 100%;
-  max-width: 170px;
+  max-width: 88px;
+  max-height: 56px;
+  width: auto;
   height: auto;
   display: block;
 }
 
 @media (--viewportMedium) {
   .opfLogo {
-    max-width: 320px;
+    max-width: 140px;
+    max-height: 72px;
   }
 }
 
+/* Divider ya no se usa en el layout slim: lo dejamos oculto. */
 .opfDivider {
   display: none;
-}
-
-@media (--viewportMedium) {
-  .opfDivider {
-    display: block;
-    position: absolute;
-    left: 50%;
-    top: 36px;
-    bottom: 36px;
-    width: 1px;
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      rgba(26, 43, 27, 0.12) 20%,
-      rgba(26, 43, 27, 0.12) 80%,
-      transparent
-    );
-    z-index: 2;
-  }
 }
 
 .opfCopy {
@@ -460,33 +444,31 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  align-items: center;
-}
-
-@media (--viewportMedium) {
-  .opfCopy {
-    padding: 0 32px 0 24px;
-    gap: 12px;
-    align-items: flex-start;
-  }
+  gap: 2px;
+  min-width: 0;
+  align-items: flex-start;
 }
 
 .opfEyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: #1e6f28;
 }
 
+@media (--viewportMedium) {
+  .opfEyebrow {
+    font-size: 10.5px;
+  }
+}
+
 .opfDot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #e5157a;
   flex-shrink: 0;
@@ -494,19 +476,25 @@
 
 .opfHeadline {
   font-weight: 500;
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.2;
   letter-spacing: -0.01em;
   color: #1e6f28;
   margin: 0;
-  max-width: 560px;
+  max-width: 100%;
   text-wrap: balance;
   font-family: Georgia, 'Times New Roman', serif;
+  /* Una sola línea en banner slim mobile — ellipsis si no cabe. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 @media (--viewportMedium) {
   .opfHeadline {
-    font-size: 26px;
+    font-size: 20px;
+    -webkit-line-clamp: 1;
   }
 }
 
@@ -515,44 +503,42 @@
   color: #e5157a;
 }
 
+/* Subline oculto en banner slim — la info detallada vive en los bylaws. */
 .opfSubline {
-  font-size: 11.5px;
-  color: #4a5248;
-  margin: 0;
-  letter-spacing: 0.03em;
-  line-height: 1.35;
+  display: none;
 }
 
+/* Powered-by inline a la derecha del headline, chip compacto sin borde. */
 .opfPwr {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding-top: 8px;
-  margin-top: 0;
-  border-top: 1px solid rgba(26, 43, 27, 0.12);
-  flex-wrap: wrap;
-  width: 100%;
-  max-width: 560px;
-  justify-content: center;
-}
-
-@media (--viewportMedium) {
-  .opfPwr {
-    justify-content: flex-start;
-  }
+  gap: 5px;
+  padding-top: 0;
+  margin-top: 1px;
+  border-top: none;
+  flex-wrap: nowrap;
+  width: auto;
+  max-width: none;
+  justify-content: flex-start;
 }
 
 .opfPwrLabel {
-  font-size: 10px;
+  font-size: 8.5px;
   font-weight: 600;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #4a5248;
+  color: #6b7080;
+}
+
+@media (--viewportMedium) {
+  .opfPwrLabel {
+    font-size: 9.5px;
+  }
 }
 
 .opfXmark {
-  width: 22px;
-  height: 20px;
+  width: 14px;
+  height: 12px;
   display: block;
 }
 
@@ -560,10 +546,16 @@
   font-family: Georgia, 'Times New Roman', serif;
   font-weight: 500;
   font-style: italic;
-  font-size: 16px;
+  font-size: 11px;
   color: #2a3b5c;
   letter-spacing: 0.005em;
   line-height: 1;
+}
+
+@media (--viewportMedium) {
+  .opfBrand {
+    font-size: 13px;
+  }
 }
 
 .opfSellers {
@@ -584,11 +576,12 @@
  * ---------------------------------------------------------------- */
 .filterRail {
   list-style: none;
-  margin: 20px 0 8px;
-  padding: 4px 2px 10px;
+  /* Compacto: casi pegado al banner + al primer riel de productos. */
+  margin: 8px 0 6px;
+  padding: 2px 2px 8px;
   display: flex;
   flex-wrap: nowrap;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x proximity;
@@ -604,11 +597,9 @@
 
 @media (--viewportMedium) {
   .filterRail {
-    margin-left: 0;
-    margin-right: 0;
-    padding-left: 2px;
-    padding-right: 2px;
-    gap: 10px;
+    margin: 10px 0 8px;
+    padding: 2px 2px 4px;
+    gap: 8px;
     /* En desktop distribuimos uniforme: grid con N columnas iguales. */
     display: grid;
     grid-template-columns: repeat(var(--community-filter-count, 8), minmax(0, 1fr));
@@ -644,13 +635,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
-  width: 92px;
-  min-height: 108px;
-  padding: 12px 8px;
+  gap: 6px;
+  width: 78px;
+  min-height: 82px;
+  padding: 8px 6px;
   background-color: #ffffff;
   border: 1px solid #e6e1d6;
-  border-radius: 12px;
+  border-radius: 10px;
   text-align: center;
   color: #232d40;
   cursor: pointer;
@@ -661,8 +652,9 @@
 @media (--viewportMedium) {
   .filterTile {
     width: 100%;
-    min-height: 118px;
-    padding: 14px 8px;
+    min-height: 92px;
+    padding: 10px 6px;
+    gap: 6px;
   }
 }
 
@@ -684,8 +676,8 @@
 }
 
 .filterIconRing {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background-color: #e4f5ea;
   color: #1f8f52;
@@ -696,29 +688,63 @@
 
 @media (--viewportMedium) {
   .filterIconRing {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
   }
 }
 
 .filterIconRing > svg {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   fill: none;
 }
 
 @media (--viewportMedium) {
   .filterIconRing > svg {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
   }
 }
 
 .filterTileLabel {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #232d40;
-  line-height: 1.25;
+  line-height: 1.2;
+}
+
+@media (--viewportMedium) {
+  .filterTileLabel {
+    font-size: 11.5px;
+  }
+}
+
+/* XOLOLO 2026-11-22 — Comprimir padding-top del primer FeaturedListings
+   dentro del content para que el riel de productos arranque pegado a los
+   filtros, estilo ML. Afecta sólo a los rieles de esta página — las
+   landings generales que usan el mismo componente no cambian. */
+.content > section[class*='FeaturedListings_root'] {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+@media (--viewportMedium) {
+  .content > section[class*='FeaturedListings_root'] {
+    padding-top: 10px;
+    padding-bottom: 14px;
+  }
+}
+
+.content > section[class*='FeaturedListings_root'] > div[class*='FeaturedListings_container'] {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+@media (--viewportMedium) {
+  .content > section[class*='FeaturedListings_root'] > div[class*='FeaturedListings_container'] {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
