@@ -121,9 +121,17 @@
 /* --- Content container --- */
 
 .content {
+  /* XOLOLO 2026-11-22 — el LayoutSingleColumn usa display:grid en el
+     <main>, lo que hace que este wrapper se expanda al tamaño intrínseco
+     de sus hijos (p.ej. el riel de filtros horizontal o la grilla de
+     FeaturedListings). Sin estos dos reset (width + min-width:0), el
+     content era 838px en viewport 375 y la página rompía mobile. */
+  width: 100%;
+  min-width: 0;
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px 16px 72px;
+  box-sizing: border-box;
 }
 
 @media (min-width: 768px) {
@@ -367,10 +375,10 @@
   background: #ffffff;
   color: #1a2219;
   overflow: hidden;
-  padding: 24px 20px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 10px;
   align-items: center;
   text-align: center;
 }
@@ -412,7 +420,7 @@
 
 .opfLogo {
   width: 100%;
-  max-width: 240px;
+  max-width: 170px;
   height: auto;
   display: block;
 }
@@ -486,8 +494,8 @@
 
 .opfHeadline {
   font-weight: 500;
-  font-size: 20px;
-  line-height: 1.15;
+  font-size: 17px;
+  line-height: 1.2;
   letter-spacing: -0.01em;
   color: #1e6f28;
   margin: 0;
@@ -508,18 +516,19 @@
 }
 
 .opfSubline {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: #4a5248;
   margin: 0;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
 }
 
 .opfPwr {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding-top: 10px;
-  margin-top: 2px;
+  gap: 8px;
+  padding-top: 8px;
+  margin-top: 0;
   border-top: 1px solid rgba(26, 43, 27, 0.12);
   flex-wrap: wrap;
   width: 100%;
@@ -575,19 +584,35 @@
  * ---------------------------------------------------------------- */
 .filterRail {
   list-style: none;
-  margin: 24px 0 8px;
-  padding: 4px 0 6px;
+  margin: 20px 0 8px;
+  padding: 4px 2px 10px;
   display: flex;
-  gap: 14px;
+  flex-wrap: nowrap;
+  gap: 10px;
   overflow-x: auto;
+  overflow-y: hidden;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+  /* Permitir que el riel sangrie al borde del viewport en mobile para
+     que se vea claramente que hay más tiles a la derecha. */
+  margin-left: -16px;
+  margin-right: -16px;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 @media (--viewportMedium) {
   .filterRail {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 2px;
+    padding-right: 2px;
     gap: 10px;
+    /* En desktop distribuimos uniforme: grid con N columnas iguales. */
+    display: grid;
+    grid-template-columns: repeat(var(--community-filter-count, 8), minmax(0, 1fr));
+    overflow: visible;
   }
 }
 
@@ -603,12 +628,13 @@
 .filterItem {
   flex: 0 0 auto;
   scroll-snap-align: start;
+  display: flex;
 }
 
 @media (--viewportMedium) {
   .filterItem {
-    flex: 1 1 0;
-    max-width: 112px;
+    width: 100%;
+    max-width: none;
   }
 }
 
@@ -617,9 +643,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
-  width: 96px;
-  padding: 14px 8px;
+  width: 92px;
+  min-height: 108px;
+  padding: 12px 8px;
   background-color: #ffffff;
   border: 1px solid #e6e1d6;
   border-radius: 12px;
@@ -632,8 +660,9 @@
 
 @media (--viewportMedium) {
   .filterTile {
-    width: auto;
-    padding: 16px 8px;
+    width: 100%;
+    min-height: 118px;
+    padding: 14px 8px;
   }
 }
 

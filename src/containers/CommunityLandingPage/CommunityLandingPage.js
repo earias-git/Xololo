@@ -254,8 +254,16 @@ const Filters = ({ filterGroups, availableCategories, selected, onSelect }) => {
   if (filterGroups?.length) {
     const hasIcons = filterGroups.some(fg => fg.iconId);
     if (hasIcons) {
+      // +1 por el tile "Todos". Lo expongo como CSS var para que el
+      // grid desktop reparta columnas uniformes sin asumir N fijo.
+      const totalTiles = filterGroups.length + 1;
       return (
-        <ul className={css.filterRail} role="group" aria-label="Filtros de la comunidad">
+        <ul
+          className={css.filterRail}
+          role="group"
+          aria-label="Filtros de la comunidad"
+          style={{ '--community-filter-count': totalTiles }}
+        >
           <li className={css.filterItem}>
             <button
               type="button"
