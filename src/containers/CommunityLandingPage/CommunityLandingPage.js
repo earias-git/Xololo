@@ -150,13 +150,13 @@ const OpfBanner = ({ community }) => (
         </linearGradient>
         <mask id="opfArcMask">
           <rect width="1600" height="500" fill="black" />
-          <circle cx="1480" cy="250" r="420" fill="white" />
-          <circle cx="1480" cy="250" r="300" fill="black" />
+          <circle cx="1520" cy="250" r="260" fill="white" />
+          <circle cx="1520" cy="250" r="190" fill="black" />
         </mask>
         <mask id="opfArcMask2">
           <rect width="1600" height="500" fill="black" />
-          <circle cx="60" cy="520" r="340" fill="white" />
-          <circle cx="60" cy="520" r="250" fill="black" />
+          <circle cx="80" cy="500" r="200" fill="white" />
+          <circle cx="80" cy="500" r="150" fill="black" />
         </mask>
       </defs>
       <rect width="1600" height="500" fill="url(#opfArcGrad)" mask="url(#opfArcMask)" />
