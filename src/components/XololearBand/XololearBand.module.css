@@ -95,8 +95,11 @@
   line-height: 1.45;
   max-width: 68ch;
   color: rgba(255, 255, 255, 0.92);
+  /* XOLOLO 2026-11-23 — ocultar en mobile; eyebrow + título bastan. */
+  display: none;
 
   @media (--viewportMedium) {
+    display: block;
     font-size: 13.5px;
     line-height: 1.5;
   }

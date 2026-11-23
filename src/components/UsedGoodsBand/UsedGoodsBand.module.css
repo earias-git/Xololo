@@ -80,8 +80,13 @@
   font-size: 13.5px;
   line-height: 1.5;
   color: #294636;
+  /* XOLOLO 2026-11-23 — ocultar en mobile para optimizar vertical
+     y que los listings suban above-the-fold. El eyebrow + título
+     ya comunican la sección. */
+  display: none;
 
   @media (--viewportMedium) {
+    display: block;
     font-size: 14.5px;
     max-width: 760px;
   }

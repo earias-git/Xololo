@@ -19,7 +19,6 @@ import FeaturedListings from '../../components/FeaturedListings/FeaturedListings
 import VerifiedBand from '../../components/VerifiedBand/VerifiedBand';
 import StoreHeaderStats from '../../components/StoreHeaderStats/StoreHeaderStats';
 // XOLOLO 2026-11-18 — ADR-006 PR-8: chips de comunidades del seller.
-import CommunityBadges from '../../components/CommunityBadges/CommunityBadges';
 
 import css from './StorefrontPage.module.css';
 
@@ -433,15 +432,13 @@ const StorefrontPageComponent = props => {
           {pd.shortDescription ? (
             <p className={css.heroDescription}>{pd.shortDescription}</p>
           ) : null}
-          {/* XOLOLO 2026-11-18 — ADR-006 PR-8: comunidades del seller
-              debajo de la descripción del storefront. theme=dark porque
-              el hero tiene fondo con imagen/color. */}
-          <CommunityBadges
-            communities={pd.communities}
-            theme="dark"
-            size="sm"
-            prefix="Comunidades:"
-          />
+          {/* XOLOLO 2026-11-23 — chip de Comunidad removido del hero
+              del storefront por decisión de UX: la tienda del seller
+              es exclusiva suya, no debe re-enviar a sus clientes a
+              landings comunes como /comunidad/opf. La pertenencia a
+              comunidades sigue existiendo en profile.publicData.communities
+              y se usa para la landing /comunidad/*, pero NO se expone
+              como link desde el storefront del seller. */}
           <div className={css.heroCtas}>
             {whatsappUrl ? (
               <a
