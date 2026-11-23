@@ -132,6 +132,18 @@ const isSibling = l => {
   return !!pd.variantGroupId && pd.isVariantMaster !== true;
 };
 
+// XOLOLO 2026-11-23 — hotfix del overfetch para esquivar el filtro
+// contaminado `pub_sellerCommunities:has:<id>` de Sharetribe. En
+// producción OPF observamos que Sharetribe devuelve ~55 listings para
+// has:opf, de los cuales 51 tienen `sellerCommunities=[]` o `undefined`
+// (falsos positivos del índice stale). La landing muestra solo 2 de 4
+// masters reales porque los otros 2 caen en page 2/3. Hasta que
+// Sharetribe reindexe (o corramos backfill del mirror), iteramos pages
+// acumulando los que pasan `inCommunity`.
+const OVERFETCH_MAX_PAGES = 5; // 500 candidates máx
+const OVERFETCH_PER_PAGE = 100; // top permitido por Sharetribe
+const OVERFETCH_TARGET_FACTOR = 2; // junta 2× el perPage pedido
+
 const fetchCommunityListings = async ({
   communityId,
   page = 1,
@@ -141,41 +153,64 @@ const fetchCommunityListings = async ({
   const isdk = getIntegrationSdk();
   if (!isdk) throw new Error('integration_api_missing');
 
-  const query = {
-    ...COMMON_FIELDS,
-    pub_sellerCommunities: `has:${communityId}`,
-    ...pubFilters,
-    page,
-    perPage: Math.min(perPage, 100),
-  };
-
-  let resp;
-  try {
-    resp = await isdk.listings.query(query);
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error('[communitiesService] listings.query failed', e?.message);
-    // Fail-open: devolver landing vacía en vez de romper la página.
-    return { data: [], included: [], meta: { totalItems: 0, totalPages: 0, page } };
-  }
-
-  // XOLOLO 2026-11-21 — post-filter defensivo: el `pub_sellerCommunities:
-  // has:<id>` sólo funciona si Sharetribe tiene el campo indexado como
-  // filterable en Console. Si no lo está, Sharetribe ignora el filtro y
-  // devuelve TODOS los listings. Garantizamos aquí que sólo salgan los
-  // listings cuyo mirror actual incluye la comunidad — así la landing
-  // respeta el opt-in del seller aunque el campo no esté indexado.
   const inCommunity = l => {
     const sc = l.attributes?.publicData?.sellerCommunities;
     return Array.isArray(sc) && sc.includes(communityId);
   };
-  const data = (resp.data?.data || [])
-    .filter(l => !isSibling(l))
-    .filter(inCommunity);
-  const included = resp.data?.included || [];
-  const meta = resp.data?.meta || {};
 
-  return { data, included, meta };
+  // Objetivo de items reales (pasados ambos filtros) a juntar.
+  const target = Math.max(perPage * OVERFETCH_TARGET_FACTOR, perPage);
+
+  const acc = [];
+  const includedSeen = new Map(); // id → inc (dedup por id)
+  let lastMeta = { totalItems: 0, totalPages: 0, page: 1 };
+  let pagesScanned = 0;
+
+  for (let p = page; p < page + OVERFETCH_MAX_PAGES; p++) {
+    const query = {
+      ...COMMON_FIELDS,
+      pub_sellerCommunities: `has:${communityId}`,
+      ...pubFilters,
+      page: p,
+      perPage: OVERFETCH_PER_PAGE,
+    };
+
+    let resp;
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      resp = await isdk.listings.query(query);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[communitiesService] listings.query failed', e?.message);
+      // Si truena a mitad de overfetch, devolvemos lo juntado hasta ahí.
+      if (acc.length) break;
+      return { data: [], included: [], meta: { totalItems: 0, totalPages: 0, page } };
+    }
+
+    pagesScanned += 1;
+    lastMeta = resp.data?.meta || lastMeta;
+    const pageItems = (resp.data?.data || []).filter(l => !isSibling(l)).filter(inCommunity);
+    acc.push(...pageItems);
+
+    (resp.data?.included || []).forEach(inc => {
+      const key = `${inc.type}:${inc.id?.uuid}`;
+      if (!includedSeen.has(key)) includedSeen.set(key, inc);
+    });
+
+    // Paro temprano: llegamos al target o exhaustimos las pages reales.
+    if (acc.length >= target) break;
+    const totalPages = lastMeta.totalPages || 1;
+    if (p >= totalPages) break;
+  }
+
+  const data = acc.slice(0, target);
+
+  // eslint-disable-next-line no-console
+  console.log(
+    `[communitiesService:${communityId}] overfetch ${pagesScanned}p × ${OVERFETCH_PER_PAGE} = ${data.length} real items (of ${lastMeta.totalItems || '?'} raw)`
+  );
+
+  return { data, included: Array.from(includedSeen.values()), meta: lastMeta };
 };
 
 // -------- API de alto nivel para los endpoints --------

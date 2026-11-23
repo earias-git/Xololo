@@ -15,7 +15,12 @@ const buildListing = (id, extra = {}) => ({
   type: 'listing',
   attributes: {
     title: `listing-${id}`,
-    publicData: { listingType: 'product', ...extra },
+    // `sellerCommunities: ['opf']` por default refleja un listing que
+    // opt-in a OPF — necesario para pasar el post-filter defensivo
+    // `inCommunity` que `communitiesService.fetchCommunityListings`
+    // aplica para esquivar el índice stale de Sharetribe (ADR-006 §7
+    // bis, hotfix 2026-11-23).
+    publicData: { listingType: 'product', sellerCommunities: ['opf'], ...extra },
   },
 });
 
