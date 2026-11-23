@@ -102,3 +102,12 @@
     margin-bottom: 40px;
   }
 }
+
+/* XOLOLO 2026-11-23 — ADR-007: CTA del modal "activa tu plan". */
+.planRequiredCta {
+  composes: button buttonPrimary from global;
+  display: inline-block;
+  margin-top: 16px;
+  text-decoration: none;
+}
+

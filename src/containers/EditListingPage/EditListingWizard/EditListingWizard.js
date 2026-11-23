@@ -37,6 +37,8 @@ import {
 import { ensureCurrentUser, ensureListing } from '../../../util/data';
 import { getDisplayAccountType } from '../../../util/stripeConnect';
 import { getCurrentWorkspace } from '../../../util/xololoTeam';
+// XOLOLO 2026-11-23 — ADR-007: gate publish por plan activo.
+import { canPublishListings } from '../../../util/xololoCanPublish';
 import { INQUIRY_PROCESS_NAME, resolveLatestProcessName } from '../../../transactions/transaction';
 
 // Import shared components
@@ -504,12 +506,17 @@ class EditListingWizard extends Component {
     this.state = {
       draftId: null,
       showPayoutDetails: false,
+      // XOLOLO 2026-11-23 — ADR-007: modal "activa tu plan para publicar"
+      // que reemplaza al botón final cuando el seller 'store' no tiene
+      // suscripción activa. El draft ya quedó guardado en ese punto.
+      showPlanRequired: false,
       selectedListingType: null,
       mounted: false,
     };
     this.handleCreateFlowTabScrolling = this.handleCreateFlowTabScrolling.bind(this);
     this.handlePublishListing = this.handlePublishListing.bind(this);
     this.handlePayoutModalClose = this.handlePayoutModalClose.bind(this);
+    this.handlePlanRequiredModalClose = this.handlePlanRequiredModalClose.bind(this);
   }
 
   componentDidMount() {
@@ -527,8 +534,34 @@ class EditListingWizard extends Component {
     this.hasScrolledToTab = shouldScroll;
   }
 
+  handlePlanRequiredModalClose() {
+    this.setState({ showPlanRequired: false });
+  }
+
   handlePublishListing(id) {
-    const { onPublishListingDraft, currentUser, stripeAccount, listing, config } = this.props;
+    const {
+      onPublishListingDraft,
+      currentUser,
+      stripeAccount,
+      listing,
+      config,
+      sellerSubscription,
+    } = this.props;
+
+    // XOLOLO 2026-11-23 — ADR-007: gate por plan activo. Solo aplica al
+    // publish FINAL del draft. Preview y navegación del wizard son
+    // siempre libres. El modo colaborador (workspace activo) omite el
+    // gate client-side porque el publish se enruta al admin del
+    // workspace, cuyo plan validaremos server-side en PR 2.
+    const isCollaboratorWorkspaceEarly = !!getCurrentWorkspace(currentUser);
+    if (!isCollaboratorWorkspaceEarly) {
+      const { allowed } = canPublishListings(currentUser, sellerSubscription);
+      if (!allowed) {
+        this.setState({ draftId: id, showPlanRequired: true });
+        return;
+      }
+    }
+
     const processName = listing?.attributes?.publicData?.transactionProcessAlias.split('/')[0];
     const isInquiryProcess = processName === INQUIRY_PROCESS_NAME;
 
@@ -878,6 +911,33 @@ class EditListingWizard extends Component {
                 </StripeConnectAccountForm>
               </>
             )}
+          </div>
+        </Modal>
+        {/* XOLOLO 2026-11-23 — ADR-007: modal "activa tu plan para publicar".
+            El draft ya quedó guardado; esto solo gatea la transición a
+            published. Preview del borrador sigue disponible desde
+            ManageListingsPage. */}
+        <Modal
+          id="EditListingWizard.planRequiredModal"
+          isOpen={this.state.showPlanRequired}
+          onClose={this.handlePlanRequiredModalClose}
+          onManageDisableScrolling={onManageDisableScrolling}
+          usePortal
+        >
+          <div className={css.modalPayoutDetailsWrapper}>
+            <Heading as="h2" rootClassName={css.modalTitle}>
+              <FormattedMessage id="EditListingWizard.planRequiredTitle" />
+            </Heading>
+            <p className={css.modalMessage}>
+              <FormattedMessage id="EditListingWizard.planRequiredMessage" />
+            </p>
+            <a
+              href="/account/subscription"
+              className={css.planRequiredCta}
+              onClick={this.handlePlanRequiredModalClose}
+            >
+              <FormattedMessage id="EditListingWizard.planRequiredCta" />
+            </a>
           </div>
         </Modal>
       </div>

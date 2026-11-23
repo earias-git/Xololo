@@ -49,6 +49,13 @@ import {
 // con el master. buildSiblingPayload clona lo esencial + aplica override.
 import { buildSiblingPayload, selectSiblingsForReplicate } from '../../util/variants';
 
+// XOLOLO 2026-11-23 — ADR-007: gate publish por plan activo. El wizard
+// hace preview libre siempre, pero el botón final requiere plan activo
+// para sellers 'store'. Pegamos a /api/seller-subscription para traer
+// el status (metadata del user) y lo exponemos al componente para
+// decidir el gate en handlePublishListing.
+import { apiBaseUrl } from '../../util/api';
+
 const { UUID, Money } = sdkTypes;
 
 // Create array of N items where indexing starts from 1
@@ -387,6 +394,31 @@ const publishListingPayloadCreator = (
 export const publishListingThunk = createAsyncThunk(
   'EditListingPage/publishListing',
   publishListingPayloadCreator
+);
+
+// XOLOLO 2026-11-23 — ADR-007: trae el estado de suscripción del seller
+// autenticado desde /api/seller-subscription para decidir el gate del
+// botón "Publicar". Fail-open: si el fetch truena, exponemos null y el
+// gate cae al modo bloqueante (safer default — no por default-abierto).
+// En modo workspace collaborator NO llamamos: el publish allá se
+// enruta al admin del workspace, no al collaborator, y es el plan del
+// admin el que debe estar activo (eso lo valida el wrapper server-side
+// en PR 2).
+export const fetchSellerSubscriptionThunk = createAsyncThunk(
+  'EditListingPage/fetchSellerSubscription',
+  async (_arg, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`${apiBaseUrl()}/api/seller-subscription`, {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        return rejectWithValue({ status: res.status });
+      }
+      return await res.json();
+    } catch (e) {
+      return rejectWithValue({ message: e?.message || 'fetch_failed' });
+    }
+  }
 );
 // Backward compatible wrappers for the thunks
 export const requestPublishListingDraft = listingId => (dispatch, getState, sdk) => {
@@ -1388,6 +1420,12 @@ const initialState = {
   updateInProgress: false,
   payoutDetailsSaveInProgress: false,
   payoutDetailsSaved: false,
+  // XOLOLO 2026-11-23 — ADR-007: estado de suscripción del seller.
+  //   null                → aún no fetched (loading o skipped)
+  //   { status, plan, ... }→ fetched; status ∈ {active,trialing,past_due,canceled,none}
+  //   { error: true }     → fetch falló; el gate cae a bloqueado.
+  sellerSubscription: null,
+  sellerSubscriptionFetched: false,
 };
 
 const editListingPageSlice = createSlice({
@@ -1464,6 +1502,15 @@ const editListingPageSlice = createSlice({
           listingId: state.listingId,
           error: action.payload,
         };
+      })
+      // XOLOLO 2026-11-23 — ADR-007: sellerSubscription cases
+      .addCase(fetchSellerSubscriptionThunk.fulfilled, (state, action) => {
+        state.sellerSubscription = action.payload;
+        state.sellerSubscriptionFetched = true;
+      })
+      .addCase(fetchSellerSubscriptionThunk.rejected, state => {
+        state.sellerSubscription = { error: true };
+        state.sellerSubscriptionFetched = true;
       })
       // updateListing cases
       .addCase(updateListingThunk.pending, state => {
@@ -1677,6 +1724,12 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
         if (currentUser && currentUser.stripeAccount) {
           dispatch(fetchStripeAccount());
         }
+        // XOLOLO 2026-11-23 — ADR-007: trae el status de suscripción
+        // para gatear el botón "Publicar". Solo tiene sentido para el
+        // owner; en modo collaborator el publish se enruta al admin.
+        if (isUserAuthorized(currentUser) && !getCurrentWorkspace(currentUser)) {
+          dispatch(fetchSellerSubscriptionThunk());
+        }
         return response;
       })
       .catch(e => {
@@ -1696,6 +1749,11 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
       if (isUserAuthorized(currentUser)) {
         if (currentUser && currentUser.stripeAccount) {
           dispatch(fetchStripeAccount());
+        }
+
+        // XOLOLO 2026-11-23 — ADR-007: también en modo edit del draft.
+        if (!getCurrentWorkspace(currentUser)) {
+          dispatch(fetchSellerSubscriptionThunk());
         }
 
         // Because of two dispatch functions, response is an array.

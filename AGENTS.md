@@ -207,3 +207,13 @@ código marcado `XOLOLO LOCKED`, leer el ADR correspondiente.
   (`/comunidad/X`, `/region/X`, `/programa/X`). Primera comunidad
   oficial: OPF – Sector Verde. Taxonomía inicial en
   `docs/TAXONOMIA_SECTOR_VERDE.md`.
+- **ADR-007** — Publish gated por plan activo. Preview SIEMPRE
+  libre (cualquier user autenticado completa el wizard y guarda
+  draft). Publish requiere plan activo: `casual_reseller` exento;
+  `store` publicable si `subscription.status ∈ {active, trialing,
+  past_due}`. `canceled`/`none` → modal "Activa tu plan" con CTA
+  a `/account/subscription`. Helper único
+  `src/util/xololoCanPublish.js` (`PUBLISHABLE_STATUSES` LOCKED).
+  **NO tocar** la lista de statuses ni la exención casual sin
+  actualizar ADR. Auto-close de listings publicados al cancelar
+  plan vive en PR 2 (webhook `customer.subscription.deleted`).

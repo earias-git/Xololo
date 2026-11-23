@@ -318,6 +318,10 @@ export const EditListingPageComponent = props => {
           stripeAccountLinkError={getAccountLinkError}
           authScopes={authScopes}
           titleId={titleId}
+          // XOLOLO 2026-11-23 — ADR-007: estado de suscripción para el
+          // gate del botón "Publicar". El wizard decide con canPublishListings.
+          sellerSubscription={page.sellerSubscription}
+          sellerSubscriptionFetched={page.sellerSubscriptionFetched}
         />
       </Page>
     );
