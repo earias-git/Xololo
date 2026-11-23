@@ -182,8 +182,12 @@
   font-size: 13px;
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.9);
+  /* XOLOLO 2026-11-23 — ocultar en mobile; título + icono comunican
+     y el banner ocupa casi toda la pantalla. */
+  display: none;
 
   @media (--viewportMedium) {
+    display: block;
     font-size: 13.5px;
     line-height: 1.5;
   }
