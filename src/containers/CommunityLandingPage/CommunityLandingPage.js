@@ -430,15 +430,20 @@ const CommunityLandingPage = () => {
   const { productItems, serviceItems, usedItems } = useMemo(() => {
     const authorsById = buildAuthorIndex(included);
 
-    // productos = no used, no event
-    const productsBase = scopedListings.filter(
-      l => !isUsedListing(l, authorsById) && !isEventListing(l)
-    );
-    // servicios = listingType service/service-day O listings con isEvent=true
-    const servicesBase = scopedListings.filter(l => {
+    // XOLOLO 2026-11-23 — helper local: ¿este listing es un servicio?
+    // Fuente única de verdad para no duplicar listings entre rieles
+    // Productos y Servicios (bug: un "Taller" o un "Peinado" aparecía
+    // en ambos). Un service lo es por listingType o por isEvent=true.
+    const isServiceListing = l => {
       const lt = l?.attributes?.publicData?.listingType;
       return lt === 'service' || lt === 'service-day' || isEventListing(l);
-    });
+    };
+    // productos = no used, no service (no event está cubierto por isServiceListing)
+    const productsBase = scopedListings.filter(
+      l => !isUsedListing(l, authorsById) && !isServiceListing(l)
+    );
+    // servicios = listingType service/service-day O listings con isEvent=true
+    const servicesBase = scopedListings.filter(isServiceListing);
     // usados = isUsedListing (3 señales)
     const usedBase = scopedListings.filter(l => isUsedListing(l, authorsById));
 
