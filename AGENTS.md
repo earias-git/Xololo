@@ -212,8 +212,15 @@ código marcado `XOLOLO LOCKED`, leer el ADR correspondiente.
   draft). Publish requiere plan activo: `casual_reseller` exento;
   `store` publicable si `subscription.status ∈ {active, trialing,
   past_due}`. `canceled`/`none` → modal "Activa tu plan" con CTA
-  a `/account/subscription`. Helper único
+  a `/account/subscription`. Helper único client
   `src/util/xololoCanPublish.js` (`PUBLISHABLE_STATUSES` LOCKED).
-  **NO tocar** la lista de statuses ni la exención casual sin
-  actualizar ADR. Auto-close de listings publicados al cancelar
-  plan vive en PR 2 (webhook `customer.subscription.deleted`).
+  Espejo server en `server/api-util/publicationGate.js`
+  (`PUBLISHABLE_INTERNAL_STATUSES = ['active','past_due']`).
+  **NO tocar** la lista de statuses ni la exención casual en ninguna
+  de las dos capas sin actualizar ADR. PR 2 entregado: webhook
+  `customer.subscription.deleted` → `applyPublicationGate` cierra
+  listings `published` del admin + marca `xololoGatedClosed=true`;
+  reactivación reabre SOLO los marcados; gate server-side en
+  `team-as.publishDraft` bloquea colaborador con admin sin plan.
+  **NO** volver a `wasActive !== isActive` en `syncSubscriptionMetadata`
+  (rompe grace window de `past_due`).

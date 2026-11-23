@@ -137,6 +137,48 @@ const ensureListingBelongsToAdmin = async (isdk, listingId, adminId) => {
   return null;
 };
 
+// ADR-007 PR 2 — gate server-side defensivo: colaborador trata de
+// publicar en nombre del admin. Chequeamos el plan del ADMIN (no del
+// colaborador) antes de subir el listing a published. Espeja la lógica
+// del helper client src/util/xololoCanPublish.js:
+//   - casual_reseller → exento (no paga sub por diseño fiscal).
+//   - store → debe tener subscription.status ∈ publishable.
+//
+// Devuelve null si OK, o un error-response (409 plan_required) para
+// enviar al cliente.
+const { isPublishableStatus } = require('../api-util/publicationGate');
+
+const ensureAdminCanPublish = async (isdk, adminId) => {
+  try {
+    const resp = await isdk.users.show({ id: adminId });
+    const profile = resp.data.data?.attributes?.profile || {};
+    const sellerMode = profile.publicData?.sellerMode;
+    if (sellerMode === 'casual_reseller') return null;
+
+    const sub = profile.metadata?.xololoSubscription || {};
+    if (isPublishableStatus(sub.status)) return null;
+
+    return {
+      status: 409,
+      body: {
+        error: 'plan_required',
+        detail: 'admin_plan_not_active',
+        subscriptionStatus: sub.status || 'none',
+      },
+    };
+  } catch (e) {
+    // Fail-close: si no podemos verificar el plan, bloqueamos el
+    // publish. Mejor un falso negativo (el admin reintenta) que
+    // dejar publicar con plan cancelado.
+    // eslint-disable-next-line no-console
+    console.error(`[team-as.ensureAdminCanPublish] no se pudo leer admin ${adminId}:`, e?.message);
+    return {
+      status: 409,
+      body: { error: 'plan_required', detail: 'verification_failed' },
+    };
+  }
+};
+
 // ============================================================
 // Listings — create / createDraft
 // ============================================================
@@ -323,6 +365,16 @@ const publishDraft = async (req, res) => {
   try {
     const guard = await ensureListingBelongsToAdmin(isdk, listingId, req.actingAs.adminId);
     if (guard) return res.status(guard.status).json(guard.body);
+
+    // ADR-007 PR 2: gate defensivo server-side. Aunque PR 1 ya mostró
+    // el modal en el UI, un colaborador podría forzar el POST con el
+    // admin sin plan activo (bypass de UI). Validamos el plan del
+    // admin aquí también.
+    const planGuard = await ensureAdminCanPublish(isdk, req.actingAs.adminId);
+    if (planGuard) {
+      auditOk(req, 'listing.publish', { listingId, blocked: 'plan_required' }, 'blocked');
+      return res.status(planGuard.status).json(planGuard.body);
+    }
 
     // XOLOLO E9 fase 3: quitamos el marker xololoWizardDraft para que
     // rehydrateAsSdk ya no enmascare state como 'draft'. Y aprobamos

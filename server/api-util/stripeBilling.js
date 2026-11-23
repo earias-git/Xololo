@@ -10,7 +10,7 @@
 //   if (!stripe) return res.status(500).json({ error: 'stripe_billing_missing' });
 
 const Stripe = require('stripe');
-const { applyPublicationGate } = require('./publicationGate');
+const { applyPublicationGate, isPublishableStatus } = require('./publicationGate');
 
 let cached = null;
 
@@ -126,18 +126,24 @@ const syncSubscriptionMetadata = async ({ isdk, sellerId, subscription, plan, ex
     console.error('[stripeBilling] syncVerifiedBadge falló:', e?.message);
   }
 
-  // XOLOLO roadmap #6: gate de publicación. Sólo actuamos cuando el
-  // status cruza la frontera activo/no-activo — evita re-escanear los
-  // listings del seller en cada sync que no cambia esa condición (ej.
-  // dos webhooks seguidos que ambos dejan el status en 'active').
-  const wasActive = (existing.status || 'none') === 'active';
-  const isActive = updated.status === 'active';
-  if (wasActive !== isActive) {
+  // XOLOLO roadmap #6 + ADR-007 PR 2: gate de publicación. Sólo
+  // actuamos cuando el status cruza la frontera publicable/no-publicable
+  // — evita re-escanear los listings del seller en cada sync que no
+  // cambia esa condición (ej. dos webhooks seguidos que ambos dejan el
+  // status en 'active').
+  //
+  // Frontera alineada con ADR-007: PUBLISHABLE_INTERNAL_STATUSES =
+  // ['active','past_due']. `past_due` es ventana de gracia — no cierra
+  // listings. Fuente de verdad en publicationGate.js; mantener en
+  // sincronía con client src/util/xololoCanPublish.js#PUBLISHABLE_STATUSES.
+  const wasPublishable = isPublishableStatus(existing.status || 'none');
+  const isPublishable = isPublishableStatus(updated.status);
+  if (wasPublishable !== isPublishable) {
     try {
       const gateResult = await applyPublicationGate({
         isdk,
         sellerId,
-        shouldBeVisible: isActive,
+        shouldBeVisible: isPublishable,
       });
       // eslint-disable-next-line no-console
       console.log(
