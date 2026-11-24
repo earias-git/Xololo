@@ -472,19 +472,22 @@ const ManageStoreForm = props => {
                 color pickers. Elegir un tema auto-rellena los 2 colores. */}
             <ThemeSelector />
 
-            <PaletteField
-              name="brandPrimaryColor"
-              label="Color primario — botones y encabezados"
-              palette={PRIMARY_PALETTE}
-              defaultColor="#1f8f52"
-            />
-
-            <PaletteField
-              name="brandSecondaryColor"
-              label="Color secundario — bandas y detalles"
-              palette={SECONDARY_PALETTE}
-              defaultColor="#6bcb8c"
-            />
+            {/* XOLOLO Web Studio: colores primario/secundario lado a lado
+                en desktop para aprovechar el ancho del form. */}
+            <div className={css.colorRow}>
+              <PaletteField
+                name="brandPrimaryColor"
+                label="Color primario — botones y encabezados"
+                palette={PRIMARY_PALETTE}
+                defaultColor="#1f8f52"
+              />
+              <PaletteField
+                name="brandSecondaryColor"
+                label="Color secundario — bandas y detalles"
+                palette={SECONDARY_PALETTE}
+                defaultColor="#6bcb8c"
+              />
+            </div>
 
             <ImageUploadField
               name="logoUrl"
@@ -493,13 +496,15 @@ const ManageStoreForm = props => {
               hint="PNG con fondo transparente, alto ~200 px. Se muestra en el header de tu tienda en línea."
             />
 
-            <ImageUploadField
-              name="bannerUrl"
-              kind="banner"
-              label="Banner publicitario 1"
-              hint="Imagen horizontal (1600 x 400 px recomendado). Aparece bajo el header de tu tienda en línea."
-              aspectRatio="4 / 1"
-            />
+            {/* XOLOLO Web Studio: 3 banners en una fila en desktop. */}
+            <div className={css.bannerRow}>
+              <ImageUploadField
+                name="bannerUrl"
+                kind="banner"
+                label="Banner publicitario 1"
+                hint="Imagen horizontal (1600 x 400 px recomendado). Aparece bajo el header de tu tienda en línea."
+                aspectRatio="4 / 1"
+              />
 
             <ImageUploadField
               name="bannerUrl2"
@@ -509,13 +514,14 @@ const ManageStoreForm = props => {
               aspectRatio="4 / 1"
             />
 
-            <ImageUploadField
-              name="bannerUrl3"
-              kind="banner"
-              label="Banner publicitario 3 (opcional)"
-              hint="Tercer slide del carrusel — mismo formato horizontal 4 : 1."
-              aspectRatio="4 / 1"
-            />
+              <ImageUploadField
+                name="bannerUrl3"
+                kind="banner"
+                label="Banner publicitario 3 (opcional)"
+                hint="Tercer slide del carrusel — mismo formato horizontal 4 : 1."
+                aspectRatio="4 / 1"
+              />
+            </div>
           </fieldset>
 
           <fieldset className={css.section}>

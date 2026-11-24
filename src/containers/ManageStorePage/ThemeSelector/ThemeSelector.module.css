@@ -123,12 +123,13 @@
   font-size: 12.5px;
   color: #4a5169;
   line-height: 1.4;
-}
-
-.tileFit {
-  font-size: 11px;
-  color: #7c8296;
-  font-style: italic;
+  /* Clamp a 2 líneas — mantiene el tile bajo aun en 4 columnas de
+     desktop donde el ancho de cada tile es más estrecho. La descripción
+     completa sigue disponible en title (tooltip) y aria-label. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .clearBtn {

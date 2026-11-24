@@ -436,6 +436,30 @@
   margin: 4px 0 12px;
 }
 
+/* XOLOLO Web Studio — grupos multi-columna en desktop para aprovechar
+   el ancho sin forzar scroll vertical. Mobile/tablet quedan apilados. */
+.colorRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+
+  @media (min-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+
+.bannerRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+
+  @media (min-width: 1100px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
 /* XOLOLO fix: inline-flex con un parent block se comportaba raro cuando
    algún ancestro tenía columnas estrechas — el checkbox + label quedaban
    en extremos opuestos con wrap vertical del texto. Grid con `auto 1fr`

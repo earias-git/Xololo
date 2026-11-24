@@ -22,15 +22,19 @@ import css from './ThemeSelector.module.css';
 // "ninguno", lo representamos como que ningún tile tiene `on`.
 
 const ThemeTile = ({ theme, selected, onSelect }) => {
-  // Tile grafica una barra tripartita con los 2 colores del tema +
-  // un off-white que insinúa las superficies. Visualización pura.
+  // Tile compacto: franja tripartita de colores + nombre + un line clamp
+  // de 2 para la descripción. Mantiene la caja BAJA — en grids de 4 col
+  // desktop el tile queda ~180-260px wide pero su altura no explota.
+  // Lista "fitFor" se removió del tile para no sumar alto; sigue como
+  // tooltip/aria descriptivo.
   return (
     <button
       type="button"
       className={classNames(css.tile, { [css.tileSelected]: selected })}
       onClick={onSelect}
       aria-pressed={selected}
-      aria-label={`Elegir tema ${theme.name}`}
+      aria-label={`Elegir tema ${theme.name} — ${theme.description}. Para ${theme.fitFor}.`}
+      title={`${theme.description}\nPara: ${theme.fitFor}`}
     >
       <span className={css.tilePreview} aria-hidden="true">
         <span
@@ -52,7 +56,6 @@ const ThemeTile = ({ theme, selected, onSelect }) => {
           {selected ? <span className={css.tileCheck} aria-hidden="true">✓</span> : null}
         </span>
         <span className={css.tileDesc}>{theme.description}</span>
-        <span className={css.tileFit}>{theme.fitFor}</span>
       </span>
     </button>
   );
