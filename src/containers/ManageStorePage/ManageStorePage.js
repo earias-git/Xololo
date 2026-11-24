@@ -246,6 +246,10 @@ export const ManageStorePageComponent = props => {
   return (
     <Page title="Mi tienda" scrollingDisabled={scrollingDisabled}>
       <LayoutSideNavigation
+        /* XOLOLO Web Studio: override del padding de .main para que esta
+           página pueda usar el ancho real del viewport en lugar del cap
+           calc((100% - 1056px)/2) que aplica el layout por default. */
+        mainColumnClassName={css.wideMain}
         topbar={
           <>
             <TopbarContainer
