@@ -12,9 +12,13 @@
    internos. */
 .layout {
   display: grid;
-  grid-template-columns: 1fr;
+  /* XOLOLO fix: minmax(0, 1fr) en vez de 1fr para que las columnas no
+     se expandan cuando un hijo (fieldset con imagen banner) tenga
+     contenido más ancho que la pantalla. Sin esto, mobile scroll-x. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   align-items: start;
+  min-width: 0;
 }
 
 @media (min-width: 1440px) {
@@ -153,6 +157,11 @@
   border-radius: 14px;
   margin: 0;
   background-color: #ffffff;
+  /* XOLOLO fix: fieldset tiene min-width: min-content por default, que
+     lo fuerza a expandirse al contenido interno más ancho (banner image,
+     slug muy largo, etc.) y rompe el layout en mobile con scroll
+     horizontal. Forzamos 0 para que respete el ancho del flex container. */
+  min-width: 0;
 }
 
 .sectionTitle {
@@ -427,14 +436,26 @@
   margin: 4px 0 12px;
 }
 
+/* XOLOLO fix: inline-flex con un parent block se comportaba raro cuando
+   algún ancestro tenía columnas estrechas — el checkbox + label quedaban
+   en extremos opuestos con wrap vertical del texto. Grid con `auto 1fr`
+   garantiza: checkbox al ancho natural, texto rellena el resto con
+   wrap horizontal normal. */
 .addressSameLabel {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: 8px;
   font-size: 13.5px;
   color: var(--colorGrey700);
   cursor: pointer;
   user-select: none;
+  min-width: 0;
+}
+
+.addressSameLabel > input[type='checkbox'] {
+  margin: 0;
+  flex-shrink: 0;
 }
 
 /* ---------- Submit / feedback ---------- */
