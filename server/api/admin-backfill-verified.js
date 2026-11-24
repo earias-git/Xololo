@@ -19,6 +19,10 @@
 //     Ejecuta el backfill real. Idempotente — syncVerifiedBadge
 //     ignora los que ya están correctos.
 //     200 → { total, becameVerified, lostVerified, errors, startedAt, finishedAt }
+//
+// Alternativa manual: scripts/backfill-verified-badge.js (CLI que
+// llama a las funciones puras `computeDryRun` / `executeBackfill` de
+// abajo sin pasar por el router HTTP).
 
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
 const { computeVerifiedFromUser, syncVerifiedBadge } = require('../api-util/sellerVerified');
@@ -58,51 +62,95 @@ const fetchUserFullProfile = async (isdk, userId) => {
   return resp.data.data;
 };
 
+// XOLOLO: función pura — sin req/res. Reutilizada por el HTTP handler
+// `dryRun` y por el CLI (scripts/backfill-verified-badge.js). Devuelve
+// un shape idéntico al del endpoint.
+const computeDryRun = async isdk => {
+  const sellers = await fetchAllSellers(isdk);
+  let wouldBecomeVerified = 0;
+  let wouldLoseVerified = 0;
+  const samples = [];
+  for (const [sellerId] of sellers.entries()) {
+    try {
+      const user = await fetchUserFullProfile(isdk, sellerId);
+      const publicData = user.attributes?.profile?.publicData || {};
+      const prev = publicData.xololoVerified === true;
+      const next = computeVerifiedFromUser(user);
+      if (prev !== next) {
+        const sampleEntry = {
+          sellerId,
+          displayName:
+            publicData.displayName ||
+            user.attributes?.profile?.displayName ||
+            user.attributes?.profile?.firstName ||
+            '(sin nombre)',
+          email: user.attributes?.email || null,
+          was: prev,
+          willBe: next,
+          change: next && !prev ? 'become_verified' : 'lose_verified',
+        };
+        if (next && !prev) wouldBecomeVerified += 1;
+        else wouldLoseVerified += 1;
+        if (samples.length < 10) samples.push(sampleEntry);
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[admin-backfill-verified] skip', sellerId, e?.message);
+    }
+  }
+
+  return {
+    total: sellers.size,
+    wouldBecomeVerified,
+    wouldLoseVerified,
+    noChange: sellers.size - wouldBecomeVerified - wouldLoseVerified,
+    samples,
+  };
+};
+
+// XOLOLO: ejecución real, función pura. Idempotente — syncVerifiedBadge
+// no escribe cuando el estado ya es el correcto.
+const executeBackfill = async isdk => {
+  const startedAt = new Date().toISOString();
+  const sellers = await fetchAllSellers(isdk);
+  let becameVerified = 0;
+  let lostVerified = 0;
+  let noChange = 0;
+  const errors = [];
+  for (const [sellerId] of sellers.entries()) {
+    try {
+      const result = await syncVerifiedBadge({ isdk, sellerId });
+      if (result.changed) {
+        if (result.verified) becameVerified += 1;
+        else lostVerified += 1;
+      } else {
+        noChange += 1;
+      }
+    } catch (e) {
+      errors.push({ sellerId, error: e?.message || 'unknown' });
+    }
+  }
+  const finishedAt = new Date().toISOString();
+
+  return {
+    total: sellers.size,
+    becameVerified,
+    lostVerified,
+    noChange,
+    errorCount: errors.length,
+    errors: errors.slice(0, 20),
+    startedAt,
+    finishedAt,
+  };
+};
+
 const dryRun = async (req, res) => {
   const isdk = getIntegrationSdk();
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
   try {
-    const sellers = await fetchAllSellers(isdk);
-    let wouldBecomeVerified = 0;
-    let wouldLoseVerified = 0;
-    const samples = [];
-    for (const [sellerId] of sellers.entries()) {
-      try {
-        const user = await fetchUserFullProfile(isdk, sellerId);
-        const publicData = user.attributes?.profile?.publicData || {};
-        const prev = publicData.xololoVerified === true;
-        const next = computeVerifiedFromUser(user);
-        if (prev !== next) {
-          const sampleEntry = {
-            sellerId,
-            displayName:
-              publicData.displayName ||
-              user.attributes?.profile?.displayName ||
-              user.attributes?.profile?.firstName ||
-              '(sin nombre)',
-            email: user.attributes?.email || null,
-            was: prev,
-            willBe: next,
-            change: next && !prev ? 'become_verified' : 'lose_verified',
-          };
-          if (next && !prev) wouldBecomeVerified += 1;
-          else wouldLoseVerified += 1;
-          if (samples.length < 10) samples.push(sampleEntry);
-        }
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn('[admin-backfill-verified] skip', sellerId, e?.message);
-      }
-    }
-
-    return res.json({
-      total: sellers.size,
-      wouldBecomeVerified,
-      wouldLoseVerified,
-      noChange: sellers.size - wouldBecomeVerified - wouldLoseVerified,
-      samples,
-    });
+    const result = await computeDryRun(isdk);
+    return res.json(result);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[admin-backfill-verified] dry-run error:', e?.message);
@@ -114,38 +162,9 @@ const run = async (req, res) => {
   const isdk = getIntegrationSdk();
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
-  const startedAt = new Date().toISOString();
   try {
-    const sellers = await fetchAllSellers(isdk);
-    let becameVerified = 0;
-    let lostVerified = 0;
-    let noChange = 0;
-    const errors = [];
-    for (const [sellerId] of sellers.entries()) {
-      try {
-        const result = await syncVerifiedBadge({ isdk, sellerId });
-        if (result.changed) {
-          if (result.verified) becameVerified += 1;
-          else lostVerified += 1;
-        } else {
-          noChange += 1;
-        }
-      } catch (e) {
-        errors.push({ sellerId, error: e?.message || 'unknown' });
-      }
-    }
-    const finishedAt = new Date().toISOString();
-
-    return res.json({
-      total: sellers.size,
-      becameVerified,
-      lostVerified,
-      noChange,
-      errorCount: errors.length,
-      errors: errors.slice(0, 20),
-      startedAt,
-      finishedAt,
-    });
+    const result = await executeBackfill(isdk);
+    return res.json(result);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[admin-backfill-verified] run error:', e?.message);
@@ -153,4 +172,4 @@ const run = async (req, res) => {
   }
 };
 
-module.exports = { dryRun, run };
+module.exports = { dryRun, run, computeDryRun, executeBackfill };
