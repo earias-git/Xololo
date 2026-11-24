@@ -33,6 +33,7 @@ import {
   buildPublishPatch,
   buildDiscardPatch,
 } from '../../util/xololoStorefrontDraft';
+import { normalizeThemeId } from '../../util/xololoStorefrontThemes';
 import css from './ManageStorePage.module.css';
 
 // XOLOLO: página /account/store donde el seller edita su storefront.
@@ -90,6 +91,7 @@ const cleanValues = raw => {
   // XOLOLO Web Studio PR 2: split branding (va a storefrontDraft) vs resto
   // (va flat como siempre). cleanValues sólo normaliza y agrupa — el
   // routing final lo hace handleSubmit con buildDraftPatch.
+  // PR 3: storefrontTheme se agrega al branding (valid id o null).
   const branding = {
     brandPrimaryColor: trim(raw.brandPrimaryColor) || null,
     brandSecondaryColor: trim(raw.brandSecondaryColor) || null,
@@ -97,6 +99,7 @@ const cleanValues = raw => {
     bannerUrl: trim(raw.bannerUrl) || null,
     bannerUrl2: trim(raw.bannerUrl2) || null,
     bannerUrl3: trim(raw.bannerUrl3) || null,
+    storefrontTheme: normalizeThemeId(raw.storefrontTheme),
   };
 
   const other = {
@@ -169,12 +172,14 @@ export const ManageStorePageComponent = props => {
     shortDescription: publicData.shortDescription || '',
     longDescription: publicData.longDescription || '',
     // XOLOLO Web Studio PR 2: branding desde effectiveBranding (draft > flat).
+    // PR 3: storefrontTheme también lee del effective (puede ser null).
     brandPrimaryColor: effectiveBranding.brandPrimaryColor || '',
     brandSecondaryColor: effectiveBranding.brandSecondaryColor || '',
     logoUrl: effectiveBranding.logoUrl || '',
     bannerUrl: effectiveBranding.bannerUrl || '',
     bannerUrl2: effectiveBranding.bannerUrl2 || '',
     bannerUrl3: effectiveBranding.bannerUrl3 || '',
+    storefrontTheme: effectiveBranding.storefrontTheme || null,
     whatsapp: publicData.whatsapp || '',
     instagram: publicData.instagram || '',
     facebook: publicData.facebook || '',

@@ -23,6 +23,7 @@
 
 // Lista LOCKED de campos de branding que se stagean. Agregar un campo
 // nuevo aquí también requiere agregarlo al UI del form y al preview.
+// storefrontTheme se agregó en Web Studio PR 3 (ver xololoStorefrontThemes).
 export const BRANDING_FIELDS = [
   'brandPrimaryColor',
   'brandSecondaryColor',
@@ -30,6 +31,7 @@ export const BRANDING_FIELDS = [
   'bannerUrl',
   'bannerUrl2',
   'bannerUrl3',
+  'storefrontTheme',
 ];
 
 // Normaliza: string vacío o undefined → null. Para comparar drafts vs

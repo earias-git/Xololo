@@ -1,0 +1,141 @@
+@import '../../../styles/customMediaQueries.css';
+
+/* XOLOLO Web Studio PR 3 — selector de tema base. 4 tiles clicables
+   que aplican un preset al form. */
+
+.root {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 20px;
+}
+
+.head {
+  display: grid;
+  gap: 4px;
+}
+
+.eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1f8f52;
+  font-weight: 800;
+}
+
+.hint {
+  margin: 0;
+  color: #4a5169;
+  font-size: 13px;
+  line-height: 1.45;
+  max-width: 55ch;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+.tile {
+  appearance: none;
+  background: #ffffff;
+  border: 1.5px solid #e3ddce;
+  border-radius: 12px;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 44px 1fr;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+  font-family: inherit;
+}
+
+.tile:hover {
+  border-color: #c7bea6;
+}
+
+.tile:focus-visible {
+  outline: 2px solid #1f8f52;
+  outline-offset: 2px;
+}
+
+.tileSelected {
+  border-color: #1f8f52;
+  box-shadow: 0 0 0 1.5px #1f8f52 inset;
+}
+
+.tilePreview {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr;
+  height: 100%;
+}
+
+.tileSwatch {
+  height: 100%;
+  width: 100%;
+}
+
+.tileBody {
+  padding: 10px 12px 12px;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tileName {
+  font-size: 14px;
+  font-weight: 800;
+  color: #232d40;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tileCheck {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1f8f52;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.tileDesc {
+  font-size: 12.5px;
+  color: #4a5169;
+  line-height: 1.4;
+}
+
+.tileFit {
+  font-size: 11px;
+  color: #7c8296;
+  font-style: italic;
+}
+
+.clearBtn {
+  justify-self: start;
+  background: transparent;
+  border: none;
+  padding: 4px 0;
+  color: #1f8f52;
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.clearBtn:hover {
+  color: #1a7a46;
+}

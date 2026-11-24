@@ -8,6 +8,7 @@ import { Form, PrimaryButton, FieldTextInput, FieldSelect } from '../../../compo
 
 import ImageUploadField from './ImageUploadField';
 import StorefrontPreview from '../StorefrontPreview/StorefrontPreview';
+import ThemeSelector from '../ThemeSelector/ThemeSelector';
 import css from './ManageStoreForm.module.css';
 
 // XOLOLO: form controls to edit the seller's storefront branding.
@@ -466,6 +467,10 @@ const ManageStoreForm = props => {
               </span>
               Look de tu tienda
             </legend>
+
+            {/* XOLOLO Web Studio PR 3: selector de tema arriba de los
+                color pickers. Elegir un tema auto-rellena los 2 colores. */}
+            <ThemeSelector />
 
             <PaletteField
               name="brandPrimaryColor"
