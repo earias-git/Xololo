@@ -9,19 +9,17 @@
   margin: 0 auto;
 }
 
-/* XOLOLO Web Studio — escalado progresivo del content width.
-   780 (default mobile/tablet) → 1200 cuando el 2-col activa (1280).
-   Antes esperaba a 1440 y en laptops normales el form quedaba apretado
-   en el centro con mucho vacío lateral. */
+/* XOLOLO Web Studio — content aprovecha todo el ancho disponible menos
+   un gutter de 48px. En viewports grandes (1600+) la página se sentía
+   "muy angosta" obligando a scroll vertical excesivo. Ahora:
+   - Mobile/tablet (<1280): 780px cap (lectura cómoda, form sin preview)
+   - Desktop (1280+): sin cap duro — el content respira al viewport real
+     con 48px de gutter lateral. El form + preview sticky aprovechan
+     todo el ancho útil. */
 @media (min-width: 1280px) {
   .content {
-    max-width: 1200px;
-  }
-}
-
-@media (min-width: 1600px) {
-  .content {
-    max-width: 1320px;
+    max-width: none;
+    padding-inline: 48px;
   }
 }
 
