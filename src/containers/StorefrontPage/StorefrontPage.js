@@ -20,6 +20,13 @@ import VerifiedBand from '../../components/VerifiedBand/VerifiedBand';
 import StoreHeaderStats from '../../components/StoreHeaderStats/StoreHeaderStats';
 // XOLOLO 2026-11-18 — ADR-006 PR-8: chips de comunidades del seller.
 
+// XOLOLO Web Studio PR 5: tokens del tema aplicados al storefront real.
+// Lee publicData.storefrontTheme → inyecta CSS vars (--xf-*) y el
+// Google Fonts CSS link vía Helmet (SSR friendly). Sellers sin tema
+// NO disparan ningún cambio — el cálculo devuelve defaults y la carga
+// de fonts se omite.
+import { themeToCssVars, buildGoogleFontsHref } from '../../util/xololoStorefrontThemes';
+
 import css from './StorefrontPage.module.css';
 
 // XOLOLO: página pública del storefront de un seller.
@@ -362,13 +369,31 @@ const StorefrontPageComponent = props => {
     (typeof pd.address === 'string' ? pd.address : null);
   const mapsUrl = buildMapsUrl(address);
 
+  // XOLOLO Web Studio PR 5: tokens del tema. OPT-IN estricto — si el
+  // seller no eligió tema, NO inyectamos CSS vars ni Google Fonts.
+  // Resultado: sellers sin tema renderizan 1:1 lo que renderizaban
+  // antes de este PR (cero regresión visual). Solo quienes eligieron
+  // tema reciben los tokens visuales.
+  const storefrontTheme = pd.storefrontTheme || null;
+  const themeCssVars = storefrontTheme ? themeToCssVars(storefrontTheme).cssVars : {};
+  const heroVariant = storefrontTheme
+    ? themeToCssVars(storefrontTheme).heroVariant
+    : null;
+  const fontsHref = storefrontTheme ? buildGoogleFontsHref(storefrontTheme) : null;
+
   const rootStyle = {
     '--storefront-primary': primary,
     '--storefront-secondary': secondary,
+    ...themeCssVars,
   };
 
   return (
-    <div className={css.root} style={rootStyle}>
+    <div
+      className={css.root}
+      style={rootStyle}
+      data-hero={heroVariant || undefined}
+      data-themed={storefrontTheme ? 'true' : undefined}
+    >
       <Helmet>
         <title>{ogTitle}</title>
         <meta name="description" content={ogDescription} />
@@ -385,6 +410,16 @@ const StorefrontPageComponent = props => {
         <meta name="twitter:title" content={ogTitle} />
         <meta name="twitter:description" content={ogDescription} />
         {ogImage ? <meta name="twitter:image" content={ogImage} /> : null}
+        {/* XOLOLO Web Studio PR 5: SSR-safe Google Fonts link. Solo se
+            emite si el seller eligió un tema — cero regresión para
+            sellers sin tema (no carga ningún CSS externo adicional). */}
+        {fontsHref ? (
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+        ) : null}
+        {fontsHref ? (
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        ) : null}
+        {fontsHref ? <link rel="stylesheet" href={fontsHref} /> : null}
       </Helmet>
       <header className={css.header}>
         <div className={css.headerInner}>

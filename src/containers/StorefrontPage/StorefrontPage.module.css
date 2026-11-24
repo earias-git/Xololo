@@ -243,6 +243,26 @@
    compacto, sin dominar la pantalla, CTAs en fila. Eyebrow oculto (es
    redundante con el header que ya identifica la tienda). Desktop
    mantiene la presencia visual grande que ancla la marca. */
+/* XOLOLO Web Studio PR 5: tipografía del tema. Aplicada SOLO cuando
+   el seller eligió tema (data-themed="true"). Sellers sin tema
+   renderean 1:1 con el stack de fuentes legacy — cero regresión.
+   Scope acotado a elementos clave del storefront: hero, nombres de
+   tienda, headings de sección. No tocamos body genérico para no
+   afectar cards de listings del subsistema global. */
+.root[data-themed='true'] .heroTitle,
+.root[data-themed='true'] .brandFallback,
+.root[data-themed='true'] .sectionTitle {
+  font-family: var(--xf-heading-font, inherit);
+}
+
+.root[data-themed='true'] .heroDescription,
+.root[data-themed='true'] .heroEyebrow {
+  font-family: var(--xf-body-font, inherit);
+}
+
+/* XOLOLO Web Studio PR 5: hero variants. El CSS legacy sin data-hero
+   sigue intacto (sellers sin tema). Solo activamos variantes cuando
+   data-hero existe — otro opt-in estricto. */
 .hero {
   background-color: var(--storefront-primary);
   color: #ffffff;
@@ -251,6 +271,43 @@
   @media (--viewportMedium) {
     padding: 40px 40px 44px;
   }
+}
+
+/* PR 5 — hero variants para sellers con tema seleccionado. Cada regla
+   gana específicamente contra .hero porque suma el selector del root. */
+.root[data-hero='gradient'] .hero {
+  background: linear-gradient(135deg, var(--storefront-primary), var(--storefront-secondary));
+}
+
+.root[data-hero='solid'] .hero {
+  /* ya es sólido por default, pero reafirmamos y aseguramos text-align. */
+  background-color: var(--storefront-primary);
+  text-align: left;
+}
+
+.root[data-hero='minimal'] .hero {
+  background: #ffffff;
+  color: #0f1a2e;
+  border-top: 4px solid var(--storefront-primary);
+}
+
+.root[data-hero='minimal'] .heroEyebrow {
+  color: var(--storefront-primary);
+}
+
+.root[data-hero='minimal'] .heroDescription {
+  color: #4a5169;
+}
+
+.root[data-hero='editorial'] .hero {
+  background: linear-gradient(
+    to right,
+    var(--storefront-primary) 0%,
+    var(--storefront-primary) 56%,
+    var(--storefront-secondary) 56%,
+    var(--storefront-secondary) 100%
+  );
+  text-align: left;
 }
 
 .heroInner {
