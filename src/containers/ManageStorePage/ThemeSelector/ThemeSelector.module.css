@@ -30,6 +30,10 @@
   max-width: 55ch;
 }
 
+/* XOLOLO Web Studio: mobile 1 col, tablet 2 cols, desktop 4 cols.
+   En desktop el form tiene ~800-1400px (post fix de LayoutSideNav
+   padding) — los 4 temas caben en una sola fila. Evita scroll vertical
+   de ~400px y hace más fácil comparar los temas lado a lado. */
 .grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -37,6 +41,11 @@
 
   @media (--viewportMedium) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  @media (min-width: 1100px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
   }
 }
