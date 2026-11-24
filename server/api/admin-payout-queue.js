@@ -31,7 +31,7 @@
 // crezca se agrega índice/materialized view.
 
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
-const { slotsForPersonType } = require('../api-util/legalDocSlots');
+const { computePayoutGate } = require('../api-util/payoutGate');
 const { getSellerStripeAccountId, createPayoutTransfer } = require('../api-util/stripePayouts');
 
 const CACHE_TTL_MS = 60 * 1000; // 1 min — datos de dinero esperando.
@@ -69,12 +69,9 @@ const isPendingPayout = tx => {
   return isCompletedState;
 };
 
-const isLegalDocsComplete = (personType, docs, sellerMode) => {
-  if (!personType) return false;
-  const required = slotsForPersonType(personType, sellerMode);
-  if (!required.length) return false;
-  return required.every(slot => !!docs?.[slot.key]);
-};
+// XOLOLO 2026-11-23 task #27: lógica de gate movida a
+// ../api-util/payoutGate.js para evitar drift entre endpoints y para
+// usarla también como defensa server-side en `release` / `retry`.
 
 const MAX_PAGES = 20;
 const PER_PAGE = 100;
@@ -149,18 +146,12 @@ const list = async (req, res) => {
         const uResp = await isdk.users.show({ id: sellerId });
         const u = uResp.data.data;
         const profile = u.attributes?.profile || {};
-        const legalDocs = profile.metadata?.xololoLegalDocs || {};
         const sellerMode = profile.publicData?.sellerMode || 'store';
-        const stripeConnected = u.attributes?.stripeConnected === true;
-        const legalDocsComplete = isLegalDocsComplete(
-          legalDocs.personType || null,
-          legalDocs.docs || {},
-          sellerMode
-        );
-        const canReceivePayout = stripeConnected && legalDocsComplete;
-        const blockers = [];
-        if (!stripeConnected) blockers.push('stripe');
-        if (!legalDocsComplete) blockers.push('legalDocs');
+        const gate = computePayoutGate({ user: u });
+        const { stripeConnected, legalDocsComplete, canReceivePayout } = gate;
+        // Shape original: array de strings. Mantener para no romper
+        // PayoutQueueView que lo pinta como chips.
+        const blockers = gate.blockers.map(b => b.key);
 
         totalPending += agg.amount;
         items.push({
@@ -232,6 +223,24 @@ const release = async (req, res) => {
 
   const isdk = getIntegrationSdk();
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+
+  // XOLOLO task #27 — DEFENSA SERVER-SIDE del gate:
+  // La UI (/ops/payout-queue) muestra canReceivePayout por seller y
+  // normalmente Ops NO verá el botón Release si el gate no está
+  // satisfecho. Pero si un operador invoca directo el endpoint — por
+  // bug de UI, script, retry mal hecho o permisos encabalgados — el
+  // server NO debe ejecutar el transfer. Falla cerrado.
+  const uResp = await isdk.users.show({ id: sellerId });
+  const gate = computePayoutGate({ user: uResp.data.data });
+  if (!gate.canReceivePayout) {
+    return res.status(409).json({
+      error: 'gate_not_satisfied',
+      sellerId,
+      stripeConnected: gate.stripeConnected,
+      legalDocsComplete: gate.legalDocsComplete,
+      blockers: gate.blockers.map(b => b.key),
+    });
+  }
 
   // Resolvemos el stripeAccountId del seller UNA vez (todas sus tx van
   // al mismo destino). Si no lo tiene, igual marcamos released=true
@@ -332,6 +341,22 @@ const retry = async (req, res) => {
 
   const isdk = getIntegrationSdk();
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+
+  // XOLOLO task #27: misma defensa que en `release`. Retry reintenta
+  // un transfer previamente fallido — si el gate se rompió entre
+  // medias (ej. seller canceló stripe, OPS rechazó un doc), NO
+  // podemos ejecutar el transfer aunque el release ya hubiera pasado.
+  const uResp = await isdk.users.show({ id: sellerId });
+  const gate = computePayoutGate({ user: uResp.data.data });
+  if (!gate.canReceivePayout) {
+    return res.status(409).json({
+      error: 'gate_not_satisfied',
+      sellerId,
+      stripeConnected: gate.stripeConnected,
+      legalDocsComplete: gate.legalDocsComplete,
+      blockers: gate.blockers.map(b => b.key),
+    });
+  }
 
   const sellerStripeAccountId = await getSellerStripeAccountId(isdk, sellerId);
 

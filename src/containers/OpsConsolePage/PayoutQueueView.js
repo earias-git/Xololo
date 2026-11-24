@@ -93,6 +93,20 @@ const PayoutQueueView = ({ onBack }) => {
     });
     setReleasingId(null);
     if (!ok) {
+      // XOLOLO task #27: el server valida el gate server-side antes del
+      // transfer. Si devuelve 409 gate_not_satisfied, mostramos qué falta.
+      if (data?.error === 'gate_not_satisfied') {
+        const faltantes = [];
+        if (!data.stripeConnected) faltantes.push('Stripe Connect');
+        if (!data.legalDocsComplete) faltantes.push('docs legales aprobados');
+        alert(
+          `No se puede liberar: ${
+            item.sellerName || item.sellerEmail
+          } no pasa el gate.\n\nFalta: ${faltantes.join(' + ') || 'requisitos'}.\n\nRefresca la cola.`
+        );
+        load();
+        return;
+      }
       alert(`Error al liberar: ${data?.error || 'desconocido'}`);
       return;
     }
@@ -129,6 +143,18 @@ const PayoutQueueView = ({ onBack }) => {
     });
     setReleasingId(null);
     if (!ok) {
+      if (data?.error === 'gate_not_satisfied') {
+        const faltantes = [];
+        if (!data.stripeConnected) faltantes.push('Stripe Connect');
+        if (!data.legalDocsComplete) faltantes.push('docs legales aprobados');
+        alert(
+          `No se puede reintentar: el gate del seller ya no está satisfecho.\n\nFalta: ${
+            faltantes.join(' + ') || 'requisitos'
+          }.\n\nRefresca la cola.`
+        );
+        load();
+        return;
+      }
       alert(`Error al reintentar: ${data?.error || 'desconocido'}`);
       return;
     }

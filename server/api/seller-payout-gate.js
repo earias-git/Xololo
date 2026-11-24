@@ -12,19 +12,17 @@
 //       routeName: string,                  // destino del CTA
 //     }>,
 //     stripeConnected: boolean,
-//     legalDocsComplete: boolean,
-//     // Hoy no contamos ventas pendientes (requiere query a tx del seller).
-//     // Fase 2: integrar con /api/seller-pending-sales para pintar el
-//     // monto reservado en escrow.
+//     legalDocsComplete: boolean,           // ALL docs con status='approved'
 //   }
 //   401 → { error: 'unauthorized' }
 //
-// Reglas:
-//   - stripeConnected: user.attributes.stripeConnected === true
-//     (igual criterio que useOnboardingStatus/payouts).
-//   - legalDocsComplete: todos los slots requeridos (según personType y
-//     sellerMode) tienen un doc subido (status cualquiera por ahora —
-//     fase 2: exigir status='approved').
+// Reglas (server/api-util/payoutGate.js — fuente única de verdad):
+//   - stripeConnected: user.attributes.stripeConnected === true.
+//   - legalDocsComplete: todos los slots requeridos (filtrados por
+//     personType + sellerMode) tienen status='approved'.
+//     Fase 1 aceptaba "cualquier status subido" → fase 2 exige
+//     explícitamente aprobado (task #27 cierre). Rechazados y
+//     pending ya NO cuentan.
 //
 // Rationale: casual publica sin stripe ni docs (fricción mínima), pero
 // antes de que el dinero salga de Xololo hacia su cuenta debe cerrar
@@ -33,14 +31,7 @@
 
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
-const { slotsForPersonType } = require('../api-util/legalDocSlots');
-
-const isLegalDocsComplete = (personType, docs, sellerMode) => {
-  if (!personType) return false;
-  const requiredSlots = slotsForPersonType(personType, sellerMode);
-  if (!requiredSlots.length) return false;
-  return requiredSlots.every(slot => !!docs?.[slot.key]);
-};
+const { computePayoutGate } = require('../api-util/payoutGate');
 
 const getStatus = async (req, res) => {
   let sellerId;
@@ -60,37 +51,8 @@ const getStatus = async (req, res) => {
 
   try {
     const resp = await isdk.users.show({ id: sellerId });
-    const profile = resp.data.data.attributes?.profile || {};
-    const legalDocs = profile.metadata?.xololoLegalDocs || {};
-    const sellerMode = profile.publicData?.sellerMode || 'store';
-    const legalDocsComplete = isLegalDocsComplete(
-      legalDocs.personType || null,
-      legalDocs.docs || {},
-      sellerMode
-    );
-
-    const blockers = [];
-    if (!stripeConnected) {
-      blockers.push({
-        key: 'stripe',
-        label: 'Conecta tu cuenta de banco para recibir tu dinero',
-        routeName: 'StripePayoutPage',
-      });
-    }
-    if (!legalDocsComplete) {
-      blockers.push({
-        key: 'legalDocs',
-        label: 'Sube tu identificación oficial y comprobante de domicilio',
-        routeName: 'LegalDocsPage',
-      });
-    }
-
-    return res.json({
-      canReceivePayout: blockers.length === 0,
-      blockers,
-      stripeConnected,
-      legalDocsComplete,
-    });
+    const gate = computePayoutGate({ user: resp.data.data, stripeConnected });
+    return res.json(gate);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[seller-payout-gate] get error:', e?.message);

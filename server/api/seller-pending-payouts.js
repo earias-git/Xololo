@@ -26,7 +26,7 @@
 
 const { getSdk } = require('../api-util/sdk');
 const { getIntegrationSdk } = require('../api-util/integrationSdk');
-const { slotsForPersonType } = require('../api-util/legalDocSlots');
+const { computePayoutGate } = require('../api-util/payoutGate');
 
 // Estados y transiciones que consideramos "venta cerrada y dinero
 // retenido". Mantenemos conservador: sólo lo que el buyer confirmó o
@@ -81,12 +81,9 @@ const fetchSellerCompletedSales = async (isdk, sellerId) => {
   return all;
 };
 
-const isLegalDocsComplete = (personType, docs, sellerMode) => {
-  if (!personType) return false;
-  const required = slotsForPersonType(personType, sellerMode);
-  if (!required.length) return false;
-  return required.every(slot => !!docs?.[slot.key]);
-};
+// XOLOLO 2026-11-23 task #27: la lógica de gate vive ahora en
+// `../api-util/payoutGate.js`. Esta función se removió para evitar
+// drift (antes exigía "subido", ahora exige "aprobado"). Ver computePayoutGate.
 
 const getStatus = async (req, res) => {
   let sellerId;
@@ -104,18 +101,11 @@ const getStatus = async (req, res) => {
   if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
 
   try {
-    // Perfil completo para calcular canReceivePayout (misma lógica que
-    // seller-payout-gate — podríamos extraer a util compartido en Fase 3).
+    // Shared payout-gate — misma fuente de verdad que seller-payout-gate
+    // y admin-payout-queue. task #27: exige docs APROBADOS (no sólo subidos).
     const uShow = await isdk.users.show({ id: sellerId });
-    const profile = uShow.data.data.attributes?.profile || {};
-    const legalDocs = profile.metadata?.xololoLegalDocs || {};
-    const sellerMode = profile.publicData?.sellerMode || 'store';
-    const legalDocsComplete = isLegalDocsComplete(
-      legalDocs.personType || null,
-      legalDocs.docs || {},
-      sellerMode
-    );
-    const canReceivePayout = stripeConnected && legalDocsComplete;
+    const gate = computePayoutGate({ user: uShow.data.data, stripeConnected });
+    const canReceivePayout = gate.canReceivePayout;
 
     const txs = await fetchSellerCompletedSales(isdk, sellerId);
     const pending = txs.filter(isPendingPayout);
