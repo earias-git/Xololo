@@ -762,6 +762,7 @@ const ManageStoreForm = props => {
             bannerUrl={values?.bannerUrl}
             slug={values?.slug}
             storeName={values?.slug}
+            storefrontTheme={values?.storefrontTheme}
           />
         </div>
         </div>

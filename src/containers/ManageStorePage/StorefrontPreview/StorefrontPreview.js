@@ -1,24 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
+
+import { themeToCssVars, buildGoogleFontsHref } from '../../../util/xololoStorefrontThemes';
 
 import css from './StorefrontPreview.module.css';
 
-// XOLOLO Web Studio PR 1 — preview en vivo del storefront dentro de
-// ManageStorePage. Mini-réplica del SellerBrandFrame + listing cards
-// que se actualiza al vuelo con los valores del form Final.
+// XOLOLO Web Studio PR 1 → PR 4 — preview en vivo del storefront.
 //
-// Scope PR 1 (ver [[web-studio-staging-lock]]):
-//   - Sólo visualización de lo que el seller YA edita (colores, logo,
-//     banner, nombre). Sin staging — PR 2 agrega modelo draft/live.
-//   - Sin iframe ni server changes — todo client-side con React.
-//   - Toggle mobile (375px) / desktop (1024px) para que el seller vea
-//     cómo luce su tienda en ambos lados.
+// PR 1: visualización de colores + logo + banner desde el form.
+// PR 4: también lee `storefrontTheme`. El tema controla:
+//   - Fuentes (Google Fonts cargadas al vuelo cuando cambia el tema)
+//   - Variante de hero: gradient / solid / minimal / editorial
+//   - Radio de cards
+// Cuando el seller no ha elegido tema cae a DEFAULT_TOKENS (sans serif,
+// hero gradient, radio 6px) — compatible 1:1 con el preview del PR 1.
 //
-// Props vienen de los values del Final Form (ManageStoreForm) a través
-// de FormSpy. Nada se persiste; al mover el color el preview re-renderea.
+// Google Fonts loading: inyectamos un <link rel="stylesheet"> en el
+// <head> y lo swappeamos cuando cambia el tema. Es un side effect
+// controlado — si el seller está offline o el CDN está caído, el
+// browser cae al fallback de la CSS var (system-ui / sans-serif).
 
-// 3 cards de ejemplo — no tocamos listings reales en PR 1 (ese es PR 4).
-// Las fotos son gradients suaves consistentes con el look de Xololo.
 const SAMPLE_LISTINGS = [
   {
     id: 'sample-1',
@@ -49,6 +50,28 @@ const initials = str =>
     .slice(0, 2)
     .toUpperCase() || 'TU';
 
+// Inyecta (o actualiza) el <link> que carga las fuentes del tema.
+// Reutilizamos UN SOLO <link> con id fijo para no acumular N tags al
+// cambiar de tema iterativamente.
+const FONT_LINK_ID = 'xololo-storefront-preview-fonts';
+const useThemeFontLink = themeId => {
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const href = buildGoogleFontsHref(themeId);
+    let link = document.getElementById(FONT_LINK_ID);
+    if (!link) {
+      link = document.createElement('link');
+      link.id = FONT_LINK_ID;
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+    if (link.href !== href) link.href = href;
+    // No limpiamos al unmount — el seller puede volver y queremos
+    // que la fuente siga cacheada. El link es inocuo si no se usa.
+    return undefined;
+  }, [themeId]);
+};
+
 const StorefrontPreview = props => {
   const {
     brandPrimaryColor,
@@ -57,19 +80,24 @@ const StorefrontPreview = props => {
     bannerUrl,
     slug,
     storeName,
+    storefrontTheme,
     className,
   } = props;
   const [viewport, setViewport] = useState('desktop');
+
+  useThemeFontLink(storefrontTheme);
 
   const primary = brandPrimaryColor || '#1f8f52';
   const secondary = brandSecondaryColor || '#6bcb8c';
   const displayName = storeName || slug || 'Tu tienda';
 
-  // CSS vars inyectadas al frame — mismo patrón que SellerBrandFrame
-  // para mantener paridad visual con el storefront real.
+  const { cssVars, heroVariant } = themeToCssVars(storefrontTheme);
+
+  // CSS vars del tema + colores del branding (viejos --preview-primary).
   const frameStyle = {
     '--preview-primary': primary,
     '--preview-secondary': secondary,
+    ...cssVars,
   };
 
   return (
@@ -106,9 +134,9 @@ const StorefrontPreview = props => {
           [css.frameMobile]: viewport === 'mobile',
           [css.frameDesktop]: viewport === 'desktop',
         })}
+        data-hero={heroVariant}
         style={frameStyle}
       >
-        {/* Header del storefront — paridad con SellerBrandFrame */}
         <div className={css.storefrontHeader}>
           {logoUrl ? (
             <img src={logoUrl} alt="" className={css.storefrontLogo} />
@@ -121,7 +149,9 @@ const StorefrontPreview = props => {
           <span className={css.storefrontCart} aria-hidden="true">🛒</span>
         </div>
 
-        {/* Hero banner: imagen si hay, si no un hero de color con el nombre */}
+        {/* PR 4: el hero renderiza según heroVariant.
+            - Si hay bannerUrl, siempre gana la imagen (independiente del tema).
+            - Si no, el CSS pinta 4 variantes vía [data-hero="..."]. */}
         {bannerUrl ? (
           <div className={css.storefrontBanner}>
             <img src={bannerUrl} alt="" />
@@ -133,7 +163,6 @@ const StorefrontPreview = props => {
           </div>
         )}
 
-        {/* Grid de listing cards de ejemplo */}
         <div className={css.storefrontBody}>
           <div className={css.sectionLabel}>Productos</div>
           <ul className={css.cardGrid}>

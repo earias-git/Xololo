@@ -75,7 +75,8 @@
 }
 
 /* Frame = el "viewport" simulado donde vive el mini storefront.
-   Mobile fija 320px, desktop se expande al ancho disponible. */
+   Mobile fija 320px, desktop se expande al ancho disponible.
+   PR 4: font-family del body viene del tema vía --xf-body-font. */
 .frame {
   margin: 0 auto;
   background: #ffffff;
@@ -86,6 +87,7 @@
   grid-template-rows: auto auto 1fr auto;
   transition: max-width 240ms ease, width 240ms ease;
   box-shadow: 0 6px 18px rgba(15, 26, 46, 0.08);
+  font-family: var(--xf-body-font, system-ui, sans-serif);
 }
 
 .frameMobile {
@@ -139,6 +141,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: var(--xf-heading-font, system-ui, sans-serif);
 }
 
 .storefrontCart {
@@ -161,13 +164,47 @@
   display: block;
 }
 
+/* XOLOLO Web Studio PR 4: 4 variantes de hero controladas por
+   [data-hero] en el frame. Cada una refleja el espíritu del tema:
+   - gradient: default, para Bold (energía)
+   - solid: fondo primary sólido, texto lateral, para Clásico
+   - minimal: fondo blanco con regla primary sutil, texto oscuro
+   - editorial: split primary / secondary, texto tipo revista */
 .storefrontHero {
-  background: linear-gradient(135deg, var(--preview-primary, #1f8f52), var(--preview-secondary, #6bcb8c));
-  color: #ffffff;
   padding: 20px 16px;
-  text-align: center;
   display: grid;
   gap: 4px;
+  background: linear-gradient(135deg, var(--preview-primary, #1f8f52), var(--preview-secondary, #6bcb8c));
+  color: #ffffff;
+  text-align: center;
+}
+
+.frame[data-hero="solid"] .storefrontHero {
+  background: var(--preview-primary, #1f8f52);
+  color: #ffffff;
+  text-align: left;
+  padding: 24px 20px;
+}
+
+.frame[data-hero="minimal"] .storefrontHero {
+  background: #ffffff;
+  color: #0f1a2e;
+  border-top: 3px solid var(--preview-primary, #1f8f52);
+  text-align: left;
+  padding: 24px 20px 20px;
+}
+
+.frame[data-hero="editorial"] .storefrontHero {
+  background: linear-gradient(
+    to right,
+    var(--preview-primary, #1f8f52) 0%,
+    var(--preview-primary, #1f8f52) 56%,
+    var(--preview-secondary, #6bcb8c) 56%,
+    var(--preview-secondary, #6bcb8c) 100%
+  );
+  color: #ffffff;
+  text-align: left;
+  padding: 24px 20px;
 }
 
 .heroTitle {
@@ -176,12 +213,25 @@
   font-weight: 800;
   letter-spacing: -0.01em;
   text-wrap: balance;
+  font-family: var(--xf-heading-font, system-ui, sans-serif);
+  line-height: 1.15;
+}
+
+.frame[data-hero="minimal"] .heroTitle,
+.frame[data-hero="solid"] .heroTitle,
+.frame[data-hero="editorial"] .heroTitle {
+  font-size: 18px;
 }
 
 .heroSub {
   margin: 0;
   font-size: 11px;
   opacity: 0.9;
+}
+
+.frame[data-hero="minimal"] .heroSub {
+  color: #4a5169;
+  opacity: 1;
 }
 
 .storefrontBody {
@@ -210,7 +260,8 @@
 
 .card {
   background: #f7f4ee;
-  border-radius: 6px;
+  /* PR 4: radio controlado por el tema vía --xf-card-radius. */
+  border-radius: var(--xf-card-radius, 6px);
   overflow: hidden;
   display: grid;
   grid-template-rows: auto 1fr;
@@ -236,6 +287,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  font-family: var(--xf-heading-font, system-ui, sans-serif);
 }
 
 .cardPrice {
