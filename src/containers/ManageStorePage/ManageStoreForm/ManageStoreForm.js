@@ -7,6 +7,7 @@ import * as validators from '../../../util/validators';
 import { Form, PrimaryButton, FieldTextInput, FieldSelect } from '../../../components';
 
 import ImageUploadField from './ImageUploadField';
+import StorefrontPreview from '../StorefrontPreview/StorefrontPreview';
 import css from './ManageStoreForm.module.css';
 
 // XOLOLO: form controls to edit the seller's storefront branding.
@@ -379,7 +380,8 @@ const ManageStoreForm = props => (
       const submitDisabled = invalid || pristine || submitInProgress;
 
       return (
-        <Form className={classNames(className, css.form)} onSubmit={handleSubmit}>
+        <div className={classNames(className, css.layout)}>
+        <Form className={css.form} onSubmit={handleSubmit}>
           <fieldset className={css.section}>
             <legend className={css.sectionTitle}>
               <span aria-hidden="true" className={css.sectionIcon}>
@@ -666,6 +668,20 @@ const ManageStoreForm = props => (
             Guardar cambios
           </PrimaryButton>
         </Form>
+        {/* XOLOLO Web Studio PR 1: preview en vivo a la derecha, sticky
+            en desktop, stacked arriba en mobile. Lee values del Final
+            Form para re-renderear al vuelo. */}
+        <div className={css.previewColumn}>
+          <StorefrontPreview
+            brandPrimaryColor={values?.brandPrimaryColor}
+            brandSecondaryColor={values?.brandSecondaryColor}
+            logoUrl={values?.logoUrl}
+            bannerUrl={values?.bannerUrl}
+            slug={values?.slug}
+            storeName={values?.slug}
+          />
+        </div>
+        </div>
       );
     }}
   />

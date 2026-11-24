@@ -1,0 +1,266 @@
+@import '../../../styles/customMediaQueries.css';
+
+/* XOLOLO Web Studio PR 1 — estilos del preview inline en ManageStore.
+   Color del seller inyectado como --preview-primary / --preview-secondary;
+   mismo mecanismo que SellerBrandFrame aplica en runtime al storefront real. */
+
+.root {
+  background: var(--colorWhite, #ffffff);
+  border: 1px solid #e3ddce;
+  border-radius: 14px;
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+
+  @media (--viewportMedium) {
+    padding: 20px;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.headCopy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #1f8f52;
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f1a2e;
+  letter-spacing: -0.005em;
+}
+
+.viewportToggle {
+  display: inline-flex;
+  background: #f1ece0;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.vpBtn {
+  background: transparent;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #4a5169;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+
+.vpBtnActive {
+  background: #ffffff;
+  color: #0f1a2e;
+  box-shadow: 0 1px 3px rgba(15, 26, 46, 0.1);
+}
+
+/* Frame = el "viewport" simulado donde vive el mini storefront.
+   Mobile fija 320px, desktop se expande al ancho disponible. */
+.frame {
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #e3ddce;
+  border-radius: 10px;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  transition: max-width 240ms ease, width 240ms ease;
+  box-shadow: 0 6px 18px rgba(15, 26, 46, 0.08);
+}
+
+.frameMobile {
+  width: 100%;
+  max-width: 320px;
+  font-size: 12px;
+}
+
+.frameDesktop {
+  width: 100%;
+  max-width: 100%;
+  font-size: 13px;
+}
+
+/* --- Storefront mock interior: paridad visual con SellerBrandFrame --- */
+
+.storefrontHeader {
+  background: var(--preview-primary, #1f8f52);
+  color: #ffffff;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.storefrontLogo {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.storefrontLogoFallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  display: inline-grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 12px;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.storefrontName {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: -0.005em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.storefrontCart {
+  margin-left: auto;
+  font-size: 15px;
+  opacity: 0.85;
+}
+
+.storefrontBanner {
+  width: 100%;
+  aspect-ratio: 4 / 1;
+  overflow: hidden;
+  background: #f7f4ee;
+}
+
+.storefrontBanner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.storefrontHero {
+  background: linear-gradient(135deg, var(--preview-primary, #1f8f52), var(--preview-secondary, #6bcb8c));
+  color: #ffffff;
+  padding: 20px 16px;
+  text-align: center;
+  display: grid;
+  gap: 4px;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.heroSub {
+  margin: 0;
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.storefrontBody {
+  padding: 12px 14px 14px;
+  display: grid;
+  gap: 8px;
+  background: #ffffff;
+}
+
+.sectionLabel {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--preview-primary, #1f8f52);
+}
+
+.cardGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.card {
+  background: #f7f4ee;
+  border-radius: 6px;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.cardPhoto {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.cardBody {
+  padding: 5px 7px 7px;
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #0f1a2e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.cardPrice {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--preview-primary, #1f8f52);
+}
+
+.storefrontFoot {
+  background: #f1ece0;
+  color: #4a5169;
+  text-align: center;
+  padding: 7px 10px;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+
+.footNote {
+  margin: 0;
+  font-size: 11.5px;
+  color: #6b7489;
+  line-height: 1.4;
+}
+
+.footNote strong {
+  color: #0f1a2e;
+  font-weight: 700;
+}

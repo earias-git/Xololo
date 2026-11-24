@@ -1,8 +1,39 @@
+/* XOLOLO Web Studio PR 1: layout de 2 columnas (form + preview sticky).
+   En desktop grande: form | preview sticky lado a lado.
+   En desktop chico y mobile: preview sobre form, no sticky. */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (min-width: 1200px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 32px;
+  }
+}
+
+.previewColumn {
+  order: -1; /* mobile: preview arriba del form para feedback inmediato */
+  min-width: 0;
+}
+
+@media (min-width: 1200px) {
+  .previewColumn {
+    order: 0;
+    position: sticky;
+    top: 24px;
+  }
+}
+
 .form {
   display: flex;
   flex-direction: column;
   gap: 32px;
   max-width: 720px;
+  min-width: 0;
 }
 
 .section {
