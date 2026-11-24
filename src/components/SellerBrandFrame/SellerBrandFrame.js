@@ -1,10 +1,17 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
+import { Helmet } from 'react-helmet-async';
 import classNames from 'classnames';
 
 import { selectCartItemCount } from '../../ducks/cart.duck';
 
 import VerifiedBadge from '../VerifiedBadge/VerifiedBadge';
+
+// XOLOLO Web Studio PR 5b: tokens del tema aplicados también al wrapper
+// transaccional (checkout, transaction, order). Mismo opt-in estricto
+// que StorefrontPage: sellers sin storefrontTheme renderean 1:1 como
+// antes (cero regresión).
+import { themeToCssVars, buildGoogleFontsHref } from '../../util/xololoStorefrontThemes';
 
 import css from './SellerBrandFrame.module.css';
 
@@ -37,12 +44,18 @@ const buildSellerStyle = seller => {
   const primary = pd.brandPrimaryColor;
   const secondary = pd.brandSecondaryColor;
   if (!primary) return null;
+  // XOLOLO Web Studio PR 5b: si el seller eligió un tema, inyectamos
+  // también las CSS vars tipográficas (--xf-heading-font/--xf-body-font).
+  // Sin tema → solo colores legacy, cero cambios.
+  const themeId = pd.storefrontTheme || null;
+  const themeCssVars = themeId ? themeToCssVars(themeId).cssVars : {};
   return {
     '--xololo-brand-primary': primary,
     '--xololo-brand-secondary': secondary || primary,
     '--marketplaceColor': primary,
     '--marketplaceColorLight': secondary || primary,
     '--marketplaceColorDark': primary,
+    ...themeCssVars,
   };
 };
 
@@ -77,8 +90,25 @@ const SellerBrandFrame = ({ seller, children, className, showFooter = true }) =>
 
   const cartHref = sellerId ? `/cart/${sellerId}` : '/cart';
 
+  // XOLOLO Web Studio PR 5b: Google Fonts link vía Helmet (SSR-safe).
+  // Solo si el seller eligió tema — evita cargar CSS externo para
+  // sellers sin tema.
+  const storefrontTheme = pd.storefrontTheme || null;
+  const fontsHref = storefrontTheme ? buildGoogleFontsHref(storefrontTheme) : null;
+
   return (
-    <div className={classNames(css.root, className)} style={style || undefined}>
+    <div
+      className={classNames(css.root, className)}
+      style={style || undefined}
+      data-themed={storefrontTheme ? 'true' : undefined}
+    >
+      {fontsHref ? (
+        <Helmet>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link rel="stylesheet" href={fontsHref} />
+        </Helmet>
+      ) : null}
       <header className={css.header}>
         <a href={href} className={css.brand}>
           {logo ? (

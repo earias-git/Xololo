@@ -7,6 +7,20 @@
   flex-direction: column;
 }
 
+/* XOLOLO Web Studio PR 5b: tipografía del tema. Opt-in estricto —
+   solo aplica cuando el wrapper tiene data-themed="true". Scope
+   acotado al brand (fallback del nombre de tienda) y al "Powered by"
+   del footer; NO tocamos el contenido transaccional para no arriesgar
+   que una fuente pesada afecte el perf del checkout. */
+.root[data-themed='true'] .brandFallback,
+.root[data-themed='true'] .poweredByBrand {
+  font-family: var(--xf-heading-font, inherit);
+}
+
+.root[data-themed='true'] .poweredByLabel {
+  font-family: var(--xf-body-font, inherit);
+}
+
 /* ---------- Header con logo del seller ---------- */
 .header {
   background-color: #ffffff;
