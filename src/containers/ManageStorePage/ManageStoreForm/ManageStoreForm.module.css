@@ -1,6 +1,15 @@
 /* XOLOLO Web Studio PR 1: layout de 2 columnas (form + preview sticky).
-   En desktop grande: form | preview sticky lado a lado.
-   En desktop chico y mobile: preview sobre form, no sticky. */
+   PR 2 follow-up (fix layout): subido el breakpoint a 1440px y reducido
+   el ancho del preview para que los fieldsets internos del form (ciudad/
+   estado, checkboxes largos, bloques de dirección) no colapsen a
+   columnas tan estrechas que el texto haga wrap vertical.
+
+   Decisión: por debajo de 1440px el preview va ARRIBA del form (stacked,
+   no sticky). Da feedback inmediato antes de scrollear al form y
+   preserva el ancho natural de todos los fieldsets.
+   Por encima de 1440px, el preview va al lado sticky con 320px — el
+   form conserva ~720px de ancho útil, suficiente para los grids 2-col
+   internos. */
 .layout {
   display: grid;
   grid-template-columns: 1fr;
@@ -8,19 +17,19 @@
   align-items: start;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1440px) {
   .layout {
-    grid-template-columns: minmax(0, 1fr) 380px;
-    gap: 32px;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 28px;
   }
 }
 
 .previewColumn {
-  order: -1; /* mobile: preview arriba del form para feedback inmediato */
+  order: -1; /* debajo de 1440: preview arriba del form */
   min-width: 0;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1440px) {
   .previewColumn {
     order: 0;
     position: sticky;

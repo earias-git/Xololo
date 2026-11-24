@@ -9,9 +9,10 @@
   margin: 0 auto;
 }
 
-/* XOLOLO Web Studio PR 1: en desktop grande ampliamos el ancho para
-   caber el preview lateral (ver .layout en ManageStoreForm.module.css). */
-@media (min-width: 1200px) {
+/* XOLOLO Web Studio PR 1 (fix): ampliamos .content solo cuando el
+   layout de 2 columnas se activa (1440px). Debajo, preview va stacked
+   arriba del form y el ancho default (780px) preserva la lectura. */
+@media (min-width: 1440px) {
   .content {
     max-width: 1200px;
   }
