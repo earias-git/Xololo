@@ -1,74 +1,66 @@
 @import '../../styles/customMediaQueries.css';
 
-/* Pill verde con checkmark blanco. Diseño simple, alto contraste,
-   legible en dark backgrounds (storefront con branding). */
+/* XOLOLO 2026-11-23: pastilla blanca con borde navy + X oficial a la
+   izquierda + "Verified" a la derecha. La pastilla vive en superficies
+   claras; el PNG de la X tiene fondo transparente, así que el blanco
+   del badge es el blanco visible, no un recorte del asset. */
 .root {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   border-radius: 999px;
-  background-color: #10b981; /* verde marca de confianza */
-  color: var(--colorWhite);
-  padding: 3px 10px 3px 6px;
+  background-color: #ffffff;
+  color: #34425f; /* navy de la marca — para "Verified" */
+  border: 1.4px solid #34425f;
+  padding: 2px 10px 2px 4px;
   font-weight: var(--fontWeightSemiBold);
   line-height: 1;
   white-space: nowrap;
-  cursor: help; /* indica que hay tooltip (`title`) */
+  cursor: help; /* indica tooltip (`title`) */
 }
 
-.check {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background-color: var(--colorWhite);
-  color: #10b981;
-}
-
-.checkIcon {
+/* La X oficial — se usa tal cual, sin filtros ni recoloreos.
+   object-fit: contain para preservar proporciones si el height
+   del contenedor cambia. */
+.mark {
   display: block;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .label {
   letter-spacing: 0.2px;
 }
 
-/* Sizes */
+/* Sizes — ajustan padding, font-size y alto de la X.
+   Mantienen el ratio original 120x96 del asset (1.25). */
+
 .sizeSm {
-  padding: 2px 8px 2px 4px;
+  padding: 2px 9px 2px 3px;
   font-size: 10px;
+  border-width: 1.2px;
+  gap: 4px;
 }
-.sizeSm .check {
-  width: 14px;
+.sizeSm .mark {
   height: 14px;
-}
-.sizeSm .checkIcon {
-  width: 10px;
-  height: 10px;
 }
 
 .sizeMd {
-  padding: 3px 10px 3px 6px;
+  padding: 3px 11px 3px 5px;
   font-size: 12px;
+  gap: 6px;
 }
-.sizeMd .check {
-  width: 18px;
+.sizeMd .mark {
   height: 18px;
-}
-.sizeMd .checkIcon {
-  width: 12px;
-  height: 12px;
 }
 
 .sizeLg {
-  padding: 4px 14px 4px 8px;
+  padding: 4px 14px 4px 7px;
   font-size: 14px;
+  border-width: 1.6px;
+  gap: 7px;
 }
-.sizeLg .check {
-  width: 22px;
+.sizeLg .mark {
   height: 22px;
-}
-.sizeLg .checkIcon {
-  width: 14px;
-  height: 14px;
 }

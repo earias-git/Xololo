@@ -89,6 +89,7 @@ import * as Tabs from './components/Tabs/Tabs.example';
 import * as TimeRange from './components/TimeRange/TimeRange.example';
 import * as UserDisplayName from './components/UserDisplayName/UserDisplayName.example';
 import * as LayoutComposer from './components/LayoutComposer/LayoutComposer.example';
+import * as VerifiedBadge from './components/VerifiedBadge/VerifiedBadge.example';
 
 // components under containers
 import * as SignupForm from './containers/AuthenticationPage/SignupForm/SignupForm.example';
