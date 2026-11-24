@@ -38,6 +38,12 @@
 .dropzoneBanner {
   aspect-ratio: 4 / 1;
   padding: 0;
+  /* XOLOLO fix: .dropzone base tiene min-height: 140px. Con aspect-ratio
+     4/1, si el viewport es angosto (mobile ~360px), el browser interpreta
+     min-height como height y deriva width = 140 * 4 = 560px → overflow
+     horizontal. Forzar min-height: 0 deja que width mande y height se
+     calcule desde ahí. */
+  min-height: 0;
 }
 
 .dropzoneEmpty {

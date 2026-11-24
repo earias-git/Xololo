@@ -9,12 +9,19 @@
   margin: 0 auto;
 }
 
-/* XOLOLO Web Studio PR 1 (fix): ampliamos .content solo cuando el
-   layout de 2 columnas se activa (1440px). Debajo, preview va stacked
-   arriba del form y el ancho default (780px) preserva la lectura. */
-@media (min-width: 1440px) {
+/* XOLOLO Web Studio — escalado progresivo del content width.
+   780 (default mobile/tablet) → 1200 cuando el 2-col activa (1280).
+   Antes esperaba a 1440 y en laptops normales el form quedaba apretado
+   en el centro con mucho vacío lateral. */
+@media (min-width: 1280px) {
   .content {
     max-width: 1200px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .content {
+    max-width: 1320px;
   }
 }
 
