@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { Helmet } from 'react-helmet-async';
 
 import { isScrollingDisabled } from '../../ducks/ui.duck';
-import { Page, LayoutSingleColumn, NamedLink } from '../../components';
+import { Page, LayoutSingleColumn, NamedLink, VerifiedBadge } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
@@ -94,6 +94,9 @@ const VerifiedPage = () => {
         <section className={css.hero}>
           <div className={css.heroInner}>
             <span className={css.eyebrow}>Xololo Verified™</span>
+            <div className={css.heroBadgeRow}>
+              <VerifiedBadge verified={true} size="lg" />
+            </div>
             <h1 className={css.title}>
               Compra y vende con quien ya pasó el filtro de confianza.
             </h1>

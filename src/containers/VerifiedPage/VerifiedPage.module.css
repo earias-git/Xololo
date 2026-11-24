@@ -35,6 +35,14 @@
   margin-bottom: 18px;
 }
 
+/* XOLOLO PR 2 (Verified): el sello se muestra arriba del título para
+   que el visitante asocie de inmediato la palabra "Verified" con la
+   pastilla que verá en los storefronts. Pastilla blanca sobre el navy
+   del hero — contraste alto. */
+.heroBadgeRow {
+  margin: 0 0 18px;
+}
+
 .title {
   font-size: 32px;
   line-height: 1.15;

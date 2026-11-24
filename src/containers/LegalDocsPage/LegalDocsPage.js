@@ -7,12 +7,16 @@ import { showCreateListingLinkForUser, showPaymentDetailsForUser } from '../../u
 import { useConfiguration } from '../../context/configurationContext';
 import { useIntl } from '../../util/reactIntl';
 
-import { H3, IconSpinner, LayoutSideNavigation, Page, UserNav } from '../../components';
+import { H3, IconSpinner, LayoutSideNavigation, Page, UserNav, VerifiedBadge } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
 import { LEGAL_DOC_SLOTS, slotsForPersonType, STATUS_LABELS } from '../../config/legalDocSlots';
 import { getSellerMode } from '../../util/xololoSellerMode';
+import {
+  getVerificationProgress,
+  verificationStatusLabel,
+} from '../../util/xololoVerificationProgress';
 
 import css from './LegalDocsPage.module.css';
 
@@ -35,6 +39,52 @@ const fetchJson = async (url, opts) => {
     throw err;
   }
   return data;
+};
+
+// XOLOLO PR 2 (Verified): hero que conecta la subida de documentos con
+// el sello. Si todo está aprobado mostramos el sello vivo (misma pastilla
+// que aparecerá en el storefront). Si no, un placeholder inerte con el
+// mismo layout — el seller "ve" a dónde va el flujo.
+const VerificationHero = ({ progress }) => {
+  const statusLabel = verificationStatusLabel(progress);
+  const totalLabel =
+    progress.total > 0
+      ? `${progress.approved} de ${progress.total} documentos aprobados`
+      : null;
+
+  return (
+    <section className={css.verifiedHero} aria-label="Progreso de verificación">
+      <div className={css.verifiedHeroBadge}>
+        {progress.allApproved ? (
+          <VerifiedBadge verified={true} size="lg" />
+        ) : (
+          <span className={css.verifiedBadgePlaceholder} aria-hidden="true">
+            Xololo Verified
+          </span>
+        )}
+      </div>
+      <div className={css.verifiedHeroCopy}>
+        <p className={css.verifiedHeroStatus}>{statusLabel}</p>
+        {totalLabel ? (
+          <>
+            <div
+              className={css.verifiedProgressTrack}
+              role="progressbar"
+              aria-valuenow={progress.pct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div
+                className={css.verifiedProgressFill}
+                style={{ width: `${progress.pct}%` }}
+              />
+            </div>
+            <p className={css.verifiedHeroCount}>{totalLabel}</p>
+          </>
+        ) : null}
+      </div>
+    </section>
+  );
 };
 
 const PersonTypePicker = ({ onChoose, saving }) => (
@@ -210,6 +260,7 @@ const LegalDocsPageComponent = () => {
   const personType = state.data?.personType || null;
   const requiredSlots = personType ? slotsForPersonType(personType, sellerMode) : [];
   const docs = state.data?.docs || {};
+  const progress = getVerificationProgress({ slots: requiredSlots, docs });
 
   return (
     <Page title="Documentos legales" scrollingDisabled={scrollingDisabled}>
@@ -228,6 +279,7 @@ const LegalDocsPageComponent = () => {
       >
         <div className={css.content}>
           <H3 as="h1">Documentos legales</H3>
+          {state.status === 'ok' ? <VerificationHero progress={progress} /> : null}
           <p className={css.intro}>
             {sellerMode === 'casual_reseller'
               ? 'Como vendedor casual sólo te pedimos identificación y comprobante de domicilio. Xololo los revisa manualmente — te avisamos si algo necesita corrección.'
