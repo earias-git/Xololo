@@ -36,6 +36,108 @@
   min-width: 0;
 }
 
+/* XOLOLO Web Studio PR 2: status card del modelo draft/live.
+   Tone ámbar cuando hay borrador, verde cuando todo está publicado. */
+.draftCard {
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: #f8f5ee;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: -8px;
+}
+
+.draftCard[data-tone="draft"] {
+  background: #fff7e6;
+  border-color: #f0c86a;
+}
+
+.draftCard[data-tone="published"] {
+  background: #ecf7ef;
+  border-color: #b5dec0;
+}
+
+.draftCardHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.draftPill,
+.publishedPill {
+  display: inline-block;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  line-height: 1;
+}
+
+.draftPill {
+  background: #e8a93a;
+  color: #2a1f05;
+}
+
+.publishedPill {
+  background: #1f8f52;
+  color: #ffffff;
+}
+
+.draftTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #232d40;
+}
+
+.draftBody {
+  margin: 0;
+  font-size: 13.5px;
+  color: #4a5169;
+  line-height: 1.5;
+}
+
+.draftActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.draftPublishBtn {
+  /* El publisher reusa PrimaryButton — nada que añadir salvo prevenir
+     que ocupe todo el ancho como el submit principal (abajo del form). */
+  min-width: 180px;
+  max-width: 260px;
+}
+
+.draftDiscardBtn {
+  background: transparent;
+  border: 1.4px solid #c7a85a;
+  color: #7a5a1f;
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.draftDiscardBtn:hover:not(:disabled) {
+  background: #f8edd4;
+}
+
+.draftDiscardBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .section {
   padding: 20px;
   border: 1px solid #e6e1d6;

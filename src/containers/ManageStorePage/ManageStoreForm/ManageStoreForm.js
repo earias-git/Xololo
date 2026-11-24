@@ -360,9 +360,25 @@ const AddressBlock = ({ name, title, hint, required = false }) => {
   );
 };
 
-const ManageStoreForm = props => (
+const ManageStoreForm = props => {
+  // XOLOLO Web Studio PR 2: props del modelo staging extraídas antes de
+  // pasar a FinalForm — FF sólo pasa a su render las props que conoce,
+  // así que para que estén disponibles las capturamos aquí en closure.
+  const {
+    hasDraft,
+    onPublishDraft,
+    onDiscardDraft,
+    publishDraftInProgress,
+    publishDraftError,
+    draftPublished,
+    discardDraftInProgress,
+    discardDraftError,
+    ...finalFormProps
+  } = props;
+
+  return (
   <FinalForm
-    {...props}
+    {...finalFormProps}
     render={formRenderProps => {
       const {
         className,
@@ -378,6 +394,8 @@ const ManageStoreForm = props => (
 
       const submitInProgress = submitting || inProgress;
       const submitDisabled = invalid || pristine || submitInProgress;
+      const anyActionInProgress =
+        submitInProgress || publishDraftInProgress || discardDraftInProgress;
 
       return (
         <div className={classNames(className, css.layout)}>
@@ -654,8 +672,23 @@ const ManageStoreForm = props => (
               No pudimos guardar los cambios. Intenta de nuevo o revisa que los datos sean válidos.
             </p>
           ) : null}
+          {publishDraftError ? (
+            <p className={css.error}>
+              No pudimos publicar tu diseño. Intenta de nuevo en un momento.
+            </p>
+          ) : null}
+          {discardDraftError ? (
+            <p className={css.error}>
+              No pudimos descartar el borrador. Intenta de nuevo en un momento.
+            </p>
+          ) : null}
           {ready ? (
-            <p className={css.success}>Cambios guardados. Tu tienda en línea se actualizó.</p>
+            <p className={css.success}>
+              Borrador guardado. Para que tus clientes lo vean, publica tu diseño abajo.
+            </p>
+          ) : null}
+          {draftPublished ? (
+            <p className={css.success}>Diseño publicado. Tu tienda en línea está actualizada.</p>
           ) : null}
 
           <PrimaryButton
@@ -665,8 +698,53 @@ const ManageStoreForm = props => (
             disabled={submitDisabled}
             ready={ready}
           >
-            Guardar cambios
+            Guardar borrador
           </PrimaryButton>
+
+          {/* XOLOLO Web Studio PR 2: status card del modelo staging.
+              - Si hay draft activo: card ámbar + botón Publicar + Descartar.
+              - Si no: card verde "Tu diseño está publicado". */}
+          {hasDraft ? (
+            <div className={css.draftCard} data-tone="draft">
+              <div className={css.draftCardHead}>
+                <span className={css.draftPill}>BORRADOR</span>
+                <p className={css.draftTitle}>Tus clientes aún no ven estos cambios</p>
+              </div>
+              <p className={css.draftBody}>
+                Guardaste cambios en el diseño. Siguen aquí hasta que publiques o descartes.
+              </p>
+              <div className={css.draftActions}>
+                <PrimaryButton
+                  type="button"
+                  onClick={onPublishDraft}
+                  inProgress={publishDraftInProgress}
+                  disabled={anyActionInProgress}
+                  className={css.draftPublishBtn}
+                >
+                  Publicar diseño
+                </PrimaryButton>
+                <button
+                  type="button"
+                  onClick={onDiscardDraft}
+                  disabled={anyActionInProgress}
+                  className={css.draftDiscardBtn}
+                >
+                  Descartar borrador
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={css.draftCard} data-tone="published">
+              <div className={css.draftCardHead}>
+                <span className={css.publishedPill}>PUBLICADO</span>
+                <p className={css.draftTitle}>Tu diseño está en vivo</p>
+              </div>
+              <p className={css.draftBody}>
+                Cualquier cambio que hagas se guarda como borrador primero. Nada se ve en tu
+                tienda hasta que pulses "Publicar diseño".
+              </p>
+            </div>
+          )}
         </Form>
         {/* XOLOLO Web Studio PR 1: preview en vivo a la derecha, sticky
             en desktop, stacked arriba en mobile. Lee values del Final
@@ -685,6 +763,7 @@ const ManageStoreForm = props => (
       );
     }}
   />
-);
+  );
+};
 
 export default ManageStoreForm;

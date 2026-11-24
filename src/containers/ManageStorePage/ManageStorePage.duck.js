@@ -63,10 +63,38 @@ export const saveStoreThunk = createAsyncThunk(
 
 export const saveStore = publicData => dispatch => dispatch(saveStoreThunk(publicData)).unwrap();
 
+// XOLOLO Web Studio PR 2: publicar y descartar el borrador del
+// storefront son escrituras a publicData exactamente igual que saveStore
+// — reusan el mismo payload creator (mismo path server, mismo refresh
+// de currentUser, mismo workspace routing). La única diferencia es la
+// shape del patch que construyen los helpers de util/xololoStorefrontDraft.
+export const publishStorefrontDraftThunk = createAsyncThunk(
+  'ManageStorePage/publishStorefrontDraft',
+  saveStorePayloadCreator
+);
+
+export const discardStorefrontDraftThunk = createAsyncThunk(
+  'ManageStorePage/discardStorefrontDraft',
+  saveStorePayloadCreator
+);
+
+export const publishStorefrontDraft = publicData => dispatch =>
+  dispatch(publishStorefrontDraftThunk(publicData)).unwrap();
+
+export const discardStorefrontDraft = publicData => dispatch =>
+  dispatch(discardStorefrontDraftThunk(publicData)).unwrap();
+
 const initialState = {
   saveStoreInProgress: false,
   saveStoreError: null,
   storeSaved: false,
+  // XOLOLO Web Studio PR 2: estados del borrador separados — el UI del
+  // status card los lee para mostrar "Publicando…" / "Publicado" etc.
+  publishDraftInProgress: false,
+  publishDraftError: null,
+  draftPublished: false,
+  discardDraftInProgress: false,
+  discardDraftError: null,
 };
 
 const manageStorePageSlice = createSlice({
@@ -76,6 +104,9 @@ const manageStorePageSlice = createSlice({
     saveStoreClear: state => {
       state.storeSaved = false;
       state.saveStoreError = null;
+      state.draftPublished = false;
+      state.publishDraftError = null;
+      state.discardDraftError = null;
     },
   },
   extraReducers: builder => {
@@ -92,6 +123,30 @@ const manageStorePageSlice = createSlice({
       .addCase(saveStoreThunk.rejected, (state, action) => {
         state.saveStoreInProgress = false;
         state.saveStoreError = action.payload;
+      })
+      .addCase(publishStorefrontDraftThunk.pending, state => {
+        state.publishDraftInProgress = true;
+        state.publishDraftError = null;
+        state.draftPublished = false;
+      })
+      .addCase(publishStorefrontDraftThunk.fulfilled, state => {
+        state.publishDraftInProgress = false;
+        state.draftPublished = true;
+      })
+      .addCase(publishStorefrontDraftThunk.rejected, (state, action) => {
+        state.publishDraftInProgress = false;
+        state.publishDraftError = action.payload;
+      })
+      .addCase(discardStorefrontDraftThunk.pending, state => {
+        state.discardDraftInProgress = true;
+        state.discardDraftError = null;
+      })
+      .addCase(discardStorefrontDraftThunk.fulfilled, state => {
+        state.discardDraftInProgress = false;
+      })
+      .addCase(discardStorefrontDraftThunk.rejected, (state, action) => {
+        state.discardDraftInProgress = false;
+        state.discardDraftError = action.payload;
       });
   },
 });

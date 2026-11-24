@@ -19,7 +19,20 @@ import FooterContainer from '../FooterContainer/FooterContainer';
 import ManageStoreForm from './ManageStoreForm/ManageStoreForm';
 import CommunitiesPanel from './CommunitiesPanel/CommunitiesPanel';
 
-import { saveStore, saveStoreClear } from './ManageStorePage.duck';
+import {
+  saveStore,
+  saveStoreClear,
+  publishStorefrontDraft,
+  discardStorefrontDraft,
+} from './ManageStorePage.duck';
+import {
+  BRANDING_FIELDS,
+  readEffectiveBranding,
+  hasActiveDraft,
+  buildDraftPatch,
+  buildPublishPatch,
+  buildDiscardPatch,
+} from '../../util/xololoStorefrontDraft';
 import css from './ManageStorePage.module.css';
 
 // XOLOLO: página /account/store donde el seller edita su storefront.
@@ -74,16 +87,22 @@ const cleanValues = raw => {
   // El CP de origen (para cotizar Skydropx) se hereda del pickupAddress.
   const originPostalCode = pickupAddress?.postalCode || legalAddress?.postalCode || null;
 
-  const out = {
-    slug: trim(raw.slug) || null,
-    shortDescription: trim(raw.shortDescription) || null,
-    longDescription: trim(raw.longDescription) || null,
+  // XOLOLO Web Studio PR 2: split branding (va a storefrontDraft) vs resto
+  // (va flat como siempre). cleanValues sólo normaliza y agrupa — el
+  // routing final lo hace handleSubmit con buildDraftPatch.
+  const branding = {
     brandPrimaryColor: trim(raw.brandPrimaryColor) || null,
     brandSecondaryColor: trim(raw.brandSecondaryColor) || null,
     logoUrl: trim(raw.logoUrl) || null,
     bannerUrl: trim(raw.bannerUrl) || null,
     bannerUrl2: trim(raw.bannerUrl2) || null,
     bannerUrl3: trim(raw.bannerUrl3) || null,
+  };
+
+  const other = {
+    slug: trim(raw.slug) || null,
+    shortDescription: trim(raw.shortDescription) || null,
+    longDescription: trim(raw.longDescription) || null,
     whatsapp: raw.whatsapp ? String(raw.whatsapp).replace(/[^\d]/g, '') : null,
     instagram: trim(raw.instagram)?.replace(/^@/, '') || null,
     facebook: trim(raw.facebook) || null,
@@ -102,7 +121,8 @@ const cleanValues = raw => {
     primaryCategory: CATEGORY_OPTIONS.has(raw.primaryCategory) ? raw.primaryCategory : null,
     showCalendar: raw.showCalendar === 'yes' ? 'yes' : 'no',
   };
-  return out;
+
+  return { branding, other };
 };
 
 export const ManageStorePageComponent = props => {
@@ -120,6 +140,12 @@ export const ManageStorePageComponent = props => {
 
   const user = ensureCurrentUser(currentUser);
   const publicData = user.attributes?.profile?.publicData || {};
+
+  // XOLOLO Web Studio PR 2: branding efectivo = draft si hay, flat si no.
+  // El form carga el draft para que el seller resuma su edición sin
+  // perder lo que había hecho antes de cerrar el tab.
+  const effectiveBranding = readEffectiveBranding(user);
+  const isDraftActive = hasActiveDraft(user);
 
   // XOLOLO: seller casual (segunda mano particular) no tiene storefront.
   // Si llega aquí por URL directa lo mandamos a su cuenta donde puede
@@ -142,12 +168,13 @@ export const ManageStorePageComponent = props => {
     slug: publicData.slug || '',
     shortDescription: publicData.shortDescription || '',
     longDescription: publicData.longDescription || '',
-    brandPrimaryColor: publicData.brandPrimaryColor || '',
-    brandSecondaryColor: publicData.brandSecondaryColor || '',
-    logoUrl: publicData.logoUrl || '',
-    bannerUrl: publicData.bannerUrl || '',
-    bannerUrl2: publicData.bannerUrl2 || '',
-    bannerUrl3: publicData.bannerUrl3 || '',
+    // XOLOLO Web Studio PR 2: branding desde effectiveBranding (draft > flat).
+    brandPrimaryColor: effectiveBranding.brandPrimaryColor || '',
+    brandSecondaryColor: effectiveBranding.brandSecondaryColor || '',
+    logoUrl: effectiveBranding.logoUrl || '',
+    bannerUrl: effectiveBranding.bannerUrl || '',
+    bannerUrl2: effectiveBranding.bannerUrl2 || '',
+    bannerUrl3: effectiveBranding.bannerUrl3 || '',
     whatsapp: publicData.whatsapp || '',
     instagram: publicData.instagram || '',
     facebook: publicData.facebook || '',
@@ -173,8 +200,23 @@ export const ManageStorePageComponent = props => {
     showCalendar: publicData.showCalendar === 'yes' ? 'yes' : 'no',
   };
 
+  // XOLOLO Web Studio PR 2: el submit default GUARDA UN BORRADOR. El
+  // branding va a publicData.storefrontDraft; el resto flat. Buyers no
+  // ven cambios hasta que seller haga click en "Publicar diseño".
   const handleSubmit = values => {
-    return onSaveStore(cleanValues(values));
+    const { branding, other } = cleanValues(values);
+    return onSaveStore(buildDraftPatch({ branding, other }));
+  };
+
+  const handlePublishDraft = () => {
+    // Tomamos el draft del user tal como está en Sharetribe (fuente de
+    // verdad). No usamos valores pendientes del form — al publicar lo
+    // que vale es lo último guardado como borrador.
+    return props.onPublishStorefrontDraft(buildPublishPatch({ user }));
+  };
+
+  const handleDiscardDraft = () => {
+    return props.onDiscardStorefrontDraft(buildDiscardPatch());
   };
 
   const showManageListingsLink = showCreateListingLinkForUser(config, currentUser);
@@ -240,6 +282,15 @@ export const ManageStorePageComponent = props => {
                 inProgress={saveStoreInProgress}
                 ready={storeSaved}
                 saveStoreError={saveStoreError}
+                /* XOLOLO Web Studio PR 2: props del modelo staging. */
+                hasDraft={isDraftActive}
+                onPublishDraft={handlePublishDraft}
+                onDiscardDraft={handleDiscardDraft}
+                publishDraftInProgress={props.publishDraftInProgress}
+                publishDraftError={props.publishDraftError}
+                draftPublished={props.draftPublished}
+                discardDraftInProgress={props.discardDraftInProgress}
+                discardDraftError={props.discardDraftError}
               />
             </>
           ) : null}
@@ -251,18 +302,34 @@ export const ManageStorePageComponent = props => {
 
 const mapStateToProps = state => {
   const { currentUser } = state.user;
-  const { saveStoreInProgress, saveStoreError, storeSaved } = state.ManageStorePage;
+  const {
+    saveStoreInProgress,
+    saveStoreError,
+    storeSaved,
+    publishDraftInProgress,
+    publishDraftError,
+    draftPublished,
+    discardDraftInProgress,
+    discardDraftError,
+  } = state.ManageStorePage;
   return {
     currentUser,
     scrollingDisabled: isScrollingDisabled(state),
     saveStoreInProgress,
     saveStoreError,
     storeSaved,
+    publishDraftInProgress,
+    publishDraftError,
+    draftPublished,
+    discardDraftInProgress,
+    discardDraftError,
   };
 };
 
 const mapDispatchToProps = dispatch => ({
   onSaveStore: publicData => dispatch(saveStore(publicData)),
+  onPublishStorefrontDraft: publicData => dispatch(publishStorefrontDraft(publicData)),
+  onDiscardStorefrontDraft: publicData => dispatch(discardStorefrontDraft(publicData)),
   onChange: () => dispatch(saveStoreClear()),
 });
 
