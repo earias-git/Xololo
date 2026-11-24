@@ -74,7 +74,17 @@ const resolveSellerBySlug = async slug => {
       const users = response.data.data;
       const meta = response.data.meta || {};
       totalPages = meta.totalPages || 1;
-      match = users.find(u => u.attributes.profile.publicData?.slug === rawSlug);
+      // XOLOLO 2026-11-24 bugfix: comparación case-insensitive. Algunos
+      // sellers legacy tienen slug con mayúsculas en Sharetribe (ej. "DVIDA"),
+      // y el subdominio los envía siempre lowercase ("dvida"). Antes el
+      // strict === los dejaba notFound aunque sí existieran. El form actual
+      // ya valida solo lowercase (ver SLUG_PATTERN en ManageStoreForm), pero
+      // esto recupera a los que ya tienen slug en mayúsculas guardado.
+      match = users.find(u => {
+        const storedSlug = u.attributes.profile.publicData?.slug;
+        if (!storedSlug) return false;
+        return String(storedSlug).toLowerCase() === rawSlug;
+      });
       if (match) matchIncluded = response.data.included || [];
       page += 1;
       // hard stop: no más de 20 páginas (2000 users)

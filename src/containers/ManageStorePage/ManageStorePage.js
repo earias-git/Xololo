@@ -103,7 +103,12 @@ const cleanValues = raw => {
   };
 
   const other = {
-    slug: trim(raw.slug) || null,
+    // XOLOLO 2026-11-24 bugfix: defensivamente normalizamos a lowercase.
+    // El form ya valida que sea lowercase (SLUG_PATTERN en ManageStoreForm),
+    // pero si por una ruta alterna llegara algo con mayúsculas, el
+    // storefront por subdominio no lo encontraría (strict === tras
+    // lowercase en el resolver). Ver server/api/seller-by-slug.js.
+    slug: trim(raw.slug)?.toLowerCase() || null,
     shortDescription: trim(raw.shortDescription) || null,
     longDescription: trim(raw.longDescription) || null,
     whatsapp: raw.whatsapp ? String(raw.whatsapp).replace(/[^\d]/g, '') : null,
