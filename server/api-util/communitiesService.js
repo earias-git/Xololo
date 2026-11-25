@@ -144,6 +144,21 @@ const OVERFETCH_MAX_PAGES = 5; // 500 candidates máx
 const OVERFETCH_PER_PAGE = 100; // top permitido por Sharetribe
 const OVERFETCH_TARGET_FACTOR = 2; // junta 2× el perPage pedido
 
+// XOLOLO 2026-11-25 — fallback full-scan cuando el filtro :has: devuelve
+// 0 pero el mirror SÍ tiene listings. Causa raíz: tras registrar el
+// listing field en Console, Sharetribe tarda horas/días (o nunca sin
+// ticket) en indexar el schema; durante ese lag `:has:` responde 0 y la
+// landing queda vacía aunque los datos existen. Ver memoria
+// sharetribe-listing-field-reindex-lag.
+//
+// Tradeoff: full-scan paginado + filtro en memoria. Costoso (hasta
+// FALLBACK_MAX_PAGES queries full-scan), pero protegido con cache 60s.
+// Cuando Sharetribe se recupere, `:has:` vuelve a devolver >0 y el
+// fallback no se dispara más. Dejar activo hasta que confirmemos que
+// Sharetribe indexa nuevos fields consistentemente.
+const FALLBACK_MAX_PAGES = 5; // hasta 500 listings scanned
+const FALLBACK_PER_PAGE = 100;
+
 const fetchCommunityListings = async ({
   communityId,
   page = 1,
@@ -203,12 +218,68 @@ const fetchCommunityListings = async ({
     if (p >= totalPages) break;
   }
 
-  const data = acc.slice(0, target);
+  let data = acc.slice(0, target);
 
   // eslint-disable-next-line no-console
   console.log(
     `[communitiesService:${communityId}] overfetch ${pagesScanned}p × ${OVERFETCH_PER_PAGE} = ${data.length} real items (of ${lastMeta.totalItems || '?'} raw)`
   );
+
+  // XOLOLO 2026-11-25 — fallback full-scan: si `:has:` devolvió 0, el
+  // field acaba de registrarse en Console y Sharetribe aún no indexa.
+  // Hacemos full scan + filtro en memoria (hasta FALLBACK_MAX_PAGES).
+  // Log explícito para detectar cuándo Sharetribe se recupera.
+  if (data.length === 0) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[communitiesService:${communityId}] :has: returned 0 — falling back to full-scan (Sharetribe reindex pending)`
+    );
+    const fbAcc = [];
+    const fbIncluded = new Map();
+    let fbMeta = { totalItems: 0, totalPages: 0, page: 1 };
+    let fbScanned = 0;
+    for (let fp = 1; fp <= FALLBACK_MAX_PAGES; fp++) {
+      const fbQuery = {
+        ...COMMON_FIELDS,
+        ...pubFilters,
+        states: 'published',
+        page: fp,
+        perPage: FALLBACK_PER_PAGE,
+      };
+      let fbResp;
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        fbResp = await isdk.listings.query(fbQuery);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('[communitiesService:fallback] listings.query failed', e?.message);
+        break;
+      }
+      fbScanned += 1;
+      fbMeta = fbResp.data?.meta || fbMeta;
+      const items = (fbResp.data?.data || [])
+        .filter(l => !isSibling(l))
+        .filter(inCommunity);
+      fbAcc.push(...items);
+      (fbResp.data?.included || []).forEach(inc => {
+        const key = `${inc.type}:${inc.id?.uuid}`;
+        if (!fbIncluded.has(key)) fbIncluded.set(key, inc);
+      });
+      if (fbAcc.length >= target) break;
+      const tp = fbMeta.totalPages || 1;
+      if (fp >= tp) break;
+    }
+    data = fbAcc.slice(0, target);
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[communitiesService:${communityId}] fallback full-scan ${fbScanned}p × ${FALLBACK_PER_PAGE} = ${data.length} real items`
+    );
+    return {
+      data,
+      included: Array.from(fbIncluded.values()),
+      meta: { ...fbMeta, totalItems: data.length, totalPages: 1, page: 1 },
+    };
+  }
 
   return { data, included: Array.from(includedSeen.values()), meta: lastMeta };
 };
