@@ -666,6 +666,107 @@
   color: var(--colorGrey600);
 }
 
+/* XOLOLO 2026-11-25 — row review de doc legal en el drawer OPS.
+   Pattern reusado del AdminLegalDocsView pero inline en el drawer. */
+.legalDocReviewRow {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.legalDocReviewHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.docLink {
+  margin-left: auto;
+  color: #1f8f52;
+  font-weight: 600;
+  font-size: 12.5px;
+  text-decoration: none;
+}
+.docLink:hover {
+  text-decoration: underline;
+}
+
+.legalDocReviewActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.legalDocNoteInput {
+  flex: 1 1 160px;
+  min-width: 140px;
+  padding: 6px 10px;
+  border: 1px solid #cfd6e4;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-family: inherit;
+}
+
+.legalDocApproveBtn,
+.legalDocRejectBtn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+  font-family: inherit;
+  border: 1px solid transparent;
+  transition: filter 0.1s ease;
+}
+
+.legalDocApproveBtn {
+  background: #1f8f52;
+  color: #ffffff;
+}
+.legalDocApproveBtn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.legalDocRejectBtn {
+  background: transparent;
+  border-color: #b04b3a;
+  color: #b04b3a;
+}
+.legalDocRejectBtn:hover:not(:disabled) {
+  background: #fdecec;
+}
+
+.legalDocApproveBtn:disabled,
+.legalDocRejectBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* XOLOLO 2026-11-25 — chip "VERIFIED" visible en la celda del Tipo
+   (fila de Users 360). Pequeño, verde, al lado del tipo. */
+.verifiedChip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 /* --------- Flags --------- */
 
 .flagList {

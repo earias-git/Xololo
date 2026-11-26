@@ -154,7 +154,7 @@ const UserDrawer = ({ userId, onClose, onReload }) => {
           ) : tab === 'summary' ? (
             <SummaryTab data={d} />
           ) : tab === 'membership' ? (
-            <MembershipTab data={d} />
+            <MembershipTab data={d} userId={userId} onReload={load} />
           ) : tab === 'catalog' ? (
             <CatalogTab listings={d.listings} />
           ) : tab === 'transactions' ? (
@@ -371,7 +371,98 @@ const CatalogTab = ({ listings }) => {
 // Tab: Membresía
 // ============================================================
 
-const MembershipTab = ({ data }) => {
+// XOLOLO 2026-11-25 — Fila de revisión de documento legal dentro del
+// drawer OPS Users 360. Reusa el endpoint existente
+// POST /api/admin/legal-docs/review (ya gated por adminGate). Al
+// aprobar/rechazar refresca el drawer para que badge Verified y
+// contador de slots se actualicen de inmediato.
+const LegalDocRow = ({ sellerId, slot, onReviewed }) => {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState('');
+  const [err, setErr] = useState(null);
+
+  const review = async decision => {
+    setBusy(true);
+    setErr(null);
+    const r = await api('/api/admin/legal-docs/review', {
+      method: 'POST',
+      body: {
+        sellerId,
+        slot: slot.key,
+        status: decision,
+        reviewNote: decision === 'rejected' ? note || null : null,
+      },
+    });
+    setBusy(false);
+    if (!r.ok) {
+      setErr(r.data?.error || 'review_failed');
+      return;
+    }
+    if (typeof onReviewed === 'function') onReviewed();
+  };
+
+  return (
+    <li className={css.legalDocReviewRow}>
+      <div className={css.legalDocReviewHead}>
+        <span className={`${css.legalBadge} ${css[`legal_${slot.status}`]}`}>
+          {slot.status}
+        </span>
+        <strong>{slot.key}</strong>
+        {slot.url ? (
+          <a href={slot.url} target="_blank" rel="noreferrer" className={css.docLink}>
+            ver archivo →
+          </a>
+        ) : null}
+      </div>
+      {slot.approvedAt ? (
+        <small className={css.muted}>
+          aprobado {new Date(slot.approvedAt).toLocaleDateString('es-MX')}
+        </small>
+      ) : slot.rejectionReason ? (
+        <small className={css.muted}>motivo: {slot.rejectionReason}</small>
+      ) : slot.uploadedAt ? (
+        <small className={css.muted}>
+          subido {new Date(slot.uploadedAt).toLocaleDateString('es-MX')}
+        </small>
+      ) : null}
+      {slot.status !== 'missing' ? (
+        <div className={css.legalDocReviewActions}>
+          {slot.status !== 'approved' ? (
+            <input
+              type="text"
+              placeholder="Motivo si rechazas…"
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              className={css.legalDocNoteInput}
+              disabled={busy}
+            />
+          ) : null}
+          <button
+            type="button"
+            className={css.legalDocApproveBtn}
+            onClick={() => review('approved')}
+            disabled={busy || slot.status === 'approved' || !slot.url}
+            title={!slot.url ? 'El seller aún no sube este documento' : ''}
+          >
+            Aprobar
+          </button>
+          <button
+            type="button"
+            className={css.legalDocRejectBtn}
+            onClick={() => review('rejected')}
+            disabled={busy || slot.status === 'rejected' || !slot.url}
+            title={!slot.url ? 'El seller aún no sube este documento' : ''}
+          >
+            Rechazar
+          </button>
+        </div>
+      ) : null}
+      {err ? <p className={css.error}>Error: {err}</p> : null}
+    </li>
+  );
+};
+
+const MembershipTab = ({ data, userId, onReload }) => {
   const sub = data.subscription;
   const legal = data.legalDocs;
   const s = data.summary;
@@ -419,24 +510,12 @@ const MembershipTab = ({ data }) => {
         {legal?.slots?.length ? (
           <ul className={css.legalList}>
             {legal.slots.map(slot => (
-              <li key={slot.key}>
-                <span className={`${css.legalBadge} ${css[`legal_${slot.status}`]}`}>
-                  {slot.status}
-                </span>
-                <strong>{slot.key}</strong>
-                {slot.approvedAt ? (
-                  <small className={css.muted}>· aprobado {new Date(slot.approvedAt).toLocaleDateString('es-MX')}</small>
-                ) : slot.rejectionReason ? (
-                  <small className={css.muted}>· {slot.rejectionReason}</small>
-                ) : slot.uploadedAt ? (
-                  <small className={css.muted}>· subido {new Date(slot.uploadedAt).toLocaleDateString('es-MX')}</small>
-                ) : null}
-                {slot.url ? (
-                  <a href={slot.url} target="_blank" rel="noreferrer" className={css.docLink}>
-                    ver →
-                  </a>
-                ) : null}
-              </li>
+              <LegalDocRow
+                key={slot.key}
+                sellerId={userId}
+                slot={slot}
+                onReviewed={onReload}
+              />
             ))}
           </ul>
         ) : (
