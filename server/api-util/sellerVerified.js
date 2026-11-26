@@ -46,6 +46,37 @@ const buildVerifiedProgramUrl = () => {
   return `${root}/verified`;
 };
 
+// XOLOLO 2026-11-25 — bloque HTML del logo para el share card del
+// email. Si el seller subió logoUrl, lo mostramos grande (hasta
+// 180×180). Si no, mostramos un placeholder tipográfico con la
+// inicial del Negocio sobre fondo navy — así el card siempre queda
+// presentable aunque el seller no haya subido branding.
+const buildLogoHtmlForCard = (sellerPd, name) => {
+  const logoUrl = sellerPd?.logoUrl;
+  if (logoUrl) {
+    // Email-safe: inline styles, no CSS modernas.
+    return (
+      '<img src="' +
+      String(logoUrl).replace(/"/g, '&quot;') +
+      '" alt="' +
+      String(name || 'Negocio').replace(/"/g, '&quot;') +
+      '" style="display:block;max-width:180px;max-height:140px;width:auto;height:auto;border:0;margin:0 auto;" />'
+    );
+  }
+  const initial = (name || 'X').trim().charAt(0).toUpperCase();
+  return (
+    '<div style="width:120px;height:120px;border-radius:50%;background:#232d40;' +
+    'display:flex;align-items:center;justify-content:center;margin:0 auto;">' +
+    '<span style="font-size:52px;font-weight:800;color:#ffffff;line-height:120px;">' +
+    initial +
+    '</span></div>'
+  );
+};
+
+// Limpia la URL del storefront para mostrarla "amigable" dentro del
+// card capturable: quita el protocolo para que se lea tipo "xololo.mx/u/juan".
+const prettyUrlForCard = url => String(url || '').replace(/^https?:\/\//, '');
+
 // XOLOLO 2026-11-25 — email de felicitación cuando el badge se concede
 // por PRIMERA vez. Idempotente: marca xololoVerifiedEmailSentAt en el
 // mismo updateProfile que persiste el flag, para no reenviar si el
@@ -60,9 +91,23 @@ const dispatchGrantedEmail = async ({ isdk, sellerId, user }) => {
       profile.displayName ||
       `${profile.firstName || ''} ${profile.lastName || ''}`.trim() ||
       'Negocio';
+    // XOLOLO: logoUrl + logoHtmlLarge del seller para el share card
+    // del email. El HTML va pre-computado porque el interpolador de
+    // templates no soporta lógica condicional.
+    const sellerPd = profile.publicData || {};
+    const storefrontUrl = buildStorefrontUrl(sellerPd);
     await sendEventNotifications('seller.verified_granted', {
-      seller: { name, email },
-      storefront: { url: buildStorefrontUrl(profile.publicData) },
+      seller: {
+        name,
+        email,
+        logoUrl: sellerPd.logoUrl || null,
+        logoHtmlLarge: buildLogoHtmlForCard(sellerPd, name),
+        primaryColor: sellerPd.brandPrimaryColor || null,
+      },
+      storefront: {
+        url: storefrontUrl,
+        urlPretty: prettyUrlForCard(storefrontUrl),
+      },
       verified: { url: buildVerifiedProgramUrl() },
     });
   } catch (e) {

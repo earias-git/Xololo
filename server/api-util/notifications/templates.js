@@ -386,6 +386,104 @@ const TEMPLATES = {
     email: {
       seller: {
         subject: '🎉 ¡Felicidades! Ya eres un Negocio Xololo Verified',
+        // bodyHtml se prioriza sobre bodyText en renderEmailHtml. Incluye
+        // un "share card" visual con el logo del seller + sello X VERIFIED
+        // listo para que el seller lo capture y lo comparta en RRSS. El
+        // bodyText queda como fallback para clientes que no renderean HTML.
+        bodyHtml:
+          '<p style="margin:0 0 14px;font-size:15.5px;line-height:1.55;color:#232d40;">' +
+          'Hola <strong>{seller.name}</strong>,</p>' +
+          '<p style="margin:0 0 18px;font-size:15.5px;line-height:1.55;color:#232d40;">' +
+          '¡Enhorabuena! Tu Negocio pasó los 4 criterios de verificación de Xololo. ' +
+          'A partir de hoy, tu tienda y tus productos aparecen con el sello ' +
+          '<strong>✓ Xololo Verified</strong>.</p>' +
+
+          // ----- SHARE CARD (compartible para RRSS) -----
+          '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 18px;">' +
+          '<tr><td align="center">' +
+          '<table role="presentation" width="480" cellpadding="0" cellspacing="0" border="0" ' +
+          'style="max-width:480px;background:linear-gradient(135deg,#f8f5ee 0%,#ffffff 60%);' +
+          'border:2px solid #232d40;border-radius:20px;overflow:hidden;">' +
+          '<tr><td align="center" style="padding:34px 24px 10px;">' +
+          // Logo del seller (si existe) o nombre grande fallback
+          '{seller.logoHtmlLarge}' +
+          '</td></tr>' +
+          '<tr><td align="center" style="padding:8px 24px 6px;">' +
+          '<p style="margin:0;font-size:20px;font-weight:800;color:#232d40;letter-spacing:-0.01em;">' +
+          '<a href="{storefront.url}" style="color:#232d40;text-decoration:none;">{seller.name}</a></p>' +
+          '</td></tr>' +
+          '<tr><td align="center" style="padding:14px 24px 20px;">' +
+          // Pill "✓ Xololo Verified" con la X oficial
+          '<table role="presentation" cellpadding="0" cellspacing="0" border="0" ' +
+          'style="background:#ffffff;border:2px solid #232d40;border-radius:999px;">' +
+          '<tr>' +
+          '<td style="padding:10px 14px 10px 16px;vertical-align:middle;">' +
+          '<img src="https://xololo.mx/static/xololo-x-mark.png" alt="X" width="24" height="19" ' +
+          'style="display:block;border:0;width:24px;height:auto;" />' +
+          '</td>' +
+          '<td style="padding:10px 18px 10px 2px;vertical-align:middle;">' +
+          '<span style="font-size:15px;font-weight:800;color:#232d40;letter-spacing:0.08em;text-transform:uppercase;">' +
+          'Verified</span>' +
+          '</td>' +
+          '</tr>' +
+          '</table>' +
+          '</td></tr>' +
+          '<tr><td align="center" style="padding:4px 24px 10px;">' +
+          '<p style="margin:0;font-size:13.5px;font-weight:700;color:#1f8f52;">' +
+          '<a href="{storefront.url}" style="color:#1f8f52;text-decoration:none;">{storefront.urlPretty}</a></p>' +
+          '</td></tr>' +
+          '<tr><td align="center" style="padding:0 24px 22px;">' +
+          '<p style="margin:0;font-size:11.5px;color:#6b7280;letter-spacing:0.14em;text-transform:uppercase;">' +
+          'Negocio verificado en xololo.mx</p>' +
+          '</td></tr>' +
+          '</table>' +
+          '</td></tr>' +
+          '<tr><td align="center" style="padding:10px 12px 0;">' +
+          '<p style="margin:0;font-size:13px;color:#4a5169;line-height:1.5;max-width:460px;">' +
+          '👉 <strong>Compártelo en tus redes:</strong> haz click derecho sobre el card de arriba y ' +
+          '<em>"Guardar imagen como…"</em>, o toma captura de pantalla. Súbelo a Instagram, ' +
+          'Facebook o WhatsApp Business para que tus clientes vean que estás verificado.</p>' +
+          '</td></tr>' +
+          '</table>' +
+
+          '<h2 style="margin:22px 0 10px;font-size:17px;font-weight:800;color:#232d40;">' +
+          '¿Qué significa para quien te compra?</h2>' +
+
+          '<ol style="margin:0 0 18px;padding-left:22px;font-size:14.5px;line-height:1.6;color:#232d40;">' +
+          '<li style="margin-bottom:10px;"><strong>Confianza desde el primer click.</strong> El sello ' +
+          'aparece junto a tu nombre y productos. Significa que Xololo validó tu identidad legal, tu ' +
+          'suscripción vigente y tus cobros configurados.</li>' +
+          '<li style="margin-bottom:10px;"><strong>Prioridad en los resultados.</strong> Los Negocios ' +
+          'Verified aparecen primero cuando el buyer filtra por "Vendedores verificados" y en los ' +
+          'rieles curados de la landing.</li>' +
+          '<li style="margin-bottom:10px;"><strong>Pago protegido real.</strong> Xololo retiene el ' +
+          'dinero en custodia hasta que el buyer confirma la recepción. Si algo sale mal, la disputa ' +
+          'la media el equipo de Xololo — tu comprador nunca se queda sin respaldo.</li>' +
+          '<li style="margin-bottom:10px;"><strong>Factura CFDI sin sorpresas.</strong> Al tener tu ' +
+          'Constancia Fiscal y RFC aprobados, el buyer sabe que puede pedir factura cuando quiera.</li>' +
+          '<li><strong>Directorio público de confianza.</strong> Tu Negocio ahora aparece en ' +
+          '<a href="https://xololo.mx/tiendas-verified" style="color:#1f8f52;font-weight:600;">' +
+          'xololo.mx/tiendas-verified</a>, el directorio que Xololo promociona para quienes buscan ' +
+          'vendedores serios.</li>' +
+          '</ol>' +
+
+          '<div style="margin:24px 0 10px;padding:16px 18px;background:#f7f4ee;border-left:4px solid #1f8f52;border-radius:6px;">' +
+          '<p style="margin:0 0 6px;font-size:13.5px;font-weight:800;color:#232d40;">Mantén tu sello activo</p>' +
+          '<p style="margin:0;font-size:13px;line-height:1.5;color:#4a5169;">' +
+          'El badge se recalcula cada vez que cambia alguno de los 4 criterios. Mientras tu ' +
+          'suscripción esté activa y tus docs legales vigentes, el sello se queda contigo automáticamente.</p>' +
+          '</div>' +
+
+          '<p style="margin:22px 0 6px;font-size:14px;color:#232d40;">' +
+          '<a href="{storefront.url}" style="color:#1f8f52;font-weight:700;text-decoration:none;">' +
+          'Ver tu tienda con el sello →</a></p>' +
+          '<p style="margin:0 0 14px;font-size:14px;color:#232d40;">' +
+          '<a href="{verified.url}" style="color:#1f8f52;font-weight:700;text-decoration:none;">' +
+          'Más info del programa Verified →</a></p>' +
+
+          '<p style="margin:18px 0 0;font-size:14px;color:#4a5169;">' +
+          '¡Bienvenido al grupo de Negocios Verified de Xololo!</p>' +
+          '<p style="margin:4px 0 0;font-size:14px;color:#4a5169;">— El equipo de Xololo</p>',
         bodyText:
           'Hola {seller.name},\n\n' +
           '¡Enhorabuena! Tu Negocio pasó los 4 criterios de verificación de Xololo:\n\n' +
@@ -394,30 +492,15 @@ const TEMPLATES = {
           '  ✓ Perfil y tienda completos\n' +
           '  ✓ Documentos legales aprobados por nuestro equipo\n\n' +
           'A partir de hoy, tu tienda y tus productos aparecen en xololo.mx con el sello ' +
-          '"✓ Xololo Verified". Esto no es sólo una insignia — es la diferencia que ' +
-          'tus compradores esperan.\n\n' +
+          '"✓ Xololo Verified".\n\n' +
           '¿QUÉ SIGNIFICA PARA QUIEN TE COMPRA?\n\n' +
-          '1) Confianza desde el primer click. El comprador ve el sello junto a tu ' +
-          'nombre, tu tienda y cada producto. Significa que Xololo validó tu identidad ' +
-          'legal, que estás al corriente con tu suscripción y que tus cobros están ' +
-          'configurados profesionalmente.\n\n' +
-          '2) Prioridad en los resultados. Los Negocios Verified aparecen primero cuando ' +
-          'el buyer filtra por "Vendedores verificados" y en los rieles de la landing.\n\n' +
-          '3) Pago protegido real. Xololo retiene el dinero en custodia hasta que el ' +
-          'comprador confirma la recepción del producto. Si algo sale mal, la disputa la ' +
-          'media el equipo de Xololo — tu comprador nunca se queda sin respaldo.\n\n' +
-          '4) Factura y cumplimiento fiscal. Al tener tu Constancia Fiscal y RFC ' +
-          'aprobados, el buyer sabe que puede pedirte factura CFDI sin sorpresas.\n\n' +
-          '5) Directorio público de confianza. Tu Negocio ahora aparece en ' +
-          'xololo.mx/tiendas-verified, el directorio curado que Xololo promociona para ' +
-          'quienes buscan vendedores serios.\n\n' +
-          'MANTÉN TU SELLO ACTIVO\n\n' +
-          'El badge se recalcula cada vez que cambia alguno de los 4 criterios. ' +
-          'Mientras tu suscripción esté activa y tus docs legales vigentes, el sello ' +
-          'se queda contigo automáticamente.\n\n' +
+          '1) Confianza desde el primer click.\n' +
+          '2) Prioridad en los resultados de búsqueda.\n' +
+          '3) Pago protegido real con custodia y disputas mediadas.\n' +
+          '4) Factura CFDI sin sorpresas.\n' +
+          '5) Directorio público xololo.mx/tiendas-verified.\n\n' +
           'Ve tu tienda con el sello: {storefront.url}\n' +
           'Más info del programa: {verified.url}\n\n' +
-          '¡Bienvenido al grupo de Negocios Verified de Xololo!\n\n' +
           '— El equipo de Xololo',
       },
     },
