@@ -22,8 +22,54 @@
 // pueda cambiar el resultado. Ver call sites documentados en el JSDoc.
 
 const { slotsForPersonType } = require('./legalDocSlots');
+const { sendEventNotifications } = require('./notifications');
 
 const isDocApproved = doc => doc && doc.status === 'approved';
+
+// XOLOLO 2026-11-25 — helper para armar la URL de la tienda desde el
+// slug del seller. Si no tiene slug (p.ej. casual_reseller aún no
+// estrictamente aplicable), caemos al home.
+const buildStorefrontUrl = publicData => {
+  const root = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx').replace(
+    /\/$/,
+    ''
+  );
+  const slug = publicData?.slug;
+  return slug ? `${root}/u/${slug}` : root;
+};
+
+const buildVerifiedProgramUrl = () => {
+  const root = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx').replace(
+    /\/$/,
+    ''
+  );
+  return `${root}/verified`;
+};
+
+// XOLOLO 2026-11-25 — email de felicitación cuando el badge se concede
+// por PRIMERA vez. Idempotente: marca xololoVerifiedEmailSentAt en el
+// mismo updateProfile que persiste el flag, para no reenviar si el
+// seller lo pierde y lo recupera (no-reenvío es LA decisión aquí —
+// evita spam en gente que toggle-a su sub).
+const dispatchGrantedEmail = async ({ isdk, sellerId, user }) => {
+  try {
+    const profile = user.attributes?.profile || {};
+    const email = user.attributes?.email;
+    if (!email) return;
+    const name =
+      profile.displayName ||
+      `${profile.firstName || ''} ${profile.lastName || ''}`.trim() ||
+      'Negocio';
+    await sendEventNotifications('seller.verified_granted', {
+      seller: { name, email },
+      storefront: { url: buildStorefrontUrl(profile.publicData) },
+      verified: { url: buildVerifiedProgramUrl() },
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(`[sellerVerified] email granted falló para ${sellerId}:`, e?.message || e);
+  }
+};
 
 /**
  * Computa el badge para un user entity ya cargado con metadata privada
@@ -95,14 +141,34 @@ const syncVerifiedBadge = async ({ isdk, sellerId }) => {
 
     if (nextVerified === prevVerified) return { changed: false, verified: nextVerified };
 
+    // XOLOLO 2026-11-25 — idempotencia del email "verified_granted":
+    // enviamos sólo si pasa a true Y aún no se envió nunca (null/missing).
+    // Si el seller pierde y recupera el sello después, NO re-enviamos —
+    // es intencional: el email celebra el primer hito, no cada ciclo.
+    const shouldSendGrantedEmail =
+      nextVerified === true && !publicData.xololoVerifiedEmailSentAt;
+
     await isdk.users.updateProfile({
       id: sellerId,
       publicData: {
         xololoVerified: nextVerified,
         xololoVerifiedAt: nextVerified ? new Date().toISOString() : null,
+        // Marca de envío — fija para siempre tras el primer envío.
+        ...(shouldSendGrantedEmail
+          ? { xololoVerifiedEmailSentAt: new Date().toISOString() }
+          : {}),
       },
     });
-    return { changed: true, verified: nextVerified };
+
+    if (shouldSendGrantedEmail) {
+      // No await — no queremos bloquear el caller si el email cae lento.
+      // Pero igual lo llamamos con await para que los errores se logueen
+      // en el canal estándar de notifications. El try/catch de arriba ya
+      // lo aísla del flujo principal.
+      await dispatchGrantedEmail({ isdk, sellerId, user });
+    }
+
+    return { changed: true, verified: nextVerified, emailSent: shouldSendGrantedEmail };
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error(`[sellerVerified] sync falló para ${sellerId}:`, e?.message || e);

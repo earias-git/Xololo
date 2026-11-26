@@ -91,6 +91,12 @@ const MATRIX = {
   'seller.subscription_canceled': {
     seller: ['email'],
   },
+  // XOLOLO 2026-11-25 — primera vez que el seller obtiene el badge
+  // Xololo Verified (los 4 criterios reales pasan). Idempotente vía
+  // publicData.xololoVerifiedEmailSentAt (ver syncVerifiedBadge).
+  'seller.verified_granted': {
+    seller: ['email'],
+  },
   // XOLOLO Envíos v2 — Sub-commit C: loop de cotización de flete.
   // Cuando el seller cotiza el envío tras la compra del método freight,
   // avisamos al buyer para que autorice. Cuando el buyer autoriza,

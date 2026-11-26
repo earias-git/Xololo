@@ -378,6 +378,50 @@ const TEMPLATES = {
       },
     },
   },
+  // XOLOLO 2026-11-25 — felicitación por obtener el badge Xololo
+  // Verified. Se envía una sola vez (idempotencia en syncVerifiedBadge
+  // vía publicData.xololoVerifiedEmailSentAt). Comunica los beneficios
+  // de confianza para compradores — razón de ser del sello.
+  'seller.verified_granted': {
+    email: {
+      seller: {
+        subject: '🎉 ¡Felicidades! Ya eres un Negocio Xololo Verified',
+        bodyText:
+          'Hola {seller.name},\n\n' +
+          '¡Enhorabuena! Tu Negocio pasó los 4 criterios de verificación de Xololo:\n\n' +
+          '  ✓ Suscripción activa\n' +
+          '  ✓ Cobros configurados (Stripe conectado)\n' +
+          '  ✓ Perfil y tienda completos\n' +
+          '  ✓ Documentos legales aprobados por nuestro equipo\n\n' +
+          'A partir de hoy, tu tienda y tus productos aparecen en xololo.mx con el sello ' +
+          '"✓ Xololo Verified". Esto no es sólo una insignia — es la diferencia que ' +
+          'tus compradores esperan.\n\n' +
+          '¿QUÉ SIGNIFICA PARA QUIEN TE COMPRA?\n\n' +
+          '1) Confianza desde el primer click. El comprador ve el sello junto a tu ' +
+          'nombre, tu tienda y cada producto. Significa que Xololo validó tu identidad ' +
+          'legal, que estás al corriente con tu suscripción y que tus cobros están ' +
+          'configurados profesionalmente.\n\n' +
+          '2) Prioridad en los resultados. Los Negocios Verified aparecen primero cuando ' +
+          'el buyer filtra por "Vendedores verificados" y en los rieles de la landing.\n\n' +
+          '3) Pago protegido real. Xololo retiene el dinero en custodia hasta que el ' +
+          'comprador confirma la recepción del producto. Si algo sale mal, la disputa la ' +
+          'media el equipo de Xololo — tu comprador nunca se queda sin respaldo.\n\n' +
+          '4) Factura y cumplimiento fiscal. Al tener tu Constancia Fiscal y RFC ' +
+          'aprobados, el buyer sabe que puede pedirte factura CFDI sin sorpresas.\n\n' +
+          '5) Directorio público de confianza. Tu Negocio ahora aparece en ' +
+          'xololo.mx/tiendas-verified, el directorio curado que Xololo promociona para ' +
+          'quienes buscan vendedores serios.\n\n' +
+          'MANTÉN TU SELLO ACTIVO\n\n' +
+          'El badge se recalcula cada vez que cambia alguno de los 4 criterios. ' +
+          'Mientras tu suscripción esté activa y tus docs legales vigentes, el sello ' +
+          'se queda contigo automáticamente.\n\n' +
+          'Ve tu tienda con el sello: {storefront.url}\n' +
+          'Más info del programa: {verified.url}\n\n' +
+          '¡Bienvenido al grupo de Negocios Verified de Xololo!\n\n' +
+          '— El equipo de Xololo',
+      },
+    },
+  },
   // XOLOLO Envíos v2 — Sub-commit C: loop de cotización de flete.
   'shipping.quote_ready': {
     email: {
