@@ -90,12 +90,34 @@ export const Avatar = props => {
       ? { name: 'ProfilePage', params: { id: avatarUser.id.uuid } }
       : { name: 'ProfileBasePage' };
   const hasProfileImage = avatarUser.profileImage && avatarUser.profileImage.id;
+  // XOLOLO 2026-11-27 — para sellers con tienda, su identidad visual
+  // real es el logo del Negocio (publicData.logoUrl). Prioridad:
+  // 1) logo del Negocio → 2) foto de perfil Sharetribe → 3) iniciales.
+  // Buyers nunca tienen logoUrl, así que caen al flow original sin cambio.
+  const sellerLogoUrl = avatarUser.attributes?.profile?.publicData?.logoUrl;
+  const hasSellerLogo = !!sellerLogoUrl;
   const profileLinkEnabled = !disableProfileLink;
 
   if (isBannedUser || isDeletedUser) {
     return (
       <div {...rootProps}>
         <IconBannedUser className={css.bannedUserIcon} />
+      </div>
+    );
+  } else if (hasSellerLogo && profileLinkEnabled) {
+    return (
+      <NamedLink {...rootProps} {...linkProps}>
+        <img
+          className={css.avatarImage}
+          alt={displayName}
+          src={sellerLogoUrl}
+        />
+      </NamedLink>
+    );
+  } else if (hasSellerLogo) {
+    return (
+      <div {...rootProps}>
+        <img className={css.avatarImage} alt={displayName} src={sellerLogoUrl} />
       </div>
     );
   } else if (hasProfileImage && profileLinkEnabled) {
