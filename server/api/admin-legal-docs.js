@@ -80,34 +80,25 @@ const list = async (req, res) => {
   }
 };
 
-const review = async (req, res) => {
-  const admin = await requireAdmin(req, res);
-  if (!admin.ok) return;
-
-  const { sellerId, slot: slotKey, status, reviewNote } = req.body || {};
+// XOLOLO 2026-11-27 — lógica pura de revisión, reusable por los dos
+// endpoints (admin vía adminGate y ops vía requireOperator). El caller
+// decide quién puede llamar; esta función ya validó auth upstream.
+const applyDocReview = async ({ isdk, sellerId, slotKey, status, reviewNote, reviewedByEmail }) => {
   if (!sellerId || typeof sellerId !== 'string') {
-    return res.status(400).json({ error: 'invalid_request', details: 'sellerId requerido.' });
+    return { ok: false, httpStatus: 400, body: { error: 'invalid_request', details: 'sellerId requerido.' } };
   }
   if (!findSlot(slotKey)) {
-    return res.status(400).json({ error: 'invalid_request', details: 'slot inválido.' });
+    return { ok: false, httpStatus: 400, body: { error: 'invalid_request', details: 'slot inválido.' } };
   }
   if (status !== 'approved' && status !== 'rejected') {
-    return res
-      .status(400)
-      .json({ error: 'invalid_request', details: "status debe ser 'approved' o 'rejected'." });
+    return { ok: false, httpStatus: 400, body: { error: 'invalid_request', details: "status debe ser 'approved' o 'rejected'." } };
   }
-
-  const isdk = getIntegrationSdk();
-  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
-
   try {
     const resp = await isdk.users.show({ id: sellerId });
     const existing = resp.data.data.attributes?.profile?.metadata?.xololoLegalDocs || {};
     const docs = existing.docs || {};
     if (!docs[slotKey]) {
-      return res
-        .status(400)
-        .json({ error: 'invalid_request', details: 'El seller no ha subido ese documento.' });
+      return { ok: false, httpStatus: 400, body: { error: 'invalid_request', details: 'El seller no ha subido ese documento.' } };
     }
     const updatedDocs = {
       ...docs,
@@ -115,20 +106,15 @@ const review = async (req, res) => {
         ...docs[slotKey],
         status,
         reviewedAt: new Date().toISOString(),
-        reviewedBy: admin.email,
+        reviewedBy: reviewedByEmail || null,
         reviewNote: reviewNote || null,
       },
     };
     await isdk.users.updateProfile({
       id: sellerId,
-      metadata: {
-        xololoLegalDocs: { ...existing, docs: updatedDocs },
-      },
+      metadata: { xololoLegalDocs: { ...existing, docs: updatedDocs } },
     });
-    // Invalida cache de la lista — el próximo GET refleja el cambio.
     cache = null;
-    // XOLOLO P3: al aprobar/rechazar un doc, re-computa el badge.
-    // El sync es silent-fail; no rompe la respuesta al admin.
     try {
       const { syncVerifiedBadge } = require('../api-util/sellerVerified');
       await syncVerifiedBadge({ isdk, sellerId });
@@ -136,12 +122,43 @@ const review = async (req, res) => {
       // eslint-disable-next-line no-console
       console.error('[admin-legal-docs] syncVerifiedBadge falló:', e?.message);
     }
-    return res.json({ ok: true });
+    return { ok: true };
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[admin-legal-docs] review error:', e?.message);
-    return res.status(500).json({ error: 'internal' });
+    return { ok: false, httpStatus: 500, body: { error: 'internal' } };
   }
 };
 
-module.exports = { list, review };
+const review = async (req, res) => {
+  const admin = await requireAdmin(req, res);
+  if (!admin.ok) return;
+  const { sellerId, slot: slotKey, status, reviewNote } = req.body || {};
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+  const r = await applyDocReview({
+    isdk, sellerId, slotKey, status, reviewNote, reviewedByEmail: admin.email,
+  });
+  if (!r.ok) return res.status(r.httpStatus).json(r.body);
+  return res.json({ ok: true });
+};
+
+// XOLOLO 2026-11-27 — endpoint OPS para aprobar/rechazar docs legales
+// desde el drawer /ops/users. Usa requireOperator del router (MFA) en
+// vez de requireAdmin (email allowlist). sellerId viene del URL path.
+const reviewFromOps = async (req, res) => {
+  const sellerId = req.params?.userId;
+  const { slot: slotKey, status, reviewNote } = req.body || {};
+  const isdk = getIntegrationSdk();
+  if (!isdk) return res.status(500).json({ error: 'integration_api_missing' });
+  // req.operatorEmail lo setea adminAuth.requireOperator — lo usamos
+  // como reviewedBy para auditoría del slot.
+  const r = await applyDocReview({
+    isdk, sellerId, slotKey, status, reviewNote,
+    reviewedByEmail: req.operatorEmail || req.operator?.email || null,
+  });
+  if (!r.ok) return res.status(r.httpStatus).json(r.body);
+  return res.json({ ok: true });
+};
+
+module.exports = { list, review, reviewFromOps };

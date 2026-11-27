@@ -462,6 +462,18 @@ router.post(
   bodyParser.json(),
   opsUsersActions.resyncBadge
 );
+// XOLOLO 2026-11-27 — endpoint OPS para aprobar/rechazar docs legales
+// desde el drawer /ops/users. Gate: requireOperator (MFA). Reusa la
+// misma lógica del endpoint /admin/legal-docs/review pero sin el gate
+// adminGate (dos sistemas de auth paralelos: admin by email allowlist
+// vs operator by MFA).
+router.post(
+  '/admin/ops/users/:userId/legal-docs/review',
+  limits.ops,
+  adminAuth.requireOperator(),
+  bodyParser.json(),
+  adminLegalDocs.reviewFromOps
+);
 router.post(
   '/admin/ops/users/bulk-note',
   limits.ops,

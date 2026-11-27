@@ -384,10 +384,12 @@ const LegalDocRow = ({ sellerId, slot, onReviewed }) => {
   const review = async decision => {
     setBusy(true);
     setErr(null);
-    const r = await api('/api/admin/legal-docs/review', {
+    // XOLOLO 2026-11-27 — endpoint OPS (gate requireOperator/MFA), NO el
+    // /admin/legal-docs/review que usa adminGate (email allowlist) y que
+    // regresaba 403 not_admin al operator. sellerId va en el URL path.
+    const r = await api(`/api/admin/ops/users/${sellerId}/legal-docs/review`, {
       method: 'POST',
       body: {
-        sellerId,
         slot: slot.key,
         status: decision,
         reviewNote: decision === 'rejected' ? note || null : null,
