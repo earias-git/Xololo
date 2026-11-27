@@ -1,6 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 
+import VerifiedBadge from '../VerifiedBadge/VerifiedBadge';
 import css from './FeaturedStores.module.css';
 
 // XOLOLO: 3 tarjetas de storefronts destacados. Cada card muestra la foto
@@ -42,7 +43,16 @@ const FeaturedStores = props => {
                 />
                 <div className={css.body}>
                   <span className={css.subdomain}>{store.subdomain}</span>
-                  <span className={css.name}>{store.name}</span>
+                  <span className={css.name}>
+                    {store.name}
+                    {/* XOLOLO 2026-11-27 — sello X Verified pequeño al
+                        lado del nombre cuando el seller es verified. */}
+                    <VerifiedBadge
+                      verified={store.verified === true}
+                      size="sm"
+                      className={css.verifiedBadge}
+                    />
+                  </span>
                   {store.description ? (
                     <p className={css.description}>{store.description}</p>
                   ) : null}

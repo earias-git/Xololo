@@ -504,13 +504,9 @@ const StorefrontPageComponent = props => {
         </div>
       </section>
 
-      {/* XOLOLO: sello de confianza — reutilizamos VerifiedBand del home
-          para que la seña visual sea idéntica en toda la plataforma
-          (mismo layout, mismos íconos, mismo copy "Xololo Verified™").
-          hideCtas: en storefront la banda es puramente informativa — no
-          queremos que el buyer salga hacia el marketplace general ni a
-          /p/verified mientras navega esta tienda. */}
-      <VerifiedBand hideCtas />
+      {/* XOLOLO 2026-11-27 — la banda Verified se movió abajo de la
+          sección "contacto" para que el catálogo del Negocio (listings)
+          tenga más visibilidad arriba. Ver más abajo en este archivo. */}
 
       {/* XOLOLO P2: la barra de stats se mudó al header (StoreHeaderStats).
           Antes vivía aquí como StoreStatsWidget grande — la info clave
@@ -598,6 +594,14 @@ const StorefrontPageComponent = props => {
           </div>
         </div>
       </section>
+
+      {/* XOLOLO 2026-11-27 — sello de confianza al final del scroll (post
+          contacto). Reutiliza VerifiedBand del home para que la seña
+          visual sea idéntica en toda la plataforma (mismo layout, mismos
+          íconos, mismo copy "Xololo Verified™"). hideCtas porque en
+          storefront es puramente informativa — no queremos que el buyer
+          salga hacia el marketplace general ni a /p/verified. */}
+      <VerifiedBand hideCtas />
 
       {/* XOLOLO: footer legal del seller — nombre legal + dirección + link a
           Google Maps si aplica. Separado del footer corporativo de Xololo

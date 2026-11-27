@@ -46,21 +46,49 @@
   height: 14px;
 }
 
+/* XOLOLO 2026-11-27 — en mobile Md y Lg se reducen a tamaño de Sm
+   para no competir con el nombre del Negocio. A partir de --viewportMedium
+   vuelven a su tamaño natural. */
 .sizeMd {
-  padding: 3px 11px 3px 5px;
-  font-size: 12px;
-  gap: 6px;
+  padding: 2px 9px 2px 3px;
+  font-size: 10px;
+  border-width: 1.2px;
+  gap: 4px;
 }
 .sizeMd .mark {
-  height: 18px;
+  height: 14px;
+}
+
+@media (--viewportMedium) {
+  .sizeMd {
+    padding: 3px 11px 3px 5px;
+    font-size: 12px;
+    border-width: 1.4px;
+    gap: 6px;
+  }
+  .sizeMd .mark {
+    height: 18px;
+  }
 }
 
 .sizeLg {
-  padding: 4px 14px 4px 7px;
-  font-size: 14px;
-  border-width: 1.6px;
-  gap: 7px;
+  padding: 3px 11px 3px 5px;
+  font-size: 12px;
+  border-width: 1.4px;
+  gap: 6px;
 }
 .sizeLg .mark {
-  height: 22px;
+  height: 18px;
+}
+
+@media (--viewportMedium) {
+  .sizeLg {
+    padding: 4px 14px 4px 7px;
+    font-size: 14px;
+    border-width: 1.6px;
+    gap: 7px;
+  }
+  .sizeLg .mark {
+    height: 22px;
+  }
 }

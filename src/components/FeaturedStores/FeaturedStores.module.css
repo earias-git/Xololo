@@ -121,6 +121,16 @@
   font-weight: 700;
   color: #232d40;
   line-height: 1.2;
+  /* XOLOLO 2026-11-27 — flex para que el VerifiedBadge quede inline
+     al lado del nombre del Negocio en el card. */
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.verifiedBadge {
+  flex: 0 0 auto;
 }
 
 .description {

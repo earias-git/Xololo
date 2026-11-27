@@ -97,6 +97,11 @@ module.exports = async (req, res) => {
         primaryColor: pd.brandPrimaryColor || null,
         description: pd.shortDescription || null,
         category: pd.primaryCategory || null,
+        // XOLOLO 2026-11-27 — bandera para que el card de FeaturedStores
+        // pinte el sello "X Verified" pequeño cuando aplique. Se calcula
+        // server-side a partir del mismo publicData.xololoVerified que
+        // usa el badge del storefront, así son consistentes.
+        verified: pd.xololoVerified === true,
       };
     });
 
