@@ -36,13 +36,28 @@ const CustomListingFields = props => {
     const isTargetCategory = isFieldForCategory(currentCategories, fieldConfig);
     return isTargetCategory;
   };
-  const propsForCustomFields =
+  const rawPropsForCustomFields =
     pickCustomFieldProps(
       { publicData, metadata },
       displayableFieldConfigs,
       'listingType',
       isFieldForSelectedCategories
     ) || [];
+
+  // XOLOLO 2026-11-27 — algunos listing fields tienen options
+  // "placeholder" en Console que no son comunicables al buyer (p.ej.
+  // `sellerCommunities.reservada` existe solo para que Sharetribe
+  // valide min-2-options al registrar el field). Filtramos esas
+  // options del shape que recibe SectionMultiEnum para que no se
+  // pinten en ListingPage ni se vean tachadas.
+  const HIDDEN_FIELD_OPTIONS = {
+    sellerCommunities: new Set(['reservada']),
+  };
+  const propsForCustomFields = rawPropsForCustomFields.map(f => {
+    const hidden = HIDDEN_FIELD_OPTIONS[f.key];
+    if (!hidden || !Array.isArray(f.options)) return f;
+    return { ...f, options: f.options.filter(o => !hidden.has(o.key)) };
+  });
 
   const sectionDetailsProps = {
     ...props,

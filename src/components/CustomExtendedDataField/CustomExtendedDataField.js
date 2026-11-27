@@ -22,13 +22,26 @@ import { FieldCheckboxGroup, FieldSelect, FieldTextInput, FieldBoolean } from '.
 // Import modules from this directory
 import css from './CustomExtendedDataField.module.css';
 
-const createFilterOptions = options => options.map(o => ({ key: `${o.option}`, label: o.label }));
+// XOLOLO 2026-11-27 — options "placeholder" en Console que no se
+// muestran al seller en el wizard ni en ListingPage. Centralizado
+// aquí para que ambos lados compartan la misma lista. Ver también
+// CustomListingFields.HIDDEN_FIELD_OPTIONS (mismo pattern).
+const HIDDEN_FIELD_OPTIONS = {
+  sellerCommunities: new Set(['reservada']),
+};
+
+const createFilterOptions = (options, fieldKey) => {
+  const hidden = fieldKey ? HIDDEN_FIELD_OPTIONS[fieldKey] : null;
+  return (options || [])
+    .filter(o => !hidden || !hidden.has(`${o.option}`))
+    .map(o => ({ key: `${o.option}`, label: o.label }));
+};
 
 const getLabel = fieldConfig => fieldConfig?.saveConfig?.label || fieldConfig?.label;
 
 const CustomFieldEnum = props => {
   const { name, fieldConfig, defaultRequiredMessage, formId, intl } = props;
-  const { enumOptions = [], saveConfig } = fieldConfig || {};
+  const { enumOptions = [], saveConfig, key: fieldKey } = fieldConfig || {};
   const { placeholderMessage, isRequired, requiredMessage } = saveConfig || {};
   const validateMaybe = isRequired
     ? { validate: required(requiredMessage || defaultRequiredMessage) }
@@ -36,7 +49,7 @@ const CustomFieldEnum = props => {
   const placeholder =
     placeholderMessage ||
     intl.formatMessage({ id: 'CustomExtendedDataField.placeholderSingleSelect' });
-  const filterOptions = createFilterOptions(enumOptions);
+  const filterOptions = createFilterOptions(enumOptions, fieldKey);
 
   const label = getLabel(fieldConfig);
 
@@ -66,7 +79,7 @@ const CustomFieldEnum = props => {
 
 const CustomFieldMultiEnum = props => {
   const { name, fieldConfig, defaultRequiredMessage, formId } = props;
-  const { enumOptions = [], saveConfig } = fieldConfig || {};
+  const { enumOptions = [], saveConfig, key: fieldKey } = fieldConfig || {};
   const { isRequired, requiredMessage } = saveConfig || {};
   const label = getLabel(fieldConfig);
   const validateMaybe = isRequired
@@ -80,7 +93,7 @@ const CustomFieldMultiEnum = props => {
       name={name}
       label={label}
       helpText={fieldConfig?.helpText}
-      options={createFilterOptions(enumOptions)}
+      options={createFilterOptions(enumOptions, fieldKey)}
       {...validateMaybe}
     />
   ) : null;
