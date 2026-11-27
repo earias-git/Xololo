@@ -26,16 +26,18 @@ const { sendEventNotifications } = require('./notifications');
 
 const isDocApproved = doc => doc && doc.status === 'approved';
 
-// XOLOLO 2026-11-25 — helper para armar la URL de la tienda desde el
-// slug del seller. Si no tiene slug (p.ej. casual_reseller aún no
-// estrictamente aplicable), caemos al home.
+// XOLOLO 2026-11-25 — helper para armar la URL de la tienda del seller.
+// Patrón oficial: subdomain `https://<slug>.xololo.mx` (storefront
+// seller-branded). Mismo que usa sellerHeader en emailTemplates y
+// SellerBrandFrame en el cliente. Si no tiene slug (casual), caemos
+// al home.
 const buildStorefrontUrl = publicData => {
   const root = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx').replace(
     /\/$/,
     ''
   );
   const slug = publicData?.slug;
-  return slug ? `${root}/u/${slug}` : root;
+  return slug ? `https://${slug}.xololo.mx` : root;
 };
 
 const buildVerifiedProgramUrl = () => {
@@ -46,18 +48,60 @@ const buildVerifiedProgramUrl = () => {
   return `${root}/verified`;
 };
 
+// XOLOLO 2026-11-25 — herramienta Xololear (virlizar en RRSS) vive en
+// /dashboard?section=promote (label 'Xololear' en el Dashboard — ver
+// DashboardPage.js). El seller llega ahí, elige red y publica directo.
+const buildXololearUrl = () => {
+  const root = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || 'https://xololo.mx').replace(
+    /\/$/,
+    ''
+  );
+  return `${root}/dashboard?section=promote`;
+};
+
 // XOLOLO 2026-11-25 — bloque HTML del logo para el share card del
 // email. Si el seller subió logoUrl, lo mostramos grande (hasta
-// 180×180). Si no, mostramos un placeholder tipográfico con la
+// 180×140). Si no, mostramos un placeholder tipográfico con la
 // inicial del Negocio sobre fondo navy — así el card siempre queda
 // presentable aunque el seller no haya subido branding.
-const buildLogoHtmlForCard = (sellerPd, name) => {
+// XOLOLO 2026-11-27 — fetcha una imagen remota y devuelve data URI
+// base64. Lo usamos para INLINEAR logo + banner del seller en el email
+// — así se ven aunque Gmail / Outlook / el preview local bloqueen
+// remotes. Tamaños típicos: logo ~50KB, banner ~150KB — el email
+// completo queda bajo 500KB, muy dentro del límite de Resend (40MB) y
+// de Gmail (102KB antes de clipping, pero las imágenes inline no
+// cuentan para ese 102KB de "texto", solo el contenido HTML textual).
+const fetchAsDataUri = async (url, timeoutMs = 5000) => {
+  if (!url) return null;
+  try {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), timeoutMs);
+    const r = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(to);
+    if (!r.ok) return null;
+    const type = r.headers.get('content-type') || 'image/jpeg';
+    const buf = Buffer.from(await r.arrayBuffer());
+    return `data:${type};base64,${buf.toString('base64')}`;
+  } catch (e) {
+    // Fallback silencioso: devolvemos null y el caller usa placeholder
+    // o salta la imagen. El email aún se envía.
+    return null;
+  }
+};
+
+// XOLOLO 2026-11-25 — bloque HTML del logo para el share card del
+// email. Si el seller subió logoUrl, lo mostramos grande (hasta
+// 180×140). Si no, mostramos un placeholder tipográfico con la
+// inicial del Negocio sobre fondo navy — así el card siempre queda
+// presentable aunque el seller no haya subido branding.
+const buildLogoHtmlForCard = async (sellerPd, name) => {
   const logoUrl = sellerPd?.logoUrl;
   if (logoUrl) {
-    // Email-safe: inline styles, no CSS modernas.
+    const dataUri = await fetchAsDataUri(logoUrl);
+    const src = dataUri || logoUrl; // fallback: URL remota si falla el inline
     return (
       '<img src="' +
-      String(logoUrl).replace(/"/g, '&quot;') +
+      String(src).replace(/"/g, '&quot;') +
       '" alt="' +
       String(name || 'Negocio').replace(/"/g, '&quot;') +
       '" style="display:block;max-width:180px;max-height:140px;width:auto;height:auto;border:0;margin:0 auto;" />'
@@ -70,6 +114,23 @@ const buildLogoHtmlForCard = (sellerPd, name) => {
     '<span style="font-size:52px;font-weight:800;color:#ffffff;line-height:120px;">' +
     initial +
     '</span></div>'
+  );
+};
+
+// XOLOLO 2026-11-27 — banner del Negocio arriba del card (hero visual
+// de 440×140 cover). Si el seller no subió banner, devolvemos '' y el
+// template no pinta esa fila — el card queda igual de válido pero más
+// compacto. Usamos bannerUrl (primario); los bannerUrl2/3 quedan para
+// variantes si queremos un carrusel futuro.
+const buildBannerHtmlForCard = async sellerPd => {
+  const bannerUrl = sellerPd?.bannerUrl;
+  if (!bannerUrl) return '';
+  const dataUri = await fetchAsDataUri(bannerUrl);
+  const src = dataUri || bannerUrl;
+  return (
+    '<img src="' +
+    String(src).replace(/"/g, '&quot;') +
+    '" alt="" style="display:block;width:100%;height:140px;object-fit:cover;border:0;" />'
   );
 };
 
@@ -101,7 +162,12 @@ const dispatchGrantedEmail = async ({ isdk, sellerId, user }) => {
         name,
         email,
         logoUrl: sellerPd.logoUrl || null,
-        logoHtmlLarge: buildLogoHtmlForCard(sellerPd, name),
+        // XOLOLO 2026-11-27 — async para inlinear logo + banner como
+        // data URI. Ambas pueden tardar ~1s c/u por red; vale la pena
+        // porque garantiza que el seller vea su branding real en el
+        // email sin dependencia del proxy del cliente de email.
+        logoHtmlLarge: await buildLogoHtmlForCard(sellerPd, name),
+        bannerHtml: await buildBannerHtmlForCard(sellerPd),
         primaryColor: sellerPd.brandPrimaryColor || null,
       },
       storefront: {
@@ -109,6 +175,12 @@ const dispatchGrantedEmail = async ({ isdk, sellerId, user }) => {
         urlPretty: prettyUrlForCard(storefrontUrl),
       },
       verified: { url: buildVerifiedProgramUrl() },
+      xololear: { url: buildXololearUrl() },
+      // XOLOLO 2026-11-27 — omite la línea de "Envíos por paquetería
+      // asegurados" del footer (ya no aplica a este tipo de notificación
+      // que es de verificación, no de compra). El canal email interpreta
+      // este flag en emailTemplates.xololoFooter.
+      useXololoBranding: true,
     });
   } catch (e) {
     // eslint-disable-next-line no-console

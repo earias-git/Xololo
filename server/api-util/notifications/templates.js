@@ -1,4 +1,22 @@
 // XOLOLO: templates centralizados de notificaciones (Fase D.9).
+//
+// XOLOLO 2026-11-25 — X oficial de Xololo embedida como data URI
+// para el share card del email 'seller.verified_granted'. Evita
+// dependencia de que el servidor de assets esté disponible cuando
+// un cliente email (Gmail proxy, Outlook, etc.) resuelve <img>.
+// El asset LOCKED es src/assets/xololo-logo-mobile.png (120×96)
+// copiado también a public/static/xololo-x-mark.png como respaldo.
+const fs = require('fs');
+const path = require('path');
+let XOLOLO_X_MARK_DATA_URI = '';
+try {
+  const p = path.resolve(__dirname, '../../../public/static/xololo-x-mark.png');
+  const b64 = fs.readFileSync(p).toString('base64');
+  XOLOLO_X_MARK_DATA_URI = `data:image/png;base64,${b64}`;
+} catch (e) {
+  // Si el file se mueve, caemos al URL hostado — el email aún se envía.
+  XOLOLO_X_MARK_DATA_URI = 'https://xololo.mx/static/xololo-x-mark.png';
+}
 // Cada template devuelve un objeto con la data que el canal necesita
 // para enviar el mensaje. Estructura:
 //
@@ -385,7 +403,7 @@ const TEMPLATES = {
   'seller.verified_granted': {
     email: {
       seller: {
-        subject: '🎉 ¡Felicidades! Ya eres un Negocio Xololo Verified',
+        subject: '¡Felicidades! Ya eres un Negocio Xololo Verified',
         // bodyHtml se prioriza sobre bodyText en renderEmailHtml. Incluye
         // un "share card" visual con el logo del seller + sello X VERIFIED
         // listo para que el seller lo capture y lo comparta en RRSS. El
@@ -393,56 +411,90 @@ const TEMPLATES = {
         bodyHtml:
           '<p style="margin:0 0 14px;font-size:15.5px;line-height:1.55;color:#232d40;">' +
           'Hola <strong>{seller.name}</strong>,</p>' +
-          '<p style="margin:0 0 18px;font-size:15.5px;line-height:1.55;color:#232d40;">' +
+          '<p style="margin:0 0 20px;font-size:15.5px;line-height:1.55;color:#232d40;">' +
           '¡Enhorabuena! Tu Negocio pasó los 4 criterios de verificación de Xololo. ' +
           'A partir de hoy, tu tienda y tus productos aparecen con el sello ' +
-          '<strong>✓ Xololo Verified</strong>.</p>' +
+          '<strong>Xololo Verified</strong>.</p>' +
 
           // ----- SHARE CARD (compartible para RRSS) -----
-          '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 18px;">' +
+          // Diseño editorial: logo seller arriba como dueño del card,
+          // divider, X oficial de Xololo grande como endoso visual, texto
+          // VERIFIED en caps + spacing, URL, footer. Blanco limpio sin
+          // gradientes para que se vea serio en cualquier RRSS.
+          '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 18px;">' +
           '<tr><td align="center">' +
-          '<table role="presentation" width="480" cellpadding="0" cellspacing="0" border="0" ' +
-          'style="max-width:480px;background:linear-gradient(135deg,#f8f5ee 0%,#ffffff 60%);' +
-          'border:2px solid #232d40;border-radius:20px;overflow:hidden;">' +
-          '<tr><td align="center" style="padding:34px 24px 10px;">' +
-          // Logo del seller (si existe) o nombre grande fallback
+          '<table role="presentation" width="440" cellpadding="0" cellspacing="0" border="0" ' +
+          'style="max-width:440px;background:#ffffff;border:1.5px solid #e6e1d6;border-radius:20px;overflow:hidden;">' +
+
+          // (0) Banner del Negocio como hero full-bleed (si existe).
+          // El template interpola '' cuando el seller no subió banner,
+          // y la fila se colapsa sin altura — card válido en ambos casos.
+          '<tr><td style="padding:0;line-height:0;font-size:0;">{seller.bannerHtml}</td></tr>' +
+
+          // (1) Logo del seller grande (menos padding top si hay banner).
+          '<tr><td align="center" style="padding:26px 24px 14px;">' +
           '{seller.logoHtmlLarge}' +
           '</td></tr>' +
-          '<tr><td align="center" style="padding:8px 24px 6px;">' +
-          '<p style="margin:0;font-size:20px;font-weight:800;color:#232d40;letter-spacing:-0.01em;">' +
+
+          // (2) Nombre del Negocio (link al storefront)
+          '<tr><td align="center" style="padding:4px 24px 2px;">' +
+          '<p style="margin:0;font-size:22px;font-weight:800;color:#232d40;letter-spacing:-0.01em;line-height:1.2;">' +
           '<a href="{storefront.url}" style="color:#232d40;text-decoration:none;">{seller.name}</a></p>' +
           '</td></tr>' +
-          '<tr><td align="center" style="padding:14px 24px 20px;">' +
-          // Pill "✓ Xololo Verified" con la X oficial
-          '<table role="presentation" cellpadding="0" cellspacing="0" border="0" ' +
-          'style="background:#ffffff;border:2px solid #232d40;border-radius:999px;">' +
+
+          // (3) URL visible, clickeable, verde Xololo
+          '<tr><td align="center" style="padding:4px 24px 22px;">' +
+          '<p style="margin:0;font-size:14px;font-weight:600;color:#1f8f52;">' +
+          '<a href="{storefront.url}" style="color:#1f8f52;text-decoration:none;">{storefront.urlPretty}</a></p>' +
+          '</td></tr>' +
+
+          // (4) Divider con dot central (editorial)
+          '<tr><td align="center" style="padding:0 24px;">' +
+          '<table role="presentation" cellpadding="0" cellspacing="0" border="0">' +
           '<tr>' +
-          '<td style="padding:10px 14px 10px 16px;vertical-align:middle;">' +
-          '<img src="https://xololo.mx/static/xololo-x-mark.png" alt="X" width="24" height="19" ' +
-          'style="display:block;border:0;width:24px;height:auto;" />' +
-          '</td>' +
-          '<td style="padding:10px 18px 10px 2px;vertical-align:middle;">' +
-          '<span style="font-size:15px;font-weight:800;color:#232d40;letter-spacing:0.08em;text-transform:uppercase;">' +
-          'Verified</span>' +
-          '</td>' +
+          '<td style="width:80px;height:1px;background:#e6e1d6;line-height:1px;font-size:0;">&nbsp;</td>' +
+          '<td style="padding:0 10px;font-size:14px;color:#c7bea6;line-height:1;">&bull;</td>' +
+          '<td style="width:80px;height:1px;background:#e6e1d6;line-height:1px;font-size:0;">&nbsp;</td>' +
           '</tr>' +
           '</table>' +
           '</td></tr>' +
-          '<tr><td align="center" style="padding:4px 24px 10px;">' +
-          '<p style="margin:0;font-size:13.5px;font-weight:700;color:#1f8f52;">' +
-          '<a href="{storefront.url}" style="color:#1f8f52;text-decoration:none;">{storefront.urlPretty}</a></p>' +
+
+          // (5) X oficial de Xololo grande (el sello visual)
+          '<tr><td align="center" style="padding:26px 24px 10px;">' +
+          '<img src="' + XOLOLO_X_MARK_DATA_URI + '" alt="Xololo" width="110" ' +
+          'style="display:block;border:0;width:110px;height:auto;margin:0 auto;" />' +
           '</td></tr>' +
-          '<tr><td align="center" style="padding:0 24px 22px;">' +
-          '<p style="margin:0;font-size:11.5px;color:#6b7280;letter-spacing:0.14em;text-transform:uppercase;">' +
+
+          // (6) "VERIFIED" tipográfico, editorial, caps + spacing amplio
+          '<tr><td align="center" style="padding:10px 24px 4px;">' +
+          '<p style="margin:0;font-size:22px;font-weight:800;color:#232d40;letter-spacing:0.28em;line-height:1;">' +
+          'VERIFIED</p>' +
+          '</td></tr>' +
+
+          // (7) Footer — "Negocio verificado en xololo.mx"
+          '<tr><td align="center" style="padding:14px 24px 34px;">' +
+          '<p style="margin:0;font-size:10.5px;color:#8a8777;letter-spacing:0.16em;text-transform:uppercase;font-weight:700;">' +
           'Negocio verificado en xololo.mx</p>' +
           '</td></tr>' +
+
           '</table>' +
           '</td></tr>' +
+
+          // CTA a Xololear — herramienta nativa para viralizar en RRSS
+          // (Instagram, Facebook, WhatsApp Business, X). Un click y
+          // publica directo con el card + tu storefront link.
+          '<tr><td align="center" style="padding:18px 12px 4px;">' +
+          '<a href="{xololear.url}" ' +
+          'style="display:inline-block;background:#1f8f52;color:#ffffff;padding:14px 28px;' +
+          'border-radius:999px;text-decoration:none;font-weight:800;font-size:15px;' +
+          'letter-spacing:0.02em;box-shadow:0 2px 6px rgba(31,143,82,0.25);">' +
+          'Xololear tu Negocio Verified' +
+          '</a>' +
+          '</td></tr>' +
           '<tr><td align="center" style="padding:10px 12px 0;">' +
-          '<p style="margin:0;font-size:13px;color:#4a5169;line-height:1.5;max-width:460px;">' +
-          '👉 <strong>Compártelo en tus redes:</strong> haz click derecho sobre el card de arriba y ' +
-          '<em>"Guardar imagen como…"</em>, o toma captura de pantalla. Súbelo a Instagram, ' +
-          'Facebook o WhatsApp Business para que tus clientes vean que estás verificado.</p>' +
+          '<p style="margin:0;font-size:12.5px;color:#6b7280;line-height:1.5;max-width:460px;">' +
+          'La herramienta <strong>Xololear</strong> publica este card directo en tus redes ' +
+          '(Instagram, Facebook, WhatsApp Business, X) — en un click, sin descargas.</p>' +
           '</td></tr>' +
           '</table>' +
 

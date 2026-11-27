@@ -17,6 +17,7 @@ import { selectCartItemCount } from '../../ducks/cart.duck';
 
 import FeaturedListings from '../../components/FeaturedListings/FeaturedListings';
 import VerifiedBand from '../../components/VerifiedBand/VerifiedBand';
+import VerifiedBadge from '../../components/VerifiedBadge/VerifiedBadge';
 import StoreHeaderStats from '../../components/StoreHeaderStats/StoreHeaderStats';
 // XOLOLO 2026-11-18 — ADR-006 PR-8: chips de comunidades del seller.
 
@@ -463,7 +464,18 @@ const StorefrontPageComponent = props => {
       <section className={css.hero}>
         <div className={css.heroInner}>
           <p className={css.heroEyebrow}>Tienda oficial en Xololo.mx</p>
-          <h1 className={css.heroTitle}>{seller.displayName}</h1>
+          {/* XOLOLO 2026-11-27 — distintivo "X Verified" al lado del
+              nombre del Negocio en el hero. El componente devuelve null
+              si el seller no está verified, así que el h1 queda igual
+              para sellers no-Verified. */}
+          <h1 className={css.heroTitle}>
+            {seller.displayName}
+            <VerifiedBadge
+              verified={pd.xololoVerified === true}
+              size="md"
+              className={css.heroVerifiedBadge}
+            />
+          </h1>
           {pd.shortDescription ? (
             <p className={css.heroDescription}>{pd.shortDescription}</p>
           ) : null}

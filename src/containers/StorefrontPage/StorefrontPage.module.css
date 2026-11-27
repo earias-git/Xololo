@@ -338,11 +338,24 @@
   font-weight: 800;
   line-height: 1.15;
   text-wrap: balance;
+  /* XOLOLO 2026-11-27 — flex para que el VerifiedBadge quede al lado
+     del nombre del Negocio sin romper text-wrap del título. */
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 
   @media (--viewportMedium) {
     margin: 0 0 12px;
     font-size: 44px;
+    gap: 14px;
   }
+}
+
+/* XOLOLO 2026-11-27 — el VerifiedBadge dentro del h1 — tamaño fijo
+   para que no herede el font-size gigante del heroTitle. */
+.heroVerifiedBadge {
+  flex: 0 0 auto;
 }
 
 .heroDescription {
